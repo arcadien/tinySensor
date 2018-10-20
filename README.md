@@ -1,4 +1,4 @@
-#TinySensor
+# TinySensor
 
 An AVR project targetting creation of a SDK for low-power sensors wireless nodes using ATTinyX4 MCU from Microchip (formely Atmel) 
 and communicating using 433Mhz.
