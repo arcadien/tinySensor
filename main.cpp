@@ -62,8 +62,9 @@ void Setup() {
   _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
   _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
 
-  // useless pins are input + pullup, as stated
-  // in Atmel's doc here http://www.atmel.com/dyn/resources/prod_documents/doc8349.pdf
+  // unused pins are input + pullup, as stated
+  // in Atmel's doc "AVR4013: picoPower Basics"
+  
   // all pins as input to avoid power draw
   DDRA = 0;
   DDRB = 0;

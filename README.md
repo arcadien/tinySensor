@@ -10,4 +10,4 @@ Various libraries are used here, and some where tweaked to remove any Arduino de
 * [USI wire library](https://github.com/puuu/USIWire.git) with little addition for ATTiny84A support
 
 Some resources from Atmel:
-* [AVR4013: picoPower Basics](http://www.atmel.com/dyn/resources/prod_documents/doc8349.pdf)
+* [AVR4013: picoPower Basics](http://www.microchip.com/downloads/en/AppNotes/doc8349.pdf)
