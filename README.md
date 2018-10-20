@@ -1,7 +1,8 @@
 # TinySensor
 
 An AVR project targetting creation of a SDK for low-power sensors wireless nodes using ATTinyX4 MCU from Microchip (formely Atmel) 
-and communicating using 433Mhz.
+and communicating using 433Mhz. The sensors emits its data using the Oregon(c) protocol v2.
+In the complete system, data is received by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
 
 ## Supported AVR targets
 * ATTiny84a
