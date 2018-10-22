@@ -169,7 +169,7 @@ U 1 1 5BCC0B59
 P 6800 4650
 F 0 "J3" H 6950 4700 50  0000 L CNN
 F 1 "BMP/BME breakout" H 6950 4600 50  0000 L CNN
-F 2 "Chinese breakouts:BMx280 breakout" H 6800 4650 50  0001 C CNN
+F 2 "TinySensor lib:BMx280_breakout" H 6800 4650 50  0001 C CNN
 F 3 "~" H 6800 4650 50  0001 C CNN
 	1    6800 4650
 	1    0    0    -1  
@@ -499,7 +499,7 @@ U 1 1 5BCF975A
 P 2250 4300
 F 0 "J6" H 1970 4396 50  0000 R CNN
 F 1 "ISP" H 1970 4305 50  0000 R CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical" V 2000 4350 50  0001 C CNN
+F 2 "TinySensor lib:AVR_ICSP" V 2000 4350 50  0001 C CNN
 F 3 " ~" H 975 3750 50  0001 C CNN
 	1    2250 4300
 	1    0    0    -1  
@@ -713,7 +713,7 @@ U 1 1 5BCCF337
 P 6900 1200
 F 0 "J2" H 6979 1242 50  0000 L CNN
 F 1 "DCDC converter" H 6979 1151 50  0000 L CNN
-F 2 "Chinese breakouts:DC-DC 0.9v-3.3v to 3.3v" H 6900 1200 50  0001 C CNN
+F 2 "TinySensor lib:DC-DC_0.9v-3.3v_to_3.3v" H 6900 1200 50  0001 C CNN
 F 3 "~" H 6900 1200 50  0001 C CNN
 	1    6900 1200
 	1    0    0    -1  
