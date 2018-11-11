@@ -351,41 +351,31 @@ Wire Wire Line
 $Comp
 L Device:CP C1
 U 1 1 5BCDDA39
-P 6500 1700
-F 0 "C1" V 6755 1700 50  0000 C CNN
-F 1 "10u" V 6664 1700 50  0000 C CNN
-F 2 "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm" H 6538 1550 50  0001 C CNN
-F 3 "~" H 6500 1700 50  0001 C CNN
-	1    6500 1700
+P 6500 1550
+F 0 "C1" V 6550 1450 50  0000 C CNN
+F 1 "10u" V 6500 1250 50  0000 C CNN
+F 2 "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm" H 6538 1400 50  0001 C CNN
+F 3 "~" H 6500 1550 50  0001 C CNN
+	1    6500 1550
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	6650 1700 6650 1200
 Connection ~ 6650 1200
 Wire Wire Line
 	6650 1200 6700 1200
-Wire Wire Line
-	6350 1700 6350 1300
 Connection ~ 6350 1300
 Wire Wire Line
 	6350 1300 6700 1300
 $Comp
-L Device:C C2
+L Device:C C5
 U 1 1 5BCDF3E0
 P 6500 2150
-F 0 "C2" V 6248 2150 50  0000 C CNN
-F 1 "100n" V 6339 2150 50  0000 C CNN
-F 2 "Capacitor_THT:C_Rect_L7.0mm_W2.0mm_P5.00mm" H 6538 2000 50  0001 C CNN
+F 0 "C5" V 6450 2250 50  0000 C CNN
+F 1 "1n" V 6500 2400 50  0000 C CNN
+F 2 "Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm" H 6538 2000 50  0001 C CNN
 F 3 "~" H 6500 2150 50  0001 C CNN
 	1    6500 2150
 	0    1    1    0   
 $EndComp
-Connection ~ 6650 1700
-Connection ~ 6350 1700
-Wire Wire Line
-	6650 1700 6650 2150
-Wire Wire Line
-	6350 1700 6350 2150
 Text Notes 10200 2300 0    50   ~ 0
 Power management
 Text Notes 4850 2300 0    50   ~ 0
@@ -956,4 +946,31 @@ Wire Wire Line
 Connection ~ 4900 4650
 Wire Wire Line
 	4900 4650 5200 4650
+$Comp
+L Device:C C2
+U 1 1 5BEB17B5
+P 6500 1850
+F 0 "C2" V 6450 1950 50  0000 C CNN
+F 1 "100n" V 6500 2150 50  0000 C CNN
+F 2 "Capacitor_THT:C_Rect_L7.0mm_W2.0mm_P5.00mm" H 6538 1700 50  0001 C CNN
+F 3 "~" H 6500 1850 50  0001 C CNN
+	1    6500 1850
+	0    1    1    0   
+$EndComp
+Connection ~ 6350 1550
+Connection ~ 6650 1550
+Wire Wire Line
+	6650 1200 6650 1550
+Wire Wire Line
+	6350 1300 6350 1550
+Connection ~ 6650 1850
+Wire Wire Line
+	6650 1850 6650 2150
+Connection ~ 6350 1850
+Wire Wire Line
+	6350 1850 6350 2150
+Wire Wire Line
+	6350 1550 6350 1850
+Wire Wire Line
+	6650 1550 6650 1850
 $EndSCHEMATC
