@@ -11,9 +11,9 @@
 
   (page A4)
   (title_block
-    (title "Generic TinySensor PCB")
-    (date 2018-11-01)
-    (rev A0)
+    (title "TinySensor Board")
+    (date 2018-11-11)
+    (rev 1.1)
   )
 
   (layers
