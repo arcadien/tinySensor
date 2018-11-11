@@ -5,11 +5,11 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title ""
-Date ""
-Rev ""
+Title "TinySensor board"
+Date "2018-11-11"
+Rev "1.1"
 Comp ""
-Comment1 ""
+Comment1 "Open Hardware"
 Comment2 ""
 Comment3 ""
 Comment4 ""
