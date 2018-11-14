@@ -1,14 +1,22 @@
 # TinySensor
 
-An AVR project targetting creation of a SDK for low-power sensors wireless nodes using ATTinyX4 MCU from Microchip (formely Atmel) 
-and communicating using 433Mhz. The sensors emits its data using the Oregon(c) protocol v2.
+TinySensor aims to provide a customisable firmware for low-power environment sensors using wireless communication.
+
 In the complete system, data is received by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
 
-## Supported AVR targets
-* ATTiny84a
+## Supported MCUs
+* ATTiny8xa family
 
 ## Supported sensors
-* [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280)
+* I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
+* Analog sensors (eg. [LM35](http://www.ti.com/lit/ds/symlink/lm35.pdf))
+* OneWire sensors (eg. [Dallas DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf))
+
+## Wireless technology
+* "one pin" emmiters. Tested with low-cost 433Mhz emmitters.
+
+## Wireless protocol
+* Oregon(c)
 
 ## Used libraries
 Various libraries are used here, and some where tweaked to remove any Arduino dependencies, making the whole firmware more compact:
