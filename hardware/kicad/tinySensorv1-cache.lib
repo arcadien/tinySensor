@@ -29,6 +29,23 @@ X GND 6 -100 -400 150 U 50 50 1 1 W
 ENDDRAW
 ENDDEF
 #
+# Connector:Conn_01x01_Female
+#
+DEF Connector:Conn_01x01_Female J 0 40 Y N 1 F N
+F0 "J" 0 100 50 H V C CNN
+F1 "Connector:Conn_01x01_Female" 0 -100 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ Connector*:*
+$ENDFPLIST
+DRAW
+A 0 0 20 901 -901 1 1 6 N 0 20 0 -20
+P 2 1 1 6 -50 0 -20 0 N
+X Pin_1 1 -200 0 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
 # Connector:Conn_01x03_Male
 #
 DEF Connector:Conn_01x03_Male J 0 40 Y N 1 F N
@@ -330,37 +347,6 @@ C 0 0 50 0 1 50 N
 ENDDRAW
 ENDDEF
 #
-# power:+3.3V
-#
-DEF power:+3.3V #PWR 0 0 Y Y 1 F P
-F0 "#PWR" 0 -150 50 H I C CNN
-F1 "power:+3.3V" 0 140 50 H V C CNN
-F2 "" 0 0 50 H I C CNN
-F3 "" 0 0 50 H I C CNN
-DRAW
-P 2 0 1 0 -30 50 0 100 N
-P 2 0 1 0 0 0 0 100 N
-P 2 0 1 0 0 100 30 50 N
-X +3V3 1 0 0 0 U 50 50 1 1 W N
-ENDDRAW
-ENDDEF
-#
-# power:+3V3
-#
-DEF power:+3V3 #PWR 0 0 Y Y 1 F P
-F0 "#PWR" 0 -150 50 H I C CNN
-F1 "power:+3V3" 0 140 50 H V C CNN
-F2 "" 0 0 50 H I C CNN
-F3 "" 0 0 50 H I C CNN
-ALIAS +3.3V
-DRAW
-P 2 0 1 0 -30 50 0 100 N
-P 2 0 1 0 0 0 0 100 N
-P 2 0 1 0 0 100 30 50 N
-X +3V3 1 0 0 0 U 50 50 1 1 W N
-ENDDRAW
-ENDDEF
-#
 # power:+BATT
 #
 DEF power:+BATT #PWR 0 0 Y Y 1 F P
@@ -399,6 +385,20 @@ F3 "" 0 0 50 H I C CNN
 DRAW
 P 6 0 1 0 0 0 0 50 -40 75 0 100 40 75 0 50 N
 X pwr 1 0 0 0 U 50 50 0 0 w
+ENDDRAW
+ENDDEF
+#
+# power:VCC
+#
+DEF power:VCC #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -150 50 H I C CNN
+F1 "power:VCC" 0 150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+C 0 75 25 0 1 0 N
+P 2 0 1 0 0 0 0 50 N
+X VCC 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
