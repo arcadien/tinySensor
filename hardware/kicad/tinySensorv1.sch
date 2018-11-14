@@ -37,7 +37,7 @@ F 3 "~" H 5200 1400 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L MCU_Microchip_ATtiny:ATtiny84A-PU U1
+L tinySensorv1-rescue:ATtiny84A-PU-MCU_Microchip_ATtiny U1
 U 1 1 5BCB880C
 P 2250 2000
 F 0 "U1" H 1720 2046 50  0000 R CNN
@@ -451,7 +451,7 @@ F 3 "~" H 4500 4550 50  0001 C CNN
 	1    4500 4550
 	-1   0    0    1   
 $EndComp
-Text Label 5200 4650 0    50   ~ 0
+Text Label 5050 4550 0    50   ~ 0
 Analog_sensor
 $Comp
 L Connector_Generic:Conn_01x03 J5
@@ -529,11 +529,8 @@ Wire Wire Line
 Connection ~ 6000 4450
 Wire Wire Line
 	6000 4450 6600 4450
-Connection ~ 5750 4550
 Wire Wire Line
 	5750 4550 6600 4550
-Wire Wire Line
-	4700 4550 5750 4550
 Wire Wire Line
 	4700 4450 6000 4450
 Wire Wire Line
@@ -753,13 +750,6 @@ F 3 "~" H 10350 5150 50  0001 C CNN
 	1    10350 5150
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	4700 4650 4900 4650
-Wire Wire Line
-	4900 4950 4900 4650
-Connection ~ 4900 4650
-Wire Wire Line
-	4900 4650 5200 4650
 $Comp
 L Device:C C2
 U 1 1 5BEB17B5
@@ -959,4 +949,16 @@ Wire Wire Line
 Connection ~ 9850 1650
 Wire Wire Line
 	9850 1650 10400 1650
+Wire Wire Line
+	5750 4650 5750 4550
+Connection ~ 5750 4550
+Wire Wire Line
+	4700 4550 4900 4550
+Wire Wire Line
+	4700 4650 5750 4650
+Wire Wire Line
+	4900 4950 4900 4550
+Connection ~ 4900 4550
+Wire Wire Line
+	4900 4550 5050 4550
 $EndSCHEMATC
