@@ -1,6 +1,6 @@
 # TinySensor
 
-TinySensor aims to provide a customisable firmware for low-power environment sensors using wireless communication.
+TinySensor aims to provide a customisable firmware and board design for low-power environment sensors using wireless communication.
 
 In the complete system, data is received by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
 
