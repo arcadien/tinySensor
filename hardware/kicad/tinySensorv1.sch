@@ -37,7 +37,7 @@ F 3 "~" H 5200 1400 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L tinySensorv1-rescue:ATtiny84A-PU-MCU_Microchip_ATtiny U1
+L tinySensorv1-rescue:ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue U1
 U 1 1 5BCB880C
 P 2250 2000
 F 0 "U1" H 1720 2046 50  0000 R CNN
@@ -880,15 +880,9 @@ Wire Wire Line
 Wire Wire Line
 	2850 2100 3350 2100
 Wire Wire Line
-	9050 1550 9050 1750
-Connection ~ 9050 1750
-Wire Wire Line
 	10300 1550 10300 1750
 Wire Wire Line
 	10400 1550 10400 1650
-Wire Wire Line
-	9150 1550 9150 1650
-Connection ~ 9150 1650
 $Comp
 L power:GND #PWR0117
 U 1 1 5BCEAFCA
@@ -904,10 +898,6 @@ Connection ~ 10300 1750
 Wire Wire Line
 	10300 1750 10300 1850
 Wire Wire Line
-	9050 1750 9750 1750
-Wire Wire Line
-	9150 1650 9450 1650
-Wire Wire Line
 	8000 1650 8250 1650
 Wire Wire Line
 	9750 1550 9750 1750
@@ -915,14 +905,8 @@ Connection ~ 9750 1750
 Wire Wire Line
 	9750 1750 10300 1750
 Wire Wire Line
-	8450 1550 8450 1750
-Wire Wire Line
-	8450 1750 9050 1750
-Wire Wire Line
 	8000 1650 8000 1350
 Connection ~ 8250 1650
-Wire Wire Line
-	8250 1650 8550 1650
 Wire Wire Line
 	8250 1950 7850 1950
 Wire Wire Line
@@ -940,11 +924,6 @@ Wire Wire Line
 	4900 1100 4900 1000
 Connection ~ 4900 1100
 Wire Wire Line
-	8550 1550 8550 1650
-Connection ~ 8550 1650
-Wire Wire Line
-	8550 1650 9150 1650
-Wire Wire Line
 	9850 1550 9850 1650
 Connection ~ 9850 1650
 Wire Wire Line
@@ -961,4 +940,25 @@ Wire Wire Line
 Connection ~ 4900 4550
 Wire Wire Line
 	4900 4550 5050 4550
+Wire Wire Line
+	8250 1650 8450 1650
+Wire Wire Line
+	8550 1550 8550 1750
+Wire Wire Line
+	8450 1550 8450 1650
+Connection ~ 8450 1650
+Wire Wire Line
+	8450 1650 9050 1650
+Wire Wire Line
+	8550 1750 9150 1750
+Wire Wire Line
+	9050 1550 9050 1650
+Connection ~ 9050 1650
+Wire Wire Line
+	9050 1650 9450 1650
+Wire Wire Line
+	9150 1550 9150 1750
+Connection ~ 9150 1750
+Wire Wire Line
+	9150 1750 9750 1750
 $EndSCHEMATC
