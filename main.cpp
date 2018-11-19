@@ -5,6 +5,7 @@
  * Author : aurelien
  */
 
+#include "config.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
@@ -14,7 +15,14 @@
 #include <string.h> // memcpy
 
 #include "protocol/oregon.h"
+
+#if defined(USE_BME280)
 #include "sensors/bme280/SparkFunBME280.h"
+#endif
+
+#if defined(USE_DS18B20)
+#include "sensors/ds18b20/include/ds18b20/ds18b20.h"
+#endif
 
 #define round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
 
@@ -96,22 +104,35 @@ void Setup() {
   DDRB |= _BV(PB1);
 }
 
+#if defined(USE_OREGON)
 Oregon oregon(2);
+#endif
+
+#if defined(USE_BME280)
 BME280 bme280;
+#endif
+
 
 int main(void) {
 
   Setup();
 
-  const uint8_t oregonType[] = {0x5A, 0x5D};
+#if defined(USE_OREGON)
+  const uint8_t oregonType[] = OREGON_TYPE;
   oregon.setType(oregon._oregonMessageBuffer, oregonType);
   oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::TWO);
-  oregon.setId(oregon._oregonMessageBuffer, 0xBA);
+  oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
+#endif
 
+
+
+#if defined(USE_BME280)
   bme280.setI2CAddress(0x76);
   bme280.beginI2C();
   bme280.setStandbyTime(5);
+#endif
 
+#if defined(USE_OREGON)
 // Buffer for Oregon message
 #if MODE == MODE_0
   uint8_t _lastOregonMessageBuffer[8] = {};
@@ -122,12 +143,14 @@ int main(void) {
 #else
 #error mode unknown
 #endif
+#endif
 
   while (1) {
 
+#if defined(USE_OREGON) && defined(USE_BME280)
     Wire.begin();
 
-    PORTB |= _BV(PB1); // led on
+    PORTB |= _BV(LED_PIN); // led on
     oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
     oregon.setTemperature(oregon._oregonMessageBuffer, bme280.readTempC());
     oregon.setHumidity(oregon._oregonMessageBuffer, bme280.readFloatHumidity());
@@ -136,7 +159,26 @@ int main(void) {
     oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
 
     Wire.end();
+#endif
 
+#if defined(USE_DS18B20)
+ 
+	ds18b20convert( &PORTB, &DDRB, &PINB, ( 1 << 0 ), NULL );
+
+	//Delay (sensor needs time to perform conversion)
+	_delay_ms( 1000 );
+
+	//Read temperature (without ROM matching)
+	int16_t temperature;
+	ds18b20read( &PORTB, &DDRB, &PINB, ( 1 << 0 ), NULL, &temperature );
+
+	oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
+	oregon.setTemperature(oregon._oregonMessageBuffer, temperature);	
+	oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+	
+#endif
+
+#if defined(USE_OREGON)
     // compare bytes 4, 5, 6 and 7 (temp and humidity)
     bool hasChanged =
         (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
@@ -148,7 +190,7 @@ int main(void) {
 
       // led off here, it will allow a short
       // blink when actually emitting new data
-      PORTB &= ~_BV(PB1);
+      PORTB &= ~_BV(LED_PIN);
 
 // Buffer for Oregon message
 #if MODE == MODE_0
@@ -178,6 +220,7 @@ int main(void) {
                         sizeof(oregon._oregonMessageBuffer));
     }
     PORTB &= ~_BV(PB1);
+#endif
 
     sleep(64);
   }
