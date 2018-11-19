@@ -30,7 +30,7 @@ TODO:
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#include "USIWire.h"
+#include "busses/wire/USIWire.h"
 #include <util/delay.h>
 
 
