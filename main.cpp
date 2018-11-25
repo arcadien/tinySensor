@@ -12,9 +12,13 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h> // memcpy
+#include <util/delay.h>
 
+#if defined(USE_OREGON)
 #include "protocol/oregon.h"
+#endif
 
 #if defined(USE_BME280)
 #include "sensors/bme280/SparkFunBME280.h"
@@ -63,24 +67,24 @@ void sleep(uint8_t s) {
 
 void Setup() {
   wdt_disable();
-  
-  // 
+
+  //
   // Watchdog setup - 8s sleep time
-  // 
+  //
   _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
   _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
 
   // unused pins are input + pullup, as stated
   // in Atmel's doc "AVR4013: picoPower Basics"
-  
+
   // all pins as input to avoid power draw
   DDRA = 0;
   DDRB = 0;
-  
-  // pull-up all pins by default,
-  // but PA7 (tx) and PB1 (led)
-  PORTA |= 0b01111111;
-  PORTB |= 0b11111101;
+
+  // pull-up all unused pins by default
+  //
+  PORTA |= 0b01111001;
+  PORTB |= 0b11110110;
 
   PRR &= ~_BV(PRTIM1);    // no timer1
   PRR &= ~_BV(PRADC);     // no adc
@@ -96,12 +100,10 @@ void Setup() {
   // don't use ADC buffers (p. 131)
   DIDR0 |= (1 << ADC2D) | (1 << ADC1D);
 
-  // radio TX pin is PA7
-  // set as output
-  DDRA |= _BV(PA7);
-
-  // PA2 is led pin
-  DDRB |= _BV(PB1);
+  // set output pins
+  DDRB |= _BV(TX_RADIO_PIN);
+  DDRA |= _BV(RADIO_POWER_PIN);
+  DDRB |= _BV(LED_PIN);
 }
 
 #if defined(USE_OREGON)
@@ -112,19 +114,15 @@ Oregon oregon(2);
 BME280 bme280;
 #endif
 
-
 int main(void) {
 
   Setup();
 
 #if defined(USE_OREGON)
-  const uint8_t oregonType[] = OREGON_TYPE;
-  oregon.setType(oregon._oregonMessageBuffer, oregonType);
+  oregon.setType(oregon._oregonMessageBuffer, OREGON_TYPE);
   oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::TWO);
   oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 #endif
-
-
 
 #if defined(USE_BME280)
   bme280.setI2CAddress(0x76);
@@ -134,11 +132,11 @@ int main(void) {
 
 #if defined(USE_OREGON)
 // Buffer for Oregon message
-#if MODE == MODE_0
+#if OREGON_MODE == MODE_0
   uint8_t _lastOregonMessageBuffer[8] = {};
-#elif MODE == MODE_1
+#elif OREGON_MODE == MODE_1
   uint8_t _lastOregonMessageBuffer[9] = {};
-#elif MODE == MODE_2
+#elif OREGON_MODE == MODE_2
   uint8_t _lastOregonMessageBuffer[11] = {};
 #else
 #error mode unknown
@@ -150,7 +148,6 @@ int main(void) {
 #if defined(USE_OREGON) && defined(USE_BME280)
     Wire.begin();
 
-    PORTB |= _BV(LED_PIN); // led on
     oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
     oregon.setTemperature(oregon._oregonMessageBuffer, bme280.readTempC());
     oregon.setHumidity(oregon._oregonMessageBuffer, bme280.readFloatHumidity());
@@ -162,42 +159,69 @@ int main(void) {
 #endif
 
 #if defined(USE_DS18B20)
- 
-	ds18b20convert( &PORTB, &DDRB, &PINB, ( 1 << 0 ), NULL );
 
-	//Delay (sensor needs time to perform conversion)
-	_delay_ms( 1000 );
+    ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
 
-	//Read temperature (without ROM matching)
-	int16_t temperature;
-	ds18b20read( &PORTB, &DDRB, &PINB, ( 1 << 0 ), NULL, &temperature );
+    // Delay (sensor needs time to perform conversion)
+    _delay_ms(1000);
 
-	oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
-	oregon.setTemperature(oregon._oregonMessageBuffer, temperature);	
-	oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-	
+    // Read temperature (without ROM matching)
+    int16_t temperature = 0;
+    ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
+
+    oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
+    oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
+    oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+
 #endif
 
 #if defined(USE_OREGON)
-    // compare bytes 4, 5, 6 and 7 (temp and humidity)
+
+#if (OREGON_MODE == MODE_0)
+    // temp update?
+    bool hasChanged =
+        (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
+         oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
+         oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6]);
+
+#elif (OREGON_MODE == MODE_1)
+    // temp or humidity update?
     bool hasChanged =
         (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
          oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
          oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
          oregon._oregonMessageBuffer[7] != _lastOregonMessageBuffer[7]);
+#elif (OREGON_MODE == MODE_2)
+    // temp, humidity or pressure update?
+    bool hasChanged =
+        (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
+         oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
+         oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
+         oregon._oregonMessageBuffer[7] != _lastOregonMessageBuffer[7] ||
+         oregon._oregonMessageBuffer[8] != _lastOregonMessageBuffer[8] ||
+         oregon._oregonMessageBuffer[9] != _lastOregonMessageBuffer[9]);
+#else
+#error OREGON_MODE has an uknown value
+#endif
+
+    PORTB |= _BV(LED_PIN); // led on
 
     if (hasChanged) {
+
+      // Activate radio power
+      PORTA |= _BV(RADIO_POWER_PIN);
+      _delay_ms(20);
 
       // led off here, it will allow a short
       // blink when actually emitting new data
       PORTB &= ~_BV(LED_PIN);
 
 // Buffer for Oregon message
-#if MODE == MODE_0
+#if OREGON_MODE == MODE_0
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 8);
-#elif MODE == MODE_1
+#elif OREGON_MODE == MODE_1
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 9);
-#elif MODE == MODE_2
+#elif MOREGON_MODEODE == MODE_2
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 11);
 #else
 #error mode unknown
@@ -214,14 +238,18 @@ int main(void) {
       _delay_us(oregon.TWOTIME * 8);
 
       // second emission with led on
-      PORTB |= _BV(PB1);
+      PORTB |= _BV(LED_PIN);
 
       oregon.sendOregon(oregon._oregonMessageBuffer,
                         sizeof(oregon._oregonMessageBuffer));
-    }
-    PORTB &= ~_BV(PB1);
-#endif
 
-    sleep(64);
+      // radio off
+      PORTA &= ~_BV(RADIO_POWER_PIN);
+    }
+    // led off
+    PORTB &= ~_BV(LED_PIN);
+
+#endif
+    sleep(8);
   }
 }

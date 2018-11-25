@@ -1,0 +1,3 @@
+[submodule "sensors/ds18b20"]
+	path = sensors/ds18b20
+	url = https://github.com/Jacajack/avr-ds18b20.git

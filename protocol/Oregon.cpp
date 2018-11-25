@@ -1,13 +1,14 @@
 #include "oregon.h"
+#include "config.h"
 
 uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};
 uint8_t Oregon::POSTAMBLE[] = {0x00};
 
 Oregon::Oregon(uint8_t repeatCount) : _repeatCount(repeatCount) {}
 
-void Oregon::txPinLow() { PORTA &= ~_BV(PA7); }
+void Oregon::txPinLow() { PORTB &= ~_BV(PB0); }
 
-void Oregon::txPinHigh() { PORTA |= _BV(PA7); }
+void Oregon::txPinHigh() { PORTB |= _BV(PB0); }
 
 inline void Oregon::sendZero(void) {
   txPinHigh();
@@ -57,7 +58,11 @@ void Oregon::sendOregon(uint8_t *data, uint8_t size) {
 
 inline void Oregon::sendPreamble(void) { sendData(PREAMBLE, 2); }
 
-inline void Oregon::sendPostamble(void) { sendData(POSTAMBLE, 1); }
+inline void Oregon::sendPostamble(void) {
+
+  sendData(POSTAMBLE, 1);
+
+}
 
 inline void Oregon::sendSync(void) { sendQuarterLSB(0xA); }
 
@@ -128,13 +133,14 @@ int Oregon::Sum(uint8_t count, const uint8_t *data) {
 }
 
 void Oregon::calculateAndSetChecksum(uint8_t *data) {
-#if MODE == MODE_0
+#if OREGON_MODE == MODE_0
   int s = ((Sum(6, data) + (data[6] & 0xF) - 0xa) & 0xff);
-
   data[6] |= (s & 0x0F) << 4;
   data[7] = (s & 0xF0) >> 4;
-#elif MODE == MODE_1
+
+#elif OREGON_MODE == MODE_1
   data[8] = ((Sum(8, data) - 0xa) & 0xFF);
+
 #else
   data[10] = ((Sum(10, data) - 0xa) & 0xFF);
 #endif

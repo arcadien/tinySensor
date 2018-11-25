@@ -91,6 +91,7 @@
 --------------------------------------------------------
 */
 
+#include "config.h"
 #include <avr/io.h>
 #include <limits.h>
 #include <stdint.h>
@@ -125,8 +126,6 @@ private:
 #define MODE_1 1 // Temperature + Humidity [THGR2228N]
 #define MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
 
-#define MODE MODE_2
-
 public:
   static const uint16_t TIME = 512;
   static const uint16_t TWOTIME = TIME * 2;
@@ -135,11 +134,11 @@ public:
   void txPinHigh();
 
 // Buffer for Oregon message
-#if MODE == MODE_0
+#if OREGON_MODE == MODE_0
   uint8_t _oregonMessageBuffer[8];
-#elif MODE == MODE_1
+#elif OREGON_MODE == MODE_1
   uint8_t _oregonMessageBuffer[9];
-#elif MODE == MODE_2
+#elif OREGON_MODE == MODE_2
   uint8_t _oregonMessageBuffer[11];
 #else
 #error mode unknown
