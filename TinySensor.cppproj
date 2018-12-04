@@ -26,7 +26,7 @@
     <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
     <ResetRule>0</ResetRule>
-    <eraseonlaunchrule>1</eraseonlaunchrule>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
     <EraseKey />
     <AsfFrameworkConfig>
       <framework-data xmlns="">
@@ -46,14 +46,16 @@
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
         <InterfaceProperties>
+          <IspClock>250000</IspClock>
         </InterfaceProperties>
-        <InterfaceName>debugWIRE</InterfaceName>
+        <InterfaceName>ISP</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.avrdragon</ToolType>
       <ToolNumber>00A200031599</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
-    <avrtoolinterface>debugWIRE</avrtoolinterface>
+    <avrtoolinterface>ISP</avrtoolinterface>
+    <avrtoolinterfaceclock>250000</avrtoolinterfaceclock>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -97,12 +99,12 @@
   <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
   <avrgcccpp.compiler.warnings.Undefined>True</avrgcccpp.compiler.warnings.Undefined>
   <avrgcccpp.compiler.warnings.Pedantic>True</avrgcccpp.compiler.warnings.Pedantic>
+  <avrgcccpp.compiler.miscellaneous.OtherFlags>--std=c++1y</avrgcccpp.compiler.miscellaneous.OtherFlags>
   <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
   <avrgcccpp.linker.libraries.Libraries><ListValues><Value>libm</Value></ListValues></avrgcccpp.linker.libraries.Libraries>
   <avrgcccpp.assembler.general.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.172\include</Value></ListValues></avrgcccpp.assembler.general.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
   <avrgcccpp.compiler.optimization.level>Optimize for size (-Os)</avrgcccpp.compiler.optimization.level>
-  <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=gnu++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
 </AvrGccCpp>
     </ToolchainSettings>
   </PropertyGroup>
@@ -144,6 +146,7 @@
   <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
   <avrgcccpp.compiler.warnings.Undefined>True</avrgcccpp.compiler.warnings.Undefined>
   <avrgcccpp.compiler.warnings.Pedantic>True</avrgcccpp.compiler.warnings.Pedantic>
+  <avrgcccpp.compiler.miscellaneous.OtherFlags>--std=c++1y</avrgcccpp.compiler.miscellaneous.OtherFlags>
   <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
   <avrgcccpp.linker.libraries.Libraries><ListValues><Value>libm</Value></ListValues></avrgcccpp.linker.libraries.Libraries>
   <avrgcccpp.assembler.general.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.172\include</Value></ListValues></avrgcccpp.assembler.general.IncludePaths>
@@ -151,7 +154,6 @@
   <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
   <avrgcccpp.compiler.optimization.level>Optimize debugging experience (-Og)</avrgcccpp.compiler.optimization.level>
   <avrgcccpp.compiler.optimization.DebugLevel>Default (-g2)</avrgcccpp.compiler.optimization.DebugLevel>
-  <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
   <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
 </AvrGccCpp>
     </ToolchainSettings>
