@@ -221,7 +221,7 @@ int main(void) {
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 8);
 #elif OREGON_MODE == MODE_1
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 9);
-#elif MOREGON_MODEODE == MODE_2
+#elif OREGON_MODE == MODE_2
       memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 11);
 #else
 #error mode unknown
