@@ -112,12 +112,8 @@ public:
     static const uint8_t TWO = 0x20;
     static const uint8_t THREE = 0x30;
   };
-
-  // Oregon(uint8_t ledPin = 13, uint8_t txPin = 7, uint8_t repeatCount = 2);
-  Oregon(uint8_t repeatCount = 2);
-
+  
 private:
-  const uint8_t _repeatCount;
 
   static uint8_t PREAMBLE[];
   static uint8_t POSTAMBLE[];

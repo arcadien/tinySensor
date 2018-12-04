@@ -4,8 +4,6 @@
 uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};
 uint8_t Oregon::POSTAMBLE[] = {0x00};
 
-Oregon::Oregon(uint8_t repeatCount) : _repeatCount(repeatCount) {}
-
 void Oregon::txPinLow() { PORTB &= ~_BV(PB0); }
 
 void Oregon::txPinHigh() { PORTB |= _BV(PB0); }
