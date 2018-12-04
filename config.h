@@ -10,6 +10,10 @@
 
 #include <inttypes.h>
 
+// sleep 32s between each sample and
+// emission
+#define SLEEP_TIME_IN_SECONDS (8 * 4)
+
 /*
  * 1-wire interface is on PA3
  * Power for radio is on PA2 (sensor_vcc)
@@ -41,10 +45,10 @@ const uint8_t OREGON_TYPE[] = {0xEA, 0x4C};
 const uint8_t OREGON_ID = 0xCA;
 
 /*
-* MODE_0 0 // Temperature only [THN132N]
-* MODE_1 1 // Temperature + Humidity [THGR2228N]
-* MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
-*/
+ * MODE_0 0 // Temperature only [THN132N]
+ * MODE_1 1 // Temperature + Humidity [THGR2228N]
+ * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
+ */
 #define OREGON_MODE MODE_0
 
 #endif /* CONFIG_H_ */
