@@ -13,7 +13,7 @@
 #include <avr/wdt.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h> // memcpy
+#include <string.h>
 #include <util/delay.h>
 
 #if defined(USE_OREGON)
@@ -30,6 +30,48 @@
 
 #define round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
 
+/*
+ * Puts MCU to sleep for specified number of seconds
+ *
+ * As the hardware watchdog is set for timeout after 8s,
+ * the value used here will be divided by 8 (and rounded if needed).
+ * It is better to use a multiple of 8 as value.
+ */
+void sleep(uint8_t s);
+
+/*
+ * Initial board setup
+ *
+ * This is where pins and various registers are set
+ * for maximized power saving.
+ */
+void setup();
+
+/*!
+ * Entry point of the firmware.
+ *
+ * Will call setup, and enter in an infinite loop
+ * where some code is executed, then the MCU is put
+ * to deep sleep during a fixed number of seconds, then
+ * the loop is processed again, aet-caetera.
+ *
+ */
+int main(void);
+
+/*
+ * The firmware force emission of
+ * a signal every quarter of an hour
+ * even if sensor data does not change,
+ * just to be sure sensor is not out of
+ * power or bugged (900s)
+ */
+volatile uint16_t secondCounter;
+
+/*!
+ * Interrupt routine called each 8 seconds in the
+ * default setup, which is the longest timeout period
+ * accepted by the hardware watchdog
+ */
 volatile uint8_t sleep_interval;
 ISR(WATCHDOG_vect) {
   wdt_reset();
@@ -38,44 +80,29 @@ ISR(WATCHDOG_vect) {
   _WD_CONTROL_REG |= (1 << WDIE);
 }
 
-// Puts MCU to sleep for specified number of seconds
-void sleep(uint8_t s) {
-  s >>= 3; // or s/8
-  if (s == 0)
-    s = 1;
-  sleep_interval = 0;
-  while (sleep_interval < s) {
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    sei();
+#if defined(USE_OREGON)
+Oregon oregon;
+#endif
 
-    // cut power to USI and Timer 0
-    uint8_t PRR_backup = PRR;
-    PRR |= (1 << PRUSI);
-    PRR |= (1 << PRTIM0);
+#if defined(USE_BME280)
+BME280 bme280;
+#endif
 
-    sleep_mode();
-    // here the system is shut down
-
-    // here the system wakes up
-    sleep_disable();
-
-    // restore power on USI and Timer 0
-    PRR = PRR_backup;
-  }
-}
-
-void Setup() {
+void setup() {
   wdt_disable();
 
+  secondCounter = 0;
+
   //
-  // Watchdog setup - 8s sleep time
+  //// Watchdog setup - 8s sleep time
   //
   _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
   _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
 
-  // unused pins are input + pullup, as stated
-  // in Atmel's doc "AVR4013: picoPower Basics"
+  //
+  //// unused pins are input + pullup, as stated
+  //// in Atmel's doc "AVR4013: picoPower Basics"
+  //
 
   // all pins as input to avoid power draw
   DDRA = 0;
@@ -106,21 +133,13 @@ void Setup() {
   DDRB |= _BV(LED_PIN);
 }
 
-#if defined(USE_OREGON)
-Oregon oregon(2);
-#endif
-
-#if defined(USE_BME280)
-BME280 bme280;
-#endif
-
 int main(void) {
 
-  Setup();
+  setup();
 
 #if defined(USE_OREGON)
   oregon.setType(oregon._oregonMessageBuffer, OREGON_TYPE);
-  oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::TWO);
+  oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
   oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 #endif
 
@@ -175,25 +194,26 @@ int main(void) {
 
 #endif
 
+    bool shouldEmitData = false;
 #if defined(USE_OREGON)
 
 #if (OREGON_MODE == MODE_0)
     // temp update?
-    bool hasChanged =
+    shouldEmitData =
         (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
          oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
          oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6]);
 
 #elif (OREGON_MODE == MODE_1)
     // temp or humidity update?
-    bool hasChanged =
+    shouldEmitData =
         (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
          oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
          oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
          oregon._oregonMessageBuffer[7] != _lastOregonMessageBuffer[7]);
 #elif (OREGON_MODE == MODE_2)
     // temp, humidity or pressure update?
-    bool hasChanged =
+    shouldEmitData =
         (oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
          oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
          oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
@@ -201,12 +221,18 @@ int main(void) {
          oregon._oregonMessageBuffer[8] != _lastOregonMessageBuffer[8] ||
          oregon._oregonMessageBuffer[9] != _lastOregonMessageBuffer[9]);
 #else
-#error OREGON_MODE has an uknown value
+#error OREGON_MODE has an unknown value
 #endif
+
+    // absolute counter for emission ~ each 15 minutes
+    if (secondCounter > 900) {
+      secondCounter = 0;
+      shouldEmitData = true;
+    }
 
     PORTB |= _BV(LED_PIN); // led on
 
-    if (hasChanged) {
+    if (shouldEmitData) {
 
       // Activate radio power
       PORTA |= _BV(RADIO_POWER_PIN);
@@ -250,6 +276,36 @@ int main(void) {
     PORTB &= ~_BV(LED_PIN);
 
 #endif
-    sleep(8);
+    sleep(SLEEP_TIME_IN_SECONDS);
+    secondCounter += SLEEP_TIME_IN_SECONDS;
+  }
+}
+
+/*
+ * Puts MCU to sleep for specified number of seconds
+ */
+void sleep(uint8_t s) {
+  s >>= 3; // or s/8
+  if (s == 0)
+    s = 1;
+  sleep_interval = 0;
+  while (sleep_interval < s) {
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sei();
+
+    // cut power to USI and Timer 0
+    uint8_t PRR_backup = PRR;
+    PRR |= (1 << PRUSI);
+    PRR |= (1 << PRTIM0);
+
+    sleep_mode();
+    // here the system is shut down
+
+    // here the system wakes up
+    sleep_disable();
+
+    // restore power on USI and Timer 0
+    PRR = PRR_backup;
   }
 }
