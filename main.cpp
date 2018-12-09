@@ -20,7 +20,7 @@
 #include "protocol/oregon.h"
 #endif
 
-#if defined(USE_BME280)
+#if defined(USE_BME280) or defined(USE_BMP280)
 #include "sensors/bme280/SparkFunBME280.h"
 #endif
 
@@ -84,8 +84,8 @@ ISR(WATCHDOG_vect) {
 Oregon oregon;
 #endif
 
-#if defined(USE_BME280)
-BME280 bme280;
+#if defined(USE_bmX280) or defined(USE_BMP280)
+BME280 bmX280;
 #endif
 
 void setup() {
@@ -111,7 +111,7 @@ void setup() {
   // pull-up all unused pins by default
   //
   PORTA |= 0b01111001;
-  PORTB |= 0b11110110;
+  PORTB |= 0b11111100;
 
   PRR &= ~_BV(PRTIM1);    // no timer1
   PRR &= ~_BV(PRADC);     // no adc
@@ -143,10 +143,10 @@ int main(void) {
   oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 #endif
 
-#if defined(USE_BME280)
-  bme280.setI2CAddress(0x76);
-  bme280.beginI2C();
-  bme280.setStandbyTime(5);
+#if defined(USE_bmX280) || defined(USE_BMP280)
+  bmX280.setI2CAddress(0x76);
+  bmX280.beginI2C();
+  bmX280.setStandbyTime(5);
 #endif
 
 #if defined(USE_OREGON)
@@ -164,14 +164,18 @@ int main(void) {
 
   while (1) {
 
-#if defined(USE_OREGON) && defined(USE_BME280)
+#if defined(USE_OREGON) && (defined(USE_bmX280) || defined(USE_BMP280))
     Wire.begin();
 
     oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
-    oregon.setTemperature(oregon._oregonMessageBuffer, bme280.readTempC());
-    oregon.setHumidity(oregon._oregonMessageBuffer, bme280.readFloatHumidity());
+    oregon.setTemperature(oregon._oregonMessageBuffer, bmX280.readTempC());
+
+#if defined(USE_bmX280)
+
+    oregon.setHumidity(oregon._oregonMessageBuffer, bmX280.readFloatHumidity());
     oregon.setPressure(oregon._oregonMessageBuffer,
-                       (bme280.readFloatPressure() / 100));
+                       (bmX280.readFloatPressure() / 100));
+#endif
     oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
 
     Wire.end();
@@ -236,7 +240,7 @@ int main(void) {
 
       // Activate radio power
       PORTA |= _BV(RADIO_POWER_PIN);
-      _delay_ms(20);
+      _delay_ms(2);
 
       // led off here, it will allow a short
       // blink when actually emitting new data
@@ -298,6 +302,18 @@ void sleep(uint8_t s) {
     uint8_t PRR_backup = PRR;
     PRR |= (1 << PRUSI);
     PRR |= (1 << PRTIM0);
+    PRR |= (1 << PRTIM1);
+
+    // all pins as input to avoid power draw
+    DDRA = 0;
+    DDRB = 0;
+
+    // pull-up all unused pins by default
+    //         76543210
+    PORTA |= 0b01110000;
+	
+	// pullup reset only
+    PORTB |= 0b00001000; // only 4 lasts are available (p. 67)
 
     sleep_mode();
     // here the system is shut down
