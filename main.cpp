@@ -5,31 +5,6 @@
  * Author : aurelien
  */
 
-#include "config.h"
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#include <avr/sfr_defs.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <util/delay.h>
-
-#if defined(USE_OREGON)
-#include "protocol/oregon.h"
-#endif
-
-#if defined(USE_BME280) or defined(USE_BMP280)
-#include "sensors/bme280/SparkFunBME280.h"
-#endif
-
-#if defined(USE_DS18B20)
-#include "sensors/ds18b20/include/ds18b20/ds18b20.h"
-#endif
-
-#define round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
-
 /*
  * Puts MCU to sleep for specified number of seconds
  *
@@ -298,8 +273,12 @@ void sleep(uint8_t s) {
     sleep_enable();
     sei();
 
-    // cut power to USI and Timer 0
     uint8_t PRR_backup = PRR;
+    uint8_t porta_backup = PORTA;
+    uint8_t portb_backup = PORTB;
+    uint8_t ddra_backup = DDRA;
+    uint8_t ddrb_backup = DDRB;
+    
     PRR |= (1 << PRUSI);
     PRR |= (1 << PRTIM0);
     PRR |= (1 << PRTIM1);
@@ -309,19 +288,23 @@ void sleep(uint8_t s) {
     DDRB = 0;
 
     // pull-up all unused pins by default
-    //         76543210
     PORTA |= 0b01110000;
 	
-	// pullup reset only
-    PORTB |= 0b00001000; // only 4 lasts are available (p. 67)
+    // pullup reset only
+    // ( only 4 lasts are available - p. 67)
+    PORTB |= 0b00001000; 
 
     sleep_mode();
-    // here the system is shut down
+    // here the system is sleeping
 
     // here the system wakes up
     sleep_disable();
 
-    // restore power on USI and Timer 0
+    // restore
     PRR = PRR_backup;
+    DDRA = ddra_backup;
+    DDRB = ddrb_backup;
+    PORTA = porta_backup;
+    PORTB = portb_backup;
   }
 }
