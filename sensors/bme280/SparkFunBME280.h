@@ -208,10 +208,10 @@ class BME280
 private:
 	uint8_t checkSampleValue(uint8_t userValue); //Checks for valid over sample values
 
-    USIWire *_hardPort = 0; //The generic connection to user's chosen I2C hardware
+        USIWire *_hardPort; //The generic connection to user's chosen I2C hardware
 
 	
-	float _referencePressure = 101325.0; //Default but is changeable
+	 float _referencePressure;
 };
 
 #endif  // End of __BME280_H__ definition check

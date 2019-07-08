@@ -37,6 +37,8 @@ BME280::BME280(void) {
   settings.I2CAddress = 0x77; // Default, jumper open is 0x77
   _hardPort = &Wire;          // Default to Wire port
 
+  _referencePressure = 101325.0; //Default but is changeable
+
   // These are deprecated settings
   settings.runMode = 3;  // Normal/Run
   settings.tStandby = 0; // 0.5ms
