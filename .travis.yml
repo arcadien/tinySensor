@@ -1,0 +1,24 @@
+language: c++
+dist: xenial
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y cmake gcc-avr binutils-avr avr-libc
+
+jobs:
+  include:
+    - stage: "Linux target"
+      name: "Linux target"
+      compiler: gcc
+      script:
+        - mkdir build_linux
+        - cd build_linux 
+        - cmake  ../ -G "Unix Makefiles" -DMCU_SPEED=1000000U -DAVR_MCU=attiny84a -DCMAKE_BUILD_TYPE=Release
+        - cmake --build . && ctest
+    - stage: "AVR target"
+      name: "AVR target"
+      compiler: avr-gcc
+      script:
+        - mkdir build_avr
+        - cd build_avr
+        - cmake  ../ -G "Unix Makefiles" -DMCU_SPEED=1000000U -DAVR_MCU=attiny84a -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third_party/cmake-avr/generic-gcc-avr.cmake
+        - cmake --build .
