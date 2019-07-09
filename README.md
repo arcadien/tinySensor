@@ -1,4 +1,5 @@
-# TinySensor
+# TinySensor ![Travis build status](https://api.travis-ci.org/arcadien/tinySensor.svg?branch=master "Travis build status")
+
 
 TinySensor aims to provide a customisable firmware and board design for low-power environment sensors using wireless communication.
 
