@@ -1,5 +1,5 @@
-#include "oregon.h"
-#include "config.h"
+#include "Oregon.h"
+#include <config.h>
 
 uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};
 uint8_t Oregon::POSTAMBLE[] = {0x00};
