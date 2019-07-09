@@ -1,3 +1,7 @@
 Debug/ Release/
 .vs
 *bak
+build/
+.vscode
+Debug/
+Release/

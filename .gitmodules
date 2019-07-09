@@ -1,3 +1,9 @@
 [submodule "sensors/ds18b20"]
 	path = sensors/ds18b20
 	url = https://github.com/arcadien/avr-ds18b20.git
+[submodule "third_party/cmake-avr"]
+	path = third_party/cmake-avr
+	url = https://github.com/mkleemann/cmake-avr.git
+[submodule "third_party/unity"]
+	path = third_party/unity
+	url = https://github.com/arcadien/Unity.git

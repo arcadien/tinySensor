@@ -5,8 +5,7 @@
  *  Author: aurelien
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#pragma once
 
 #include <inttypes.h>
 
@@ -50,5 +49,3 @@ const uint8_t OREGON_ID = 0xCB;
  * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
  */
 #define OREGON_MODE MODE_0
-
-#endif /* CONFIG_H_ */

@@ -5,33 +5,24 @@
  * Author : aurelien
  */
 
-/*
- * Puts MCU to sleep for specified number of seconds
- *
- * As the hardware watchdog is set for timeout after 8s,
- * the value used here will be divided by 8 (and rounded if needed).
- * It is better to use a multiple of 8 as value.
- */
-void sleep(uint8_t s);
+#include <TinySensor.h>
+#include <config.h>
 
-/*
- * Initial board setup
- *
- * This is where pins and various registers are set
- * for maximized power saving.
- */
-void setup();
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/sleep.h>
+#include <avr/interrupt.h>
+#include <string.h>
 
-/*!
- * Entry point of the firmware.
- *
- * Will call setup, and enter in an infinite loop
- * where some code is executed, then the MCU is put
- * to deep sleep during a fixed number of seconds, then
- * the loop is processed again, aet-caetera.
- *
- */
-int main(void);
+#if defined(USE_OREGON)
+#include <protocol/Oregon.h>
+Oregon oregon;
+#endif
+
+#if defined(USE_bmX280) or defined(USE_BMP280)
+#include <sensors/bme280/SparkFunBME280.h>
+BME280 bmX280;
+#endif
 
 /*
  * The firmware force emission of
@@ -54,14 +45,6 @@ ISR(WATCHDOG_vect) {
   // Re-enable WDT interrupt
   _WD_CONTROL_REG |= (1 << WDIE);
 }
-
-#if defined(USE_OREGON)
-Oregon oregon;
-#endif
-
-#if defined(USE_bmX280) or defined(USE_BMP280)
-BME280 bmX280;
-#endif
 
 void setup() {
   wdt_disable();
@@ -108,7 +91,7 @@ void setup() {
   DDRB |= _BV(LED_PIN);
 }
 
-int main(void) {
+int avr_main(void) {
 
   setup();
 
@@ -262,7 +245,12 @@ int main(void) {
 
 /*
  * Puts MCU to sleep for specified number of seconds
+ *
+ * As the hardware watchdog is set for timeout after 8s,
+ * the value used here will be divided by 8 (and rounded if needed).
+ * It is better to use a multiple of 8 as value.
  */
+ 
 void sleep(uint8_t s) {
   s >>= 3; // or s/8
   if (s == 0)

@@ -1,0 +1,10 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: opthomasprime/avr-gcc
+
+    steps:
+      - checkout
+
+      - run: gcc-avr main.cpp

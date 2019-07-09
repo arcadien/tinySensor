@@ -21,6 +21,9 @@
  *
  *
  ****************************************************************************/
+
+#pragma once
+
 //********** Prototypes **********//
 
 void          USI_TWI_Slave_Initialise(unsigned char);
