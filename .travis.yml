@@ -3,6 +3,7 @@ dist: xenial
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y cmake gcc-avr binutils-avr avr-libc
+  - pip install --user cpp-coveralls
 
 jobs:
   include:
@@ -12,8 +13,10 @@ jobs:
       script:
         - mkdir build_linux
         - cd build_linux 
-        - cmake  ../ -G "Unix Makefiles" -DMCU_SPEED=1000000U -DAVR_MCU=attiny84a -DCMAKE_BUILD_TYPE=Release
+        - cmake  ../ -G "Unix Makefiles" -DMCU_SPEED=1000000U -DAVR_MCU=attiny84a -DCMAKE_BUILD_TYPE=Release -DWITH_COVERAGE=TRUE
         - cmake --build . && ctest
+      after_success:
+        - coveralls --exclude CMakeFiles/ --gcov-options '\-lp'
     - stage: "AVR target"
       name: "AVR target"
       compiler: avr-gcc
