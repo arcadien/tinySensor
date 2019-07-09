@@ -77,7 +77,7 @@ else()
 	if(WITH_COVERAGE)
 		set(CMAKE_CXX_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
 		set(CMAKE_C_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
-	endif
+	endif()
 	add_subdirectory("third_party/unity")
 	add_library(tinySensorLib OBJECT ${SOURCES})
 endif()
