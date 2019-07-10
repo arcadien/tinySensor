@@ -15,13 +15,12 @@ else()
   message("-- Compiling for AVR target")
   list(APPEND SOURCES
 	src/main.cpp
+        third_party/tiny-i2c/TinyI2CMaster.cpp
+        third_party/tiny-i2c/TinyI2CMaster.h
 	protocol/Oregon.cpp
 	sensors/bme280/SparkFunBME280.cpp
 	sensors/bme280/SparkFunBME280.h
-	busses/wire/USIWire.cpp
 	protocol/Oregon.h
-	busses/wire/USI_TWI_Master/USI_TWI_Master.c
-	busses/wire/USI_TWI_Slave/USI_TWI_Slave.c
   ) 
 endif()
 
@@ -42,6 +41,11 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
    set(CMAKE_C_FLAGS_DEBUG "-O0 -save-temps -g -gdwarf-3 -gstrict-dwarf")
    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -save-temps -g -gdwarf-3 -gstrict-dwarf")
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
+
+include_directories("${CMAKE_SOURCE_DIR}/")
+include_directories("${CMAKE_SOURCE_DIR}/include/")
+include_directories("${CMAKE_SOURCE_DIR}/third_party/unity/src")
+include_directories("${CMAKE_SOURCE_DIR}/third_party/tiny-i2c")
 
 if(AVR)
 	##########################################################################
@@ -82,11 +86,6 @@ else()
 	add_library(tinySensorLib OBJECT ${SOURCES})
 endif()
 
-
-include_directories("${CMAKE_SOURCE_DIR}/")
-include_directories("${CMAKE_SOURCE_DIR}/include/")
-include_directories("third_party/unity/src")
-
 include(CTest)
 enable_testing()
 
@@ -94,6 +93,8 @@ enable_testing()
 SET(TESTS
  firstTest.cpp
 )
+
+
 foreach(test_ ${TESTS})
 
 	if(AVR)

@@ -123,20 +123,15 @@ int avr_main(void) {
   while (1) {
 
 #if defined(USE_OREGON) && (defined(USE_bmX280) || defined(USE_BMP280))
-    Wire.begin();
-
     oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
     oregon.setTemperature(oregon._oregonMessageBuffer, bmX280.readTempC());
 
 #if defined(USE_bmX280)
-
     oregon.setHumidity(oregon._oregonMessageBuffer, bmX280.readFloatHumidity());
     oregon.setPressure(oregon._oregonMessageBuffer,
                        (bmX280.readFloatPressure() / 100));
 #endif
     oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-
-    Wire.end();
 #endif
 
 #if defined(USE_DS18B20)
