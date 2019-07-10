@@ -62,7 +62,7 @@ uint8_t BME280::begin() {
   _delay_ms(2); // Make sure sensor had enough time to turn on. BME280 requires
                 // 2ms to start up.
 
-  _hardPort->start(settings.I2CAddress, 0);
+  //_hardPort->start(settings.I2CAddress, 0);
 
   // Check communication with IC before anything else
   uint8_t chipID =
@@ -445,16 +445,14 @@ float BME280::readTempF(void) {
 //****************************************************************************//
 void BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset,
                                 uint8_t length) {
-  // define pointer that will point to the external space
-  uint8_t i = 0;
-  char c = 0;
 
   _hardPort->start(settings.I2CAddress, 0);
   _hardPort->write(offset);
-  _hardPort->stop();
 
   // request bytes from slave device
-  _hardPort->start(settings.I2CAddress, length);
+  _hardPort->restart(settings.I2CAddress, length);
+  uint8_t i = 0;
+  char c = 0;
   while (i < length) // slave may send less than requested
   {
     c = _hardPort->read(); // receive a byte as character
@@ -462,6 +460,7 @@ void BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset,
     outputPointer++;
     i++;
   }
+  _hardPort->stop();
 }
 
 uint8_t BME280::readRegister(uint8_t offset) {
@@ -470,10 +469,9 @@ uint8_t BME280::readRegister(uint8_t offset) {
 
   _hardPort->start(settings.I2CAddress, 0);
   _hardPort->write(offset);
-  _hardPort->stop();
-
-  _hardPort->start(settings.I2CAddress, 1);
+  _hardPort->restart(settings.I2CAddress, 1);
   result = _hardPort->read(); // receive a byte as a proper uint8_t
+  _hardPort->stop();
   return result;
 }
 
