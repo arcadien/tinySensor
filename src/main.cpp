@@ -89,6 +89,8 @@ void setup() {
   DDRB |= _BV(TX_RADIO_PIN);
   DDRA |= _BV(RADIO_POWER_PIN);
   DDRB |= _BV(LED_PIN);
+
+  TinyI2C.init();
 }
 
 int avr_main(void) {
