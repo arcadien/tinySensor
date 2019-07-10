@@ -6,12 +6,7 @@ May 20, 2015
 https://github.com/sparkfun/BME280_Breakout
 
 Resources:
-Uses Wire.h for i2c operation
-Uses SPI.h for SPI operation
-
-Development environment specifics:
-Arduino IDE 1.6.4
-Teensy loader 1.23
+Uses TinyI2CMaster.h for i2c operation
 
 This code is released under the [MIT License](http://opensource.org/licenses/MIT).
 Please review the LICENSE.md file included with this example. If you have any questions 
@@ -30,9 +25,8 @@ TODO:
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#include "busses/wire/USIWire.h"
 #include <util/delay.h>
-
+#include <TinyI2CMaster.h>
 
 #define MODE_SLEEP 0b00
 #define MODE_FORCED 0b01
@@ -159,7 +153,7 @@ class BME280
 	//Call to apply SensorSettings.
 	//This also gets the SensorCalibration constants
     uint8_t begin( void );
-    bool beginI2C(USIWire &wirePort = Wire); //Called when user provides Wire port
+    bool beginI2C(TinyI2CMaster &wirePort = TinyI2C); //Called when user provides Wire port
     
 
 	uint8_t getMode(void); //Get the current mode: sleep, forced, or normal
@@ -208,7 +202,7 @@ class BME280
 private:
 	uint8_t checkSampleValue(uint8_t userValue); //Checks for valid over sample values
 
-        USIWire *_hardPort; //The generic connection to user's chosen I2C hardware
+        TinyI2CMaster *_hardPort; //The generic connection to user's chosen I2C hardware
 
 	
 	 float _referencePressure;

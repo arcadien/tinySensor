@@ -7,3 +7,6 @@
 [submodule "third_party/unity"]
 	path = third_party/unity
 	url = https://github.com/arcadien/Unity.git
+[submodule "third_party/tiny-i2c"]
+	path = third_party/tiny-i2c
+	url = https://github.com/arcadien/tiny-i2c.git

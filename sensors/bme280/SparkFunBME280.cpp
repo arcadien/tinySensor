@@ -23,6 +23,7 @@ warranty is given.
 
 #include "SparkFunBME280.h"
 #include <math.h>
+#include <TinyI2CMaster.h>
 
 //****************************************************************************//
 //
@@ -35,7 +36,7 @@ BME280::BME280(void) {
   // Construct with these default settings
 
   settings.I2CAddress = 0x77; // Default, jumper open is 0x77
-  _hardPort = &Wire;          // Default to Wire port
+  _hardPort = &TinyI2C;          // Default to Wire port
 
   _referencePressure = 101325.0; //Default but is changeable
 
@@ -61,7 +62,7 @@ uint8_t BME280::begin() {
   _delay_ms(2); // Make sure sensor had enough time to turn on. BME280 requires
                 // 2ms to start up.
 
-  _hardPort->begin();
+  _hardPort->start(settings.I2CAddress, 0);
 
   // Check communication with IC before anything else
   uint8_t chipID =
@@ -122,7 +123,7 @@ uint8_t BME280::begin() {
 }
 
 // Begin comm with BME280 over I2C
-bool BME280::beginI2C(USIWire &wirePort) {
+bool BME280::beginI2C(TinyI2CMaster &wirePort) {
   _hardPort = &wirePort;
 
   // settings.I2CAddress = 0x77; //We assume user has set the I2C address using
@@ -448,14 +449,13 @@ void BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset,
   uint8_t i = 0;
   char c = 0;
 
-  _hardPort->beginTransmission(settings.I2CAddress);
+  _hardPort->start(settings.I2CAddress, 0);
   _hardPort->write(offset);
-  _hardPort->endTransmission();
+  _hardPort->stop();
 
   // request bytes from slave device
-  _hardPort->requestFrom(settings.I2CAddress, length);
-  while ((_hardPort->available()) &&
-         (i < length)) // slave may send less than requested
+  _hardPort->start(settings.I2CAddress, length);
+  while (i < length) // slave may send less than requested
   {
     c = _hardPort->read(); // receive a byte as character
     *outputPointer = c;
@@ -467,17 +467,13 @@ void BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset,
 uint8_t BME280::readRegister(uint8_t offset) {
   // Return value
   uint8_t result = 0;
-  uint8_t numBytes = 1;
 
-  _hardPort->beginTransmission(settings.I2CAddress);
+  _hardPort->start(settings.I2CAddress, 0);
   _hardPort->write(offset);
-  _hardPort->endTransmission();
+  _hardPort->stop();
 
-  _hardPort->requestFrom(settings.I2CAddress, numBytes);
-  while (_hardPort->available()) // slave may send less than requested
-  {
-    result = _hardPort->read(); // receive a byte as a proper uint8_t
-  }
+  _hardPort->start(settings.I2CAddress, 1);
+  result = _hardPort->read(); // receive a byte as a proper uint8_t
   return result;
 }
 
@@ -490,8 +486,8 @@ int16_t BME280::readRegisterInt16(uint8_t offset) {
 }
 
 void BME280::writeRegister(uint8_t offset, uint8_t dataToWrite) {
-  _hardPort->beginTransmission(settings.I2CAddress);
+  _hardPort->start(settings.I2CAddress, 0);
   _hardPort->write(offset);
   _hardPort->write(dataToWrite);
-  _hardPort->endTransmission();
+  _hardPort->stop();
 }
