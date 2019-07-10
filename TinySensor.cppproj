@@ -26,7 +26,7 @@
     <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
     <ResetRule>0</ResetRule>
-    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <eraseonlaunchrule>1</eraseonlaunchrule>
     <EraseKey />
     <AsfFrameworkConfig>
       <framework-data xmlns="">
@@ -48,13 +48,13 @@
         <InterfaceProperties>
           <IspClock>250000</IspClock>
         </InterfaceProperties>
-        <InterfaceName>ISP</InterfaceName>
+        <InterfaceName>debugWIRE</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.avrdragon</ToolType>
       <ToolNumber>00A200031599</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
-    <avrtoolinterface>ISP</avrtoolinterface>
+    <avrtoolinterface>debugWIRE</avrtoolinterface>
     <avrtoolinterfaceclock>250000</avrtoolinterfaceclock>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -206,31 +206,7 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="busses\wire\USIWire.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USIWire.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Master\usi_io.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Master\USI_TWI_Master.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Master\USI_TWI_Master.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Master\USI_TWI_Slave.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Slave\usi_io.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Slave\USI_TWI_Slave.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="busses\wire\USI_TWI_Slave\USI_TWI_Slave.h">
+    <Compile Include="include\Arduino.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\config.h">
@@ -278,25 +254,25 @@
     <Compile Include="src\mainWrapper.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <None Include="busses\wire\USI_TWI_Master\avr310_using_usi_module_as_i2c_master.rst">
+    <Compile Include="third_party\tiny-i2c\TinyI2CMaster.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="third_party\tiny-i2c\TinyI2CMaster.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="third_party\unity\unity.c">
       <SubType>compile</SubType>
     </None>
-    <None Include="busses\wire\USI_TWI_Master\main.c.txt">
+    <None Include="third_party\unity\unity.h">
       <SubType>compile</SubType>
     </None>
-    <None Include="busses\wire\USI_TWI_Slave\avr312_using_usi_module_as_i2c_slave.rst">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="busses\wire\USI_TWI_Slave\main.c.txt">
+    <None Include="third_party\unity\unity_internals.h">
       <SubType>compile</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="busses" />
-    <Folder Include="busses\wire" />
-    <Folder Include="busses\wire\USI_TWI_Slave" />
-    <Folder Include="busses\wire\USI_TWI_Master" />
     <Folder Include="include" />
+    <Folder Include="third_party" />
     <Folder Include="src" />
     <Folder Include="sensors" />
     <Folder Include="protocol" />
@@ -305,6 +281,14 @@
     <Folder Include="sensors\ds18b20\include" />
     <Folder Include="sensors\ds18b20\include\ds18b20" />
     <Folder Include="sensors\ds18b20\src" />
+    <Folder Include="third_party\cmake-avr" />
+    <Folder Include="third_party\unity" />
+    <Folder Include="third_party\tiny-i2c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="third_party\cmake-avr\generic-gcc-avr.cmake">
+      <SubType>compile</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
