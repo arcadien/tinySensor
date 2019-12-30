@@ -703,31 +703,18 @@ Wire Notes Line
 Wire Notes Line
 	4050 3250 4050 6200
 $Comp
-L Device:C_Small C4
-U 1 1 5BE98657
-P 8800 3850
-F 0 "C4" V 8571 3850 50  0000 C CNN
-F 1 "1n" V 8662 3850 50  0000 C CNN
-F 2 "Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm" H 8800 3850 50  0001 C CNN
-F 3 "~" H 8800 3850 50  0001 C CNN
-	1    8800 3850
-	0    1    1    0   
-$EndComp
-$Comp
 L power:GND #PWR0123
 U 1 1 5BE989C1
-P 9050 3850
-F 0 "#PWR0123" H 9050 3600 50  0001 C CNN
-F 1 "GND" H 9055 3677 50  0000 C CNN
-F 2 "" H 9050 3850 50  0001 C CNN
-F 3 "" H 9050 3850 50  0001 C CNN
-	1    9050 3850
+P 9150 3850
+F 0 "#PWR0123" H 9150 3600 50  0001 C CNN
+F 1 "GND" H 9155 3677 50  0000 C CNN
+F 2 "" H 9150 3850 50  0001 C CNN
+F 3 "" H 9150 3850 50  0001 C CNN
+	1    9150 3850
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	8600 3850 8700 3850
-Wire Wire Line
-	8900 3850 9050 3850
 $Comp
 L Mechanical:MountingHole MH6
 U 1 1 5BEA80B3
@@ -864,21 +851,8 @@ F 3 "" H 9750 5750 50  0001 C CNN
 	1    9750 5750
 	-1   0    0    1   
 $EndComp
-$Comp
-L Connector:Conn_01x01_Female J4
-U 1 1 5BEAA179
-P 3550 2100
-F 0 "J4" H 3578 2126 50  0000 L CNN
-F 1 "PWM_OUT" H 3700 2100 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 3550 2100 50  0001 C CNN
-F 3 "~" H 3550 2100 50  0001 C CNN
-	1    3550 2100
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	5950 1300 6350 1300
-Wire Wire Line
-	2850 2100 3350 2100
 Wire Wire Line
 	10300 1550 10300 1750
 Wire Wire Line
@@ -961,4 +935,43 @@ Wire Wire Line
 Connection ~ 9150 1750
 Wire Wire Line
 	9150 1750 9750 1750
+$Comp
+L Device:CP C4
+U 1 1 5E0B7120
+P 8850 3850
+F 0 "C4" V 8950 3700 50  0000 C CNN
+F 1 "10u" V 9014 3850 50  0000 C CNN
+F 2 "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm" H 8888 3700 50  0001 C CNN
+F 3 "~" H 8850 3850 50  0001 C CNN
+	1    8850 3850
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	9150 3850 9000 3850
+$Comp
+L Connector:Conn_01x02_Male J4
+U 1 1 5E0CE887
+P 4050 2200
+F 0 "J4" H 4156 2378 50  0000 C CNN
+F 1 "PWM out" H 4156 2287 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 4050 2200 50  0001 C CNN
+F 3 "~" H 4050 2200 50  0001 C CNN
+	1    4050 2200
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	2850 2100 3850 2100
+$Comp
+L power:GND #PWR0101
+U 1 1 5E0E2B34
+P 3700 2200
+F 0 "#PWR0101" H 3700 1950 50  0001 C CNN
+F 1 "GND" H 3705 2027 50  0000 C CNN
+F 2 "" H 3700 2200 50  0001 C CNN
+F 3 "" H 3700 2200 50  0001 C CNN
+	1    3700 2200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3700 2200 3850 2200
 $EndSCHEMATC

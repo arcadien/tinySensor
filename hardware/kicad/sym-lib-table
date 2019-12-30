@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name tinySensorv1-rescue)(type Legacy)(uri ${KIPRJMOD}/tinySensorv1-rescue.lib)(options "")(descr ""))
+  (lib (name libraries)(type Legacy)(uri ${KIPRJMOD}/DC-DC_0.9v-3.3v_to_3.3v.kicad_mod)(options "")(descr ""))
+)

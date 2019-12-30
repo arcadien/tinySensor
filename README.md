@@ -1,11 +1,10 @@
 # TinySensor 
 
 [![Travis build status](https://api.travis-ci.org/arcadien/tinySensor.svg?branch=master)](https://travis-ci.org/arcadien/tinySensor)
-[![Coverage Status](https://coveralls.io/repos/github/arcadien/tinySensor/badge.svg?branch=master)](https://coveralls.io/github/arcadien/tinySensor?branch=master)
 
-TinySensor aims to provide a customisable firmware and board design for low-power environment sensors using wireless communication.
+TinySensor aims to provide a customisable firmware and a hardware design for low-power environment sensors using wireless communication.
 
-In the complete system, data is received by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
+In the complete system, data is processed by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
 
 ## Supported MCUs
 * ATTiny8xa family
@@ -51,3 +50,10 @@ PATH="/c/dev/tools/cmake-3.14.3-win64-x64/bin/cmake:$PATH" \
 cmake --build .
 
 ```
+
+## Hardware
+
+![Schematic](/doc/schematic.png?raw=true|width=200px "Board schematic")
+![Board preview (front)](/doc/boardv2.png?raw=true "Board preview (front)"){:height="700px" width="400px"}
+![Board preview (back)](/doc/boardv2_copper.png?raw=true "Board preview (back)"){:height="700px" width="400px"}
+
