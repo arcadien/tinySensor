@@ -35,6 +35,39 @@ Oregon oregon;
 BME280 bmX280;
 #endif
 
+
+void UseLessPowerAsPossible()
+{
+		//
+		//// unused pins are input + pullup, as stated
+		//// in Atmel's doc "AVR4013: picoPower Basics"
+		//
+
+		// all pins as input to avoid power draw
+		DDRA = 0;
+		DDRB = 0;
+
+		// pull-up all unused pins by default
+		//
+		PORTA |= 0b01111001;
+		PORTB |= 0b11111100;
+
+		PRR &= ~_BV(PRTIM1);    // no timer1
+		PRR &= ~_BV(PRADC);     // no adc
+		ADCSRA &= ~(1 << ADEN); // p. 146
+
+		ACSR |= (1 << ACD); // no analog comparator (p. 129)
+
+		// deactivate brownout detection during sleep (p.36)
+		MCUCR |= (1 << BODS) | (1 << BODSE);
+		MCUCR |= (1 << BODS);
+		MCUSR &= ~(1 << BODSE);
+
+		// don't use ADC buffers (p. 131)
+		DIDR0 |= (1 << ADC2D) | (1 << ADC1D;)
+	
+}
+
 /*
 * The firmware force emission of
 * a signal every quarter of an hour
@@ -59,6 +92,8 @@ ISR(WATCHDOG_vect) {
 
 void setup() {
 	wdt_disable();
+	
+	UseLessPowerAsPossible();
 
 	secondCounter = 0;
 
@@ -67,34 +102,6 @@ void setup() {
 	//
 	_WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
 	_WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
-
-	//
-	//// unused pins are input + pullup, as stated
-	//// in Atmel's doc "AVR4013: picoPower Basics"
-	//
-
-	// all pins as input to avoid power draw
-	DDRA = 0;
-	DDRB = 0;
-
-	// pull-up all unused pins by default
-	//
-	PORTA |= 0b01111001;
-	PORTB |= 0b11111100;
-
-	PRR &= ~_BV(PRTIM1);    // no timer1
-	PRR &= ~_BV(PRADC);     // no adc
-	ADCSRA &= ~(1 << ADEN); // p. 146
-
-	ACSR |= (1 << ACD); // no analog comparator (p. 129)
-
-	// deactivate brownout detection during sleep (p.36)
-	MCUCR |= (1 << BODS) | (1 << BODSE);
-	MCUCR |= (1 << BODS);
-	MCUSR &= ~(1 << BODSE);
-
-	// don't use ADC buffers (p. 131)
-	DIDR0 |= (1 << ADC2D) | (1 << ADC1D);
 
 	// set output pins
 	DDRB |= _BV(TX_RADIO_PIN);
