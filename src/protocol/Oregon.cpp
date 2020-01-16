@@ -1,4 +1,4 @@
-#include "Oregon.h"
+#include "protocol/Oregon.h"
 #include <config.h>
 
 uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};

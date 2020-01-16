@@ -1,26 +1,50 @@
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(TinySensor VERSION 0.1.0)
+set (CMAKE_CXX_STANDARD 11)
 
-
-add_definitions("-DF_CPU=${MCU_SPEED}")
 
 set(SOURCES )
 
 if(WIN32 OR UNIX)
   message("-- Compiling for Windows target")
   list(APPEND SOURCES src/base.cpp)
+  add_definitions("-DF_CPU=${MCU_SPEED}")
 
 else()
   message("-- Compiling for AVR target")
+  
+  set(AVR_MCU attiny84a)
+  set(MCU_SPEED 1000000UL)
+  add_definitions("-DF_CPU=${MCU_SPEED}")
+  add_definitions("-DARDUINO=101")
+
+  # AVR_L_FUSE (NO DEFAULT)
+  # AVR_H_FUSE (NO DEFAULT)
+  # AVR_UPLOADTOOL (default: avrdude)
+  # AVR_UPLOADTOOL_PORT (default: usb)
+  # AVR_PROGRAMMER (default: avrispmkII)
+
+  include_directories("${CMAKE_SOURCE_DIR}/include")
+  include_directories("${CMAKE_SOURCE_DIR}/third_party/ds18b20/include")
+  include_directories("${CMAKE_SOURCE_DIR}/third_party/SparkFun_BME280/src/")
+
   list(APPEND SOURCES
+
 	src/main.cpp
-        third_party/tiny-i2c/TinyI2CMaster.cpp
-        third_party/tiny-i2c/TinyI2CMaster.h
-	protocol/Oregon.cpp
-	sensors/bme280/SparkFunBME280.cpp
-	sensors/bme280/SparkFunBME280.h
-	protocol/Oregon.h
+
+    third_party/tiny-i2c/TinyI2CMaster.cpp
+    third_party/tiny-i2c/TinyI2CMaster.h
+	src/protocol/Oregon.cpp
+	include/protocol/Oregon.h
+
+	third_party/SparkFun_BME280/src/SparkFunBME280.cpp
+	third_party/SparkFun_BME280/src/SparkFunBME280.h
+
+	third_party/ds18b20/src/ds18b20.c
+	third_party/ds18b20/src/onewire.c
+	third_party/ds18b20/src/romsearch.c
+
   ) 
 endif()
 
