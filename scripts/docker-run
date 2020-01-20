@@ -1,2 +1,2 @@
-docker build . -t tinysensor-webapp
+docker build . -t arcadien73/tinysensor-webapp
 docker run -p 80:80 -d --name web -v tsweb:/var/www  tinysensor-webapp

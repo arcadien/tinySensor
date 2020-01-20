@@ -7,7 +7,7 @@ TinySensor aims to provide a customisable firmware and a hardware design for low
 In the complete system, data is processed by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
 
 ## Supported MCUs
-* ATTiny8xa family
+* ATTiny84a
 
 ## Supported sensors
 * I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
@@ -26,6 +26,8 @@ Various libraries are used here, and some where tweaked to remove any Arduino de
 * Sparkfun [BME280 sensor library](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library) with all SPI related code removed
 * [USI wire library](https://github.com/puuu/USIWire.git) with little addition for ATTiny84A support
 
+## Firmware builder
+A web application wrapped in a Docker container allow to build the firmware in a sealed environment. NOTE: It is at his early stage!
 
 ## Useful documentation about low power AVR
 * [AVR4013: picoPower Basics](http://www.microchip.com/downloads/en/AppNotes/doc8349.pdf)
