@@ -2,7 +2,7 @@
 * This file is part of the TinySensor distribution
 * (https://github.com/arcadien/TinySensor)
 *
-* Copyright (c) 2019 Aur�lien Labrosse
+* Copyright (c) 2019 Aurélien Labrosse
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -26,10 +26,8 @@
 #include <avr/wdt.h>
 #include <string.h>
 
-#if defined(USE_OREGON)
 #include <protocol/Oregon.h>
 Oregon oregon;
-#endif
 
 #if defined(USE_DS18B20)
 #include <ds18b20/ds18b20.h>
@@ -113,7 +111,9 @@ void setup()
 	DDRA |= _BV(RADIO_POWER_PIN);
 	DDRB |= _BV(LED_PIN);
 
+#if defined(USE_I2C)
 	TinyI2C.init();
+#endif
 }
 
 int avr_main(void)
@@ -281,6 +281,7 @@ void sleep(uint8_t s)
 		sleep_enable();
 		sei();
 
+		
 		uint8_t PRR_backup = PRR;
 		uint8_t porta_backup = PORTA;
 		uint8_t portb_backup = PORTB;
@@ -307,12 +308,13 @@ void sleep(uint8_t s)
 
 		// here the system wakes up
 		sleep_disable();
-
+		
 		// restore
 		PRR = PRR_backup;
 		DDRA = ddra_backup;
 		DDRB = ddrb_backup;
 		PORTA = porta_backup;
 		PORTB = portb_backup;
+		
 	}
 }

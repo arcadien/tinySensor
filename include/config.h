@@ -43,21 +43,20 @@
 #define BAT_SENSOR_PIN PA1
 
 // Sensors
-#define USE_BMP280
-//#define USE_BME280
+//#define USE_BMP280
+#define USE_BME280
 //#define USE_DS18B20
 
-// Protocols
-#define USE_OREGON 1
+#if defined(USE_BMP280) or defined(USE_BME280)
+#define USE_I2C
+#endif
 
-// 0x5A, 0x5D pressure, temp, hygro
-// 0xEA, 0x4C temp only
-const uint8_t OREGON_TYPE[] = {0xEA, 0x4C};
-const uint8_t OREGON_ID = 0xCB;
+const uint8_t OREGON_ID = SENSOR_ID;
+const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
 
 /*
  * MODE_0 0 // Temperature only [THN132N]
  * MODE_1 1 // Temperature + Humidity [THGR2228N]
  * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
  */
-#define OREGON_MODE MODE_0
+// #define OREGON_MODE MODE_1
