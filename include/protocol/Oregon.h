@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2013 olivier.lebrun@gmail.com
  *
- * Refactored to class by Aurélien Labrosse <https://github.com/arcadien>
+ * Refactored to class by AurÃ©lien Labrosse <https://github.com/arcadien>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
