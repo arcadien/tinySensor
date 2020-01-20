@@ -105,6 +105,9 @@ if(AVR)
 	message(STATUS "Current L_FUSE is set to: ${AVR_L_FUSE}")
 	message(STATUS "Build type  : ${CMAKE_BUILD_TYPE}")
 
+  message(STATUS "Sensor type : ${SENSOR_TYPE}")
+  message(STATUS "Sensor ID    :${SENSOR_ID}")
+
 	add_avr_executable(tinySensor ${SOURCES} src/mainWrapper.cpp)
 	add_avr_library(unity third_party/unity/src/unity.c)
 	set_target_properties(tinySensor PROPERTIES LINK_FLAGS "--wrap main" )
