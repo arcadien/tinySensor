@@ -1,7 +1,7 @@
 /*
  * This file is part of the TinySensor distribution (https://github.com/arcadien/TinySensor)
  *
- * Copyright (c) 2019 Aurélien Labrosse
+ * Copyright (c) 2019 AurÃ©lien Labrosse
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
