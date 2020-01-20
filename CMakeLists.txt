@@ -132,8 +132,8 @@ SET(TESTS
 foreach(test_ ${TESTS})
 
 	if(AVR)
-		add_avr_executable(${test_}_driver tests/${test_} ${SOURCES})
-		avr_target_link_libraries(${test_}_driver unity)
+		#add_avr_executable(${test_}_driver tests/${test_} ${SOURCES})
+		#avr_target_link_libraries(${test_}_driver unity)
 	else()
 		add_executable(${test_}_driver tests/${test_})
 		target_link_libraries(${test_}_driver unity)
