@@ -96,8 +96,6 @@ void setup()
 
 	secondCounter = 0;
 
-	wdt_enable(WDTO_8S);
-
 	//Watchdog setup - 8s sleep time
 	_WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
 	_WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
