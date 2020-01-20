@@ -1,7 +1,13 @@
 
 cmake_minimum_required(VERSION 3.10)
 project(TinySensor VERSION 0.1.0)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
+
+set(SENSOR_TYPE "{0x5A, 0x5D}")
+add_definitions("-DSENSOR_TYPE=${SENSOR_TYPE}")
+
+set(SENSOR_ID "0xCB")
+add_definitions("-DSENSOR_ID=${SENSOR_ID}")
 
 
 set(SOURCES )
@@ -10,7 +16,7 @@ if(WIN32 OR UNIX)
   message("-- Compiling for Windows target")
   list(APPEND SOURCES src/base.cpp)
   add_definitions("-DF_CPU=${MCU_SPEED}")
-
+  
 else()
   message("-- Compiling for AVR target")
   
@@ -51,9 +57,18 @@ endif()
 ##########################################################################
 # set compiler options for build types
 ##########################################################################
+
+if(AVR)
+	set(AVR_OPTIM_CXX_FLAGS "-std=gnu++11 -mtiny-stack -mmcu=attiny84a -fdata-sections -fno-inline-small-functions -ffunction-sections -flto ")	
+	set(AVR_OPTIM_C_FLAGS " -std=gnu11 -mtiny-stack -mmcu=attiny84a -fdata-sections -fno-inline-small-functions -ffunction-sections ")
+else()
+	set(AVR_OPTIM_CXX_FLAGS "")
+	set(AVR_OPTIM_C_FLAGS  "")
+endif()
+
 if(CMAKE_BUILD_TYPE MATCHES Release)
-   set(CMAKE_C_FLAGS_RELEASE "-Os")
-   set(CMAKE_CXX_FLAGS_RELEASE "-Os")
+   set(CMAKE_C_FLAGS_RELEASE "-Os ${AVR_OPTIM_C_FLAGS}")
+   set(CMAKE_CXX_FLAGS_RELEASE "-Os ${AVR_OPTIM_CXX_FLAGS}")
 endif(CMAKE_BUILD_TYPE MATCHES Release)
 
 if(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
@@ -76,15 +91,6 @@ if(AVR)
 	# compiler options for all build types
 	##########################################################################
 	add_definitions("-DF_CPU=${MCU_SPEED}")
-	add_definitions("-fpack-struct")
-	add_definitions("-fshort-enums")
-	add_definitions("-Wall")
-	#add_definitions("-Werror")
-	#add_definitions("-pedantic")
-	#add_definitions("-pedantic-errors")
-	add_definitions("-funsigned-char")
-	add_definitions("-funsigned-bitfields")
-	add_definitions("-ffunction-sections")
 
 	##########################################################################
 	# status messages
@@ -97,17 +103,18 @@ if(AVR)
 	message(STATUS "Current MCU speed (Hz) is set to: ${MCU_SPEED}")
 	message(STATUS "Current H_FUSE is set to: ${AVR_H_FUSE}")
 	message(STATUS "Current L_FUSE is set to: ${AVR_L_FUSE}")
+	message(STATUS "Build type  : ${CMAKE_BUILD_TYPE}")
 
 	add_avr_executable(tinySensor ${SOURCES} src/mainWrapper.cpp)
 	add_avr_library(unity third_party/unity/src/unity.c)
 	set_target_properties(tinySensor PROPERTIES LINK_FLAGS "--wrap main" )
 else()
 	if(WITH_COVERAGE)
-		set(CMAKE_CXX_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
-		set(CMAKE_C_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -Wall -fprofile-arcs -ftest-coverage")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -Wall -fprofile-arcs -ftest-coverage")
 	endif()
 	add_subdirectory("third_party/unity")
-	add_library(tinySensorLib OBJECT ${SOURCES})
+	add_library(tinySensorLib STATIC ${SOURCES})
 endif()
 
 include(CTest)
@@ -126,8 +133,8 @@ foreach(test_ ${TESTS})
 		avr_target_link_libraries(${test_}_driver unity)
 	else()
 		add_executable(${test_}_driver tests/${test_})
-		target_link_libraries(${test_}_driver tinySensorLib)
 		target_link_libraries(${test_}_driver unity)
+		target_link_libraries(${test_}_driver tinySensorLib)
 	endif()
 	add_test(${test_}_driver ${test_}_driver)
 endforeach()
