@@ -18,7 +18,7 @@ $buildDir = $sourceDir . "/build";
 mkdir($buildDir);
 chdir($buildDir);
 
-$config_out = shell_exec("$sourceDir/init_avr.sh");
+$config_out = shell_exec("$sourceDir/scripts/init_avr.sh");
 $compilation_out = shell_exec("make -j4");
 
 preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $config_out);
