@@ -1,0 +1,1 @@
+docker stop web && docker container prune && docker volume prune

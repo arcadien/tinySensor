@@ -6,3 +6,5 @@ build/
 Debug/
 Release/
 .pio
+web/data/
+volume
