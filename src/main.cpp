@@ -17,7 +17,6 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <TinySensor.h>
 #include <config.h>
 
 #include <avr/interrupt.h>
@@ -40,12 +39,9 @@ BME280 bmX280;
 
 void UseLessPowerAsPossible()
 {
-	//
-	//// unused pins are input + pullup, as stated
-	//// in Atmel's doc "AVR4013: picoPower Basics"
-	//
-
-	// all pins as input to avoid power draw
+	// AVR4013: picoPower Basics
+	// unused pins should be set as
+	// input + pullup to minimize consumption
 	DDRA = 0;
 	DDRB = 0;
 
@@ -54,19 +50,19 @@ void UseLessPowerAsPossible()
 	PORTA |= 0b01111001;
 	PORTB |= 0b11111100;
 
-	PRR &= ~_BV(PRTIM1);	// no timer1
-	PRR &= ~_BV(PRADC);		// no adc
-	ADCSRA &= ~(1 << ADEN); // p. 146
+	// no timer1
+	PRR &= ~_BV(PRTIM1);
 
-	ACSR |= (1 << ACD); // no analog comparator (p. 129)
+	// no analog p. 129, 146, 131
+	PRR &= ~_BV(PRADC);
+	ADCSRA &= ~(1 << ADEN);
+	ACSR |= (1 << ACD);
+	DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
 
 	// deactivate brownout detection during sleep (p.36)
 	MCUCR |= (1 << BODS) | (1 << BODSE);
 	MCUCR |= (1 << BODS);
 	MCUSR &= ~(1 << BODSE);
-
-	// don't use ADC buffers (p. 131)
-	DIDR0 |= (1 << ADC2D) | (1 << ADC1D);
 }
 
 /*
@@ -100,9 +96,9 @@ void setup()
 
 	secondCounter = 0;
 
-	//
-	//// Watchdog setup - 8s sleep time
-	//
+	wdt_enable(WDTO_8S);
+
+	//Watchdog setup - 8s sleep time
 	_WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
 	_WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
 
@@ -116,6 +112,60 @@ void setup()
 #endif
 }
 
+/*
+* Puts MCU to sleep for specified number of seconds
+*
+* As the hardware watchdog is set for timeout after 8s,
+* the value used here will be divided by 8 (and rounded if needed).
+* It is better to use a multiple of 8 as value.
+*/
+void sleep(uint8_t s)
+{
+	s >>= 3; // or s/8
+	if (s == 0)
+		s = 1;
+	sleep_interval = 0;
+	while (sleep_interval < s)
+	{
+		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+		sleep_enable();
+		sei();
+
+		uint8_t PRR_backup = PRR;
+		uint8_t porta_backup = PORTA;
+		uint8_t portb_backup = PORTB;
+		uint8_t ddra_backup = DDRA;
+		uint8_t ddrb_backup = DDRB;
+
+		PRR |= (1 << PRUSI);
+		PRR |= (1 << PRTIM0);
+		PRR |= (1 << PRTIM1);
+
+		// all pins as input to avoid power draw
+		DDRA = 0;
+		DDRB = 0;
+
+		// pull-up all unused pins by default
+		PORTA |= 0b01110000;
+
+		// pullup reset only
+		// ( only 4 lasts are available - p. 67)
+		PORTB |= 0b00001000;
+
+		sleep_mode();
+		// here the system is sleeping
+
+		// here the system wakes up
+		sleep_disable();
+
+		// restore
+		PRR = PRR_backup;
+		DDRA = ddra_backup;
+		DDRB = ddrb_backup;
+		PORTA = porta_backup;
+		PORTB = portb_backup;
+	}
+}
 int avr_main(void)
 {
 
@@ -210,7 +260,8 @@ int avr_main(void)
 			shouldEmitData = true;
 		}
 
-		PORTB |= _BV(LED_PIN); // led on
+		// led on
+		PORTB |= _BV(LED_PIN);
 
 		if (shouldEmitData)
 		{
@@ -258,63 +309,5 @@ int avr_main(void)
 
 		sleep(SLEEP_TIME_IN_SECONDS);
 		secondCounter += SLEEP_TIME_IN_SECONDS;
-	}
-}
-
-/*
-* Puts MCU to sleep for specified number of seconds
-*
-* As the hardware watchdog is set for timeout after 8s,
-* the value used here will be divided by 8 (and rounded if needed).
-* It is better to use a multiple of 8 as value.
-*/
-
-void sleep(uint8_t s)
-{
-	s >>= 3; // or s/8
-	if (s == 0)
-		s = 1;
-	sleep_interval = 0;
-	while (sleep_interval < s)
-	{
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-		sleep_enable();
-		sei();
-
-		
-		uint8_t PRR_backup = PRR;
-		uint8_t porta_backup = PORTA;
-		uint8_t portb_backup = PORTB;
-		uint8_t ddra_backup = DDRA;
-		uint8_t ddrb_backup = DDRB;
-
-		PRR |= (1 << PRUSI);
-		PRR |= (1 << PRTIM0);
-		PRR |= (1 << PRTIM1);
-
-		// all pins as input to avoid power draw
-		DDRA = 0;
-		DDRB = 0;
-
-		// pull-up all unused pins by default
-		PORTA |= 0b01110000;
-
-		// pullup reset only
-		// ( only 4 lasts are available - p. 67)
-		PORTB |= 0b00001000;
-
-		sleep_mode();
-		// here the system is sleeping
-
-		// here the system wakes up
-		sleep_disable();
-		
-		// restore
-		PRR = PRR_backup;
-		DDRA = ddra_backup;
-		DDRB = ddrb_backup;
-		PORTA = porta_backup;
-		PORTB = portb_backup;
-		
 	}
 }
