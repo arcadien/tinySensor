@@ -43,7 +43,7 @@
 #define BAT_SENSOR_PIN PA1
 
 // Sensors
-#define USE_BMP280
+//#define USE_BMP280
 //#define USE_BME280
 //#define USE_DS18B20
 
