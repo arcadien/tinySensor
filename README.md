@@ -33,25 +33,8 @@ A web application wrapped in a Docker container allow to build the firmware in a
 * [AVR4013: picoPower Basics](http://www.microchip.com/downloads/en/AppNotes/doc8349.pdf)
 
 ## Development
-Sample command for project setup using Atmel Studio, and the Git Bash console below.
-It setups project for a ATTiny84a mcu running at 1Mhz.
 
-```bash
-mkdir build_avr
-cd build_avr
-export MCU=attiny84a
-PATH="$PATH:/d/embedded/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/:/d/embedded/Atmel/Studio/7.0/shellutils/"  \
-PATH="/c/dev/tools/cmake-3.14.3-win64-x64/bin/cmake:$PATH" \
-	cmake  ../ \
-	-G "Unix Makefiles" \
-	-DMCU_SPEED=1000000U \
-	-DAVR_MCU=$MCU \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_TOOLCHAIN_FILE=../third_party/cmake-avr/generic-gcc-avr.cmake
-
-cmake --build .
-
-```
+TinySensor build environment now uses [PlatformIO](https://platformio.org/).
 
 ## Hardware
 
