@@ -214,11 +214,13 @@ int avr_main(void)
 
 		// Read temperature (without ROM matching)
 		int16_t temperature = 0;
-		ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
-
-		oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
-		oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
-		oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+		auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
+		if (readStatus == DS18B20_ERROR_OK)
+		{
+			oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
+			oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
+			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+		}
 
 #endif
 
