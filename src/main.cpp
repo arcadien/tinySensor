@@ -24,9 +24,11 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <string.h>
+#include <readVcc.h>
 
 #include <protocol/Oregon.h>
-Oregon oregon;
+Oregon oregon(OREGON_MODE);
+Oregon oregonPower(MODE_0);
 
 #if defined(USE_DS18B20)
 #include <ds18b20/ds18b20.h>
@@ -54,10 +56,15 @@ void UseLessPowerAsPossible()
 	PRR &= ~_BV(PRTIM1);
 
 	// no analog p. 129, 146, 131
+	ADCSRA = 0;
+
+	/*
+	better, but not easy to invert for VCC sensing
 	PRR &= ~_BV(PRADC);
 	ADCSRA &= ~(1 << ADEN);
 	ACSR |= (1 << ACD);
 	DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
+	*/
 
 	// deactivate brownout detection during sleep (p.36)
 	MCUCR |= (1 << BODS) | (1 << BODSE);
@@ -164,6 +171,53 @@ void sleep(uint8_t s)
 		PORTB = portb_backup;
 	}
 }
+
+void backupOregonMessage(uint8_t *target)
+{
+// Buffer for Oregon message
+#if OREGON_MODE == MODE_0
+	memcpy(target, oregon._oregonMessageBuffer, 8);
+#elif OREGON_MODE == MODE_1
+	memcpy(target, oregon._oregonMessageBuffer, 9);
+#elif OREGON_MODE == MODE_2
+	memcpy(target, oregon._oregonMessageBuffer, 11);
+#else
+#error mode unknown
+#endif
+}
+
+bool doMessageHaveChanged(uint8_t *previous)
+{
+	bool shouldEmitData = false;
+#if (OREGON_MODE == MODE_0)
+	// temp update?
+	shouldEmitData =
+		(oregon._oregonMessageBuffer[4] != previous[4] ||
+		 oregon._oregonMessageBuffer[5] != previous[5] ||
+		 oregon._oregonMessageBuffer[6] != previous[6]);
+
+#elif (OREGON_MODE == MODE_1)
+	// temp or humidity update?
+	shouldEmitData =
+		(oregon._oregonMessageBuffer[4] != previous[4] ||
+		 oregon._oregonMessageBuffer[5] != previous[5] ||
+		 oregon._oregonMessageBuffer[6] != previous[6] ||
+		 oregon._oregonMessageBuffer[7] != previous[7]);
+#elif (OREGON_MODE == MODE_2)
+	// temp, humidity or pressure update?
+	shouldEmitData =
+		(oregon._oregonMessageBuffer[4] != previous[4] ||
+		 oregon._oregonMessageBuffer[5] != previous[5] ||
+		 oregon._oregonMessageBuffer[6] != previous[6] ||
+		 oregon._oregonMessageBuffer[7] != previous[7] ||
+		 oregon._oregonMessageBuffer[8] != previous[8] ||
+		 oregon._oregonMessageBuffer[9] != previous[9]);
+#else
+#error OREGON_MODE has an unknown value
+#endif
+	return shouldEmitData;
+}
+
 int avr_main(void)
 {
 
@@ -173,6 +227,12 @@ int avr_main(void)
 	oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
 	oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 
+	// using temp-only sensor to carry battery voltage
+	const uint8_t OREGON_POWER_TYPE[] = {0xEA, 0x4C};
+	oregonPower.setType(oregon._oregonMessageBuffer, OREGON_POWER_TYPE);
+	oregonPower.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
+	oregonPower.setId(oregon._oregonMessageBuffer, OREGON_ID + 1);
+
 #if defined(USE_BME280) || defined(USE_BMP280)
 	bmX280.setI2CAddress(0x76);
 	bmX280.beginI2C();
@@ -181,11 +241,11 @@ int avr_main(void)
 
 // Buffer for Oregon message
 #if OREGON_MODE == MODE_0
-	uint8_t _lastOregonMessageBuffer[8] = {};
+	uint8_t _previousOregonMessageBuffer[8] = {};
 #elif OREGON_MODE == MODE_1
-	uint8_t _lastOregonMessageBuffer[9] = {};
+	uint8_t _previousOregonMessageBuffer[9] = {};
 #elif OREGON_MODE == MODE_2
-	uint8_t _lastOregonMessageBuffer[11] = {};
+	uint8_t _previousOregonMessageBuffer[11] = {};
 #else
 #error mode unknown
 #endif
@@ -224,47 +284,34 @@ int avr_main(void)
 
 #endif
 
-		bool shouldEmitData = false;
-
-#if (OREGON_MODE == MODE_0)
-		// temp update?
-		shouldEmitData =
-			(oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
-			 oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
-			 oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6]);
-
-#elif (OREGON_MODE == MODE_1)
-		// temp or humidity update?
-		shouldEmitData =
-			(oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
-			 oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
-			 oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
-			 oregon._oregonMessageBuffer[7] != _lastOregonMessageBuffer[7]);
-#elif (OREGON_MODE == MODE_2)
-		// temp, humidity or pressure update?
-		shouldEmitData =
-			(oregon._oregonMessageBuffer[4] != _lastOregonMessageBuffer[4] ||
-			 oregon._oregonMessageBuffer[5] != _lastOregonMessageBuffer[5] ||
-			 oregon._oregonMessageBuffer[6] != _lastOregonMessageBuffer[6] ||
-			 oregon._oregonMessageBuffer[7] != _lastOregonMessageBuffer[7] ||
-			 oregon._oregonMessageBuffer[8] != _lastOregonMessageBuffer[8] ||
-			 oregon._oregonMessageBuffer[9] != _lastOregonMessageBuffer[9]);
-#else
-#error OREGON_MODE has an unknown value
-#endif
+		bool shouldEmitData = doMessageHaveChanged(_previousOregonMessageBuffer);
+		bool shouldEmitVoltage = false;
 
 		// absolute counter for emission ~ each 15 minutes
 		if (secondCounter > 900)
 		{
 			secondCounter = 0;
 			shouldEmitData = true;
+			shouldEmitVoltage = true;
 		}
 
-		// led on
-		PORTB |= _BV(LED_PIN);
+		if (shouldEmitVoltage)
+		{
+			oregon.txPinLow();
+			_delay_us(oregon.TWOTIME * 8);
+
+			oregonPower.setTemperature(oregonPower._oregonMessageBuffer, readVcc() / 1000);
+			oregonPower.sendOregon(oregonPower._oregonMessageBuffer,
+								   sizeof(oregonPower._oregonMessageBuffer));
+			oregon.txPinLow();
+		}
 
 		if (shouldEmitData)
 		{
+			backupOregonMessage(_previousOregonMessageBuffer);
+
+			// led on
+			PORTB |= _BV(LED_PIN);
 
 			// Activate radio power
 			PORTA |= _BV(RADIO_POWER_PIN);
@@ -273,17 +320,6 @@ int avr_main(void)
 			// led off here, it will allow a short
 			// blink when actually emitting new data
 			PORTB &= ~_BV(LED_PIN);
-
-// Buffer for Oregon message
-#if OREGON_MODE == MODE_0
-			memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 8);
-#elif OREGON_MODE == MODE_1
-			memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 9);
-#elif OREGON_MODE == MODE_2
-			memcpy(_lastOregonMessageBuffer, oregon._oregonMessageBuffer, 11);
-#else
-#error mode unknown
-#endif
 
 			oregon.txPinLow();
 			_delay_us(oregon.TWOTIME * 8);
@@ -303,9 +339,10 @@ int avr_main(void)
 
 			// radio off
 			PORTA &= ~_BV(RADIO_POWER_PIN);
+
+			// led off
+			PORTB &= ~_BV(LED_PIN);
 		}
-		// led off
-		PORTB &= ~_BV(LED_PIN);
 
 		sleep(SLEEP_TIME_IN_SECONDS);
 		secondCounter += SLEEP_TIME_IN_SECONDS;
