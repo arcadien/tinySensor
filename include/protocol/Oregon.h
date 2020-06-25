@@ -92,53 +92,57 @@
 */
 
 #include "config.h"
-#include <avr/io.h>
 #include <limits.h>
 #include <stdint.h>
+#include <stdlib.h>
 
-#include <util/delay.h>
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 
 #define HIGH 0x1
 #define LOW 0x0
 
-class Oregon {
+class Oregon
+{
 public:
   /*!
    * Convenient define for channel codes (1,2,3)
    */
-  struct Channel {
+  struct Channel
+  {
     static const uint8_t ONE = 0x10;
     static const uint8_t TWO = 0x20;
     static const uint8_t THREE = 0x30;
   };
-  
-private:
-
-  static uint8_t PREAMBLE[];
-  static uint8_t POSTAMBLE[];
 
 #define MODE_0 0 // Temperature only [THN132N]
 #define MODE_1 1 // Temperature + Humidity [THGR2228N]
 #define MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
 
+  Oregon(uint8_t mode)
+  {
+    // Buffer for Oregon message
+#if mode == MODE_0
+    realloc(_oregonMessageBuffer, sizeof(uint8_t) * 8);
+#elif mode == MODE_1
+     realloc(_oregonMessageBuffer, sizeof(uint8_t) * 9);
+#elif mode == MODE_2
+     realloc(_oregonMessageBuffer, sizeof(uint8_t) * 11);
+#else
+#error mode unknown
+#endif
+  }
+
+private:
+  static uint8_t PREAMBLE[];
+  static uint8_t POSTAMBLE[];
+
 public:
+  uint8_t *_oregonMessageBuffer;
   static const uint16_t TIME = 512;
   static const uint16_t TWOTIME = TIME * 2;
 
   void txPinLow();
   void txPinHigh();
-
-// Buffer for Oregon message
-#if OREGON_MODE == MODE_0
-  uint8_t _oregonMessageBuffer[8];
-#elif OREGON_MODE == MODE_1
-  uint8_t _oregonMessageBuffer[9];
-#elif OREGON_MODE == MODE_2
-  uint8_t _oregonMessageBuffer[11];
-#else
-#error mode unknown
-#endif
 
   /**
    * \brief    Send logical "0" over RF

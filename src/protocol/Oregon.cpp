@@ -25,6 +25,9 @@
 #include "protocol/Oregon.h"
 #include <config.h>
 
+#include <avr/io.h>
+#include <util/delay.h>
+
 uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};
 uint8_t Oregon::POSTAMBLE[] = {0x00};
 
