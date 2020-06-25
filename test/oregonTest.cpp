@@ -17,7 +17,7 @@
  */
 
 #include <unity.h>
-
+#include <protocol/Oregon.h>
 void setUp(void)
 {
 }
@@ -26,13 +26,30 @@ void tearDown(void)
 {
 }
 
-void Expect_test_to_compile()
+void Expect_Oregon_Buffers_to_be_correctly_sized_in_mode0()
 {
+    Oregon<MODE_0> oregon;
+    TEST_ASSERT_EQUAL(Oregon<MODE_0>::BUFF_SIZE[MODE_0], sizeof(oregon._oregonMessageBuffer));
+}
+
+void Expect_Oregon_Buffers_to_be_correctly_sized_in_mode1()
+{
+    Oregon<MODE_1> oregon1;
+    TEST_ASSERT_EQUAL(Oregon<MODE_1>::BUFF_SIZE[MODE_1], sizeof(oregon1._oregonMessageBuffer));
+}
+
+void Expect_Oregon_Buffers_to_be_correctly_sized_in_mode2()
+{
+    Oregon<MODE_2> oregon2;
+    TEST_ASSERT_EQUAL(Oregon<MODE_2>::BUFF_SIZE[MODE_2], sizeof(oregon2._oregonMessageBuffer));
 }
 
 int main(int, char **)
 {
     UNITY_BEGIN();
-    RUN_TEST(Expect_test_to_compile);
+    RUN_TEST(Expect_Oregon_Buffers_to_be_correctly_sized_in_mode0);
+    RUN_TEST(Expect_Oregon_Buffers_to_be_correctly_sized_in_mode1);
+    RUN_TEST(Expect_Oregon_Buffers_to_be_correctly_sized_in_mode2);
+
     return UNITY_END();
 }
