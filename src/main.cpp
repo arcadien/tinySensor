@@ -16,6 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+#if defined(AVR)
 
 #include <config.h>
 
@@ -27,7 +28,6 @@
 #include <readVcc.h>
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
-
 #include <x10rf.h>
 x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 #endif
@@ -102,7 +102,6 @@ ISR(WATCHDOG_vect)
 
 void setup()
 {
-
 	wdt_disable();
 
 	UseLessPowerAsPossible();
@@ -291,3 +290,4 @@ int avr_main(void)
 		secondCounter += SLEEP_TIME_IN_SECONDS;
 	}
 }
+#endif

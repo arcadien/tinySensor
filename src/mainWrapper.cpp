@@ -18,7 +18,10 @@
 
 #include <TinySensor.h>
 
-int main(void) {
-  avr_main();
-}
+int main(void)
+{
 
+#if defined(AVR)
+  avr_main();
+#endif
+}
