@@ -27,8 +27,8 @@
 #include <readVcc.h>
 
 #include <protocol/Oregon.h>
-Oregon oregon(OREGON_MODE);
-Oregon oregonPower(MODE_0);
+Oregon<OREGON_MODE> oregon;
+Oregon<MODE_0> oregonPower;
 
 #if defined(USE_DS18B20)
 #include <ds18b20/ds18b20.h>
@@ -74,7 +74,7 @@ void UseLessPowerAsPossible()
 
 /*
 * The firmware force emission of
-* a signal every quarter of an hour
+* a signal at boot and every quarter of an hour
 * even if sensor data does not change,
 * just to be sure sensor is not out of
 * power or bugged (900s)
@@ -97,11 +97,14 @@ ISR(WATCHDOG_vect)
 
 void setup()
 {
+
 	wdt_disable();
 
 	UseLessPowerAsPossible();
 
-	secondCounter = 0;
+	// 901 so that first emission
+	// is at boot
+	secondCounter = 901;
 
 	//Watchdog setup - 8s sleep time
 	_WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
@@ -145,6 +148,7 @@ void sleep(uint8_t s)
 		PRR |= (1 << PRUSI);
 		PRR |= (1 << PRTIM0);
 		PRR |= (1 << PRTIM1);
+		PRR |= (1 << PRADC);
 
 		// all pins as input to avoid power draw
 		DDRA = 0;
@@ -172,82 +176,37 @@ void sleep(uint8_t s)
 	}
 }
 
-void backupOregonMessage(uint8_t *target)
+template <typename Oregon>
+void emit(Oregon &oregon)
 {
-// Buffer for Oregon message
-#if OREGON_MODE == MODE_0
-	memcpy(target, oregon._oregonMessageBuffer, 8);
-#elif OREGON_MODE == MODE_1
-	memcpy(target, oregon._oregonMessageBuffer, 9);
-#elif OREGON_MODE == MODE_2
-	memcpy(target, oregon._oregonMessageBuffer, 11);
-#else
-#error mode unknown
-#endif
-}
-
-bool doMessageHaveChanged(uint8_t *previous)
-{
-	bool shouldEmitData = false;
-#if (OREGON_MODE == MODE_0)
-	// temp update?
-	shouldEmitData =
-		(oregon._oregonMessageBuffer[4] != previous[4] ||
-		 oregon._oregonMessageBuffer[5] != previous[5] ||
-		 oregon._oregonMessageBuffer[6] != previous[6]);
-
-#elif (OREGON_MODE == MODE_1)
-	// temp or humidity update?
-	shouldEmitData =
-		(oregon._oregonMessageBuffer[4] != previous[4] ||
-		 oregon._oregonMessageBuffer[5] != previous[5] ||
-		 oregon._oregonMessageBuffer[6] != previous[6] ||
-		 oregon._oregonMessageBuffer[7] != previous[7]);
-#elif (OREGON_MODE == MODE_2)
-	// temp, humidity or pressure update?
-	shouldEmitData =
-		(oregon._oregonMessageBuffer[4] != previous[4] ||
-		 oregon._oregonMessageBuffer[5] != previous[5] ||
-		 oregon._oregonMessageBuffer[6] != previous[6] ||
-		 oregon._oregonMessageBuffer[7] != previous[7] ||
-		 oregon._oregonMessageBuffer[8] != previous[8] ||
-		 oregon._oregonMessageBuffer[9] != previous[9]);
-#else
-#error OREGON_MODE has an unknown value
-#endif
-	return shouldEmitData;
+	oregon.txPinLow();
+	_delay_us(oregon.TWOTIME * 8);
+	oregon.sendOregon(oregon._oregonMessageBuffer,
+					  sizeof(oregon._oregonMessageBuffer));
+	oregon.txPinLow();
 }
 
 int avr_main(void)
 {
 
+	bool batteryIsLow = false;
+
 	setup();
 
 	oregon.setType(oregon._oregonMessageBuffer, OREGON_TYPE);
-	oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
+	oregon.setChannel(oregon._oregonMessageBuffer, Oregon<OREGON_MODE>::Channel::ONE);
 	oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 
 	// using temp-only sensor to carry battery voltage
 	const uint8_t OREGON_POWER_TYPE[] = {0xEA, 0x4C};
-	oregonPower.setType(oregon._oregonMessageBuffer, OREGON_POWER_TYPE);
-	oregonPower.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
-	oregonPower.setId(oregon._oregonMessageBuffer, OREGON_ID + 1);
+	oregonPower.setType(oregonPower._oregonMessageBuffer, OREGON_POWER_TYPE);
+	oregonPower.setChannel(oregonPower._oregonMessageBuffer, Oregon<MODE_0>::Channel::ONE);
+	oregonPower.setId(oregonPower._oregonMessageBuffer, OREGON_ID + 1);
 
 #if defined(USE_BME280) || defined(USE_BMP280)
 	bmX280.setI2CAddress(0x76);
 	bmX280.beginI2C();
 	bmX280.setStandbyTime(5);
-#endif
-
-// Buffer for Oregon message
-#if OREGON_MODE == MODE_0
-	uint8_t _previousOregonMessageBuffer[8] = {};
-#elif OREGON_MODE == MODE_1
-	uint8_t _previousOregonMessageBuffer[9] = {};
-#elif OREGON_MODE == MODE_2
-	uint8_t _previousOregonMessageBuffer[11] = {};
-#else
-#error mode unknown
 #endif
 
 	while (1)
@@ -284,65 +243,55 @@ int avr_main(void)
 
 #endif
 
-		bool shouldEmitData = doMessageHaveChanged(_previousOregonMessageBuffer);
 		bool shouldEmitVoltage = false;
 
 		// absolute counter for emission ~ each 15 minutes
 		if (secondCounter > 900)
 		{
 			secondCounter = 0;
-			shouldEmitData = true;
 			shouldEmitVoltage = true;
 		}
 
 		if (shouldEmitVoltage)
 		{
-			oregon.txPinLow();
-			_delay_us(oregon.TWOTIME * 8);
+			auto voltageInMv = readBatteryVoltage();
+			oregonPower.setTemperature(oregonPower._oregonMessageBuffer, voltageInMv / 1000.0);
+			oregonPower.calculateAndSetChecksum(oregonPower._oregonMessageBuffer);
 
-			oregonPower.setTemperature(oregonPower._oregonMessageBuffer, readVcc() / 1000);
-			oregonPower.sendOregon(oregonPower._oregonMessageBuffer,
-								   sizeof(oregonPower._oregonMessageBuffer));
-			oregon.txPinLow();
+			if (batteryIsLow != (voltageInMv < LOW_BATTERY_VOLTAGE))
+			{
+				batteryIsLow = voltageInMv < LOW_BATTERY_VOLTAGE;
+				oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow);
+				oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+			}
+			// Voltage emission 1
+			emit<Oregon<MODE_0>>(oregonPower);
+			emit<Oregon<MODE_0>>(oregonPower);
 		}
 
-		if (shouldEmitData)
-		{
-			backupOregonMessage(_previousOregonMessageBuffer);
+		// led on
+		PORTB |= _BV(LED_PIN);
 
-			// led on
-			PORTB |= _BV(LED_PIN);
+		// Activate radio power
+		PORTA |= _BV(RADIO_POWER_PIN);
+		_delay_ms(2);
 
-			// Activate radio power
-			PORTA |= _BV(RADIO_POWER_PIN);
-			_delay_ms(2);
+		// led off here, it will allow a short
+		// blink when actually emitting new data
+		PORTB &= ~_BV(LED_PIN);
 
-			// led off here, it will allow a short
-			// blink when actually emitting new data
-			PORTB &= ~_BV(LED_PIN);
+		emit<Oregon<OREGON_MODE>>(oregon);
 
-			oregon.txPinLow();
-			_delay_us(oregon.TWOTIME * 8);
+		// second emission with led on
+		PORTB |= _BV(LED_PIN);
 
-			oregon.sendOregon(oregon._oregonMessageBuffer,
-							  sizeof(oregon._oregonMessageBuffer));
+		emit<Oregon<OREGON_MODE>>(oregon);
 
-			// pause before new transmission
-			oregon.txPinLow();
-			_delay_us(oregon.TWOTIME * 8);
+		// radio off
+		PORTA &= ~_BV(RADIO_POWER_PIN);
 
-			// second emission with led on
-			PORTB |= _BV(LED_PIN);
-
-			oregon.sendOregon(oregon._oregonMessageBuffer,
-							  sizeof(oregon._oregonMessageBuffer));
-
-			// radio off
-			PORTA &= ~_BV(RADIO_POWER_PIN);
-
-			// led off
-			PORTB &= ~_BV(LED_PIN);
-		}
+		// led off
+		PORTB &= ~_BV(LED_PIN);
 
 		sleep(SLEEP_TIME_IN_SECONDS);
 		secondCounter += SLEEP_TIME_IN_SECONDS;

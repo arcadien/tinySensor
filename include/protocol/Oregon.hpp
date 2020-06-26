@@ -28,14 +28,21 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-uint8_t Oregon::PREAMBLE[] = {0xFF, 0xFF};
-uint8_t Oregon::POSTAMBLE[] = {0x00};
+template <int MODE>
+uint8_t Oregon<MODE>::PREAMBLE[] = {0xFF, 0xFF};
 
-void Oregon::txPinLow() { PORTB &= ~_BV(PB0); }
+template <int MODE>
+uint8_t Oregon<MODE>::POSTAMBLE[] = {0x00};
 
-void Oregon::txPinHigh() { PORTB |= _BV(PB0); }
+template <int MODE>
+void Oregon<MODE>::txPinLow() { PORTB &= ~_BV(PB0); }
 
-inline void Oregon::sendZero(void) {
+template <int MODE>
+void Oregon<MODE>::txPinHigh() { PORTB |= _BV(PB0); }
+
+template <int MODE>
+inline void Oregon<MODE>::sendZero(void)
+{
   txPinHigh();
   _delay_us(TIME);
   txPinLow();
@@ -44,7 +51,9 @@ inline void Oregon::sendZero(void) {
   _delay_us(TIME);
 }
 
-inline void Oregon::sendOne(void) {
+template <int MODE>
+inline void Oregon<MODE>::sendOne(void)
+{
   txPinLow();
   _delay_us(TIME);
   txPinHigh();
@@ -53,66 +62,89 @@ inline void Oregon::sendOne(void) {
   _delay_us(TIME);
 }
 
-inline void Oregon::sendQuarterMSB(const uint8_t data) {
+template <int MODE>
+inline void Oregon<MODE>::sendQuarterMSB(const uint8_t data)
+{
   (bitRead(data, 4)) ? sendOne() : sendZero();
   (bitRead(data, 5)) ? sendOne() : sendZero();
   (bitRead(data, 6)) ? sendOne() : sendZero();
   (bitRead(data, 7)) ? sendOne() : sendZero();
 }
 
-inline void Oregon::sendQuarterLSB(const uint8_t data) {
+template <int MODE>
+inline void Oregon<MODE>::sendQuarterLSB(const uint8_t data)
+{
   (bitRead(data, 0)) ? sendOne() : sendZero();
   (bitRead(data, 1)) ? sendOne() : sendZero();
   (bitRead(data, 2)) ? sendOne() : sendZero();
   (bitRead(data, 3)) ? sendOne() : sendZero();
 }
 
-void Oregon::sendData(uint8_t *data, uint8_t size) {
-  for (uint8_t i = 0; i < size; ++i) {
+template <int MODE>
+void Oregon<MODE>::sendData(uint8_t *data, uint8_t size)
+{
+  for (uint8_t i = 0; i < size; ++i)
+  {
     sendQuarterLSB(data[i]);
     sendQuarterMSB(data[i]);
   }
 }
 
-void Oregon::sendOregon(uint8_t *data, uint8_t size) {
+template <int MODE>
+void Oregon<MODE>::sendOregon(uint8_t *data, uint8_t size)
+{
   sendPreamble();
   // sendSync();
   sendData(data, size);
   sendPostamble();
 }
 
-inline void Oregon::sendPreamble(void) { sendData(PREAMBLE, 2); }
+template <int MODE>
+inline void Oregon<MODE>::sendPreamble(void) { sendData(PREAMBLE, 2); }
 
-inline void Oregon::sendPostamble(void) {
+template <int MODE>
+inline void Oregon<MODE>::sendPostamble(void)
+{
 
   sendData(POSTAMBLE, 1);
-
 }
 
-inline void Oregon::sendSync(void) { sendQuarterLSB(0xA); }
+template <int MODE>
+inline void Oregon<MODE>::sendSync(void) { sendQuarterLSB(0xA); }
 
-void Oregon::setType(uint8_t *data, const uint8_t *type) {
+template <int MODE>
+void Oregon<MODE>::setType(uint8_t *data, const uint8_t *type)
+{
   data[0] = type[0];
   data[1] = type[1];
 }
 
-void Oregon::setChannel(uint8_t *data, uint8_t channel) { data[2] = channel; }
+template <int MODE>
+void Oregon<MODE>::setChannel(uint8_t *data, uint8_t channel) { data[2] = channel; }
 
-void Oregon::setId(uint8_t *data, uint8_t ID) { data[3] = ID; }
+template <int MODE>
+void Oregon<MODE>::setId(uint8_t *data, uint8_t ID) { data[3] = ID; }
 
-void Oregon::setBatteryLevel(uint8_t *data, uint8_t level) {
+template <int MODE>
+void Oregon<MODE>::setBatteryLevel(uint8_t *data, uint8_t level)
+{
   if (!level)
     data[4] = 0x0C;
   else
     data[4] = 0x00;
 }
 
-void Oregon::setTemperature(uint8_t *data, float temp) {
+template <int MODE>
+void Oregon<MODE>::setTemperature(uint8_t *data, float temp)
+{
   // Set temperature sign
-  if (temp < 0) {
+  if (temp < 0)
+  {
     data[6] = 0x08;
     temp *= -1;
-  } else {
+  }
+  else
+  {
     data[6] = 0x00;
   }
 
@@ -131,22 +163,30 @@ void Oregon::setTemperature(uint8_t *data, float temp) {
   data[4] |= (tempFloat << 4);
 }
 
-void Oregon::setHumidity(uint8_t *data, uint8_t hum) {
+template <int MODE>
+void Oregon<MODE>::setHumidity(uint8_t *data, uint8_t hum)
+{
   data[7] = (hum / 10);
   data[6] |= (hum - data[7] * 10) << 4;
 }
 
-void Oregon::setPressure(uint8_t *data, float pres) {
-  if ((pres > 850) && (pres < 1100)) {
+template <int MODE>
+void Oregon<MODE>::setPressure(uint8_t *data, float pres)
+{
+  if ((pres > 850) && (pres < 1100))
+  {
     data[8] = (int)round(pres) - 856;
     data[9] = 0xC0;
   }
 }
 
-int Oregon::Sum(uint8_t count, const uint8_t *data) {
+template <int MODE>
+int Oregon<MODE>::Sum(uint8_t count, const uint8_t *data)
+{
   int s = 0;
 
-  for (uint8_t i = 0; i < count; ++i) {
+  for (uint8_t i = 0; i < count; ++i)
+  {
     s += (data[i] & 0xF0) >> 4;
     s += (data[i] & 0xF);
   }
@@ -157,7 +197,9 @@ int Oregon::Sum(uint8_t count, const uint8_t *data) {
   return s;
 }
 
-void Oregon::calculateAndSetChecksum(uint8_t *data) {
+template <int MODE>
+void Oregon<MODE>::calculateAndSetChecksum(uint8_t *data)
+{
 #if OREGON_MODE == MODE_0
   int s = ((Sum(6, data) + (data[6] & 0xF) - 0xa) & 0xff);
   data[6] |= (s & 0x0F) << 4;
