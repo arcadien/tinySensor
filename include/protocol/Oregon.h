@@ -101,9 +101,14 @@
 #define HIGH 0x1
 #define LOW 0x0
 
+template <int OREGON_MODE = 0>
 class Oregon
 {
 public:
+  static constexpr uint8_t BUFF_SIZE[] = {8, 9, 11};
+  static const uint8_t BUFFER_SIZE = BUFF_SIZE[OREGON_MODE];
+  uint8_t _oregonMessageBuffer[BUFFER_SIZE];
+
   /*!
    * Convenient define for channel codes (1,2,3)
    */
@@ -118,26 +123,11 @@ public:
 #define MODE_1 1 // Temperature + Humidity [THGR2228N]
 #define MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
 
-  Oregon(uint8_t mode)
-  {
-    // Buffer for Oregon message
-#if mode == MODE_0
-    realloc(_oregonMessageBuffer, sizeof(uint8_t) * 8);
-#elif mode == MODE_1
-     realloc(_oregonMessageBuffer, sizeof(uint8_t) * 9);
-#elif mode == MODE_2
-     realloc(_oregonMessageBuffer, sizeof(uint8_t) * 11);
-#else
-#error mode unknown
-#endif
-  }
-
 private:
   static uint8_t PREAMBLE[];
   static uint8_t POSTAMBLE[];
 
 public:
-  uint8_t *_oregonMessageBuffer;
   static const uint16_t TIME = 512;
   static const uint16_t TWOTIME = TIME * 2;
 
@@ -272,4 +262,7 @@ public:
   void calculateAndSetChecksum(uint8_t *data);
 };
 
+#if defined(AVR)
+#include "Oregon.hpp"
+#endif
 #endif /* OREGON_H_ */
