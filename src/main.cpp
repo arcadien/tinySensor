@@ -26,9 +26,14 @@
 #include <string.h>
 #include <readVcc.h>
 
+#if defined(VOLTAGE_X10_SENSOR_ID)
+
+#include <x10rf.h>
+x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
+#endif
+
 #include <protocol/Oregon.h>
 Oregon<OREGON_MODE> oregon;
-Oregon<MODE_0> oregonPower;
 
 #if defined(USE_DS18B20)
 #include <ds18b20/ds18b20.h>
@@ -197,12 +202,6 @@ int avr_main(void)
 	oregon.setChannel(oregon._oregonMessageBuffer, Oregon<OREGON_MODE>::Channel::ONE);
 	oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 
-	// using temp-only sensor to carry battery voltage
-	const uint8_t OREGON_POWER_TYPE[] = {0xEA, 0x4C};
-	oregonPower.setType(oregonPower._oregonMessageBuffer, OREGON_POWER_TYPE);
-	oregonPower.setChannel(oregonPower._oregonMessageBuffer, Oregon<MODE_0>::Channel::ONE);
-	oregonPower.setId(oregonPower._oregonMessageBuffer, OREGON_ID + 1);
-
 #if defined(USE_BME280) || defined(USE_BMP280)
 	bmX280.setI2CAddress(0x76);
 	bmX280.beginI2C();
@@ -236,7 +235,7 @@ int avr_main(void)
 		auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
 		if (readStatus == DS18B20_ERROR_OK)
 		{
-			oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
+			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow);
 			oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
 			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
 		}
@@ -255,18 +254,13 @@ int avr_main(void)
 		if (shouldEmitVoltage)
 		{
 			auto voltageInMv = readBatteryVoltage();
-			oregonPower.setTemperature(oregonPower._oregonMessageBuffer, voltageInMv / 1000.0);
-			oregonPower.calculateAndSetChecksum(oregonPower._oregonMessageBuffer);
+			batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
+			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow ? 0 : 1);
+			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
 
-			if (batteryIsLow != (voltageInMv < LOW_BATTERY_VOLTAGE))
-			{
-				batteryIsLow = voltageInMv < LOW_BATTERY_VOLTAGE;
-				oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow);
-				oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-			}
-			// Voltage emission 1
-			emit<Oregon<MODE_0>>(oregonPower);
-			emit<Oregon<MODE_0>>(oregonPower);
+#if defined(VOLTAGE_X10_SENSOR_ID)
+			voltageX10Sensor.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
+#endif
 		}
 
 		// led on

@@ -20,9 +20,25 @@
 
 #include <inttypes.h>
 
+/*
+ * MODE_0 0 // Temperature only [THN132N]
+ * MODE_1 1 // Temperature + Humidity [THGR2228N]
+ * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
+ */
+#if !defined(OREGON_MODE)
+#define OREGON_MODE MODE_0
+#endif
+
 #if !defined(SLEEP_TIME_IN_SECONDS)
 #define SLEEP_TIME_IN_SECONDS 32
 #endif
+
+#if !defined(LOW_BATTERY_VOLTAGE)
+#define LOW_BATTERY_VOLTAGE 2000
+#endif
+
+const uint8_t OREGON_ID = SENSOR_ID;
+const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
 
 /*
  * 1-wire interface is on PA3
@@ -51,13 +67,3 @@
 #define USE_I2C
 #endif
 
-const uint8_t OREGON_ID = SENSOR_ID;
-const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
-
-#define LOW_BATTERY_VOLTAGE 2000
-/*
- * MODE_0 0 // Temperature only [THN132N]
- * MODE_1 1 // Temperature + Humidity [THGR2228N]
- * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
- */
-// #define OREGON_MODE MODE_1
