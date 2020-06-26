@@ -20,9 +20,9 @@
 
 #include <inttypes.h>
 
-// sleep 32s between each sample and
-// emission
-#define SLEEP_TIME_IN_SECONDS (8 * 4)
+#if !defined(SLEEP_TIME_IN_SECONDS)
+#define SLEEP_TIME_IN_SECONDS 32
+#endif
 
 /*
  * 1-wire interface is on PA3
@@ -54,6 +54,7 @@
 const uint8_t OREGON_ID = SENSOR_ID;
 const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
 
+#define LOW_BATTERY_VOLTAGE 2000
 /*
  * MODE_0 0 // Temperature only [THN132N]
  * MODE_1 1 // Temperature + Humidity [THGR2228N]
