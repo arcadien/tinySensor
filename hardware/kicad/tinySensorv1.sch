@@ -1,12 +1,11 @@
 EESchema Schematic File Version 4
-LIBS:tinySensorv1-cache
-EELAYER 26 0
+EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "TinySensor board"
-Date "2018-11-12"
+Date "2020-06-28"
 Rev "2.0"
 Comp ""
 Comment1 "Open Hardware"
@@ -67,7 +66,7 @@ F 1 "LED" H 2792 6186 50  0000 C CNN
 F 2 "LED_THT:LED_D1.8mm_W3.3mm_H2.4mm" H 2800 6350 50  0001 C CNN
 F 3 "~" H 2800 6350 50  0001 C CNN
 	1    2800 6350
-	-1   0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR0102
@@ -149,7 +148,6 @@ F 3 "" H 6600 1100 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	6600 1100 6700 1100
-NoConn ~ 2850 2500
 $Comp
 L power:GND #PWR0105
 U 1 1 5BCCA06F
@@ -300,7 +298,7 @@ F 1 "1n" V 6500 2400 50  0000 C CNN
 F 2 "Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm" H 6538 2000 50  0001 C CNN
 F 3 "~" H 6500 2150 50  0001 C CNN
 	1    6500 2150
-	0    1    1    0   
+	0    -1   -1   0   
 $EndComp
 Text Notes 10200 2300 0    50   ~ 0
 Power management
@@ -376,7 +374,7 @@ RESET
 Wire Wire Line
 	2850 2600 3000 2600
 $Comp
-L Connector:AVR-ISP-6 J6
+L tinySensorv1-rescue:AVR-ISP-6-Connector J6
 U 1 1 5BCF975A
 P 2250 4300
 F 0 "J6" H 1970 4396 50  0000 R CNN
@@ -444,8 +442,8 @@ $Comp
 L Connector_Generic:Conn_01x03 J7
 U 1 1 5BD28967
 P 4500 4550
-F 0 "J7" H 4900 4450 50  0000 C CNN
-F 1 "Analog sensor" H 4900 4550 50  0000 C CNN
+F 0 "J7" H 4650 4550 50  0000 C CNN
+F 1 "Analog sensor" H 4500 4800 50  0000 C CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 4500 4550 50  0001 C CNN
 F 3 "~" H 4500 4550 50  0001 C CNN
 	1    4500 4550
@@ -457,8 +455,8 @@ $Comp
 L Connector_Generic:Conn_01x03 J5
 U 1 1 5BD3495A
 P 5050 3850
-F 0 "J5" H 5450 3800 50  0000 C CNN
-F 1 "OneWire sensor" H 5450 3900 50  0000 C CNN
+F 0 "J5" H 5200 3850 50  0000 C CNN
+F 1 "OneWire sensor" H 5050 4100 50  0000 C CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 5050 3850 50  0001 C CNN
 F 3 "~" H 5050 3850 50  0001 C CNN
 	1    5050 3850
@@ -467,13 +465,8 @@ $EndComp
 Wire Wire Line
 	5750 3500 5750 3850
 Wire Wire Line
-	5250 3750 6000 3750
-Connection ~ 6000 3750
-Wire Wire Line
 	5250 3850 5750 3850
 Connection ~ 5750 3850
-Text Label 5400 3950 0    50   ~ 0
-OneWire
 Wire Notes Line
 	4050 3250 7750 3250
 Text Notes 6900 6050 0    50   ~ 0
@@ -523,16 +516,11 @@ F 3 "~" H 6900 1200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	6000 3750 6000 4200
-Wire Wire Line
-	5750 3850 5750 4550
-Connection ~ 6000 4450
+	5750 3850 5750 4450
 Wire Wire Line
 	6000 4450 6600 4450
 Wire Wire Line
 	5750 4550 6600 4550
-Wire Wire Line
-	4700 4450 6000 4450
 Wire Wire Line
 	2850 2300 3000 2300
 Text Label 3000 2100 0    50   ~ 0
@@ -542,7 +530,7 @@ L Connector:Conn_01x06_Female J3
 U 1 1 5BDADDD8
 P 6800 4650
 F 0 "J3" H 6827 4626 50  0000 L CNN
-F 1 "BMP/BME breakout" H 6827 4535 50  0000 L CNN
+F 1 "I2C Sensor (BME/BMP 280)" H 6250 4200 50  0000 L CNN
 F 2 "TinySensor lib:BMx280_breakout" H 6800 4650 50  0001 C CNN
 F 3 "~" H 6800 4650 50  0001 C CNN
 	1    6800 4650
@@ -551,12 +539,12 @@ $EndComp
 $Comp
 L power:GND #PWR0120
 U 1 1 5BDB0112
-P 4900 5550
-F 0 "#PWR0120" H 4900 5300 50  0001 C CNN
-F 1 "GND" H 5000 5400 50  0000 R CNN
-F 2 "" H 4900 5550 50  0001 C CNN
-F 3 "" H 4900 5550 50  0001 C CNN
-	1    4900 5550
+P 4900 5600
+F 0 "#PWR0120" H 4900 5350 50  0001 C CNN
+F 1 "GND" H 5000 5450 50  0000 R CNN
+F 2 "" H 4900 5600 50  0001 C CNN
+F 3 "" H 4900 5600 50  0001 C CNN
+	1    4900 5600
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -584,24 +572,14 @@ $EndComp
 $Comp
 L Device:R R6
 U 1 1 5BDB363C
-P 5400 4200
-F 0 "R6" V 5193 4200 50  0000 C CNN
-F 1 "4k7" V 5284 4200 50  0000 C CNN
-F 2 "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 5330 4200 50  0001 C CNN
-F 3 "~" H 5400 4200 50  0001 C CNN
-	1    5400 4200
+P 5400 3600
+F 0 "R6" V 5193 3600 50  0000 C CNN
+F 1 "4k7" V 5284 3600 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 5330 3600 50  0001 C CNN
+F 3 "~" H 5400 3600 50  0001 C CNN
+	1    5400 3600
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	5550 4200 6000 4200
-Connection ~ 6000 4200
-Wire Wire Line
-	6000 4200 6000 4450
-Wire Wire Line
-	5250 4200 5250 3950
-Connection ~ 5250 3950
-Wire Wire Line
-	5250 3950 5400 3950
 Wire Notes Line
 	5850 2400 11000 2400
 Wire Notes Line
@@ -688,12 +666,10 @@ Text Notes 2850 6650 0    50   ~ 0
 Radio activity led
 Wire Notes Line rgb(0, 194, 0)
 	4450 4950 5800 4950
-Text Notes 4450 5850 0    50   ~ 0
-Optional RC filter for LM35 sensor
-Wire Notes Line rgb(0, 194, 0)
-	4450 5950 5800 5950
+Text Notes 4500 5950 0    50   ~ 0
+Optional RC filter for LM35 sensor \nor resistor bridge for LDR
 Wire Notes Line rgb(114, 194, 0)
-	5800 4950 5800 5950
+	5950 4950 5950 5950
 Wire Notes Line rgb(0, 194, 0)
 	4450 4950 4450 5950
 Wire Notes Line
@@ -724,17 +700,6 @@ F 1 "MountingHole" H 10250 5105 50  0000 L CNN
 F 2 "MountingHole:MountingHole_2.5mm" H 10150 5150 50  0001 C CNN
 F 3 "~" H 10150 5150 50  0001 C CNN
 	1    10150 5150
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Mechanical:MountingHole MH7
-U 1 1 5BEA80BA
-P 10350 5150
-F 0 "MH7" H 10450 5196 50  0000 L CNN
-F 1 "MountingHole" H 10450 5105 50  0000 L CNN
-F 2 "MountingHole:MountingHole_2.5mm" H 10350 5150 50  0001 C CNN
-F 3 "~" H 10350 5150 50  0001 C CNN
-	1    10350 5150
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -792,8 +757,6 @@ F 3 "" H 2150 3750 50  0001 C CNN
 $EndComp
 Text Label 6000 3400 0    50   ~ 0
 SENSOR_VCC
-Wire Wire Line
-	6000 3400 6000 3750
 $Comp
 L power:VCC #PWR05
 U 1 1 5BEA3FC9
@@ -853,10 +816,6 @@ F 3 "" H 9750 5750 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	5950 1300 6350 1300
-Wire Wire Line
-	10300 1550 10300 1750
-Wire Wire Line
-	10400 1550 10400 1650
 $Comp
 L power:GND #PWR0117
 U 1 1 5BCEAFCA
@@ -868,16 +827,10 @@ F 3 "" H 10300 1850 50  0001 C CNN
 	1    10300 1850
 	1    0    0    -1  
 $EndComp
-Connection ~ 10300 1750
 Wire Wire Line
 	10300 1750 10300 1850
 Wire Wire Line
 	8000 1650 8250 1650
-Wire Wire Line
-	9750 1550 9750 1750
-Connection ~ 9750 1750
-Wire Wire Line
-	9750 1750 10300 1750
 Wire Wire Line
 	8000 1650 8000 1350
 Connection ~ 8250 1650
@@ -886,8 +839,6 @@ Wire Wire Line
 Wire Wire Line
 	9450 850  9450 1650
 Connection ~ 9450 1650
-Wire Wire Line
-	9450 1650 9850 1650
 Text Notes 7700 2100 0    50   ~ 0
 Bypass of DC-DC converter
 Wire Wire Line
@@ -898,17 +849,7 @@ Wire Wire Line
 	4900 1100 4900 1000
 Connection ~ 4900 1100
 Wire Wire Line
-	9850 1550 9850 1650
-Connection ~ 9850 1650
-Wire Wire Line
-	9850 1650 10400 1650
-Wire Wire Line
-	5750 4650 5750 4550
-Connection ~ 5750 4550
-Wire Wire Line
 	4700 4550 4900 4550
-Wire Wire Line
-	4700 4650 5750 4650
 Wire Wire Line
 	4900 4950 4900 4550
 Connection ~ 4900 4550
@@ -933,8 +874,6 @@ Wire Wire Line
 Wire Wire Line
 	9150 1550 9150 1750
 Connection ~ 9150 1750
-Wire Wire Line
-	9150 1750 9750 1750
 $Comp
 L Device:CP C4
 U 1 1 5E0B7120
@@ -949,29 +888,138 @@ $EndComp
 Wire Wire Line
 	9150 3850 9000 3850
 $Comp
-L Connector:Conn_01x02_Male J4
-U 1 1 5E0CE887
-P 4050 2200
-F 0 "J4" H 4156 2378 50  0000 C CNN
-F 1 "PWM out" H 4156 2287 50  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 4050 2200 50  0001 C CNN
-F 3 "~" H 4050 2200 50  0001 C CNN
-	1    4050 2200
-	-1   0    0    1   
-$EndComp
-Wire Wire Line
-	2850 2100 3850 2100
-$Comp
 L power:GND #PWR0101
 U 1 1 5E0E2B34
-P 3700 2200
-F 0 "#PWR0101" H 3700 1950 50  0001 C CNN
-F 1 "GND" H 3705 2027 50  0000 C CNN
-F 2 "" H 3700 2200 50  0001 C CNN
-F 3 "" H 3700 2200 50  0001 C CNN
-	1    3700 2200
+P 4150 2100
+F 0 "#PWR0101" H 4150 1850 50  0001 C CNN
+F 1 "GND" H 4155 1927 50  0000 C CNN
+F 2 "" H 4150 2100 50  0001 C CNN
+F 3 "" H 4150 2100 50  0001 C CNN
+	1    4150 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Jumper:SolderJumper_2_Open JP3
+U 1 1 5EF9D131
+P 5450 5450
+F 0 "JP3" V 5450 5200 50  0000 L CNN
+F 1 " " V 5350 4950 50  0000 L CNN
+F 2 "Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm" H 5450 5450 50  0001 C CNN
+F 3 "~" H 5450 5450 50  0001 C CNN
+	1    5450 5450
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	5450 5600 4900 5600
+Wire Wire Line
+	4900 5550 4900 5600
+Connection ~ 4900 5600
+Wire Notes Line rgb(7, 194, 0)
+	5800 4950 5950 4950
+Wire Wire Line
+	4900 5250 5450 5250
+Wire Wire Line
+	5450 5250 5450 5300
+Wire Notes Line rgb(0, 194, 0)
+	4450 5950 5950 5950
+Connection ~ 4900 5250
+$Comp
+L Connector_Generic:Conn_01x02 J8
+U 1 1 5F04FEAF
+P 2200 5450
+F 0 "J8" H 2280 5442 50  0000 L CNN
+F 1 "EXT. INT0" H 1800 5650 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 2200 5450 50  0001 C CNN
+F 3 "~" H 2200 5450 50  0001 C CNN
+	1    2200 5450
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0103
+U 1 1 5F052C10
+P 2000 5600
+F 0 "#PWR0103" H 2000 5350 50  0001 C CNN
+F 1 "GND" H 2005 5427 50  0000 C CNN
+F 2 "" H 2000 5600 50  0001 C CNN
+F 3 "" H 2000 5600 50  0001 C CNN
+	1    2000 5600
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3700 2200 3850 2200
+	2000 5550 2000 5600
+Text Label 1700 5450 0    50   ~ 0
+INT0
+Wire Wire Line
+	1700 5450 2000 5450
+Wire Wire Line
+	2850 2500 3000 2500
+Text Label 3000 2500 0    50   ~ 0
+INT0
+Wire Wire Line
+	4700 4450 5750 4450
+Connection ~ 5750 4450
+Wire Wire Line
+	5750 4450 5750 4550
+Wire Wire Line
+	6000 4450 6000 4650
+Wire Wire Line
+	6000 4650 4700 4650
+Connection ~ 6000 4450
+Wire Wire Line
+	9450 1650 9750 1650
+Wire Wire Line
+	10300 1550 10300 1650
+Wire Wire Line
+	9750 1550 9750 1650
+Connection ~ 9750 1650
+Wire Wire Line
+	9750 1650 10300 1650
+Wire Wire Line
+	9150 1750 9850 1750
+Connection ~ 10300 1750
+Wire Wire Line
+	10300 1750 10400 1750
+Wire Wire Line
+	10400 1550 10400 1750
+Wire Wire Line
+	9850 1550 9850 1750
+Connection ~ 9850 1750
+Wire Wire Line
+	9850 1750 10300 1750
+Wire Wire Line
+	2850 2100 3900 2100
+Wire Wire Line
+	6000 3400 6000 3600
+Wire Wire Line
+	5550 3600 6000 3600
+Connection ~ 6000 3600
+Wire Wire Line
+	5250 3600 5250 3750
+Wire Wire Line
+	6000 3600 6000 3950
+Wire Wire Line
+	5250 3750 5350 3750
+Connection ~ 5250 3750
+Text Label 5350 3750 0    50   ~ 0
+OneWire
+Wire Wire Line
+	5250 3950 6000 3950
+Connection ~ 6000 3950
+Wire Wire Line
+	6000 3950 6000 4450
+$Comp
+L Connector:Conn_01x02_Male J4
+U 1 1 5E0CE887
+P 3900 2300
+F 0 "J4" H 4006 2478 50  0000 C CNN
+F 1 "PWM out" V 3800 2250 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 3900 2300 50  0001 C CNN
+F 3 "~" H 3900 2300 50  0001 C CNN
+	1    3900 2300
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4150 2100 4000 2100
+Connection ~ 4150 2100
+Connection ~ 4000 2100
 $EndSCHEMATC
