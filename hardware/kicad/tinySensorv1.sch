@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 1 1
 Title "TinySensor board"
 Date "2020-06-28"
-Rev "2.0"
+Rev "2.1"
 Comp ""
 Comment1 "Open Hardware"
 Comment2 ""
@@ -148,43 +148,6 @@ F 3 "" H 6600 1100 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	6600 1100 6700 1100
-$Comp
-L power:GND #PWR0105
-U 1 1 5BCCA06F
-P 5750 3500
-F 0 "#PWR0105" H 5750 3250 50  0001 C CNN
-F 1 "GND" H 5755 3327 50  0000 C CNN
-F 2 "" H 5750 3500 50  0001 C CNN
-F 3 "" H 5750 3500 50  0001 C CNN
-	1    5750 3500
-	-1   0    0    1   
-$EndComp
-Text Label 6350 4650 0    50   ~ 0
-SCL
-Text Label 6350 4750 0    50   ~ 0
-SDA
-NoConn ~ 6600 4850
-$Comp
-L power:GND #PWR0106
-U 1 1 5BCCC7EF
-P 6350 4950
-F 0 "#PWR0106" H 6350 4700 50  0001 C CNN
-F 1 "GND" V 6355 4822 50  0000 R CNN
-F 2 "" H 6350 4950 50  0001 C CNN
-F 3 "" H 6350 4950 50  0001 C CNN
-	1    6350 4950
-	0    1    1    0   
-$EndComp
-Wire Wire Line
-	6350 4950 6600 4950
-Wire Wire Line
-	6350 4650 6600 4650
-Wire Wire Line
-	6350 4750 6600 4750
-Text Notes 6350 4950 0    50   ~ 0
-SDO
-Text Notes 6350 4850 0    50   ~ 0
-CSB
 Text Label 3000 1800 0    50   ~ 0
 SCL
 Text Label 3000 2000 0    50   ~ 0
@@ -451,22 +414,6 @@ F 3 "~" H 4500 4550 50  0001 C CNN
 $EndComp
 Text Label 5050 4550 0    50   ~ 0
 Analog_sensor
-$Comp
-L Connector_Generic:Conn_01x03 J5
-U 1 1 5BD3495A
-P 5050 3850
-F 0 "J5" H 5200 3850 50  0000 C CNN
-F 1 "OneWire sensor" H 5050 4100 50  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 5050 3850 50  0001 C CNN
-F 3 "~" H 5050 3850 50  0001 C CNN
-	1    5050 3850
-	-1   0    0    1   
-$EndComp
-Wire Wire Line
-	5750 3500 5750 3850
-Wire Wire Line
-	5250 3850 5750 3850
-Connection ~ 5750 3850
 Wire Notes Line
 	4050 3250 7750 3250
 Text Notes 6900 6050 0    50   ~ 0
@@ -516,26 +463,9 @@ F 3 "~" H 6900 1200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	5750 3850 5750 4450
-Wire Wire Line
-	6000 4450 6600 4450
-Wire Wire Line
-	5750 4550 6600 4550
-Wire Wire Line
 	2850 2300 3000 2300
 Text Label 3000 2100 0    50   ~ 0
 PWM_OUT
-$Comp
-L Connector:Conn_01x06_Female J3
-U 1 1 5BDADDD8
-P 6800 4650
-F 0 "J3" H 6827 4626 50  0000 L CNN
-F 1 "I2C Sensor (BME/BMP 280)" H 6250 4200 50  0000 L CNN
-F 2 "TinySensor lib:BMx280_breakout" H 6800 4650 50  0001 C CNN
-F 3 "~" H 6800 4650 50  0001 C CNN
-	1    6800 4650
-	1    0    0    -1  
-$EndComp
 $Comp
 L power:GND #PWR0120
 U 1 1 5BDB0112
@@ -568,17 +498,6 @@ F 2 "Capacitor_THT:CP_Radial_D4.0mm_P1.50mm" H 4900 5400 50  0001 C CNN
 F 3 "~" H 4900 5400 50  0001 C CNN
 	1    4900 5400
 	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R R6
-U 1 1 5BDB363C
-P 5400 3600
-F 0 "R6" V 5193 3600 50  0000 C CNN
-F 1 "4k7" V 5284 3600 50  0000 C CNN
-F 2 "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 5330 3600 50  0001 C CNN
-F 3 "~" H 5400 3600 50  0001 C CNN
-	1    5400 3600
-	0    1    1    0   
 $EndComp
 Wire Notes Line
 	5850 2400 11000 2400
@@ -755,8 +674,6 @@ F 3 "" H 2150 3750 50  0001 C CNN
 	1    2150 3750
 	1    0    0    -1  
 $EndComp
-Text Label 6000 3400 0    50   ~ 0
-SENSOR_VCC
 $Comp
 L power:VCC #PWR05
 U 1 1 5BEA3FC9
@@ -898,17 +815,6 @@ F 3 "" H 4150 2100 50  0001 C CNN
 	1    4150 2100
 	1    0    0    -1  
 $EndComp
-$Comp
-L Jumper:SolderJumper_2_Open JP3
-U 1 1 5EF9D131
-P 5450 5450
-F 0 "JP3" V 5450 5200 50  0000 L CNN
-F 1 " " V 5350 4950 50  0000 L CNN
-F 2 "Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm" H 5450 5450 50  0001 C CNN
-F 3 "~" H 5450 5450 50  0001 C CNN
-	1    5450 5450
-	0    -1   -1   0   
-$EndComp
 Wire Wire Line
 	5450 5600 4900 5600
 Wire Wire Line
@@ -956,16 +862,6 @@ Wire Wire Line
 Text Label 3000 2500 0    50   ~ 0
 INT0
 Wire Wire Line
-	4700 4450 5750 4450
-Connection ~ 5750 4450
-Wire Wire Line
-	5750 4450 5750 4550
-Wire Wire Line
-	6000 4450 6000 4650
-Wire Wire Line
-	6000 4650 4700 4650
-Connection ~ 6000 4450
-Wire Wire Line
 	9450 1650 9750 1650
 Wire Wire Line
 	10300 1550 10300 1650
@@ -988,25 +884,6 @@ Wire Wire Line
 	9850 1750 10300 1750
 Wire Wire Line
 	2850 2100 3900 2100
-Wire Wire Line
-	6000 3400 6000 3600
-Wire Wire Line
-	5550 3600 6000 3600
-Connection ~ 6000 3600
-Wire Wire Line
-	5250 3600 5250 3750
-Wire Wire Line
-	6000 3600 6000 3950
-Wire Wire Line
-	5250 3750 5350 3750
-Connection ~ 5250 3750
-Text Label 5350 3750 0    50   ~ 0
-OneWire
-Wire Wire Line
-	5250 3950 6000 3950
-Connection ~ 6000 3950
-Wire Wire Line
-	6000 3950 6000 4450
 $Comp
 L Connector:Conn_01x02_Male J4
 U 1 1 5E0CE887
@@ -1020,6 +897,179 @@ F 3 "~" H 3900 2300 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	4150 2100 4000 2100
-Connection ~ 4150 2100
-Connection ~ 4000 2100
+Wire Wire Line
+	6000 4650 4700 4650
+Text Label 6550 3950 0    50   ~ 0
+OneWire
+Text Label 6000 3400 0    50   ~ 0
+SENSOR_VCC
+Connection ~ 5750 3850
+Wire Wire Line
+	5750 3500 5750 3850
+$Comp
+L power:GND #PWR0105
+U 1 1 5BCCA06F
+P 5750 3500
+F 0 "#PWR0105" H 5750 3250 50  0001 C CNN
+F 1 "GND" H 5755 3327 50  0000 C CNN
+F 2 "" H 5750 3500 50  0001 C CNN
+F 3 "" H 5750 3500 50  0001 C CNN
+	1    5750 3500
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector:Conn_01x06_Female J3
+U 1 1 5BDADDD8
+P 7600 4650
+F 0 "J3" H 7627 4626 50  0000 L CNN
+F 1 "I2C Sensor (BME/BMP 280)" H 6600 4150 50  0000 L CNN
+F 2 "TinySensor lib:BMx280_breakout" H 7600 4650 50  0001 C CNN
+F 3 "~" H 7600 4650 50  0001 C CNN
+	1    7600 4650
+	1    0    0    -1  
+$EndComp
+Text Notes 7150 4850 0    50   ~ 0
+CSB
+Text Notes 7150 4950 0    50   ~ 0
+SDO
+Wire Wire Line
+	7150 4750 7400 4750
+Wire Wire Line
+	7150 4650 7400 4650
+Wire Wire Line
+	7150 4950 7400 4950
+$Comp
+L power:GND #PWR0106
+U 1 1 5BCCC7EF
+P 7150 4950
+F 0 "#PWR0106" H 7150 4700 50  0001 C CNN
+F 1 "GND" V 7155 4822 50  0000 R CNN
+F 2 "" H 7150 4950 50  0001 C CNN
+F 3 "" H 7150 4950 50  0001 C CNN
+	1    7150 4950
+	0    1    1    0   
+$EndComp
+NoConn ~ 7400 4850
+Text Label 7150 4750 0    50   ~ 0
+SDA
+Text Label 7150 4650 0    50   ~ 0
+SCL
+Wire Wire Line
+	6000 4450 7400 4450
+Connection ~ 6000 4450
+Wire Wire Line
+	6000 4450 6000 4650
+Wire Wire Line
+	5750 4550 7400 4550
+$Comp
+L Connector_Generic:Conn_01x03 J5
+U 1 1 5F02EE88
+P 7100 3850
+F 0 "J5" H 7250 3850 50  0000 C CNN
+F 1 "OneWire sensor" H 7100 4100 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 7100 3850 50  0001 C CNN
+F 3 "~" H 7100 3850 50  0001 C CNN
+	1    7100 3850
+	1    0    0    -1  
+$EndComp
+Connection ~ 6000 3750
+$Comp
+L Device:R R6
+U 1 1 5F036A1B
+P 6250 4200
+F 0 "R6" V 6043 4200 50  0000 C CNN
+F 1 "4k7" V 6134 4200 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 6180 4200 50  0001 C CNN
+F 3 "~" H 6250 4200 50  0001 C CNN
+	1    6250 4200
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	6900 4200 6900 3950
+Wire Wire Line
+	6000 4200 6100 4200
+Connection ~ 6000 4200
+Wire Wire Line
+	6000 4200 6000 4450
+Wire Wire Line
+	6400 4200 6900 4200
+Wire Wire Line
+	6900 3950 6550 3950
+Connection ~ 6900 3950
+Wire Wire Line
+	5750 3850 6900 3850
+Wire Wire Line
+	6000 3750 6900 3750
+Wire Wire Line
+	6000 3400 6000 3750
+Wire Wire Line
+	6000 3750 6000 4200
+$Comp
+L Diode:1N914 D3
+U 1 1 5F0654D3
+P 5400 3850
+F 0 "D3" H 5400 3633 50  0000 C CNN
+F 1 "1N914" H 5400 3724 50  0000 C CNN
+F 2 "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal" H 5400 3675 50  0001 C CNN
+F 3 "http://www.vishay.com/docs/85622/1n914.pdf" H 5400 3850 50  0001 C CNN
+	1    5400 3850
+	-1   0    0    1   
+$EndComp
+$Comp
+L Diode:1N914 D2
+U 1 1 5F0666CE
+P 5100 3850
+F 0 "D2" H 5100 3633 50  0000 C CNN
+F 1 "1N914" H 5100 3724 50  0000 C CNN
+F 2 "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal" H 5100 3675 50  0001 C CNN
+F 3 "http://www.vishay.com/docs/85622/1n914.pdf" H 5100 3850 50  0001 C CNN
+	1    5100 3850
+	-1   0    0    1   
+$EndComp
+Text Label 4450 3800 0    50   ~ 0
+OneWire
+Wire Wire Line
+	4450 3850 4450 3800
+Wire Wire Line
+	5750 3850 5550 3850
+Wire Wire Line
+	4450 3850 4800 3850
+Connection ~ 4800 3850
+Wire Wire Line
+	4800 3850 4950 3850
+$Comp
+L Jumper:SolderJumper_2_Open JP3
+U 1 1 5EF9D131
+P 5450 5450
+F 0 "JP3" V 5450 5200 50  0000 L CNN
+F 1 " " V 5350 4950 50  0000 L CNN
+F 2 "Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm" H 5450 5450 50  0001 C CNN
+F 3 "~" H 5450 5450 50  0001 C CNN
+	1    5450 5450
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Jumper:SolderJumper_3_Open JP4
+U 1 1 5F0DC052
+P 5000 4150
+F 0 "JP4" H 5000 4250 50  0000 C CNN
+F 1 "Analog ref" H 4550 4150 50  0000 C CNN
+F 2 "Jumper:SolderJumper-3_P1.3mm_Open_Pad1.0x1.5mm_NumberLabels" H 5000 4150 50  0001 C CNN
+F 3 "~" H 5000 4150 50  0001 C CNN
+	1    5000 4150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5750 3850 5750 4150
+Wire Wire Line
+	5200 4150 5750 4150
+Connection ~ 5750 4150
+Wire Wire Line
+	5750 4150 5750 4550
+Wire Wire Line
+	4800 3850 4800 4150
+Wire Wire Line
+	5000 4450 5000 4300
+Wire Wire Line
+	4700 4450 5000 4450
 $EndSCHEMATC
