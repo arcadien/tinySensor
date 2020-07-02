@@ -38,9 +38,33 @@ A web application wrapped in a Docker container allow to build the firmware in a
 
 TinySensor build environment now uses [PlatformIO](https://platformio.org/).
 
-## Hardware
+## Hardware options
 
-![Schematic](/doc/schematic.png?raw=true|width=200px "Board schematic")
-![Board preview (front)](/doc/boardv2.png?raw=true "Board preview (front)"){:height="700px" width="400px"}
-![Board preview (back)](/doc/boardv2_copper.png?raw=true "Board preview (back)"){:height="700px" width="400px"}
+TinySensor has been tested in 'single sensor' and 'multiple sensor'. Multiple sensor setup is DS18B20 + LM35.
+Due to memory limit in the Attiny84a used by default, some sensor combinations are not possible.
 
+
+### DS18B20
+
+OneWire sensor, cheap and efficient.
+
+### BMP/BME 280 environment sensor
+The [BMP280](https://www.bosch-sensortec.com/products/environmental-sensors/pressure-sensors/pressure-sensors-bmp280-1.html) and the [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) share the same library, but the BME provide humidity sensing, and thus use more memory.
+
+### Analog sensor
+
+Analog sensor can be used for [LM35](https://www.ti.com/lit/ds/symlink/lm35.pdf) temperature sensor, or [LDR](https://en.wikipedia.org/wiki/Photoresistor).
+
+### LM35 temperature sensor
+
+#### Without negative temperature support
+solder *2* and middle pads of **J4** solder jumper (rear side) and  **JP3**. 
+This will make ground as reference for analog sensor.
+
+#### With negative temperature support
+In the case of a *-CAZ* version, temperature below 0 can be measured. 
+To allow this, two 1N914 diodes must be placed to put the sensor reference below 0. This setup is documented in the LM35 datasheet.
+On TinySensor board v2.1 and up, this can be implemented by solding **D2** and **D3** diodes, **R4** (18k), **JP3** and solding *1* and middle pads of **J4** solder jumper (rear side).
+
+# LDR
+Use the right value for **R4** (should match the used LDR) and solder **JP3** and, on **JP4**, middle and *3* pads. This way, there will be no RC filter (no cap because of **J3**) and Vss analog reference thanks of **JP4**.
