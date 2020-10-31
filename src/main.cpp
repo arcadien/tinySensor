@@ -116,7 +116,7 @@ void setup()
 
 	// set output pins
 	DDRB |= _BV(TX_RADIO_PIN);
-	DDRA |= _BV(RADIO_POWER_PIN);
+	DDRA |= _BV(SENSOR_VCC);
 	DDRB |= _BV(LED_PIN);
 
 #if defined(USE_I2C)
@@ -265,8 +265,7 @@ int avr_main(void)
 		// led on
 		PORTB |= _BV(LED_PIN);
 
-		// Activate radio power
-		PORTA |= _BV(RADIO_POWER_PIN);
+		PORTA |= _BV(SENSOR_VCC);
 		_delay_ms(2);
 
 		// led off here, it will allow a short
@@ -280,8 +279,7 @@ int avr_main(void)
 
 		emit<Oregon<OREGON_MODE>>(oregon);
 
-		// radio off
-		PORTA &= ~_BV(RADIO_POWER_PIN);
+		PORTA &= ~_BV(SENSOR_VCC);
 
 		// led off
 		PORTB &= ~_BV(LED_PIN);

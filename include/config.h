@@ -55,7 +55,7 @@ const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
 #define LED_PIN PB1
 #define PWM_PIN PA7
 #define TX_RADIO_PIN PB0
-#define RADIO_POWER_PIN PA2
+#define SENSOR_VCC PA2
 #define BAT_SENSOR_PIN PA1
 
 // Sensors
