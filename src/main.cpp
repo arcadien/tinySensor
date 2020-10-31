@@ -36,7 +36,7 @@ x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 Oregon<OREGON_MODE> oregon;
 
 #if defined(USE_DS18B20)
-#include <ds18b20/ds18b20.h>
+#include <ds18b20.h>
 #endif
 
 #if defined(USE_BME280) or defined(USE_BMP280)
