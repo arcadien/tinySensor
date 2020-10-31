@@ -8,3 +8,4 @@ Release/
 .pio
 web/data/
 volume
+hardware/kicad/fp-info-cache
