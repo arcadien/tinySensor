@@ -193,6 +193,12 @@ void emit(Oregon &oregon)
 int avr_main(void)
 {
 
+#if defined(USE_BME280) || defined(USE_BMP280)
+	// I2C setup needs pullup on SENSOR_VCC rail
+	PORTA |= _BV(SENSOR_VCC);
+#endif
+
+
 	bool batteryIsLow = false;
 
 	setup();
