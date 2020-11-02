@@ -58,13 +58,22 @@ Analog sensor can be used for [LM35](https://www.ti.com/lit/ds/symlink/lm35.pdf)
 ### LM35 temperature sensor
 
 #### Without negative temperature support
-solder *2* and middle pads of **J4** solder jumper (rear side) and  **JP3**. 
-This will make ground as reference for analog sensor.
+A 0v ground reference is needed.
+Solder pads *2* and *3* of **J4**, (rear side) as well **JP3**. 
 
 #### With negative temperature support
 In the case of a *-CAZ* version, temperature below 0 can be measured. 
-To allow this, two 1N914 diodes must be placed to put the sensor reference below 0. This setup is documented in the LM35 datasheet.
-On TinySensor board v2.1 and up, this can be implemented by solding **D2** and **D3** diodes, **R4** (18k), **JP3** and solding *1* and middle pads of **J4** solder jumper (rear side).
+To allow this, two 1N914 diodes must be placed to put the sensor reference below 0v. This setup is documented in the LM35 datasheet.
+On TinySensor board v2.1 and up, this can be implemented by:
+* solding **D2** and **D3** diodes
+*solding **R4** with a value of 18k
+* solding **JP3** to bypass C3 capacitor
+* solding pads *1* and *2* of **J4** (rear side) to set ground reference.
+
+#### Notes about swing
+
+You can add a filter capacitor *C3* to avoid swing if the wire is long. In this case, do not solder *JP3*.
+See datasheet for details.
 
 # LDR
 Use the right value for **R4** (should match the used LDR) and solder **JP3** and, on **JP4**, middle and *3* pads. This way, there will be no RC filter (no cap because of **J3**) and Vss analog reference thanks of **JP4**.

@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "TinySensor board"
-Date "2020-06-28"
-Rev "2.1"
+Date "2020-11-02"
+Rev "2.2"
 Comp ""
 Comment1 "Open Hardware"
 Comment2 ""
@@ -412,8 +412,6 @@ F 3 "~" H 4500 4550 50  0001 C CNN
 $EndComp
 Text Label 5050 4550 0    50   ~ 0
 Analog_sensor
-Wire Notes Line
-	4050 3250 7750 3250
 Text Notes 6900 6050 0    50   ~ 0
 Sensors connections
 $Comp
@@ -590,11 +588,7 @@ Wire Notes Line rgb(114, 194, 0)
 Wire Notes Line rgb(0, 194, 0)
 	4450 4950 4450 5950
 Wire Notes Line
-	4050 6200 7750 6200
-Wire Notes Line
 	7750 3250 7750 6200
-Wire Notes Line
-	4050 3250 4050 6200
 $Comp
 L power:GND #PWR0123
 U 1 1 5BE989C1
@@ -895,8 +889,6 @@ F 3 "~" H 3900 2300 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	4150 2100 4000 2100
-Wire Wire Line
-	6000 4650 4700 4650
 Text Label 6550 3950 0    50   ~ 0
 OneWire
 Text Label 6000 3400 0    50   ~ 0
@@ -1024,15 +1016,6 @@ F 3 "http://www.vishay.com/docs/85622/1n914.pdf" H 5100 3850 50  0001 C CNN
 	1    5100 3850
 	-1   0    0    1   
 $EndComp
-Text Label 4450 3800 0    50   ~ 0
-OneWire
-Wire Wire Line
-	4450 3850 4450 3800
-Wire Wire Line
-	5750 3850 5550 3850
-Wire Wire Line
-	4450 3850 4800 3850
-Connection ~ 4800 3850
 Wire Wire Line
 	4800 3850 4950 3850
 $Comp
@@ -1050,8 +1033,8 @@ $Comp
 L Jumper:SolderJumper_3_Open JP4
 U 1 1 5F0DC052
 P 5000 4150
-F 0 "JP4" H 5000 4250 50  0000 C CNN
-F 1 "Analog ref" H 4550 4150 50  0000 C CNN
+F 0 "JP4" H 5250 4100 50  0000 C CNN
+F 1 "Analog ref" H 5050 4250 50  0000 C CNN
 F 2 "Jumper:SolderJumper-3_P1.3mm_Open_Pad1.0x1.5mm_NumberLabels" H 5000 4150 50  0001 C CNN
 F 3 "~" H 5000 4150 50  0001 C CNN
 	1    5000 4150
@@ -1069,7 +1052,7 @@ Wire Wire Line
 Wire Wire Line
 	5000 4450 5000 4300
 Wire Wire Line
-	4700 4450 5000 4450
+	4700 4450 4750 4450
 $Comp
 L Device:R R5
 U 1 1 5F9E21D2
@@ -1137,4 +1120,61 @@ F 3 "~" H 3600 3050 50  0001 C CNN
 	1    3600 2850
 	1    0    0    -1  
 $EndComp
+Wire Notes Line
+	5650 3500 5650 4100
+Wire Notes Line
+	5650 4100 5000 4100
+Wire Notes Line
+	5000 4100 5000 4250
+Wire Notes Line
+	5000 4250 4300 4250
+Wire Notes Line
+	4300 4250 4300 3500
+Wire Notes Line
+	4300 3500 5650 3500
+Text Notes 4500 3500 0    50   ~ 0
+LM35 below 0° circuitry
+Text Notes 5200 5150 0    50   ~ 0
+R4 == 18k if used with \nLM35 "below 0°" setup
+$Comp
+L Device:CP C6
+U 1 1 5FA1DF8D
+P 4100 4550
+F 0 "C6" H 3982 4504 50  0000 R CNN
+F 1 "0.1u" H 3982 4595 50  0000 R CNN
+F 2 "Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm" H 4138 4400 50  0001 C CNN
+F 3 "~" H 4100 4550 50  0001 C CNN
+	1    4100 4550
+	-1   0    0    1   
+$EndComp
+Connection ~ 4750 4450
+Wire Wire Line
+	4750 4450 5000 4450
+Wire Wire Line
+	6000 4650 4750 4650
+Wire Wire Line
+	4100 4700 4100 4750
+Wire Wire Line
+	4100 4750 4750 4750
+Wire Wire Line
+	4750 4750 4750 4650
+Connection ~ 4750 4650
+Wire Wire Line
+	4750 4650 4700 4650
+Wire Notes Line
+	3800 3250 3800 6200
+Wire Notes Line
+	3800 3250 7750 3250
+Wire Notes Line
+	3800 6200 7750 6200
+Text Notes 4000 4700 1    50   ~ 0
+Optional
+Wire Wire Line
+	4750 4300 4100 4300
+Wire Wire Line
+	4100 4300 4100 4400
+Wire Wire Line
+	4750 4300 4750 4450
+Wire Wire Line
+	5550 3850 5750 3850
 $EndSCHEMATC
