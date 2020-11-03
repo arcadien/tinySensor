@@ -212,3 +212,19 @@ void Oregon<MODE>::calculateAndSetChecksum(uint8_t *data)
   data[10] = ((Sum(10, data) - 0xa) & 0xFF);
 #endif
 }
+
+template <int MODE>
+void Oregon<MODE>::calculateAndSetChecksum(uint8_t *data)
+{
+	#if OREGON_MODE == MODE_0
+	int s = ((Sum(6, data) + (data[6] & 0xF) - 0xa) & 0xff);
+	data[6] |= (s & 0x0F) << 4;
+	data[7] = (s & 0xF0) >> 4;
+
+	#elif OREGON_MODE == MODE_1
+	data[8] = ((Sum(8, data) - 0xa) & 0xFF);
+
+	#else
+	data[10] = ((Sum(10, data) - 0xa) & 0xFF);
+	#endif
+}
