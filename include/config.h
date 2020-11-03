@@ -34,7 +34,7 @@
 #warning using Oregon MODE_1
 #define OREGON_MODE MODE_1
 
-#elif !defined(OREGON_MODE_0)
+#elif defined(OREGON_MODE_0)
 #warning using default Oregon MODE_0
 #define OREGON_MODE MODE_0
 #else
