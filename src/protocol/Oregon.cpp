@@ -22,6 +22,7 @@
  * USA.
  */
 
+#if defined(AVR)
 #include "protocol/Oregon.h"
 #include <config.h>
 
@@ -170,3 +171,4 @@ void Oregon::calculateAndSetChecksum(uint8_t *data) {
   data[10] = ((Sum(10, data) - 0xa) & 0xFF);
 #endif
 }
+#endif
