@@ -133,6 +133,10 @@ public:
   mutable std::vector<unsigned char> Orders;
 };
 
+const static std::vector<unsigned char> expectedOrderSequenceForOne({'H', 'L',
+                                                                     'H'});
+const static std::vector<unsigned char> expectedOrderSequenceForZero();
+
 } // namespace
 /*
  * This testsuite is based on the document
@@ -193,12 +197,39 @@ void Expect_messages_to_be_manchester_encoded() {
                                   "Sending a byte must lead to 6x8 orders");
 
   // std::vector<unsigned char> expectedOne({H,L,H});
+    TEST_FAIL_MESSAGE("not implemented");
+
+}
+
+void Expect_good_hardware_orders_for_zero() {
+  TEST_FAIL_MESSAGE("not implemented");
+}
+
+void Expect_good_hardware_orders_for_one() {
+    TEST_FAIL_MESSAGE("not implemented");
+}
+
+void Expect_byte_to_be_sent_lsb_first() {
+
+  uint8_t value = 0b00000001;
+
+  TestHal testHal;
+  Oregon::v3 v3(std::move(testHal), 512);
+
+  // Send one byte
+  v3.SendData(&value, 1);
+
+  // The byte content must be sent LSB first, so the first nibble
+  // to be sent is a one, then the second is a zero.
 }
 
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(Expect_bitread_to_read_each_nibble_separately);
   RUN_TEST(Expect_messages_to_be_manchester_encoded);
+  RUN_TEST(Expect_byte_to_be_sent_lsb_first);
+  RUN_TEST(Expect_good_hardware_orders_for_zero);
+  RUN_TEST(Expect_good_hardware_orders_for_one);
 
   return UNITY_END();
 }
