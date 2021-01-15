@@ -35,6 +35,10 @@ inline bool BitRead(uint8_t value, uint8_t bit) {
   return (((value) >> (bit)) & 0x01);
 }
 
+/*
+ * Interface definition for lower level hardware function
+ *
+ */
 class Hal {
 public:
   virtual void GoLow() const = 0;
@@ -43,20 +47,6 @@ public:
   virtual void DelayHalfPeriod() const = 0;
 };
 
-class TemperatureSensor {
-public:
-  virtual void SetTemperature(float temperature) = 0;
-};
-
-class HumiditySensor {
-public:
-  virtual void SetHumidity(float humidity) = 0;
-};
-
-class PressureSensor {
-public:
-  virtual void SetPressure(float pressure) = 0;
-};
 /*
  * Emulation of environment sensors using Oregon v3 protocol
  *
@@ -65,7 +55,7 @@ public:
  *  - Temperature, humidity:           emulates THGR122NX (id 0x1D, 0x20)
  *  - Temperature, humidity, pressure: emulates BTHR968 (id 0x5D, 0x60)
  */
-class OregonV3 : public TemperatureSensor {
+class OregonV3 {
 
 public:
   /*!
@@ -74,7 +64,9 @@ public:
    */
   OregonV3(Hal const &hal) : _hal(hal) {}
 
-  void SetTemperature(float temperature) override {}
+  void SetTemperature(float temperature) {}
+  void SetHumidity(float humidity) {}
+  void SetPressure(float pressure) {}
 
   /*!
    * Emit message according to available data
@@ -147,6 +139,15 @@ public:
   static const int ORDERS_COUNT_FOR_A_BYTE = 6;
   const static char EXPECTED_ORDERS_FOR_ZERO[ORDERS_COUNT_FOR_A_BYTE];
   const static char EXPECTED_ORDERS_FOR_ONE[ORDERS_COUNT_FOR_A_BYTE];
+  // 6 chars per bit, 24 times "1"
+  const static int PREAMBLE_BYTE_LENGTH = 24 * 6;
+  const static char EXPECTED_PREAMBLE[PREAMBLE_BYTE_LENGTH];
+
+  const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
+  const static char EXPECTED_POSTAMBLE[POSTAMBLE_BYTE_LENGTH];
+
+  const static int SYNC_BYTE_LENGTH = 4 * 6;
+  const static char EXPECTED_SYNC[SYNC_BYTE_LENGTH];
 
   void DelayPeriod() const override { Orders.push_back('P'); }
   void DelayHalfPeriod() const override { Orders.push_back('D'); }
@@ -161,8 +162,49 @@ public:
 
 const char TestHal::EXPECTED_ORDERS_FOR_ZERO[ORDERS_COUNT_FOR_A_BYTE] = {
     'H', 'D', 'L', 'P', 'H', 'D'};
+
 const char TestHal::EXPECTED_ORDERS_FOR_ONE[ORDERS_COUNT_FOR_A_BYTE] = {
     'L', 'D', 'H', 'P', 'L', 'D'};
+
+const char TestHal::EXPECTED_POSTAMBLE[TestHal::POSTAMBLE_BYTE_LENGTH] = {
+    // postamble : two nibbles at zero
+    'H', 'D', 'L', 'P', 'H', 'D', // 0
+    'H', 'D', 'L', 'P', 'H', 'D'  // 0
+};
+
+const char TestHal::EXPECTED_SYNC[TestHal::SYNC_BYTE_LENGTH] = {
+    'H', 'D', 'L', 'P', 'H', 'D', // 0
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'H', 'D', 'L', 'P', 'H', 'D', // 0
+    'L', 'D', 'H', 'P', 'L', 'D'  // 1
+};
+
+const char TestHal::EXPECTED_PREAMBLE[TestHal::PREAMBLE_BYTE_LENGTH] = {
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+};
 
 } // namespace
 
@@ -257,45 +299,26 @@ void Expect_messages_to_have_preamble_sync_and_postamble() {
 
   tinySensor.Send();
 
-auto ordersCount = (6 * 4 + 4 + 2) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
-  char expected[ordersCount] = {
-      // Preamble : 24 times '1'
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      // Sync : “0101” in the order of transmission
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      // postamble : two nibbles a zero
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'H', 'D', 'L', 'P', 'H', 'D'  // 0
-  };
+  auto ordersCount = (6 * 4 + 4 + 2) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
+
+  char *expected = new char[ordersCount + 1];
+
+  expected[ordersCount + 1] = '\0';
+
+  memcpy(expected, TestHal::EXPECTED_PREAMBLE,
+         TestHal::PREAMBLE_BYTE_LENGTH * sizeof(char));
+
+  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_SYNC,
+         TestHal::SYNC_BYTE_LENGTH * sizeof(char));
+
+  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH + TestHal::SYNC_BYTE_LENGTH,
+         TestHal::EXPECTED_POSTAMBLE,
+         TestHal::POSTAMBLE_BYTE_LENGTH * sizeof(char));
+
   char *actualOrdersForTemperatureOnly;
   actualOrdersForTemperatureOnly = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualOrdersForTemperatureOnly, ordersCount);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualOrdersForTemperatureOnly,
+                               ordersCount);
 }
 
 int main(int, char **) {
