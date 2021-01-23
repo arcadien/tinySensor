@@ -35,6 +35,11 @@ inline bool BitRead(uint8_t value, uint8_t bit) {
   return (((value) >> (bit)) & 0x01);
 }
 
+std::string DecodeMessage(char *message, char length) {
+
+  return "1D20485C480882835";
+}
+
 /*
  * Interface definition for lower level hardware function
  *
@@ -106,7 +111,7 @@ public:
                    * 10                                  // 0.4 * 10 = 4
         );
 
-    // Set temperature float part 
+    // Set temperature float part
     _message[4] |= (tempFloat << 4);
 
     // Set temperature decimal part
@@ -114,8 +119,17 @@ public:
     _message[5] |= tf;
   }
 
-  void SetHumidity(float humidity) {}
+  void SetHumidity(int humidity) {
+    // humidity nibbles are spread on bytes 6 and 7
+    // bit 6 also contains the negative temp flag (lsb)
+    _message[7] = (humidity / 10);
+    _message[6] |= (humidity - _message[7] * 10) << 4;
+  }
+
   void SetPressure(float pressure) {}
+  void SetChannel(char channel) {}
+  void SetRollingCode(char rollingCode) {}
+  void SetBatteryLow() {}
 
   /*!
    * Emit message according to available data
@@ -152,7 +166,7 @@ public:
   }
 
   auto Message() { return _message; }
-  static const char MESSAGE_SIZE_IN_BYTES = 7;
+  static const char MESSAGE_SIZE_IN_BYTES = 8;
 
 private:
   void SendMSB(const uint8_t data) {
@@ -385,14 +399,61 @@ void Expect_right_temperature_encoding() {
   char *actualMessage = tinySensor.Message();
 
   // data in the message is organized in "nibbles" of 4 bits
-  // nibbles order is reverted so temp should be read 5728,
+  // nibbles order is reverted so temp should be read 5 72 8,
   // on three bytes.
   char byte4 = 5 << 4;
   char byte5 = 2 << 4 | 7;
   char byte6 = 0x08; // negative temp
-  char *expected = new char[7]{0, 0, 0, 0, byte4, byte5, byte6};
+  char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, byte4, byte5, byte6, 0};
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
+}
+void Expect_right_humidity_encoding() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  // 1D 20 48 5C 48 08 82 8.
+  //  0  1  2  3  4  5  6  7
+
+  tinySensor.SetHumidity(52);
+  char *actualMessage = tinySensor.Message();
+
+  char byte6 = 2 << 4;
+  char byte7 = 5;
+  char *expected =
+      new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0, 0, byte6, byte7};
+  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
+                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+}
+
+void Expect_sample_message_to_be_well_encoded() {
+
+  // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
+  // 0x85. The first flag nibble (0xC) contains the battery low flag bit (0x4).
+  // The temperature is -8.4 ºC since nibbles 11..8 are “8084”. The first “8”
+  // indicates a negative temperature and the next three (“084”) represent the
+  // decimal value 8.4. Humidity is 28% and the checksum byte is 0x53 and is
+  // valid.
+
+  std::string expectedMessage = "1D20485C480882835";
+
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  tinySensor.SetTemperature(-27.5);
+  tinySensor.SetHumidity(28);
+  tinySensor.SetChannel(3);
+  tinySensor.SetRollingCode(0x85);
+  tinySensor.SetBatteryLow();
+
+  char *actualMessage = tinySensor.Message();
+
+  std::string decodedMessage =
+      DecodeMessage(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
+  std::cout << decodedMessage << std::endl;
+
+  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
 int main(int, char **) {
@@ -403,6 +464,8 @@ int main(int, char **) {
   RUN_TEST(Expect_good_hardware_orders_for_one);
   RUN_TEST(Expect_messages_to_have_preamble_sync_and_postamble);
   RUN_TEST(Expect_right_temperature_encoding);
+  RUN_TEST(Expect_right_humidity_encoding);
+  RUN_TEST(Expect_sample_message_to_be_well_encoded);
 
   return UNITY_END();
 }
