@@ -54,6 +54,14 @@ public:
  *  - Temperature:                     emulates THN132N (id 0xEC, 0x40)
  *  - Temperature, humidity:           emulates THGR122NX (id 0x1D, 0x20)
  *  - Temperature, humidity, pressure: emulates BTHR968 (id 0x5D, 0x60)
+ *
+ * Payload data is stored in the `_message` property. Payload is made of
+ * 'nibbles' which are 4 bits long.
+ * The message is sent least-significant nibble first for each byte.
+ * Therefore, to simplify implementation, nibbles are stored "backward"
+ * in `_message`, so that sending them in the right order is a simple loop.
+ *
+ *
  */
 class OregonV3 {
 
