@@ -62,9 +62,50 @@ public:
    * @param hal the component responsible in bit emission (delay and pin
    * states)
    */
-  OregonV3(Hal const &hal) : _hal(hal) {}
+  OregonV3(Hal const &hal) : _hal(hal) {
 
-  void SetTemperature(float temperature) {}
+    for (uint index = 0; index < MESSAGE_SIZE_IN_BYTES; index++) {
+      _message[index] = 0;
+    }
+  }
+
+  /*!
+   * Set data bytes 4, 5 and 6
+   *
+   */
+  void SetTemperature(float temperature) {
+
+    if (temperature < 0) {
+      _message[6] = 0x08;
+      temperature *= -1;
+    } else {
+      _message[6] = 0x00;
+    }
+
+    // Determine decimal and float part
+
+    // ex. for 27.4 degrees C
+    int tempInt = (int)temperature; // 27
+
+    // (int)(27/10) = 2
+    int td = (int)(tempInt / 10);
+
+    // 2.7 - 20 = (int)7.4=7
+    int tf = (int)round((float)((float)tempInt / 10 - (float)td) * 10);
+
+    int tempFloat =
+        (int)round((float)(temperature - (float)tempInt) // 27.4 - 27 = 0.4
+                   * 10                                  // 0.4 * 10 = 4
+        );
+
+    // Set temperature float part 
+    _message[4] |= (tempFloat << 4);
+
+    // Set temperature decimal part
+    _message[5] = (td << 4);
+    _message[5] |= tf;
+  }
+
   void SetHumidity(float humidity) {}
   void SetPressure(float pressure) {}
 
@@ -102,6 +143,9 @@ public:
     _hal.DelayHalfPeriod();
   }
 
+  auto Message() { return _message; }
+  static const char MESSAGE_SIZE_IN_BYTES = 7;
+
 private:
   void SendMSB(const uint8_t data) {
     (BitRead(data, 4)) ? SendOne() : SendZero();
@@ -116,6 +160,8 @@ private:
     (BitRead(data, 2)) ? SendOne() : SendZero();
     (BitRead(data, 3)) ? SendOne() : SendZero();
   }
+
+  char _message[MESSAGE_SIZE_IN_BYTES];
 
   // v3, preamble is 6 nibbles of 1, 24 times '1'
   // see "Message Layout" section
@@ -319,6 +365,26 @@ void Expect_messages_to_have_preamble_sync_and_postamble() {
   actualOrdersForTemperatureOnly = testHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualOrdersForTemperatureOnly,
                                ordersCount);
+
+  delete expected;
+}
+
+void Expect_right_temperature_encoding() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  tinySensor.SetTemperature(-27.5);
+  char *actualMessage = tinySensor.Message();
+
+  // data in the message is organized in "nibbles" of 4 bits
+  // nibbles order is reverted so temp should be read 5728,
+  // on three bytes.
+  char byte4 = 5 << 4;
+  char byte5 = 2 << 4 | 7;
+  char byte6 = 0x08; // negative temp
+  char *expected = new char[7]{0, 0, 0, 0, byte4, byte5, byte6};
+  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
+                               OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
 int main(int, char **) {
@@ -328,6 +394,7 @@ int main(int, char **) {
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
   RUN_TEST(Expect_messages_to_have_preamble_sync_and_postamble);
+  RUN_TEST(Expect_right_temperature_encoding);
 
   return UNITY_END();
 }
