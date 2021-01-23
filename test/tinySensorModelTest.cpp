@@ -62,9 +62,6 @@ public:
  *
  * Payload data is stored in the `_message` property. Payload is made of
  * 'nibbles' which are 4 bits long.
- * The message is sent least-significant nibble first for each byte.
- * Therefore, to simplify implementation, nibbles are stored "backward"
- * in `_message`, so that sending them in the right order is a simple loop.
  *
  *
  */
@@ -98,25 +95,24 @@ public:
     // Determine decimal and float part
 
     // ex. for 27.4 degrees C
-    int tempInt = (int)temperature; // 27
+    int tempIntegerPart = (int)temperature; // 27
 
     // (int)(27/10) = 2
-    int td = (int)(tempInt / 10);
+    int temperatureDozen = (int)(tempIntegerPart / 10);
 
     // 2.7 - 20 = (int)7.4=7
-    int tf = (int)round((float)((float)tempInt / 10 - (float)td) * 10);
+    int temperatureUnit = (int)round(
+        (float)((float)tempIntegerPart / 10.0 - (float)temperatureDozen) *
+        10.0);
 
-    int tempFloat =
-        (int)round((float)(temperature - (float)tempInt) // 27.4 - 27 = 0.4
-                   * 10                                  // 0.4 * 10 = 4
-        );
+    int temperatureDecimal = (int)round(
+        (float)(temperature - (float)tempIntegerPart) // 27.4 - 27 = 0.4
+        * 10                                          // 0.4 * 10 = 4
+    );
 
-    // Set temperature float part
-    _message[4] |= (tempFloat << 4);
-
-    // Set temperature decimal part
-    _message[5] = (td << 4);
-    _message[5] |= tf;
+    _message[4] |= (temperatureDecimal << 4);
+    _message[5] = (temperatureDozen << 4);
+    _message[5] |= temperatureUnit;
   }
 
   void SetHumidity(int humidity) {
@@ -391,23 +387,55 @@ void Expect_messages_to_have_preamble_sync_and_postamble() {
   delete expected;
 }
 
-void Expect_right_temperature_encoding() {
+void Expect_right_positive_temperature_encoding()
+
+{
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
+  tinySensor.SetTemperature(27.5);
 
-  tinySensor.SetTemperature(-27.5);
   char *actualMessage = tinySensor.Message();
-
-  // data in the message is organized in "nibbles" of 4 bits
-  // nibbles order is reverted so temp should be read 5 72 8,
-  // on three bytes.
   char byte4 = 5 << 4;
   char byte5 = 2 << 4 | 7;
-  char byte6 = 0x08; // negative temp
+  char byte6 = 0x0; // positive temp
   char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, byte4, byte5, byte6, 0};
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
-                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+  TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
+                                       OregonV3::MESSAGE_SIZE_IN_BYTES,
+                                       "Failed with positive temp. with dozen");
+}
+
+void Expect_right_negative_temperature_encoding() {
+  {
+    TestHal testHal;
+    OregonV3 tinySensor(std::move(testHal));
+    tinySensor.SetTemperature(-27.5);
+
+    char *actualMessage = tinySensor.Message();
+    char byte4 = 5 << 4;
+    char byte5 = 2 << 4 | 7;
+    char byte6 = 0x08; // negative temp
+    char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0};
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
+        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
+        "Failed with negative temp. with dozen");
+  }
+  {
+    TestHal testHal;
+    OregonV3 tinySensor(std::move(testHal));
+    tinySensor.SetTemperature(-8.4);
+
+    char *actualMessage = tinySensor.Message();
+    char byte4 = 4 << 4;
+    char byte5 = 8;
+    char byte6 = 0x08; // negative temp
+    char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0};
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
+        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
+        "Failed with negative temp without dozen");
+  }
 }
 void Expect_right_humidity_encoding() {
   TestHal testHal;
@@ -441,10 +469,11 @@ void Expect_sample_message_to_be_well_encoded() {
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
 
-  tinySensor.SetTemperature(-27.5);
-  tinySensor.SetHumidity(28);
   tinySensor.SetChannel(3);
   tinySensor.SetRollingCode(0x85);
+
+  tinySensor.SetTemperature(-8.4);
+  tinySensor.SetHumidity(28);
   tinySensor.SetBatteryLow();
 
   char *actualMessage = tinySensor.Message();
@@ -463,7 +492,8 @@ int main(int, char **) {
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
   RUN_TEST(Expect_messages_to_have_preamble_sync_and_postamble);
-  RUN_TEST(Expect_right_temperature_encoding);
+  RUN_TEST(Expect_right_negative_temperature_encoding);
+  RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
 
