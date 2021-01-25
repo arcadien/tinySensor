@@ -65,7 +65,8 @@ public:
  *
  * byte:      0    1    2    3    4     5      6      7      8      9
  * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
- *           1 D  2 0  4 8  5 C 480882835
+ *           1 D  2 0  4 8  5 C 4  8  0  8   8  2   8  3  5
+ *
  * nibbles 0..3    : sensor ID
  * nibble  4       : channel
  * nibbles 5..6    : rolling code
@@ -83,6 +84,11 @@ public:
   // To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
   // pressure value. It is added when decoding the message
   static const int PRESSURE_SCALING_VALUE = 856;
+
+  // As rolling code is spread on two bytes, then its
+  // max value is 16 tens and 16 units, because 16 is the max value on 4 bits
+  static const char MAX_ROLLING_CODE_VALUE = 176;
+
   /*!
    * @param hal the component responsible in bit emission (delay and pin
    * states)
@@ -94,10 +100,17 @@ public:
     }
   }
 
-  /*!
-   * Set data bytes 4, 5 and 6
-   *
+  void SetChannel(char channel) { _message[2] = 1 << 4 + (channel - 1); }
+
+  /* \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
    */
+  void SetRollingCode(char rollingCode) {
+    char rollingCodeTens = (char)rollingCode / 10;
+    _message[2] |= rollingCodeTens;                          // nibble 4
+    _message[3] = (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
+  }
+  void SetBatteryLow() {}
+
   void SetTemperature(float temperature) {
 
     if (temperature < 0) {
@@ -148,11 +161,6 @@ public:
       _message[9] = 0xC0;
     }
   }
-  void SetChannel(char channel) { _message[2] = 1 << 4 + (channel - 1); }
-  void SetRollingCode(char rollingCode) {
-    // nibbles 4 and 5 (byte )
-  }
-  void SetBatteryLow() {}
 
   /*!
    * Emit message according to available data
@@ -544,6 +552,26 @@ void Expect_right_channel_encoding() {
                                          given.label);
   }
 }
+
+void Expect_right_rolling_code_encoding() {
+
+  //  byte:      0    1    2    3    4     5      6      7      8      9
+  // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
+  //
+  // nibbles 5..6    : rolling code
+
+  char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, (char)8, (char)(5 << 4), 0, 0, 0, 0, 0, 0};
+
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+  tinySensor.SetRollingCode(85);
+  char *actualMessage = tinySensor.Message();
+
+  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
+                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+}
+
 void Expect_sample_message_to_be_well_encoded() {
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
@@ -588,7 +616,7 @@ int main(int, char **) {
   RUN_TEST(Expect_right_humidity_encoding);
   RUN_TEST(Expect_right_pressure_encoding);
   RUN_TEST(Expect_right_channel_encoding);
-
+  RUN_TEST(Expect_right_rolling_code_encoding);
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
 
   return UNITY_END();
