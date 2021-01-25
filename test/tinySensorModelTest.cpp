@@ -86,8 +86,9 @@ public:
   static const int PRESSURE_SCALING_VALUE = 856;
 
   // As rolling code is spread on two bytes, then its
-  // max value is 16 tens and 16 units, because 16 is the max value on 4 bits
-  static const char MAX_ROLLING_CODE_VALUE = 176;
+  // max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
+  // bits
+  static const char MAX_ROLLING_CODE_VALUE = 165;
 
   /*!
    * @param hal the component responsible in bit emission (delay and pin
@@ -102,14 +103,16 @@ public:
 
   void SetChannel(char channel) { _message[2] = 1 << 4 + (channel - 1); }
 
-  /* \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
+  /*
+   * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
    */
   void SetRollingCode(char rollingCode) {
     char rollingCodeTens = (char)rollingCode / 10;
-    _message[2] |= rollingCodeTens;                          // nibble 4
-    _message[3] = (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
+    _message[2] = rollingCodeTens;                            // nibble 4
+    _message[3] |= (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
   }
-  void SetBatteryLow() {}
+
+  void SetBatteryLow() { _message[3] |= 0xC; }
 
   void SetTemperature(float temperature) {
 
@@ -572,6 +575,25 @@ void Expect_right_rolling_code_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
+void Expect_right_low_battery_encoding() {
+
+  //  byte:      0    1    2    3    4     5      6      7      8      9
+  // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
+  //                            C
+  // nibbles 7    : low batt
+
+  char *expected =
+      new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0xC, 0, 0, 0, 0, 0, 0};
+
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+  tinySensor.SetBatteryLow();
+  char *actualMessage = tinySensor.Message();
+
+  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
+                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+}
+
 void Expect_sample_message_to_be_well_encoded() {
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
@@ -618,7 +640,7 @@ int main(int, char **) {
   RUN_TEST(Expect_right_channel_encoding);
   RUN_TEST(Expect_right_rolling_code_encoding);
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
-
+  RUN_TEST(Expect_right_low_battery_encoding);
   return UNITY_END();
 }
 #endif
