@@ -140,7 +140,7 @@ public:
     }
   }
 
-  void SetChannel(char channel) {}
+  void SetChannel(char channel) { _message[2] = 1 << (channel - 1); }
   void SetRollingCode(char rollingCode) {}
   void SetBatteryLow() {}
 
@@ -480,22 +480,60 @@ void Expect_right_negative_temperature_encoding() {
 }
 
 void Expect_right_humidity_encoding() {
-  TestHal testHal;
-  OregonV3 tinySensor(std::move(testHal));
-
-  tinySensor.SetHumidity(52);
 
   char byte6 = 2 << 4;
   char byte7 = 5;
   char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0};
 
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+  tinySensor.SetHumidity(52);
   char *actualMessage = tinySensor.Message();
 
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
+void Expect_right_channel_encoding() {
 
+  struct Given {
+    const char *label;
+    char channel;
+    char *expected;
+    Given(const char *label, char channel, char *expected)
+        : channel(channel), expected(std::move(expected)) {}
+  };
+  std::vector<Given> givens;
+
+  // implemented sensors use the coding 1 << (ch –1), where ch is 1, 2 or 3.
+
+  char channelByte = 1;
+  givens.push_back(Given("channel 1", 1,
+                         new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+
+  channelByte = 1 << 1;
+  givens.push_back(Given("channel 2", 2,
+                         new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+
+  channelByte = 1 << 2;
+  givens.push_back(Given("channel 3", 3,
+                         new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+
+  for (auto const given : givens) {
+    TestHal testHal;
+    OregonV3 tinySensor(std::move(testHal));
+
+    tinySensor.SetChannel(given.channel);
+    char *actualMessage = tinySensor.Message();
+
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(given.expected, actualMessage,
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES,
+                                         given.label);
+  }
+}
 void Expect_sample_message_to_be_well_encoded() {
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
@@ -506,7 +544,7 @@ void Expect_sample_message_to_be_well_encoded() {
   // valid.
 
   // message byte index          0   1  2  3  4  5  6  7  8
-  //std::string expectedMessage = "1D 20 48 5C 48 08 .8 28 35";
+  // std::string expectedMessage = "1D 20 48 5C 48 08 .8 28 35";
   std::string expectedMessage = "1D20485C480882835";
 
   TestHal testHal;
@@ -539,6 +577,7 @@ int main(int, char **) {
   RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
   RUN_TEST(Expect_right_pressure_encoding);
+  RUN_TEST(Expect_right_channel_encoding);
 
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
 
