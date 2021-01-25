@@ -63,6 +63,17 @@ public:
  * Payload data is stored in the `_message` property. Payload is made of
  * 'nibbles' which are 4 bits long.
  *
+ * byte:      0    1    2    3    4     5      6      7      8      9
+ * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
+ *           1 D  2 0  4 8  5 C 480882835
+ * nibbles 0..3    : sensor ID
+ * nibble  4       : channel
+ * nibbles 5..6    : rolling code
+ * nibble  7       : battery state (0x4 is low battery)
+ * nibbles 8..13   : temperature
+ * nibble 12,14,15 : humidity (or-ed with temperature)
+ * nibbles 16..19  : pressure
+ *
  *
  */
 class OregonV3 {
@@ -118,14 +129,12 @@ public:
     _message[5] = (temperatureDozen << 4);
     _message[5] |= temperatureUnit;
   }
-
   void SetHumidity(int humidity) {
     // humidity nibbles are spread on bytes 6 and 7
     // bit 6 also contains the negative temp flag (lsb)
     _message[7] = (humidity / 10);
     _message[6] |= (humidity - _message[7] * 10) << 4;
   }
-
   /*!
    *
    * Presure is set using hPa
@@ -139,9 +148,10 @@ public:
       _message[9] = 0xC0;
     }
   }
-
-  void SetChannel(char channel) { _message[2] = 1 << (channel - 1); }
-  void SetRollingCode(char rollingCode) {}
+  void SetChannel(char channel) { _message[2] = 1 << 4 + (channel - 1); }
+  void SetRollingCode(char rollingCode) {
+    // nibbles 4 and 5 (byte )
+  }
   void SetBatteryLow() {}
 
   /*!
@@ -507,17 +517,17 @@ void Expect_right_channel_encoding() {
 
   // implemented sensors use the coding 1 << (ch –1), where ch is 1, 2 or 3.
 
-  char channelByte = 1;
+  char channelByte = 0b00010000;
   givens.push_back(Given("channel 1", 1,
                          new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
                              0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
 
-  channelByte = 1 << 1;
+  channelByte = 0b00100000;
   givens.push_back(Given("channel 2", 2,
                          new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
                              0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
 
-  channelByte = 1 << 2;
+  channelByte = 0b01000000;
   givens.push_back(Given("channel 3", 3,
                          new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
                              0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
