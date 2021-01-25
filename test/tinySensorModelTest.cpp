@@ -35,7 +35,7 @@ inline bool BitRead(uint8_t value, uint8_t bit) {
   return (((value) >> (bit)) & 0x01);
 }
 
-std::string DecodeMessage(char *message, char length) {
+std::string MessageNibblesToString(char *message, char length) {
 
   return "1D20485C480882835";
 }
@@ -68,6 +68,10 @@ public:
 class OregonV3 {
 
 public:
+  // pressure is a value expressed in hPa, in interval ]850, 1100[
+  // To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
+  // pressure value. It is added when decoding the message
+  static const int PRESSURE_SCALING_VALUE = 856;
   /*!
    * @param hal the component responsible in bit emission (delay and pin
    * states)
@@ -122,7 +126,20 @@ public:
     _message[6] |= (humidity - _message[7] * 10) << 4;
   }
 
-  void SetPressure(float pressure) {}
+  /*!
+   *
+   * Presure is set using hPa
+   *
+   * Values out of possible ones on earth (less that 850, more than 1099) are
+   * ignored.
+   */
+  void SetPressure(int pressure) {
+    if ((pressure > 850) && (pressure < 1100)) {
+      _message[8] = pressure - PRESSURE_SCALING_VALUE;
+      _message[9] = 0xC0;
+    }
+  }
+
   void SetChannel(char channel) {}
   void SetRollingCode(char rollingCode) {}
   void SetBatteryLow() {}
@@ -162,7 +179,7 @@ public:
   }
 
   auto Message() { return _message; }
-  static const char MESSAGE_SIZE_IN_BYTES = 8;
+  static const char MESSAGE_SIZE_IN_BYTES = 10;
 
 private:
   void SendMSB(const uint8_t data) {
@@ -216,8 +233,8 @@ public:
   void DelayPeriod() const override { Orders.push_back('P'); }
   void DelayHalfPeriod() const override { Orders.push_back('D'); }
 
-  void GoHigh() const override { Orders.push_back('H'); }
-  void GoLow() const override { Orders.push_back('L'); }
+  inline void GoHigh() const override { Orders.push_back('H'); }
+  inline void GoLow() const override { Orders.push_back('L'); }
 
   char *GetOrders() { return &Orders[0]; }
 
@@ -394,63 +411,87 @@ void Expect_right_positive_temperature_encoding()
   OregonV3 tinySensor(std::move(testHal));
   tinySensor.SetTemperature(27.5);
 
-  char *actualMessage = tinySensor.Message();
   char byte4 = 5 << 4;
   char byte5 = 2 << 4 | 7;
   char byte6 = 0x0; // positive temp
   char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, byte4, byte5, byte6, 0};
+      0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+
+  char *actualMessage = tinySensor.Message();
+
   TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,
                                        "Failed with positive temp. with dozen");
 }
 
+void Expect_right_pressure_encoding() {
+
+  int actualPressureInHPa = 900;
+  char byte8 = actualPressureInHPa - OregonV3::PRESSURE_SCALING_VALUE;
+  char byte9 = 0xC0;
+  char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9};
+
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+  tinySensor.SetPressure(actualPressureInHPa);
+  char *actualMessage = tinySensor.Message();
+
+  TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
+                                       OregonV3::MESSAGE_SIZE_IN_BYTES,
+                                       "Failed with possible pressure value");
+}
+
 void Expect_right_negative_temperature_encoding() {
   {
-    TestHal testHal;
-    OregonV3 tinySensor(std::move(testHal));
-    tinySensor.SetTemperature(-27.5);
 
-    char *actualMessage = tinySensor.Message();
     char byte4 = 5 << 4;
     char byte5 = 2 << 4 | 7;
     char byte6 = 0x08; // negative temp
     char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0};
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+
+    TestHal testHal;
+    OregonV3 tinySensor(std::move(testHal));
+    tinySensor.SetTemperature(-27.5);
+    char *actualMessage = tinySensor.Message();
+
     TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
         expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
         "Failed with negative temp. with dozen");
   }
   {
-    TestHal testHal;
-    OregonV3 tinySensor(std::move(testHal));
-    tinySensor.SetTemperature(-8.4);
 
-    char *actualMessage = tinySensor.Message();
     char byte4 = 4 << 4;
     char byte5 = 8;
     char byte6 = 0x08; // negative temp
     char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0};
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+
+    TestHal testHal;
+    OregonV3 tinySensor(std::move(testHal));
+    tinySensor.SetTemperature(-8.4);
+    char *actualMessage = tinySensor.Message();
+
     TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
         expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
         "Failed with negative temp without dozen");
   }
 }
+
 void Expect_right_humidity_encoding() {
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
 
-  // 1D 20 48 5C 48 08 82 8.
-  //  0  1  2  3  4  5  6  7
-
   tinySensor.SetHumidity(52);
-  char *actualMessage = tinySensor.Message();
 
   char byte6 = 2 << 4;
   char byte7 = 5;
-  char *expected =
-      new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0, 0, byte6, byte7};
+  char *expected = new char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0};
+
+  char *actualMessage = tinySensor.Message();
+
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
@@ -464,6 +505,8 @@ void Expect_sample_message_to_be_well_encoded() {
   // decimal value 8.4. Humidity is 28% and the checksum byte is 0x53 and is
   // valid.
 
+  // message byte index          0   1  2  3  4  5  6  7  8
+  //std::string expectedMessage = "1D 20 48 5C 48 08 .8 28 35";
   std::string expectedMessage = "1D20485C480882835";
 
   TestHal testHal;
@@ -479,7 +522,7 @@ void Expect_sample_message_to_be_well_encoded() {
   char *actualMessage = tinySensor.Message();
 
   std::string decodedMessage =
-      DecodeMessage(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
+      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
   std::cout << decodedMessage << std::endl;
 
   TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
@@ -495,6 +538,8 @@ int main(int, char **) {
   RUN_TEST(Expect_right_negative_temperature_encoding);
   RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
+  RUN_TEST(Expect_right_pressure_encoding);
+
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
 
   return UNITY_END();
