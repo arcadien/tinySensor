@@ -184,6 +184,10 @@ public:
       Message[10] = ((Sum(10, Message) - 0xa) & 0xFF);
     }
 
+    // The specification document says that the SYNC must be sent.
+    // With the RFLINK decoder, which is the reference for this library,
+    // the SYNC is not needed.
+
     SendData(PREAMBLE, 3);
     SendData(Message, MESSAGE_SIZE_IN_BYTES);
     SendData(POSTAMBLE, 1);
