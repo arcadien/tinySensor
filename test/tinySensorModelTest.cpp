@@ -18,10 +18,10 @@
  */
 #if !defined(AVR)
 
-#include <protocol/Oregon_v2.h>
 #include <cstdarg>
 #include <cstring>
 #include <iostream>
+#include <protocol/Oregon_v2.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -32,7 +32,6 @@
 #include <unity.h>
 
 namespace {
-
 
 std::string MessageNibblesToString(unsigned char *message,
                                    unsigned char length) {
@@ -411,6 +410,55 @@ void Expect_right_low_battery_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
+void Expect_temperature_set_to_change_message_status() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  uint8_t messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_EQUAL(0, messageStatus);
+
+  tinySensor.SetTemperature(-8.4);
+  messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_TRUE((messageStatus & 0x1) == 0x1);
+}
+
+void Expect_humidity_set_to_change_message_status() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  uint8_t messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_EQUAL(0, messageStatus);
+
+  tinySensor.SetHumidity(84);
+  messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_TRUE((messageStatus & 0x2) == 0x2);
+}
+
+void Expect_pressure_set_to_change_message_status() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  uint8_t messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_EQUAL(0, messageStatus);
+
+  tinySensor.SetPressure(1000);
+  messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_TRUE((messageStatus & 0x4) == 0x4);
+}
+
+void Expect_all_values_set_to_change_message_status() {
+  TestHal testHal;
+  OregonV3 tinySensor(std::move(testHal));
+
+  uint8_t messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_EQUAL(0, messageStatus);
+
+  tinySensor.SetTemperature(12.2);
+  tinySensor.SetHumidity(40);
+  tinySensor.SetPressure(1000);
+  messageStatus = tinySensor.GetMessageStatus();
+  TEST_ASSERT_TRUE((messageStatus & 0x7) == 0x7);
+}
 void Expect_sample_message_to_be_well_encoded() {
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
@@ -454,7 +502,7 @@ void Expect_sample_message_to_be_well_encoded() {
       MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
   std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
 
-  //TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
+  // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
 int main(int, char **) {
@@ -472,6 +520,10 @@ int main(int, char **) {
   RUN_TEST(Expect_right_rolling_code_encoding);
   RUN_TEST(Expect_sample_message_to_be_well_encoded);
   RUN_TEST(Expect_right_low_battery_encoding);
+  RUN_TEST(Expect_temperature_set_to_change_message_status);
+  RUN_TEST(Expect_humidity_set_to_change_message_status);
+  RUN_TEST(Expect_pressure_set_to_change_message_status);
+  RUN_TEST(Expect_all_values_set_to_change_message_status);
   return UNITY_END();
 }
 #endif

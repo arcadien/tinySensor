@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <stdint.h>
+
 /*
  * Interface definition for lower level hardware function
  *
@@ -12,9 +15,7 @@ public:
   virtual void DelayHalfPeriod() const = 0;
 };
 
-inline bool BitRead(uint8_t value, uint8_t bit) {
-  return (((value) >> (bit)) & 0x01);
-}
+bool BitRead(uint8_t value, uint8_t bit) { return (((value) >> (bit)) & 0x01); }
 
 /*
  * Emulation of environment sensors using Oregon v3 protocol
@@ -53,6 +54,10 @@ public:
   // bits
   static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
 
+  static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
+
+  unsigned char Message[MESSAGE_SIZE_IN_BYTES];
+
   /*!
    * @param hal the component responsible in bit emission (delay and pin
    * states)
@@ -81,6 +86,7 @@ public:
 
   void SetTemperature(float temperature) {
 
+    _messageStatus |= 1;
     if (temperature < 0) {
       Message[6] = 0x08;
       temperature *= -1;
@@ -112,6 +118,8 @@ public:
   }
 
   void SetHumidity(int humidity) {
+    _messageStatus |= 1 << 1;
+
     // humidity nibbles are spread on bytes 6 and 7
     // bit 6 also contains the negative temp flag (lsb)
     Message[7] = (humidity / 10);
@@ -126,6 +134,9 @@ public:
    * ignored.
    */
   void SetPressure(int pressure) {
+
+    _messageStatus |= 1 << 2;
+
     if ((pressure > 850) && (pressure < 1100)) {
       Message[8] = pressure - PRESSURE_SCALING_VALUE;
       Message[9] = 0xC0;
@@ -178,7 +189,7 @@ public:
     SendData(POSTAMBLE, 1);
   }
 
-  void SendData(uint8_t *data, uint8_t size) {
+  void SendData(const uint8_t *data, uint8_t size) {
     for (uint8_t i = 0; i < size; ++i) {
       SendLSB(data[i]);
       SendMSB(data[i]);
@@ -203,9 +214,7 @@ public:
     _hal.DelayHalfPeriod();
   }
 
-  static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
-
-  unsigned char Message[MESSAGE_SIZE_IN_BYTES];
+  uint8_t GetMessageStatus() { return _messageStatus; }
 
 private:
   void SendMSB(const uint8_t data) {
@@ -221,6 +230,13 @@ private:
     (BitRead(data, 2)) ? SendOne() : SendZero();
     (BitRead(data, 3)) ? SendOne() : SendZero();
   }
+
+  /*
+   * bit 0 : temperature is set
+   * bit 1 : humidity is set
+   * bit 2 : pressure is set
+   */
+  uint8_t _messageStatus;
 
   // one nibble as 0101, so 0b00001010
   // see "Message Layout" section
