@@ -64,9 +64,6 @@ public:
   const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
   const static unsigned char EXPECTED_POSTAMBLE[POSTAMBLE_BYTE_LENGTH];
 
-  const static int SYNC_BYTE_LENGTH = 4 * 6;
-  const static unsigned char EXPECTED_SYNC[SYNC_BYTE_LENGTH];
-
   void DelayPeriod() const override { Orders.push_back('P'); }
   void DelayHalfPeriod() const override { Orders.push_back('D'); }
 
@@ -89,13 +86,6 @@ const unsigned char
         // postamble : two nibbles at zero
         'H', 'D', 'L', 'P', 'H', 'D', // 0
         'H', 'D', 'L', 'P', 'H', 'D'  // 0
-};
-
-const unsigned char TestHal::EXPECTED_SYNC[TestHal::SYNC_BYTE_LENGTH] = {
-    'H', 'D', 'L', 'P', 'H', 'D', // 0
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'H', 'D', 'L', 'P', 'H', 'D', // 0
-    'L', 'D', 'H', 'P', 'L', 'D'  // 1
 };
 
 const unsigned char TestHal::EXPECTED_PREAMBLE[TestHal::PREAMBLE_BYTE_LENGTH] =
@@ -213,30 +203,30 @@ void Expect_good_hardware_orders_for_one() {
                                TestHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_messages_to_have_preamble_sync_and_postamble() {
+void Expect_messages_to_have_preamble_and_postamble() {
+
+  // The specification document says that the SYNC must be sent.
+  // With the RFLINK decoder, which is the reference for this library,
+  // the SYNC is not needed.
+
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
 
   tinySensor.Send();
 
-  auto ordersCount = (6 * 4 + 4 + 2) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
+  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
 
   unsigned char *expected = new unsigned char[ordersCount];
 
   memcpy(expected, TestHal::EXPECTED_PREAMBLE,
          TestHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_SYNC,
-         TestHal::SYNC_BYTE_LENGTH * sizeof(unsigned char));
-
-  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH + TestHal::SYNC_BYTE_LENGTH,
-         TestHal::EXPECTED_POSTAMBLE,
+  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_POSTAMBLE,
          TestHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  unsigned char *actualOrdersForTemperatureOnly;
-  actualOrdersForTemperatureOnly = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualOrdersForTemperatureOnly,
-                               ordersCount);
+  unsigned char *actualEmptyMessageOrders;
+  actualEmptyMessageOrders = testHal.GetOrders();
+  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
 
 void Expect_right_positive_temperature_encoding()
@@ -511,7 +501,7 @@ int main(int, char **) {
   RUN_TEST(Expect_nibbles_to_be_sent_lsb_first);
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
-  RUN_TEST(Expect_messages_to_have_preamble_sync_and_postamble);
+  RUN_TEST(Expect_messages_to_have_preamble_and_postamble);
   RUN_TEST(Expect_right_negative_temperature_encoding);
   RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
