@@ -395,11 +395,11 @@ void Expect_right_low_battery_encoding() {
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-  //                            C
+  //                                 C
   // nibbles 7    : low batt
 
   unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0xC, 0, 0, 0, 0, 0, 0};
+      0, 0, 0, 0, 0xC, 0, 0, 0, 0, 0};
 
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
