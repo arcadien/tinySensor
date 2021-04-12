@@ -216,7 +216,7 @@ void Expect_messages_to_have_preamble_and_postamble() {
 
   auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
 
-  unsigned char *expected = new unsigned char[ordersCount];
+  unsigned char expected[ordersCount];
 
   memcpy(expected, TestHal::EXPECTED_PREAMBLE,
          TestHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
@@ -239,8 +239,8 @@ void Expect_right_positive_temperature_encoding()
   unsigned char byte4 = 5 << 4;
   unsigned char byte5 = 2 << 4 | 7;
   unsigned char byte6 = 0x0; // positive temp
-  unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
   unsigned char *actualMessage = tinySensor.Message;
 
@@ -254,8 +254,8 @@ void Expect_right_pressure_encoding() {
   int actualPressureInHPa = 900;
   unsigned char byte8 = actualPressureInHPa - OregonV3::PRESSURE_SCALING_VALUE;
   unsigned char byte9 = 0xC0;
-  unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9};
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9, 0};
 
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
@@ -273,9 +273,8 @@ void Expect_right_negative_temperature_encoding() {
     unsigned char byte4 = 5 << 4;
     unsigned char byte5 = 2 << 4 | 7;
     unsigned char byte6 = 0x08; // negative temp
-    unsigned char *expected =
-        new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-            0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
     TestHal testHal;
     OregonV3 tinySensor(std::move(testHal));
@@ -291,9 +290,8 @@ void Expect_right_negative_temperature_encoding() {
     unsigned char byte4 = 4 << 4;
     unsigned char byte5 = 8;
     unsigned char byte6 = 0x08; // negative temp
-    unsigned char *expected =
-        new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-            0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0};
+    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
     TestHal testHal;
     OregonV3 tinySensor(std::move(testHal));
@@ -310,8 +308,8 @@ void Expect_right_humidity_encoding() {
 
   unsigned char byte6 = 2 << 4;
   unsigned char byte7 = 5;
-  unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0};
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0, 0};
 
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
@@ -335,19 +333,19 @@ void Expect_right_channel_encoding() {
   // implemented sensors use the coding 1 << (ch –1), where ch is 1, 2 or 3.
 
   unsigned char channelByte = 0b00010000;
-  givens.push_back(Given("channel 1", 1,
-                         new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+  unsigned char msg1[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
+                                                      0, 0, 0,           0, 0};
+  givens.push_back(Given("channel 1", 1, msg1));
 
   channelByte = 0b00100000;
-  givens.push_back(Given("channel 2", 2,
-                         new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+  unsigned char msg2[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
+                                                      0, 0, 0,           0, 0};
+  givens.push_back(Given("channel 2", 2, msg2));
 
   channelByte = 0b01000000;
-  givens.push_back(Given("channel 3", 3,
-                         new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-                             0, 0, channelByte, 0, 0, 0, 0, 0, 0, 0}));
+  unsigned char msg3[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
+                                                      0, 0, 0,           0, 0};
+  givens.push_back(Given("channel 3", 3, msg3));
 
   for (auto const given : givens) {
     TestHal testHal;
@@ -369,7 +367,7 @@ void Expect_right_rolling_code_encoding() {
   //
   // nibbles 5..6    : rolling code
 
-  unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, (unsigned char)8, (unsigned char)(5 << 4), 0, 0, 0, 0, 0, 0};
 
   TestHal testHal;
@@ -388,8 +386,8 @@ void Expect_right_low_battery_encoding() {
   //                                 C
   // nibbles 7    : low batt
 
-  unsigned char *expected = new unsigned char[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, 0xC, 0, 0, 0, 0, 0};
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0xC,
+                                                          0, 0, 0, 0, 0};
 
   TestHal testHal;
   OregonV3 tinySensor(std::move(testHal));
