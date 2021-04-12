@@ -240,7 +240,7 @@ private:
    * bit 1 : humidity is set
    * bit 2 : pressure is set
    */
-  uint8_t _messageStatus;
+  uint8_t _messageStatus = 0;
 
   // one nibble as 0101, so 0b00001010
   // see "Message Layout" section
