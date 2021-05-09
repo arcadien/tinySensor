@@ -1,4 +1,3 @@
-#include <avr/io.h>
 #include <stddef.h>
 #include <util/delay.h>
 
