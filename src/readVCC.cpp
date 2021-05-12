@@ -1,3 +1,4 @@
+#ifdef AVR
 #include <readVcc.h>
 #include <avr/io.h>
 
@@ -69,3 +70,5 @@ uint16_t readBatteryVoltage(void) {
 
   return (result);
 }
+
+#endif
