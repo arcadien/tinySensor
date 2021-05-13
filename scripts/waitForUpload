@@ -1,0 +1,14 @@
+#!/bin/bash
+
+while true; do
+
+if [ -f upload_* ]; then
+
+	firmware=`echo upload_* | sed 's/upload_//'`
+	echo "Flashing firmware $firmware..."
+	./scripts/flash_tinySensor $firmware | tee flash.log
+	rm upload_*
+	echo "done"
+fi
+sleep 1
+done
