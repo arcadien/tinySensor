@@ -1,0 +1,12 @@
+#!/bin/bash
+~aurelien/.platformio/packages/tool-avrdude/avrdude \
+    -v  \
+    -B8 \
+    -pt84 \
+    -cdragon_isp \
+    -b115200  \
+    -C ~aurelien/.platformio/packages/tool-avrdude/avrdude.conf \
+    -Uflash:w:/var/services/homes/aurelien/git/tinySensor/.pio/build/$1/firmware.hex \
+    -U efuse:w:0xff:m  \
+    -U hfuse:w:0xdf:m  \
+    -U lfuse:w:0x62:m
