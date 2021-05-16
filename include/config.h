@@ -19,6 +19,8 @@
 #pragma once
 
 #include <inttypes.h>
+#include <util/delay.h>
+#include <Attiny84aHal.h>
 
 // MODE 0 : Temperature only [THN132]
 #if OREGON_MODE == 0
@@ -38,6 +40,11 @@ static const uint8_t OREGON_NIBBLES_COUNT = 24;
 #else
 #error No oregon mode!
 #endif
+
+#define OREGON_GO_LOW ATTiny84aHal::RadioGoLow();
+#define OREGON_GO_HIGH ATTiny84aHal::RadioGoHigh();
+#define OREGON_DELAY_US(x) _delay_us(x);
+#include <protocol/Oregon_v3.h>
 
 #if !defined(SLEEP_TIME_IN_SECONDS)
 #define SLEEP_TIME_IN_SECONDS 32
@@ -69,9 +76,9 @@ const uint8_t OREGON_CHANNEL = SENSOR_CHANNEL;
 #define BAT_SENSOR_PIN PA1
 
 // Sensors
-//#define USE_BMP280
-//#define USE_BME280
-//#define USE_DS18B20
+// #define USE_BMP280
+// #define USE_BME280
+// #define USE_DS18B20
 
 #if defined(USE_BMP280) or defined(USE_BME280)
 #define USE_I2C

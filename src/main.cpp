@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <Oregon_TM.h>
+#include <Attiny84aHal.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
