@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <Attiny84aHal.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
@@ -32,8 +33,6 @@
 x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 #endif
 
-Oregon oregon;
-
 #if defined(USE_DS18B20)
 #include <ds18b20.h>
 #endif
@@ -42,6 +41,19 @@ Oregon oregon;
 #include <SparkFunBME280.h>
 BME280 bmX280;
 #endif
+
+ATTiny84aHal hal;
+
+ISR(BADISR_vect)
+{
+	while (1)
+	{
+		PORTB |= _BV(LED_PIN);
+		_delay_ms(100);
+		PORTA |= _BV(SENSOR_VCC);
+		_delay_ms(100);
+	}
+}
 
 void UseLessPowerAsPossible()
 {
@@ -118,9 +130,9 @@ void setup()
 	DDRA |= _BV(SENSOR_VCC);
 	DDRB |= _BV(LED_PIN);
 
-	#if defined(USE_BME280) || defined(USE_BMP280)
+#if defined(USE_BME280) || defined(USE_BMP280)
 	bmX280.setI2CAddress(0x76);
-	#endif
+#endif
 }
 
 /*
@@ -134,7 +146,7 @@ void sleep(uint8_t s)
 {
 	s >>= 3; // or s/8
 	if (s == 0)
-	s = 1;
+		s = 1;
 	sleep_interval = 0;
 	while (sleep_interval < s)
 	{
@@ -148,8 +160,7 @@ void sleep(uint8_t s)
 		uint8_t ddra_backup = DDRA;
 		uint8_t ddrb_backup = DDRB;
 
-		PRR |= (1 << PRUSI) |(1 << PRTIM0)| (1 << PRTIM1)|(1 << PRADC);
-		
+		PRR |= (1 << PRUSI) | (1 << PRTIM0) | (1 << PRTIM1) | (1 << PRADC);
 
 		// all pins as input to avoid power draw
 		DDRA = 0;
@@ -177,49 +188,40 @@ void sleep(uint8_t s)
 	}
 }
 
-void emit(Oregon &oregon)
-{
-	oregon.txPinLow();
-	_delay_us(oregon.TWOTIME * 8);
-	oregon.sendOregon(oregon._oregonMessageBuffer,
-	sizeof(oregon._oregonMessageBuffer));
-	oregon.txPinLow();
-}
-
 int avr_main(void)
 {
+
+	OregonV3 oregon;
 
 	bool batteryIsLow = false;
 
 	setup();
-	
-	oregon.setType(oregon._oregonMessageBuffer, OREGON_TYPE);
-	oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
-	oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
 
+	oregon.SetChannel(1);
+	oregon.SetRollingCode(OREGON_ID);
 
 	while (1)
 	{
-		#if defined(USE_I2C)
+
 		PORTA |= _BV(SENSOR_VCC);
+		_delay_ms(2);
+
+#if defined(USE_I2C)
 		TinyI2C.init();
-		#endif
-		
-		#if defined(USE_BME280) || defined(USE_BMP280)
+#endif
+
+#if defined(USE_BME280) || defined(USE_BMP280)
 		bmX280.beginI2C();
-		
-		oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
-		oregon.setTemperature(oregon._oregonMessageBuffer, bmX280.readTempC());
 
-		#if defined(USE_BME280)
-		oregon.setHumidity(oregon._oregonMessageBuffer, bmX280.readFloatHumidity());
-		oregon.setPressure(oregon._oregonMessageBuffer,
-		(bmX280.readFloatPressure() / 100));
-		#endif
-		oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-		#endif
+		oregon.SetTemperature(bmX280.readTempC());
 
-		#if defined(USE_DS18B20)
+#if defined(USE_BME280)
+		oregon.SetHumidity(bmX280.readFloatHumidity());
+		oregon.SetPressure(bmX280.readFloatPressure() / 100);
+#endif
+#endif
+
+#if defined(USE_DS18B20)
 
 		ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
 
@@ -231,12 +233,10 @@ int avr_main(void)
 		auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
 		if (readStatus == DS18B20_ERROR_OK)
 		{
-			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow);
-			oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
-			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+			oregon.SetTemperature(temperature / 16);
 		}
 
-		#endif
+#endif
 
 		bool shouldEmitVoltage = false;
 
@@ -249,35 +249,34 @@ int avr_main(void)
 
 		if (shouldEmitVoltage)
 		{
-			
+
 			auto voltageInMv = readBatteryVoltage();
 			batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
-			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow ? 0 : 1);
-			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
 
-			#if defined(VOLTAGE_X10_SENSOR_ID)
+#if defined(VOLTAGE_X10_SENSOR_ID)
 			voltageX10Sensor.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
-			#endif
+#endif
 		}
 
-		// led on
-		PORTB |= _BV(LED_PIN);
+		if (batteryIsLow)
+		{
+			oregon.SetBatteryLow();
+		}
 
-		PORTA |= _BV(SENSOR_VCC);
-		_delay_ms(2);
+		hal.LedOn();
 
 		// led off here, it will allow a short
 		// blink when actually emitting new data
 		PORTB &= ~_BV(LED_PIN);
 
-		emit(oregon);
-		
+		oregon.Send();
+
 		_delay_ms(30);
 
 		// second emission with led on
 		PORTB |= _BV(LED_PIN);
 
-		emit(oregon);
+		oregon.Send();
 
 		PORTA &= ~_BV(SENSOR_VCC);
 

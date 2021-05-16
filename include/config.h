@@ -19,27 +19,19 @@
 #pragma once
 
 #include <inttypes.h>
-#include <protocol/Oregon.h>
+#include <Attiny84aHal.h>
+#include <util/delay.h>
 
 /*
 * MODE_0 0 // Temperature only [THN132N]
 * MODE_1 1 // Temperature + Humidity [THGR2228N]
 * MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
 */
-#if defined(OREGON_MODE_2)
-#warning using Oregon MODE_2
-#define OREGON_MODE MODE_2
+#define OREGON_GO_LOW ATTiny84aHal::RadioGoLow();
+#define OREGON_GO_HIGH ATTiny84aHal::RadioGoHigh();
+#define OREGON_DELAY_US(x) _delay_us(x);
 
-#elif defined(OREGON_MODE_1)
-#warning using Oregon MODE_1
-#define OREGON_MODE MODE_1
-
-#elif defined(OREGON_MODE_0)
-#warning using Oregon MODE_0
-#define OREGON_MODE MODE_0
-#else
-#error No oregon mode!
-#endif
+#include <protocol/Oregon_v3.h>
 
 #if !defined(SLEEP_TIME_IN_SECONDS)
 #define SLEEP_TIME_IN_SECONDS 32
