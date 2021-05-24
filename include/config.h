@@ -19,9 +19,11 @@
 #pragma once
 
 #include <inttypes.h>
+
+
+#if defined(__AVR_ATtiny84a__)
 #include <Attiny84aHal.h>
 #include <util/delay.h>
-
 /*
 * MODE_0 0 // Temperature only [THN132N]
 * MODE_1 1 // Temperature + Humidity [THGR2228N]
@@ -30,6 +32,7 @@
 #define OREGON_GO_LOW ATTiny84aHal::RadioGoLow();
 #define OREGON_GO_HIGH ATTiny84aHal::RadioGoHigh();
 #define OREGON_DELAY_US(x) _delay_us(x);
+#endif
 
 #include <protocol/Oregon_v3.h>
 

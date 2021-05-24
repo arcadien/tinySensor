@@ -45,6 +45,7 @@
 class OregonV3
 {
 
+public:
 
   static const uint16_t HALF_DELAY_US = 512;
   static const uint16_t DELAY_US = HALF_DELAY_US * 2;
@@ -63,7 +64,6 @@ class OregonV3
 
   unsigned char message[MESSAGE_SIZE_IN_BYTES];
 
-public:
 
  
   OregonV3()
@@ -140,13 +140,14 @@ public:
 
   uint8_t GetMessageStatus() { return messageStatus; }
 
+  static bool BitRead(uint8_t value, uint8_t bit) { return (((value) >> (bit)) & 0x01); }
+
+  void SendData(const uint8_t *data, uint8_t size);
 private:
 
-  bool BitRead(uint8_t value, uint8_t bit) { return (((value) >> (bit)) & 0x01); }
 
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
-  void SendData(const uint8_t *data, uint8_t size);
 
   void DelayHalfPeriod();	
 	void DelayPeriod();
