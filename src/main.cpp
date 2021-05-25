@@ -1,33 +1,34 @@
 /*
- * This file is part of the TinySensor distribution
- * (https://github.com/arcadien/TinySensor)
- *
- * Copyright (c) 2019 Aurélien Labrosse
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-#if defined(AVR)
+* This file is part of the TinySensor distribution
+* (https://github.com/arcadien/TinySensor)
+*
+* Copyright (c) 2019 Aurelien Labrosse
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, version 3.
+*
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+* General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <config.h>
 
-#include <Oregon_TM.h>
-#include <Attiny84aHal.h>
+#if defined(__AVR_ATtiny84a__)
+
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <readVcc.h>
 #include <string.h>
+#include <Hal.h>
+#include <Oregon_v3.h>
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
 #include <x10rf.h>
@@ -35,7 +36,7 @@ x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 #endif
 
 #if defined(OREGON_MODE)
-Oregon_TM oregon = Oregon_TM(&PORTB, TX_RADIO_PIN, OREGON_NIBBLES_COUNT);
+OregonV3 oregon;
 #endif
 
 #if defined(USE_DS18B20)
@@ -47,7 +48,21 @@ Oregon_TM oregon = Oregon_TM(&PORTB, TX_RADIO_PIN, OREGON_NIBBLES_COUNT);
 BME280 bmX280;
 #endif
 
-void UseLessPowerAsPossible() {
+
+
+ISR(BADISR_vect)
+{
+	while (1)
+	{
+		PORTB |= _BV(LED_PIN);
+		_delay_ms(100);
+		PORTA |= _BV(SENSOR_VCC);
+		_delay_ms(100);
+	}
+}
+
+void UseLessPowerAsPossible()
+{
   // AVR4013: picoPower Basics
   // unused pins should be set as
   // input + pullup to minimize consumption
@@ -177,16 +192,18 @@ void sleep(uint16_t s) {
 
 int avr_main(void) {
 
+  OregonV3 oregon;
+
   bool batteryIsLow = false;
   uint16_t voltageInMv = 0;
 
   setup();
 
-#if defined(OREGON_MODE)
-  oregon.setType(OREGON_TYPE);
-  oregon.setChannel(OREGON_CHANNEL);
-  oregon.setId(OREGON_ID);
-#endif
+// #if defined(OREGON_MODE)
+//   oregon.setType(OREGON_TYPE);
+//   oregon.setChannel(OREGON_CHANNEL);
+//   oregon.setId(OREGON_ID);
+// #endif
 
   while (1) {
 
@@ -205,11 +222,11 @@ int avr_main(void) {
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmX280.beginI2C();
     _delay_ms(5);
-    oregon.setTemperature(bmX280.readTempC());
+    //oregon.setTemperature(bmX280.readTempC());
 
 #if defined(USE_BME280)
-    oregon.setHumidity(bmX280.readFloatHumidity());
-    oregon.setPressure((bmX280.readFloatPressure() / 100));
+   // oregon.setHumidity(bmX280.readFloatHumidity());
+   // oregon.setPressure((bmX280.readFloatPressure() / 100));
 #endif
 #endif
 
@@ -242,16 +259,20 @@ int avr_main(void) {
 #if defined(VOLTAGE_X10_SENSOR_ID)
       voltageX10Sensor.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
 #endif
-      secondCounter = 0;
-    }
+		}
 
-#if defined(OREGON_MODE)
-    oregon.setBatteryFlag(batteryIsLow ? true : false);
-    oregon.transmit();
-#endif
+		if (batteryIsLow)
+		{
+			oregon.SetBatteryLow();
+		}
 
-    // sensor power off
-    PORTA &= ~_BV(SENSOR_VCC);
+		GetHal()->LedOn();
+
+		// led off here, it will allow a short
+		// blink when actually emitting new data
+		PORTB &= ~_BV(LED_PIN);
+
+		oregon.Send();
 
     _delay_ms(30);
     PORTB &= ~_BV(LED_PIN);

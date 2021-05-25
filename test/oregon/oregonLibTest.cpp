@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#if !defined(AVR)
+#if defined(NATIVE)
 
 #include <cstdarg>
 #include <cstring>
@@ -29,106 +29,32 @@
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
+#include <Hal.h>
 
-namespace {
+ static std::string MessageNibblesToString(unsigned char *message,
+                                     unsigned char length)
+  {
 
-std::string MessageNibblesToString(unsigned char *message,
-                                   unsigned char length) {
-
-  std::stringstream ss;
-  for (int index = 0; index < length; index++) {
-    unsigned char currentMessageElement = message[index];
-
-    if (index == 8) {
-      ss << +currentMessageElement;
-    } else {
-      unsigned char lsb = message[index] & 0x0F;
-      unsigned char msb = message[index] >> 4;
-      ss << +msb;
-      ss << +lsb;
-    }
-  }
-  return ss.str();
-} // namespace
-
-
-#define OREGON_GO_LOW TestHal::RadioGoLow();
-#define OREGON_GO_HIGH TestHal::RadioGoHigh();
-#define OREGON_DELAY_US(x) TestHal::Delay(x);
-#include <protocol/Oregon_v3.h>
-
-class TestHal {
-public:
-  static const int ORDERS_COUNT_FOR_A_BYTE = 6;
-  const static unsigned char EXPECTED_ORDERS_FOR_ZERO[ORDERS_COUNT_FOR_A_BYTE];
-  const static unsigned char EXPECTED_ORDERS_FOR_ONE[ORDERS_COUNT_FOR_A_BYTE];
-  // 6 unsigned chars per bit, 24 times "1"
-  const static int PREAMBLE_BYTE_LENGTH = 24 * 6;
-  const static unsigned char EXPECTED_PREAMBLE[PREAMBLE_BYTE_LENGTH];
-  const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
-  const static unsigned char EXPECTED_POSTAMBLE[POSTAMBLE_BYTE_LENGTH];
-
-  static void Delay(uint16_t delay){
-    if(delay == OregonV3::DELAY_US){
-      DelayPeriod();
-    }else if(delay == OregonV3::HALF_DELAY_US)
+    std::stringstream ss;
+    for (int index = 0; index < length; index++)
     {
-      DelayHalfPeriod();
+      unsigned char currentMessageElement = message[index];
+
+      if (index == 8)
+      {
+        ss << +currentMessageElement;
+      }
+      else
+      {
+        unsigned char lsb = message[index] & 0x0F;
+        unsigned char msb = message[index] >> 4;
+        ss << +msb;
+        ss << +lsb;
+      }
     }
+    return ss.str();
   }
-  static void DelayPeriod()   { Orders.push_back('P'); }
-  static void DelayHalfPeriod()   { Orders.push_back('D'); }
 
-  static inline void GoHigh()   { Orders.push_back('H'); }
-  static inline void GoLow()   { Orders.push_back('L'); }
-
-  static unsigned char *GetOrders() { return &Orders[0]; }
-
-  static std::vector<unsigned char> Orders;
-};
-
-const unsigned char TestHal::EXPECTED_ORDERS_FOR_ZERO[ORDERS_COUNT_FOR_A_BYTE] =
-    {'H', 'D', 'L', 'P', 'H', 'D'};
-
-const unsigned char TestHal::EXPECTED_ORDERS_FOR_ONE[ORDERS_COUNT_FOR_A_BYTE] =
-    {'L', 'D', 'H', 'P', 'L', 'D'};
-
-const unsigned char
-    TestHal::EXPECTED_POSTAMBLE[TestHal::POSTAMBLE_BYTE_LENGTH] = {
-        // postamble : two nibbles at zero
-        'H', 'D', 'L', 'P', 'H', 'D', // 0
-        'H', 'D', 'L', 'P', 'H', 'D'  // 0
-};
-
-const unsigned char TestHal::EXPECTED_PREAMBLE[TestHal::PREAMBLE_BYTE_LENGTH] =
-    {
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-        'L', 'D', 'H', 'P', 'L', 'D', // 1
-};
-
-} // namespace
 
 /*
  * This testsuite is based on the document
@@ -142,26 +68,33 @@ void setUp(void) {}
 void tearDown(void) {}
 
 // ---------------- Test helpers tests
-void Expect_bitread_to_read_each_bit_separately() {
+void Expect_bitread_to_read_each_bit_separately()
+{
 
   std::string message = "";
 
   uint8_t value = 0;
 
-  for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex) {
+  for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex)
+  {
     message = "Failed with value==0 for bit " + std::to_string(bitIndex);
     TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
   }
 
   value = 1; // 0b00000001
-  for (uint8_t positionOfOne = 0; positionOfOne < 8; ++positionOfOne) {
+  for (uint8_t positionOfOne = 0; positionOfOne < 8; ++positionOfOne)
+  {
 
-    for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex) {
+    for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex)
+    {
       message = "Failed when 1 is at index " + std::to_string(positionOfOne) +
                 ", for bit " + std::to_string(bitIndex);
-      if (positionOfOne == bitIndex) {
+      if (positionOfOne == bitIndex)
+      {
         TEST_ASSERT_TRUE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
-      } else {
+      }
+      else
+      {
         TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
       }
     }
@@ -171,15 +104,15 @@ void Expect_bitread_to_read_each_bit_separately() {
 
 // ----------------- Oregon tests
 
-void Expect_nibbles_to_be_sent_lsb_first() {
+void Expect_nibbles_to_be_sent_lsb_first()
+{
   uint8_t value = 0b00010001;
-
   OregonV3 tinySensor;
 
   // Send one byte
   tinySensor.SendData(&value, 1);
 
-  unsigned char expectedOrders[8 * TestHal::ORDERS_COUNT_FOR_A_BYTE] = {
+  unsigned char expectedOrders[8 * NativeHal::ORDERS_COUNT_FOR_A_BYTE] = {
       'L', 'D', 'H', 'P', 'L', 'D', // 1
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D', // 0
@@ -189,51 +122,57 @@ void Expect_nibbles_to_be_sent_lsb_first() {
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D'  // 0
   };
-  auto actualOrdersForOneByte = TestHal::GetOrders();
+  NativeHal* h = (NativeHal*)(GetHal());
+  unsigned char* actualOrdersForOneByte = &h->Orders.at(0);
   TEST_ASSERT_EQUAL_INT8_ARRAY(expectedOrders, actualOrdersForOneByte,
-                               8 * TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               8 * NativeHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_good_hardware_orders_for_zero() {
+void Expect_good_hardware_orders_for_zero()
+{
   OregonV3 tinySensor;
   tinySensor.SendZero();
-  auto actualOrdersForZero = TestHal::GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ZERO,
+  NativeHal* h = (NativeHal*)(GetHal());
+  auto actualOrdersForZero = h->GetOrders();
+  TEST_ASSERT_EQUAL_INT8_ARRAY(NativeHal::EXPECTED_ORDERS_FOR_ZERO,
                                actualOrdersForZero,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               NativeHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_good_hardware_orders_for_one() {
+void Expect_good_hardware_orders_for_one()
+{
   OregonV3 tinySensor;
+  NativeHal hal;
   tinySensor.SendOne();
-  unsigned char *actualOrdersForOne = TestHal::GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ONE,
+  unsigned char *actualOrdersForOne = hal.GetOrders();
+  TEST_ASSERT_EQUAL_INT8_ARRAY(NativeHal::EXPECTED_ORDERS_FOR_ONE,
                                actualOrdersForOne,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               NativeHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_messages_to_have_preamble_and_postamble() {
+void Expect_messages_to_have_preamble_and_postamble()
+{
 
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
-
+  NativeHal hal;
   OregonV3 tinySensor;
 
   tinySensor.Send();
 
-  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
+  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * NativeHal::ORDERS_COUNT_FOR_A_BYTE;
 
   unsigned char expected[ordersCount];
 
-  memcpy(expected, TestHal::EXPECTED_PREAMBLE,
-         TestHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected, NativeHal::EXPECTED_PREAMBLE,
+         NativeHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_POSTAMBLE,
-         TestHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected + NativeHal::PREAMBLE_BYTE_LENGTH, NativeHal::EXPECTED_POSTAMBLE,
+         NativeHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
   unsigned char *actualEmptyMessageOrders;
-  actualEmptyMessageOrders = TestHal::GetOrders();
+  actualEmptyMessageOrders = hal.GetOrders();
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
 
@@ -256,7 +195,8 @@ void Expect_right_positive_temperature_encoding()
                                        "Failed with positive temp. with dozen");
 }
 
-void Expect_right_pressure_encoding() {
+void Expect_right_pressure_encoding()
+{
 
   int actualPressureInHPa = 900;
   unsigned char byte8 = actualPressureInHPa - OregonV3::PRESSURE_SCALING_VALUE;
@@ -273,7 +213,8 @@ void Expect_right_pressure_encoding() {
                                        "Failed with possible pressure value");
 }
 
-void Expect_right_negative_temperature_encoding() {
+void Expect_right_negative_temperature_encoding()
+{
   {
 
     unsigned char byte4 = 5 << 4;
@@ -308,7 +249,8 @@ void Expect_right_negative_temperature_encoding() {
   }
 }
 
-void Expect_right_humidity_encoding() {
+void Expect_right_humidity_encoding()
+{
 
   unsigned char byte6 = 2 << 4;
   unsigned char byte7 = 5;
@@ -322,9 +264,11 @@ void Expect_right_humidity_encoding() {
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
-void Expect_right_channel_encoding() {
+void Expect_right_channel_encoding()
+{
 
-  struct Given {
+  struct Given
+  {
     const char *label;
     unsigned char channel;
     unsigned char *expected;
@@ -337,20 +281,21 @@ void Expect_right_channel_encoding() {
 
   unsigned char channelByte = 0b00010000;
   unsigned char msg1[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0,           0, 0};
+                                                      0, 0, 0, 0, 0};
   givens.push_back(Given("channel 1", 1, msg1));
 
   channelByte = 0b00100000;
   unsigned char msg2[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0,           0, 0};
+                                                      0, 0, 0, 0, 0};
   givens.push_back(Given("channel 2", 2, msg2));
 
   channelByte = 0b01000000;
   unsigned char msg3[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0,           0, 0};
+                                                      0, 0, 0, 0, 0};
   givens.push_back(Given("channel 3", 3, msg3));
 
-  for (auto const given : givens) {
+  for (auto const given : givens)
+  {
 
     OregonV3 tinySensor;
 
@@ -363,7 +308,8 @@ void Expect_right_channel_encoding() {
   }
 }
 
-void Expect_right_rolling_code_encoding() {
+void Expect_right_rolling_code_encoding()
+{
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
@@ -381,7 +327,8 @@ void Expect_right_rolling_code_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
-void Expect_right_low_battery_encoding() {
+void Expect_right_low_battery_encoding()
+{
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
@@ -399,7 +346,8 @@ void Expect_right_low_battery_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
-void Expect_temperature_set_to_change_message_status() {
+void Expect_temperature_set_to_change_message_status()
+{
   OregonV3 tinySensor;
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
@@ -410,7 +358,8 @@ void Expect_temperature_set_to_change_message_status() {
   TEST_ASSERT_TRUE((messageStatus & 0x1) == 0x1);
 }
 
-void Expect_humidity_set_to_change_message_status() {
+void Expect_humidity_set_to_change_message_status()
+{
   OregonV3 tinySensor;
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
@@ -421,7 +370,8 @@ void Expect_humidity_set_to_change_message_status() {
   TEST_ASSERT_TRUE((messageStatus & 0x2) == 0x2);
 }
 
-void Expect_pressure_set_to_change_message_status() {
+void Expect_pressure_set_to_change_message_status()
+{
   OregonV3 tinySensor;
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
@@ -432,7 +382,8 @@ void Expect_pressure_set_to_change_message_status() {
   TEST_ASSERT_TRUE((messageStatus & 0x4) == 0x4);
 }
 
-void Expect_all_values_set_to_change_message_status() {
+void Expect_all_values_set_to_change_message_status()
+{
   OregonV3 tinySensor;
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
@@ -444,7 +395,8 @@ void Expect_all_values_set_to_change_message_status() {
   messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_TRUE((messageStatus & 0x7) == 0x7);
 }
-void Expect_sample_message_to_be_well_encoded() {
+void Expect_sample_message_to_be_well_encoded()
+{
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
   // 0x85. The first flag nibble (0xC) contains the battery low flag bit (0x4).
@@ -489,7 +441,8 @@ void Expect_sample_message_to_be_well_encoded() {
   // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
-int main(int, char **) {
+int main(int, char **)
+{
   UNITY_BEGIN();
   RUN_TEST(Expect_bitread_to_read_each_bit_separately);
   RUN_TEST(Expect_nibbles_to_be_sent_lsb_first);

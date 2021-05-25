@@ -1,4 +1,5 @@
-#ifdef AVR
+#if !defined(NATIVE)
+
 #include <readVcc.h>
 #include <avr/io.h>
 
