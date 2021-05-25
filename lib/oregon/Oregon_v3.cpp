@@ -1,4 +1,5 @@
-#include <protocol/Oregon_v3.h>
+#include <Oregon_v3.h>
+#include <Hal.h>
 
 const uint8_t OregonV3::POSTAMBLE[1] = {0x0};
 const uint8_t OregonV3::PREAMBLE[3] = {0xFF, 0xFF, 0xFF};

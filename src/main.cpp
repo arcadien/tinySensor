@@ -16,17 +16,18 @@
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-#if defined(AVR)
-
 #include <config.h>
+#include <Hal.h>
 
-#include <Attiny84aHal.h>
+#if defined(__AVR_ATtiny84a__)
+
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <string.h>
 #include <readVcc.h>
+#include <Oregon_v3.h>
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
 #include <x10rf.h>
@@ -42,7 +43,6 @@ x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 BME280 bmX280;
 #endif
 
-ATTiny84aHal hal;
 
 ISR(BADISR_vect)
 {
@@ -263,7 +263,7 @@ int avr_main(void)
 			oregon.SetBatteryLow();
 		}
 
-		hal.LedOn();
+		GetHal()->LedOn();
 
 		// led off here, it will allow a short
 		// blink when actually emitting new data

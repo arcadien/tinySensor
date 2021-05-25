@@ -20,22 +20,7 @@
 
 #include <inttypes.h>
 
-
-#if defined(__AVR_ATtiny84a__)
-#include <Attiny84aHal.h>
-#include <util/delay.h>
-/*
-* MODE_0 0 // Temperature only [THN132N]
-* MODE_1 1 // Temperature + Humidity [THGR2228N]
-* MODE_2 2 // Temperature + Humidity + Baro() [BTHR918N]
-*/
-#define OREGON_GO_LOW ATTiny84aHal::RadioGoLow();
-#define OREGON_GO_HIGH ATTiny84aHal::RadioGoHigh();
-#define OREGON_DELAY_US(x) _delay_us(x);
-#endif
-
-#include <protocol/Oregon_v3.h>
-
+#include <Hal.h>
 #if !defined(SLEEP_TIME_IN_SECONDS)
 #define SLEEP_TIME_IN_SECONDS 32
 #endif
@@ -47,23 +32,7 @@
 const uint8_t OREGON_ID = SENSOR_ID;
 const uint8_t OREGON_TYPE[] = SENSOR_TYPE;
 
-/*
-* 1-wire interface is on PA3
-* Power for radio is on PA2 (sensor_vcc)
-* LED pin is PB1
-* PWM pin is PA7
-* SDA pin is PA6
-* SCL pin is PA4
-* MISO pin is PA5
-* TX radio pin is PB0
-* BAT sensor pin is PA1
-* analog sensor pin is PA0
-*/
-#define LED_PIN PB1
-#define PWM_PIN PA7
-#define TX_RADIO_PIN PB0
-#define SENSOR_VCC PA2
-#define BAT_SENSOR_PIN PA1
+
 
 // Sensors
 //#define USE_BMP280

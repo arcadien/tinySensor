@@ -1,22 +1,7 @@
-#ifndef __OREGON_V3_H__
-#define __OREGON_V3_H__
+#pragma once
 
 #include <math.h>
 #include <stdint.h>
-#include <config.h>
-
-#ifndef OREGON_GO_LOW
-#warning OREGON_GO_LOW is not defined, expect errors
-#endif
-
-#ifndef OREGON_GO_HIGH
-#warning OREGON_GO_HIGH is not defined, expect errors
-#endif
-
-
-#ifndef OREGON_DELAY_US
-#warning OREGON_DELAY_US is not defined, expect errors
-#endif
 
 /*
  * Emulation of environment sensors using Oregon v3 protocol
@@ -64,8 +49,6 @@ public:
 
   unsigned char message[MESSAGE_SIZE_IN_BYTES];
 
-
- 
   OregonV3()
   {
     for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++)
@@ -145,7 +128,6 @@ public:
   void SendData(const uint8_t *data, uint8_t size);
 private:
 
-
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
 
@@ -172,5 +154,3 @@ private:
   static const uint8_t PREAMBLE[3];
 
 };
-
-#endif
