@@ -32,21 +32,7 @@ class OregonV3
 
 public:
 
-  static const uint16_t HALF_DELAY_US = 512;
-  static const uint16_t DELAY_US = HALF_DELAY_US * 2;
-
-  // pressure is a value expressed in hPa, in interval ]850, 1100[
-  // To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
-  // pressure value. It is added when decoding the message
-  static const int PRESSURE_SCALING_VALUE = 856;
-
-  // As rolling code is spread on two bytes, then its
-  // max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
-  // bits
-  static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
-
   static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
-
   unsigned char message[MESSAGE_SIZE_IN_BYTES];
 
   OregonV3()
@@ -134,6 +120,20 @@ private:
   void DelayHalfPeriod();	
 	void DelayPeriod();
 
+  static const uint16_t HALF_DELAY_US = 512;
+  static const uint16_t DELAY_US = HALF_DELAY_US * 2;
+
+  // pressure is a value expressed in hPa, in interval ]850, 1100[
+  // To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
+  // pressure value. It is added when decoding the message
+  static const int PRESSURE_SCALING_VALUE = 856;
+
+  // As rolling code is spread on two bytes, then its
+  // max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
+  // bits
+  static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
+
+  
   /*
    * bit 0 : temperature is set
    * bit 1 : humidity is set
