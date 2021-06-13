@@ -1,6 +1,6 @@
 #if defined(__AVR_ATtiny84a__)
 
-#include <Hal.h>
+#include <ATtiny84aHal.h>
 #include <avr/io.h>
 
 

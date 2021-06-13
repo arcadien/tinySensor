@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <Hal.h>
 
 /*
  * Emulation of environment sensors using Oregon v3 protocol
@@ -35,7 +36,7 @@ public:
   static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
   unsigned char message[MESSAGE_SIZE_IN_BYTES];
 
-  OregonV3()
+  OregonV3(Hal* hal) : _hal(hal)
   {
     for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++)
     {
@@ -152,5 +153,7 @@ private:
   // v3, preamble is 6 nibbles of 1, 24 times '1'
   // see "Message Layout" section
   static const uint8_t PREAMBLE[3];
+
+  Hal* _hal;
 
 };

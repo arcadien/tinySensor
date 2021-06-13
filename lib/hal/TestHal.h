@@ -1,14 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <Hal.h>
 
-#if !defined(__HAL_LOADED__)
-#error "Do not include NativeHal.h, but Hal.h"
-#endif
-
-#include <Oregon_v3.h>
-
-class NativeHal : public Hal
+class TestHal : public Hal
 {
 public:
     static const int ORDERS_COUNT_FOR_A_BYTE = 6;
@@ -42,7 +37,7 @@ public:
         Orders.push_back('D');
     }
 
-    unsigned char *GetOrders() { return &Orders.at(0); }
+    unsigned char *GetOrders() { return Orders.data(); }
 
     void LedOn() const override {}
     inline void RadioGoHigh() const override { Orders.push_back('H'); }

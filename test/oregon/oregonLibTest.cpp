@@ -29,32 +29,34 @@
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
-#include <Hal.h>
+#include <TestHal.h>
+#include <Oregon_v3.h>
 
- static std::string MessageNibblesToString(unsigned char *message,
-                                     unsigned char length)
+static std::string MessageNibblesToString(unsigned char *message,
+                                          unsigned char length)
+{
+
+  std::stringstream ss;
+  for (int index = 0; index < length; index++)
   {
+    unsigned char currentMessageElement = message[index];
 
-    std::stringstream ss;
-    for (int index = 0; index < length; index++)
+    if (index == 8)
     {
-      unsigned char currentMessageElement = message[index];
-
-      if (index == 8)
-      {
-        ss << +currentMessageElement;
-      }
-      else
-      {
-        unsigned char lsb = message[index] & 0x0F;
-        unsigned char msb = message[index] >> 4;
-        ss << +msb;
-        ss << +lsb;
-      }
+      ss << +currentMessageElement;
     }
-    return ss.str();
+    else
+    {
+      unsigned char lsb = message[index] & 0x0F;
+      unsigned char msb = message[index] >> 4;
+      ss << +msb;
+      ss << +lsb;
+    }
   }
+  return ss.str();
+}
 
+TestHal testHal;
 
 /*
  * This testsuite is based on the document
@@ -63,7 +65,9 @@
  *  October 2015"
  *  A copy of the document should be provided along the implementation
  */
-void setUp(void) {}
+void setUp(void)
+{
+}
 
 void tearDown(void) {}
 
@@ -107,12 +111,12 @@ void Expect_bitread_to_read_each_bit_separately()
 void Expect_nibbles_to_be_sent_lsb_first()
 {
   uint8_t value = 0b00010001;
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   // Send one byte
   tinySensor.SendData(&value, 1);
 
-  unsigned char expectedOrders[8 * NativeHal::ORDERS_COUNT_FOR_A_BYTE] = {
+  unsigned char expectedOrders[8 * TestHal::ORDERS_COUNT_FOR_A_BYTE] = {
       'L', 'D', 'H', 'P', 'L', 'D', // 1
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D', // 0
@@ -122,32 +126,30 @@ void Expect_nibbles_to_be_sent_lsb_first()
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D'  // 0
   };
-  NativeHal* h = (NativeHal*)(GetHal());
-  unsigned char* actualOrdersForOneByte = &h->Orders.at(0);
+  unsigned char *actualOrdersForOneByte = testHal.GetOrders();
   TEST_ASSERT_EQUAL_INT8_ARRAY(expectedOrders, actualOrdersForOneByte,
-                               8 * NativeHal::ORDERS_COUNT_FOR_A_BYTE);
+                               8 * TestHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
 void Expect_good_hardware_orders_for_zero()
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SendZero();
-  NativeHal* h = (NativeHal*)(GetHal());
-  auto actualOrdersForZero = h->GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(NativeHal::EXPECTED_ORDERS_FOR_ZERO,
+  auto actualOrdersForZero = testHal.GetOrders();
+  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ZERO,
                                actualOrdersForZero,
-                               NativeHal::ORDERS_COUNT_FOR_A_BYTE);
+                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
 void Expect_good_hardware_orders_for_one()
 {
-  OregonV3 tinySensor;
-  NativeHal hal;
+  OregonV3 tinySensor(&testHal);
+  TestHal hal;
   tinySensor.SendOne();
   unsigned char *actualOrdersForOne = hal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(NativeHal::EXPECTED_ORDERS_FOR_ONE,
+  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ONE,
                                actualOrdersForOne,
-                               NativeHal::ORDERS_COUNT_FOR_A_BYTE);
+                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
 void Expect_messages_to_have_preamble_and_postamble()
@@ -156,30 +158,29 @@ void Expect_messages_to_have_preamble_and_postamble()
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
-  NativeHal hal;
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   tinySensor.Send();
 
-  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * NativeHal::ORDERS_COUNT_FOR_A_BYTE;
+  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
 
   unsigned char expected[ordersCount];
 
-  memcpy(expected, NativeHal::EXPECTED_PREAMBLE,
-         NativeHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected, TestHal::EXPECTED_PREAMBLE,
+         TestHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  memcpy(expected + NativeHal::PREAMBLE_BYTE_LENGTH, NativeHal::EXPECTED_POSTAMBLE,
-         NativeHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_POSTAMBLE,
+         TestHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
   unsigned char *actualEmptyMessageOrders;
-  actualEmptyMessageOrders = hal.GetOrders();
+  actualEmptyMessageOrders = testHal.GetOrders();
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
 
 void Expect_right_positive_temperature_encoding()
 
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SetTemperature(27.5);
 
   unsigned char byte4 = 5 << 4;
@@ -200,12 +201,12 @@ void Expect_right_pressure_encoding()
 
   const int actualPressureInHPa = 900;
   const int pressureScalingValue = 856; // //OregonV3::PRESSURE_SCALING_VALUE;
-  unsigned char byte8 = actualPressureInHPa - pressureScalingValue; 
+  unsigned char byte8 = actualPressureInHPa - pressureScalingValue;
   unsigned char byte9 = 0xC0;
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9, 0};
 
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SetPressure(actualPressureInHPa);
   unsigned char *actualMessage = tinySensor.message;
 
@@ -224,7 +225,7 @@ void Expect_right_negative_temperature_encoding()
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
         0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
-    OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
     tinySensor.SetTemperature(-27.5);
     unsigned char *actualMessage = tinySensor.message;
 
@@ -240,7 +241,7 @@ void Expect_right_negative_temperature_encoding()
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
         0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
-    OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
     tinySensor.SetTemperature(-8.4);
     unsigned char *actualMessage = tinySensor.message;
 
@@ -258,7 +259,7 @@ void Expect_right_humidity_encoding()
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0, 0};
 
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SetHumidity(52);
   unsigned char *actualMessage = tinySensor.message;
 
@@ -298,7 +299,7 @@ void Expect_right_channel_encoding()
   for (auto const given : givens)
   {
 
-    OregonV3 tinySensor;
+    OregonV3 tinySensor(&testHal);
 
     tinySensor.SetChannel(given.channel);
     unsigned char *actualMessage = tinySensor.message;
@@ -320,7 +321,7 @@ void Expect_right_rolling_code_encoding()
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, (unsigned char)8, (unsigned char)(5 << 4), 0, 0, 0, 0, 0, 0};
 
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SetRollingCode(85);
   unsigned char *actualMessage = tinySensor.message;
 
@@ -339,7 +340,7 @@ void Expect_right_low_battery_encoding()
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0xC,
                                                           0, 0, 0, 0, 0};
 
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
   tinySensor.SetBatteryLow();
   unsigned char *actualMessage = tinySensor.message;
 
@@ -349,7 +350,7 @@ void Expect_right_low_battery_encoding()
 
 void Expect_temperature_set_to_change_message_status()
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -361,7 +362,7 @@ void Expect_temperature_set_to_change_message_status()
 
 void Expect_humidity_set_to_change_message_status()
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -373,7 +374,7 @@ void Expect_humidity_set_to_change_message_status()
 
 void Expect_pressure_set_to_change_message_status()
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -385,7 +386,7 @@ void Expect_pressure_set_to_change_message_status()
 
 void Expect_all_values_set_to_change_message_status()
 {
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -422,7 +423,7 @@ void Expect_sample_message_to_be_well_encoded()
    */
   std::string expectedMessage = "0000485C480882844C0";
 
-  OregonV3 tinySensor;
+  OregonV3 tinySensor(&testHal);
 
   tinySensor.SetChannel(3);
   tinySensor.SetRollingCode(0x85);
