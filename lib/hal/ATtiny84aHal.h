@@ -1,8 +1,6 @@
 #pragma once
 
-#if !defined(__HAL_LOADED__)
-#error "Do not include ATtiny84aHal.h, but Hal.h"
-#endif
+#include <Hal.h>
 
 /*
 * 1-wire interface is on PA3

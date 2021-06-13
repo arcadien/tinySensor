@@ -40,21 +40,21 @@ void OregonV3::DelayPeriod()
 
 void OregonV3::SendZero()
 {
-	OREGON_GO_HIGH
+	_hal->RadioGoHigh();
 	DelayHalfPeriod();
-	OREGON_GO_LOW
+	_hal->RadioGoLow();
 	DelayPeriod();
-	OREGON_GO_HIGH
+	_hal->RadioGoHigh();
 	DelayHalfPeriod();
 }
 
 void OregonV3::SendOne()
 {
-	OREGON_GO_LOW
+	_hal->RadioGoLow();
 	DelayHalfPeriod();
-	OREGON_GO_HIGH
+	_hal->RadioGoHigh();
 	DelayPeriod();
-	OREGON_GO_LOW
+	_hal->RadioGoLow();
 	DelayHalfPeriod();
 }
 
@@ -110,7 +110,7 @@ void OregonV3::Send()
 
 	if ((messageStatus & 0b00000001) == 0b00000001)
 	{
-		messageLength++; 
+		messageLength++;
 	}
 	if ((messageStatus & 0b00000010) == 0b00000010)
 	{
