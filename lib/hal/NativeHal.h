@@ -24,11 +24,11 @@ public:
 
     void Delay(uint16_t delay)
     {
-        if (delay == OregonV3::DELAY_US)
+        if (delay == 1024) // DELAY_US
         {
             DelayPeriod();
         }
-        else if (delay == OregonV3::HALF_DELAY_US)
+        else if (delay ==  512) // HALF_DELAY_US
         {
             DelayHalfPeriod();
         }

@@ -198,8 +198,9 @@ void Expect_right_positive_temperature_encoding()
 void Expect_right_pressure_encoding()
 {
 
-  int actualPressureInHPa = 900;
-  unsigned char byte8 = actualPressureInHPa - OregonV3::PRESSURE_SCALING_VALUE;
+  const int actualPressureInHPa = 900;
+  const int pressureScalingValue = 856; // //OregonV3::PRESSURE_SCALING_VALUE;
+  unsigned char byte8 = actualPressureInHPa - pressureScalingValue; 
   unsigned char byte9 = 0xC0;
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9, 0};
