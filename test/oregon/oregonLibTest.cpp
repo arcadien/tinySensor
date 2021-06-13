@@ -108,6 +108,27 @@ void Expect_bitread_to_read_each_bit_separately()
 
 // ----------------- Oregon tests
 
+void Expect_good_hardware_orders_for_zero()
+{
+  OregonV3 tinySensor(&testHal);
+  tinySensor.SendZero();
+  auto actualOrdersForZero = testHal.GetOrders();
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ZERO,
+                               actualOrdersForZero,
+                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+}
+
+void Expect_good_hardware_orders_for_one()
+{
+  OregonV3 tinySensor(&testHal);
+  TestHal hal;
+  tinySensor.SendOne();
+  unsigned char *actualOrdersForOne = hal.GetOrders();
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ONE,
+                               actualOrdersForOne,
+                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+}
+
 void Expect_nibbles_to_be_sent_lsb_first()
 {
   uint8_t value = 0b00010001;
@@ -127,30 +148,10 @@ void Expect_nibbles_to_be_sent_lsb_first()
       'H', 'D', 'L', 'P', 'H', 'D'  // 0
   };
   unsigned char *actualOrdersForOneByte = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expectedOrders, actualOrdersForOneByte,
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(expectedOrders, actualOrdersForOneByte,
                                8 * TestHal::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_good_hardware_orders_for_zero()
-{
-  OregonV3 tinySensor(&testHal);
-  tinySensor.SendZero();
-  auto actualOrdersForZero = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ZERO,
-                               actualOrdersForZero,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
-}
-
-void Expect_good_hardware_orders_for_one()
-{
-  OregonV3 tinySensor(&testHal);
-  TestHal hal;
-  tinySensor.SendOne();
-  unsigned char *actualOrdersForOne = hal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ONE,
-                               actualOrdersForOne,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
-}
 
 void Expect_messages_to_have_preamble_and_postamble()
 {
@@ -174,7 +175,7 @@ void Expect_messages_to_have_preamble_and_postamble()
 
   unsigned char *actualEmptyMessageOrders;
   actualEmptyMessageOrders = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
 
 void Expect_right_positive_temperature_encoding()
@@ -446,10 +447,10 @@ void Expect_sample_message_to_be_well_encoded()
 int main(int, char **)
 {
   UNITY_BEGIN();
-  RUN_TEST(Expect_bitread_to_read_each_bit_separately);
-  RUN_TEST(Expect_nibbles_to_be_sent_lsb_first);
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
+  RUN_TEST(Expect_bitread_to_read_each_bit_separately);
+  RUN_TEST(Expect_nibbles_to_be_sent_lsb_first);
   RUN_TEST(Expect_messages_to_have_preamble_and_postamble);
   RUN_TEST(Expect_right_negative_temperature_encoding);
   RUN_TEST(Expect_right_positive_temperature_encoding);
