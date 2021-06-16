@@ -14,6 +14,7 @@ void OregonV3::SendMSB(const uint8_t data)
 
 void OregonV3::SendLSB(const uint8_t data)
 {
+	(BitRead(data, 0)) ? SendOne() : SendZero();
 	(BitRead(data, 1)) ? SendOne() : SendZero();
 	(BitRead(data, 2)) ? SendOne() : SendZero();
 	(BitRead(data, 3)) ? SendOne() : SendZero();
@@ -30,12 +31,12 @@ void OregonV3::SendData(const uint8_t *data, uint8_t size)
 
 void OregonV3::DelayHalfPeriod()
 {
-	OREGON_DELAY_US(HALF_DELAY_US)
+	_hal->DelayUs(HALF_DELAY_US);
 }
 
 void OregonV3::DelayPeriod()
 {
-	OREGON_DELAY_US(DELAY_US)
+	_hal->DelayUs(DELAY_US);
 }
 
 void OregonV3::SendZero()

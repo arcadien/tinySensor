@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Hal.h>
+#include <util/delay.h>
 
 /*
 * 1-wire interface is on PA3
@@ -34,3 +35,5 @@ class ATtiny84aHal : public Hal
     void RadioGoHigh() const override;
 
 };
+
+#define OREGON_DELAY_US(x) _delay_us(x);
