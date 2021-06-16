@@ -3,7 +3,7 @@
 #include <vector>
 #include <Hal.h>
 
-class TestHal : public Hal
+class TestHal_ : public Hal
 {
 public:
     static const int ORDERS_COUNT_FOR_A_BYTE = 6;
@@ -17,7 +17,7 @@ public:
 
     mutable std::vector<unsigned char> Orders;
 
-    void Delay(uint16_t delay)
+    void DelayUs(long delay) const
     {
         if (delay == 1024) // DELAY_US
         {
@@ -28,19 +28,26 @@ public:
             DelayHalfPeriod();
         }
     }
-    void DelayPeriod()
+
+    void DelayPeriod() const
     {
         Orders.push_back('P');
     }
-    void DelayHalfPeriod()
+    void DelayHalfPeriod() const
     {
         Orders.push_back('D');
     }
 
     unsigned char *GetOrders() { return Orders.data(); }
-
+    void ClearOrders(){
+        Orders.clear();
+    }
     void LedOn() const override {}
     inline void RadioGoHigh() const override { Orders.push_back('H'); }
     inline void RadioGoLow() const override { Orders.push_back('L'); }
 
 };
+
+extern TestHal_ TestHal;
+
+#define OREGON_DELAY_US(x) TestHal.Delay(x);

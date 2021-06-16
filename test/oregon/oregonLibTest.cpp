@@ -25,28 +25,23 @@
 #include <utility>
 #include <vector>
 
+#include <Oregon_v3.h>
+#include <TestHal.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
-#include <TestHal.h>
-#include <Oregon_v3.h>
 
 static std::string MessageNibblesToString(unsigned char *message,
-                                          unsigned char length)
-{
+                                          unsigned char length) {
 
   std::stringstream ss;
-  for (int index = 0; index < length; index++)
-  {
+  for (int index = 0; index < length; index++) {
     unsigned char currentMessageElement = message[index];
 
-    if (index == 8)
-    {
+    if (index == 8) {
       ss << +currentMessageElement;
-    }
-    else
-    {
+    } else {
       unsigned char lsb = message[index] & 0x0F;
       unsigned char msb = message[index] >> 4;
       ss << +msb;
@@ -56,8 +51,6 @@ static std::string MessageNibblesToString(unsigned char *message,
   return ss.str();
 }
 
-TestHal testHal;
-
 /*
  * This testsuite is based on the document
  * "434MHz RF Protocol Descriptions for Wireless Weather Sensors,
@@ -65,41 +58,37 @@ TestHal testHal;
  *  October 2015"
  *  A copy of the document should be provided along the implementation
  */
-void setUp(void)
-{
+void setUp(void) {
+  TestHal.ClearOrders();
 }
 
 void tearDown(void) {}
 
 // ---------------- Test helpers tests
-void Expect_bitread_to_read_each_bit_separately()
-{
+void Expect_bitread_to_read_each_bit_separately() {
 
   std::string message = "";
 
   uint8_t value = 0;
 
-  for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex)
-  {
+  for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex) {
     message = "Failed with value==0 for bit " + std::to_string(bitIndex);
-    TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
+    TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex),
+                              message.c_str());
   }
 
   value = 1; // 0b00000001
-  for (uint8_t positionOfOne = 0; positionOfOne < 8; ++positionOfOne)
-  {
+  for (uint8_t positionOfOne = 0; positionOfOne < 8; ++positionOfOne) {
 
-    for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex)
-    {
+    for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex) {
       message = "Failed when 1 is at index " + std::to_string(positionOfOne) +
                 ", for bit " + std::to_string(bitIndex);
-      if (positionOfOne == bitIndex)
-      {
-        TEST_ASSERT_TRUE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
-      }
-      else
-      {
-        TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex), message.c_str());
+      if (positionOfOne == bitIndex) {
+        TEST_ASSERT_TRUE_MESSAGE(OregonV3::BitRead(value, bitIndex),
+                                 message.c_str());
+      } else {
+        TEST_ASSERT_FALSE_MESSAGE(OregonV3::BitRead(value, bitIndex),
+                                  message.c_str());
       }
     }
     value <<= 1; // 0b00000010
@@ -108,38 +97,34 @@ void Expect_bitread_to_read_each_bit_separately()
 
 // ----------------- Oregon tests
 
-void Expect_good_hardware_orders_for_zero()
-{
-  OregonV3 tinySensor(&testHal);
+void Expect_good_hardware_orders_for_zero() {
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SendZero();
-  auto actualOrdersForZero = testHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ZERO,
+  auto actualOrdersForZero = TestHal.GetOrders();
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal_::EXPECTED_ORDERS_FOR_ZERO,
                                actualOrdersForZero,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               TestHal_::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_good_hardware_orders_for_one()
-{
-  OregonV3 tinySensor(&testHal);
-  TestHal hal;
+void Expect_good_hardware_orders_for_one() {
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SendOne();
-  unsigned char *actualOrdersForOne = hal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal::EXPECTED_ORDERS_FOR_ONE,
+  unsigned char *actualOrdersForOne = TestHal.GetOrders();
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal_::EXPECTED_ORDERS_FOR_ONE,
                                actualOrdersForOne,
-                               TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               TestHal_::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-void Expect_nibbles_to_be_sent_lsb_first()
-{
-  uint8_t value = 0b00010001;
-  OregonV3 tinySensor(&testHal);
+void Expect_nibbles_to_be_sent_lsb_first() {
+  OregonV3 tinySensor(&TestHal);
 
   // Send one byte
+  uint8_t value = 0b00010010;
   tinySensor.SendData(&value, 1);
 
-  unsigned char expectedOrders[8 * TestHal::ORDERS_COUNT_FOR_A_BYTE] = {
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
+  unsigned char expectedOrders[8 * TestHal_::ORDERS_COUNT_FOR_A_BYTE] = {
       'H', 'D', 'L', 'P', 'H', 'D', // 0
+      'L', 'D', 'H', 'P', 'L', 'D', // 1
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'L', 'D', 'H', 'P', 'L', 'D', // 1
@@ -147,41 +132,39 @@ void Expect_nibbles_to_be_sent_lsb_first()
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'H', 'D', 'L', 'P', 'H', 'D'  // 0
   };
-  unsigned char *actualOrdersForOneByte = testHal.GetOrders();
+  unsigned char *actualOrdersForOneByte = TestHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expectedOrders, actualOrdersForOneByte,
-                               8 * TestHal::ORDERS_COUNT_FOR_A_BYTE);
+                               8 * TestHal_::ORDERS_COUNT_FOR_A_BYTE);
 }
 
-
-void Expect_messages_to_have_preamble_and_postamble()
-{
+void Expect_messages_to_have_preamble_and_postamble() {
 
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
 
   tinySensor.Send();
 
-  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal::ORDERS_COUNT_FOR_A_BYTE;
+  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal_::ORDERS_COUNT_FOR_A_BYTE;
 
   unsigned char expected[ordersCount];
 
-  memcpy(expected, TestHal::EXPECTED_PREAMBLE,
-         TestHal::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected, TestHal_::EXPECTED_PREAMBLE,
+         TestHal_::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  memcpy(expected + TestHal::PREAMBLE_BYTE_LENGTH, TestHal::EXPECTED_POSTAMBLE,
-         TestHal::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected + TestHal_::PREAMBLE_BYTE_LENGTH, TestHal_::EXPECTED_POSTAMBLE,
+         TestHal_::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
   unsigned char *actualEmptyMessageOrders;
-  actualEmptyMessageOrders = testHal.GetOrders();
+  actualEmptyMessageOrders = TestHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
 
 void Expect_right_positive_temperature_encoding()
 
 {
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SetTemperature(27.5);
 
   unsigned char byte4 = 5 << 4;
@@ -197,8 +180,7 @@ void Expect_right_positive_temperature_encoding()
                                        "Failed with positive temp. with dozen");
 }
 
-void Expect_right_pressure_encoding()
-{
+void Expect_right_pressure_encoding() {
 
   const int actualPressureInHPa = 900;
   const int pressureScalingValue = 856; // //OregonV3::PRESSURE_SCALING_VALUE;
@@ -207,7 +189,7 @@ void Expect_right_pressure_encoding()
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, 0, 0, byte8, byte9, 0};
 
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SetPressure(actualPressureInHPa);
   unsigned char *actualMessage = tinySensor.message;
 
@@ -216,8 +198,7 @@ void Expect_right_pressure_encoding()
                                        "Failed with possible pressure value");
 }
 
-void Expect_right_negative_temperature_encoding()
-{
+void Expect_right_negative_temperature_encoding() {
   {
 
     unsigned char byte4 = 5 << 4;
@@ -226,7 +207,7 @@ void Expect_right_negative_temperature_encoding()
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
         0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
-  OregonV3 tinySensor(&testHal);
+    OregonV3 tinySensor(&TestHal);
     tinySensor.SetTemperature(-27.5);
     unsigned char *actualMessage = tinySensor.message;
 
@@ -242,7 +223,7 @@ void Expect_right_negative_temperature_encoding()
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
         0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
-  OregonV3 tinySensor(&testHal);
+    OregonV3 tinySensor(&TestHal);
     tinySensor.SetTemperature(-8.4);
     unsigned char *actualMessage = tinySensor.message;
 
@@ -252,26 +233,23 @@ void Expect_right_negative_temperature_encoding()
   }
 }
 
-void Expect_right_humidity_encoding()
-{
+void Expect_right_humidity_encoding() {
 
   unsigned char byte6 = 2 << 4;
   unsigned char byte7 = 5;
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, byte6, byte7, 0, 0, 0};
 
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SetHumidity(52);
   unsigned char *actualMessage = tinySensor.message;
 
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
-void Expect_right_channel_encoding()
-{
+void Expect_right_channel_encoding() {
 
-  struct Given
-  {
+  struct Given {
     const char *label;
     unsigned char channel;
     unsigned char *expected;
@@ -284,23 +262,22 @@ void Expect_right_channel_encoding()
 
   unsigned char channelByte = 0b00010000;
   unsigned char msg1[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0, 0, 0};
+                                                      0, 0, 0,           0, 0};
   givens.push_back(Given("channel 1", 1, msg1));
 
   channelByte = 0b00100000;
   unsigned char msg2[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0, 0, 0};
+                                                      0, 0, 0,           0, 0};
   givens.push_back(Given("channel 2", 2, msg2));
 
   channelByte = 0b01000000;
   unsigned char msg3[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, channelByte, 0, 0,
-                                                      0, 0, 0, 0, 0};
+                                                      0, 0, 0,           0, 0};
   givens.push_back(Given("channel 3", 3, msg3));
 
-  for (auto const given : givens)
-  {
+  for (auto const given : givens) {
 
-    OregonV3 tinySensor(&testHal);
+    OregonV3 tinySensor(&TestHal);
 
     tinySensor.SetChannel(given.channel);
     unsigned char *actualMessage = tinySensor.message;
@@ -311,8 +288,7 @@ void Expect_right_channel_encoding()
   }
 }
 
-void Expect_right_rolling_code_encoding()
-{
+void Expect_right_rolling_code_encoding() {
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
@@ -322,7 +298,7 @@ void Expect_right_rolling_code_encoding()
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, (unsigned char)8, (unsigned char)(5 << 4), 0, 0, 0, 0, 0, 0};
 
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SetRollingCode(85);
   unsigned char *actualMessage = tinySensor.message;
 
@@ -330,8 +306,7 @@ void Expect_right_rolling_code_encoding()
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
-void Expect_right_low_battery_encoding()
-{
+void Expect_right_low_battery_encoding() {
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
@@ -340,8 +315,7 @@ void Expect_right_low_battery_encoding()
 
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0xC,
                                                           0, 0, 0, 0, 0};
-
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
   tinySensor.SetBatteryLow();
   unsigned char *actualMessage = tinySensor.message;
 
@@ -349,9 +323,8 @@ void Expect_right_low_battery_encoding()
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 
-void Expect_temperature_set_to_change_message_status()
-{
-  OregonV3 tinySensor(&testHal);
+void Expect_temperature_set_to_change_message_status() {
+  OregonV3 tinySensor(&TestHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -361,9 +334,8 @@ void Expect_temperature_set_to_change_message_status()
   TEST_ASSERT_TRUE((messageStatus & 0x1) == 0x1);
 }
 
-void Expect_humidity_set_to_change_message_status()
-{
-  OregonV3 tinySensor(&testHal);
+void Expect_humidity_set_to_change_message_status() {
+  OregonV3 tinySensor(&TestHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -373,9 +345,8 @@ void Expect_humidity_set_to_change_message_status()
   TEST_ASSERT_TRUE((messageStatus & 0x2) == 0x2);
 }
 
-void Expect_pressure_set_to_change_message_status()
-{
-  OregonV3 tinySensor(&testHal);
+void Expect_pressure_set_to_change_message_status() {
+  OregonV3 tinySensor(&TestHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -385,9 +356,8 @@ void Expect_pressure_set_to_change_message_status()
   TEST_ASSERT_TRUE((messageStatus & 0x4) == 0x4);
 }
 
-void Expect_all_values_set_to_change_message_status()
-{
-  OregonV3 tinySensor(&testHal);
+void Expect_all_values_set_to_change_message_status() {
+  OregonV3 tinySensor(&TestHal);
 
   uint8_t messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_EQUAL(0, messageStatus);
@@ -398,8 +368,7 @@ void Expect_all_values_set_to_change_message_status()
   messageStatus = tinySensor.GetMessageStatus();
   TEST_ASSERT_TRUE((messageStatus & 0x7) == 0x7);
 }
-void Expect_sample_message_to_be_well_encoded()
-{
+void Expect_sample_message_to_be_well_encoded() {
 
   // This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
   // 0x85. The first flag nibble (0xC) contains the battery low flag bit (0x4).
@@ -424,7 +393,7 @@ void Expect_sample_message_to_be_well_encoded()
    */
   std::string expectedMessage = "0000485C480882844C0";
 
-  OregonV3 tinySensor(&testHal);
+  OregonV3 tinySensor(&TestHal);
 
   tinySensor.SetChannel(3);
   tinySensor.SetRollingCode(0x85);
@@ -444,8 +413,7 @@ void Expect_sample_message_to_be_well_encoded()
   // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
-int main(int, char **)
-{
+int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
