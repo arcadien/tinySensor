@@ -20,6 +20,20 @@ void OregonV3::SendLSB(const uint8_t data)
 	(BitRead(data, 3)) ? SendOne() : SendZero();
 }
 
+int OregonV3::Sum(uint8_t count, const uint8_t *data) {
+    int s = 0;
+
+    for (uint8_t i = 0; i < count; ++i) {
+      s += (data[i] & 0xF0) >> 4;
+      s += (data[i] & 0xF);
+    }
+
+    if (int(count) != count)
+      s += (data[count] & 0xF0) >> 4;
+
+    return s;
+  }
+
 void OregonV3::SendData(const uint8_t *data, uint8_t size)
 {
 	for (uint8_t i = 0; i < size; ++i)

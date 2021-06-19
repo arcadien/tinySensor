@@ -6,9 +6,9 @@
 class Hal
 {
 public:
-    // Radio related
-    virtual void LedOn() const = 0;
-
+    virtual void  LedOn()const  = 0;
+    virtual void  LedOff() const = 0;
+    
     virtual void DelayUs(long us) const = 0;
 
     // Radio related
