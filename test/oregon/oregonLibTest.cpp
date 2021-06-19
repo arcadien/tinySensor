@@ -32,6 +32,48 @@
 #include <string.h>
 #include <unity.h>
 
+static const unsigned char
+    EXPECTED_ORDERS_FOR_ZERO[OregonV3::ORDERS_COUNT_FOR_A_BIT] = {
+        'H', 'D', 'L', 'P', 'H', 'D'};
+
+static const unsigned char
+    EXPECTED_ORDERS_FOR_ONE[OregonV3::ORDERS_COUNT_FOR_A_BIT] = {'L', 'D', 'H',
+                                                                 'P', 'L', 'D'};
+
+static const unsigned char
+    EXPECTED_POSTAMBLE[2 * OregonV3::ORDERS_COUNT_FOR_A_BIT] = {
+        // postamble : two nibbles at zero
+        'H', 'D', 'L', 'P', 'H', 'D', // 0
+        'H', 'D', 'L', 'P', 'H', 'D'  // 0
+};
+
+static const unsigned char EXPECTED_PREAMBLE[OregonV3::PREAMBLE_BYTE_LENGTH] = {
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D', // 1
+};
+
 static std::string MessageNibblesToString(unsigned char *message,
                                           unsigned char length) {
 
@@ -58,9 +100,7 @@ static std::string MessageNibblesToString(unsigned char *message,
  *  October 2015"
  *  A copy of the document should be provided along the implementation
  */
-void setUp(void) {
-  TestHal.ClearOrders();
-}
+void setUp(void) { TestHal.ClearOrders(); }
 
 void tearDown(void) {}
 
@@ -101,18 +141,18 @@ void Expect_good_hardware_orders_for_zero() {
   OregonV3 tinySensor(&TestHal);
   tinySensor.SendZero();
   auto actualOrdersForZero = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal_::EXPECTED_ORDERS_FOR_ZERO,
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS_FOR_ZERO,
                                actualOrdersForZero,
-                               TestHal_::ORDERS_COUNT_FOR_A_BYTE);
+                               OregonV3::ORDERS_COUNT_FOR_A_BIT);
 }
 
 void Expect_good_hardware_orders_for_one() {
   OregonV3 tinySensor(&TestHal);
   tinySensor.SendOne();
   unsigned char *actualOrdersForOne = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(TestHal_::EXPECTED_ORDERS_FOR_ONE,
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS_FOR_ONE,
                                actualOrdersForOne,
-                               TestHal_::ORDERS_COUNT_FOR_A_BYTE);
+                              OregonV3::ORDERS_COUNT_FOR_A_BIT);
 }
 
 void Expect_nibbles_to_be_sent_lsb_first() {
@@ -122,7 +162,7 @@ void Expect_nibbles_to_be_sent_lsb_first() {
   uint8_t value = 0b00010010;
   tinySensor.SendData(&value, 1);
 
-  unsigned char expectedOrders[8 * TestHal_::ORDERS_COUNT_FOR_A_BYTE] = {
+  unsigned char expectedOrders[8 * OregonV3::ORDERS_COUNT_FOR_A_BIT] = {
       'H', 'D', 'L', 'P', 'H', 'D', // 0
       'L', 'D', 'H', 'P', 'L', 'D', // 1
       'H', 'D', 'L', 'P', 'H', 'D', // 0
@@ -134,7 +174,7 @@ void Expect_nibbles_to_be_sent_lsb_first() {
   };
   unsigned char *actualOrdersForOneByte = TestHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expectedOrders, actualOrdersForOneByte,
-                               8 * TestHal_::ORDERS_COUNT_FOR_A_BYTE);
+                               8 * OregonV3::ORDERS_COUNT_FOR_A_BIT);
 }
 
 void Expect_messages_to_have_preamble_and_postamble() {
@@ -146,15 +186,16 @@ void Expect_messages_to_have_preamble_and_postamble() {
 
   tinySensor.Send();
 
-  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * TestHal_::ORDERS_COUNT_FOR_A_BYTE;
+  auto ordersCount = (6 * 4 + /* 4 +*/ 1) * OregonV3::ORDERS_COUNT_FOR_A_BIT;
 
   unsigned char expected[ordersCount];
 
-  memcpy(expected, TestHal_::EXPECTED_PREAMBLE,
-         TestHal_::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected, EXPECTED_PREAMBLE,
+         OregonV3::PREAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
-  memcpy(expected + TestHal_::PREAMBLE_BYTE_LENGTH, TestHal_::EXPECTED_POSTAMBLE,
-         TestHal_::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
+  memcpy(expected + OregonV3::PREAMBLE_BYTE_LENGTH,
+         EXPECTED_POSTAMBLE,
+         OregonV3::POSTAMBLE_BYTE_LENGTH * sizeof(unsigned char));
 
   unsigned char *actualEmptyMessageOrders;
   actualEmptyMessageOrders = TestHal.GetOrders();

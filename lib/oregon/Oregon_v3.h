@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Hal.h>
 #include <math.h>
 #include <stdint.h>
-#include <Hal.h>
 
 /*
  * Emulation of environment sensors using Oregon v3 protocol
@@ -28,32 +28,33 @@
  * nibbles 20..21  : checksum
  *
  */
-class OregonV3
-{
+class OregonV3 {
 
 public:
+
+  static const int ORDERS_COUNT_FOR_A_BIT = 6;
+
+  // 6 unsigned chars per bit, 24 times "1"
+  const static int PREAMBLE_BYTE_LENGTH = 24 * 6;
+  const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
 
   static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
   unsigned char message[MESSAGE_SIZE_IN_BYTES];
 
-  OregonV3(Hal* hal) : _hal(hal)
-  {
-    for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++)
-    {
+  OregonV3(Hal *hal) : _hal(hal) {
+    for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++) {
       message[index] = 0;
     }
   }
 
-  void SetChannel(unsigned char channel)
-  {
+  void SetChannel(unsigned char channel) {
     message[2] |= 1 << (4 + (channel - 1));
   }
 
   /*
    * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
    */
-  void SetRollingCode(unsigned char rollingCode)
-  {
+  void SetRollingCode(unsigned char rollingCode) {
     unsigned char rollingCodeTens = (unsigned char)rollingCode / 10;
     message[2] |= rollingCodeTens & 0x0f;                    // nibble 4
     message[3] |= (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
@@ -72,33 +73,18 @@ public:
    * Values out of possible ones on earth (less that 850, more than 1099) are
    * ignored.
    */
-  void SetPressure(int pressure)
-  {
+  void SetPressure(int pressure) {
 
     messageStatus |= 1 << 2;
 
-    if ((pressure > 850) && (pressure < 1100))
-    {
+    if ((pressure > 850) && (pressure < 1100)) {
       message[8] = pressure - PRESSURE_SCALING_VALUE;
       message[9] = 0xC0;
     }
   }
 
-  int Sum(uint8_t count, const uint8_t *data)
-  {
-    int s = 0;
-
-    for (uint8_t i = 0; i < count; ++i)
-    {
-      s += (data[i] & 0xF0) >> 4;
-      s += (data[i] & 0xF);
-    }
-
-    if (int(count) != count)
-      s += (data[count] & 0xF0) >> 4;
-
-    return s;
-  }
+  int Sum(uint8_t count, const uint8_t *data);
+  
   /*!
    * Emit message according to available data
    */
@@ -110,16 +96,18 @@ public:
 
   uint8_t GetMessageStatus() { return messageStatus; }
 
-  static bool BitRead(uint8_t value, uint8_t bit) { return (((value) >> (bit)) & 0x01); }
+  static bool BitRead(uint8_t value, uint8_t bit) {
+    return (((value) >> (bit)) & 0x01);
+  }
 
   void SendData(const uint8_t *data, uint8_t size);
-private:
 
+private:
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
 
-  void DelayHalfPeriod();	
-	void DelayPeriod();
+  void DelayHalfPeriod();
+  void DelayPeriod();
 
   static const uint16_t HALF_DELAY_US = 512;
   static const uint16_t DELAY_US = HALF_DELAY_US * 2;
@@ -134,7 +122,6 @@ private:
   // bits
   static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
 
-  
   /*
    * bit 0 : temperature is set
    * bit 1 : humidity is set
@@ -154,6 +141,5 @@ private:
   // see "Message Layout" section
   static const uint8_t PREAMBLE[3];
 
-  Hal* _hal;
-
+  Hal *_hal;
 };
