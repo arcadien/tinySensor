@@ -45,12 +45,12 @@ void OregonV3::SendData(const uint8_t *data, uint8_t size)
 
 void OregonV3::DelayHalfPeriod()
 {
-	_hal->DelayUs(HALF_DELAY_US);
+	_hal->Delay512Us();
 }
 
 void OregonV3::DelayPeriod()
 {
-	_hal->DelayUs(DELAY_US);
+	_hal->Delay1024Us();
 }
 
 void OregonV3::SendZero()
