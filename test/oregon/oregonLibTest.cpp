@@ -85,7 +85,7 @@ static std::string MessageNibblesToString(unsigned char *message,
       ss << +currentMessageElement;
     } else {
       unsigned char lsb = message[index] & 0x0F;
-      unsigned char msb = message[index] >> 4;
+      unsigned char msb = (message[index] & 0xF0)>> 4;
       ss << +msb;
       ss << +lsb;
     }
@@ -451,7 +451,7 @@ void Expect_sample_message_to_be_well_encoded() {
       MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
   std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
 
-  // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
+  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
 int main(int, char **) {
