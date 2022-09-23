@@ -83,7 +83,6 @@ public:
     }
   }
 
-  int Sum(uint8_t count, const uint8_t *data);
   
   /*!
    * Emit message according to available data
@@ -103,6 +102,7 @@ public:
   void SendData(const uint8_t *data, uint8_t size);
 
 private:
+  int Sum(uint8_t count, const uint8_t *data);
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
 

@@ -473,6 +473,6 @@ int main(int, char **) {
   RUN_TEST(Expect_humidity_set_to_change_message_status);
   RUN_TEST(Expect_pressure_set_to_change_message_status);
   RUN_TEST(Expect_all_values_set_to_change_message_status);
-  return UNITY_END();
+  UNITY_END();
 }
 #endif
