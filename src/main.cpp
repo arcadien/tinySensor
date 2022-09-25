@@ -112,10 +112,10 @@ int main(void) {
       secondCounter = 0;
       shouldEmitVoltage = true;
     }
-
+shouldEmitVoltage = true;
     if (shouldEmitVoltage) {
 
-      auto voltageInMv = hal.GetBatteryVoltageMv();
+      uint16_t voltageInMv = hal.GetBatteryVoltageMv();
       batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
 
 #if defined(VOLTAGE_X10_SENSOR_ID)

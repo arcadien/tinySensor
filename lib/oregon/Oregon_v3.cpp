@@ -1,8 +1,66 @@
 #include <Oregon_v3.h>
 #include <Hal.h>
 
-const uint8_t OregonV3::POSTAMBLE[1] = {0x0};
-const uint8_t OregonV3::PREAMBLE[3] = {0xFF, 0xFF, 0xFF};
+// v3, two nibbles with unknown format
+// see "Message Layout" section
+static const uint8_t POSTAMBLE[] = {0x0};
+
+// v3, preamble is 6 nibbles of 1, 24 times '1'
+// see "Message Layout" section
+static const uint8_t PREAMBLE[] = {0xFF, 0xFF, 0xFF};
+
+static const int ORDERS_COUNT_FOR_A_BIT = 6;
+
+// 6 unsigned chars per bit, 24 times "1"
+const static int PREAMBLE_BYTE_LENGTH = 24 * 6;
+const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
+
+static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
+unsigned char message[MESSAGE_SIZE_IN_BYTES];
+
+static const uint16_t HALF_DELAY_US = 512;
+static const uint16_t DELAY_US = HALF_DELAY_US * 2;
+
+// pressure is a value expressed in hPa, in interval ]850, 1100[
+// To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
+// pressure value. It is added when decoding the message
+static const int PRESSURE_SCALING_VALUE = 856;
+
+// As rolling code is spread on two bytes, then its
+// max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
+// bits
+static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
+
+// one nibble as 0101, so 0b00001010
+// see "Message Layout" section
+static const uint8_t SYNC = {0b00001010};
+
+static bool BitRead(uint8_t value, uint8_t bit)
+{
+	return (((value) >> (bit)) & 0x01);
+}
+
+OregonV3::OregonV3(Hal *hal) : _hal(hal)
+{
+	for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++)
+	{
+		message[index] = 0;
+	}
+}
+
+void OregonV3::SetBatteryLow() { message[4] |= 0xC; }
+
+void OregonV3::SetPressure(int pressure)
+{
+
+	messageStatus |= 1 << 2;
+
+	if ((pressure > 850) && (pressure < 1100))
+	{
+		message[8] = pressure - PRESSURE_SCALING_VALUE;
+		message[9] = 0xC0;
+	}
+}
 
 void OregonV3::SendMSB(const uint8_t data)
 {
@@ -20,19 +78,21 @@ void OregonV3::SendLSB(const uint8_t data)
 	(BitRead(data, 3)) ? SendOne() : SendZero();
 }
 
-int OregonV3::Sum(uint8_t count, const uint8_t *data) {
-    int s = 0;
+int OregonV3::Sum(uint8_t count, const uint8_t *data)
+{
+	int s = 0;
 
-    for (uint8_t i = 0; i < count; ++i) {
-      s += (data[i] & 0xF0) >> 4;
-      s += (data[i] & 0xF);
-    }
+	for (uint8_t i = 0; i < count; ++i)
+	{
+		s += (data[i] & 0xF0) >> 4;
+		s += (data[i] & 0xF);
+	}
 
-    if (int(count) != count)
-      s += (data[count] & 0xF0) >> 4;
+	if (int(count) != count)
+		s += (data[count] & 0xF0) >> 4;
 
-    return s;
-  }
+	return s;
+}
 
 void OregonV3::SendData(const uint8_t *data, uint8_t size)
 {
@@ -61,6 +121,21 @@ void OregonV3::SendZero()
 	DelayPeriod();
 	_hal->RadioGoHigh();
 	DelayHalfPeriod();
+}
+
+void OregonV3::SetChannel(unsigned char channel)
+{
+	message[2] |= 1 << (4 + (channel - 1));
+}
+
+/*
+ * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
+ */
+void OregonV3::SetRollingCode(unsigned char rollingCode)
+{
+	unsigned char rollingCodeTens = (unsigned char)rollingCode / 10;
+	message[2] |= rollingCodeTens & 0x0f;					 // nibble 4
+	message[3] |= (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
 }
 
 void OregonV3::SendOne()

@@ -1,15 +1,25 @@
 #ifdef AVR
 #include <Attiny84aHal.h>
+#include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
 
+// #define LED_PIN PB1
+// #define TX_RADIO_PIN PB0
+// #define PWM_PIN PA7
+// #define SENSOR_VCC PA2
+// #define BAT_SENSOR_PIN PA1
 
 volatile uint8_t sleep_interval;
+static const uint16_t VREF = 1100l; // internal reference voltage of ADC
+static const uint16_t ADCSTEPS = 1024l;
 
-ISR(BADISR_vect) {
-  while (1) {
+ISR(BADISR_vect)
+{
+  while (1)
+  {
     PORTB |= _BV(PORTB1);
     _delay_ms(100);
     PORTA |= _BV(PORTB1);
@@ -17,17 +27,76 @@ ISR(BADISR_vect) {
   }
 }
 
-
 //
 // * Interrupt routine called each 8 seconds in the
 // * default setup, which is the longest timeout period
 // * accepted by the hardware watchdog
 //
-ISR(WATCHDOG_vect) {
+ISR(WATCHDOG_vect)
+{
   wdt_reset();
   ++sleep_interval;
   // Re-enable WDT interrupt
   _WD_CONTROL_REG |= (1 << WDIE);
+}
+
+static void UseLessPowerAsPossible()
+{
+  // AVR4013: picoPower Basics
+  // unused pins should be set as
+  // input + pullup to minimize consumption
+  DDRA = 0;
+  DDRB = 0;
+
+  // pull-up all unused pins by default
+  //
+  PORTA |= 0b01111001;
+  PORTB |= 0b11111100;
+
+  // no timer1
+  PRR &= ~_BV(PRTIM1);
+
+  // no analog p. 129, 146, 131
+  ADCSRA = 0;
+
+  // better, but not easy to invert for VCC sensing
+  // PRR &= ~_BV(PRADC);
+  // ADCSRA &= ~(1 << ADEN);
+  // ACSR |= (1 << ACD);
+  // DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
+
+  // deactivate brownout detection during sleep (p.36)
+  MCUCR |= (1 << BODS) | (1 << BODSE);
+  MCUCR |= (1 << BODS);
+  MCUSR &= ~(1 << BODSE);
+}
+
+static inline void startADCReading() { ADCSRA |= (1 << ADSC) | (1 << ADEN) | ( 1 << ADPS0) | (1<<ADPS1) | ( 1<< ADPS2) ; }
+static inline bool ADCReadInProgress()
+{
+  return (ADCSRA & (1 << ADSC)) == ADSC;
+}
+
+/*!
+ * Read the ADC, discarding `discard` first readings,
+ * and then return average of `samples` readings
+ */
+static uint16_t adcRead(uint8_t discard, uint8_t samples)
+{
+  uint16_t result = 0;
+
+  for (uint8_t loopSamples = 0; loopSamples < (samples + discard);
+       ++loopSamples)
+  {
+    startADCReading();
+    while (ADCReadInProgress())
+    {
+    }
+    if (loopSamples >= discard)
+      result += ADC;
+  }
+  result /= samples;
+  return result;
 }
 
 /*
@@ -37,12 +106,14 @@ ISR(WATCHDOG_vect) {
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint8_t s) {
+void sleep(uint8_t s)
+{
   s >>= 3; // or s/8
   if (s == 0)
     s = 1;
   sleep_interval = 0;
-  while (sleep_interval < s) {
+  while (sleep_interval < s)
+  {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     sei();
@@ -81,5 +152,81 @@ void sleep(uint8_t s) {
   }
 }
 
+Attiny84aHal::Attiny84aHal()
+{
+  PORTB = 0;
+  UseLessPowerAsPossible();
+
+  // Watchdog setup - 8s sleep time
+  _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
+
+  // set output pins
+  DDRB |= _BV(PB0); // TX_RADIO_PIN
+  DDRB |= _BV(PB1); // LED_PIN
+  DDRA |= _BV(PA2); // sensor VCC
+}
+
+void Attiny84aHal::PowerOnSensors()
+{
+  PORTA |= _BV(PA2);
+}
+
+void Attiny84aHal::PowerOffSensors()
+{
+  PORTA &= ~_BV(PA2);
+}
+
+void Attiny84aHal::LedOn() { PORTB |= (1 << PB1); }
+
+void Attiny84aHal::LedOff() { PORTB &= ~(1 << PB1); }
+
+void Attiny84aHal::RadioGoLow() { PORTB &= ~(1 << PB0); }
+
+void Attiny84aHal::RadioGoHigh() { PORTB |= (1 << PB0); }
+
+void Attiny84aHal::Delay30ms() { _delay_ms(30); }
+void Attiny84aHal::Delay512Us() { _delay_us(512); }
+void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
+
+/*!
+ *
+ * Reads voltage on ADC1 pin, relative to Vcc
+ *
+ */
+uint16_t Attiny84aHal::GetBatteryVoltageMv(void)
+{
+  // analog ref = VCC, input channel = ADC1 (PA1)
+  ADMUX = 0b00000001;
+
+  uint16_t result = adcRead(1, 4);
+  uint16_t mvPerAdcStep = GetVccVoltageMv() / ADCSTEPS;
+  result *= mvPerAdcStep;
+  return result;
+}
+
+/*!
+ *
+ * Reads Vcc using internal 1.1v tension reference
+ *
+ */
+uint16_t Attiny84aHal::GetVccVoltageMv(void)
+{
+  // analog ref = VCC, input channel = VREF
+  ADMUX = 0b00100001;
+  _delay_ms(1);
+  uint16_t result = adcRead(1, 4);
+  uint16_t vccMv = (uint16_t)(1100.0 * 1024.0 / result);
+  return vccMv;
+}
+
 void Attiny84aHal::Hibernate(uint8_t seconds) { sleep(seconds); }
+
+void InitI2C(void)
+{
+#if defined(USE_I2C)
+  TinyI2C.init();
+#endif
+}
+
 #endif
