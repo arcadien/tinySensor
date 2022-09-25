@@ -202,9 +202,9 @@ void OregonV3::Send()
 
 	if (messageLength == 8)
 	{
-		// THGN122N (Temperature)
-		message[0] = 0x0A;
-		message[1] = 0x4D;
+		// THN132N (Temperature)
+		message[0] = 0xEC;
+		message[1] = 0x40;
 		int s = ((Sum(6, message) + (message[6] & 0xF) - 0xa) & 0xff);
 		message[6] |= (s & 0x0F) << 4;
 		message[7] = (s & 0xF0) >> 4;
@@ -212,17 +212,17 @@ void OregonV3::Send()
 
 	if (messageLength == 9)
 	{
-		// THGN122N (Temperature + Humidity)
-		message[0] = 0x1A;
-		message[1] = 0x2D;
+		// THGN123N (Temperature + Humidity)
+		message[0] = 0x1D;
+		message[1] = 0x20;
 		message[8] = ((Sum(8, message) - 0xa) & 0xFF);
 	}
 
 	if (messageLength == 11)
 	{
-		// BTHR918N (temp, humidity, pressure)
+		// BTHR918 (temp, humidity, pressure)
 		message[0] = 0x5A;
-		message[1] = 0x6D;
+		message[1] = 0x5D;
 		message[10] = ((Sum(10, message) - 0xa) & 0xFF);
 	}
 

@@ -55,7 +55,8 @@ x10 voltageEmitter;
 wdt_disable();
 */
 
-int main(void) {
+int main(void)
+{
 
   OregonV3 oregon(&hal);
   oregon.SetChannel(1);
@@ -70,7 +71,8 @@ int main(void) {
    */
   volatile uint16_t secondCounter = 901;
 
-  while (1) {
+  while (1)
+  {
 
     hal.PowerOnSensors();
     hal.Delay30ms();
@@ -81,7 +83,7 @@ int main(void) {
 #endif
 
 #if defined(USE_BME280) || defined(USE_BMP280)
-	bmx280.Begin();
+    bmx280.Begin();
     oregon.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
     oregon.SetHumidity(bmx280.GetHumidity());
@@ -100,7 +102,8 @@ int main(void) {
     int16_t temperature = 0;
     auto readStatus =
         ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
-    if (readStatus == DS18B20_ERROR_OK) {
+    if (readStatus == DS18B20_ERROR_OK)
+    {
       oregon.SetTemperature(temperature / 16);
     }
 
@@ -109,12 +112,14 @@ int main(void) {
     bool shouldEmitVoltage = false;
 
     // absolute counter for emission ~ each 15 minutes
-    if (secondCounter > 900) {
+    if (secondCounter > 900)
+    {
       secondCounter = 0;
       shouldEmitVoltage = true;
     }
-	
-    if (shouldEmitVoltage) {
+
+    if (shouldEmitVoltage)
+    {
 
       uint16_t voltageInMv = hal.GetBatteryVoltageMv();
       batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
@@ -124,7 +129,8 @@ int main(void) {
 #endif
     }
 
-    if (batteryIsLow) {
+    if (batteryIsLow)
+    {
       oregon.SetBatteryLow();
     }
 
@@ -132,11 +138,10 @@ int main(void) {
     oregon.Send();
     hal.LedOff();
     hal.Delay30ms();
-    hal.Delay30ms();
     hal.LedOn();
     oregon.Send();
-    hal.PowerOffSensors();
     hal.LedOff();
+    hal.PowerOffSensors();
 
     hal.Hibernate((uint8_t)SLEEP_TIME_IN_SECONDS);
     secondCounter += SLEEP_TIME_IN_SECONDS;

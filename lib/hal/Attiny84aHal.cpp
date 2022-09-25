@@ -194,7 +194,7 @@ void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
  */
 uint16_t Attiny84aHal::GetBatteryVoltageMv(void)
 {
-  ADCSRA |= (1 << ADEN) | (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+  ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
   
   // analog ref = VCC, input channel = ADC1 (PA1)
   ADMUX = 0b00000001;

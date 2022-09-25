@@ -8,9 +8,9 @@
  * Emulation of environment sensors using Oregon v3 protocol
  *
  *
- *  - Temperature:                     emulates TH132N     (id 0xEC, 0x40)
- *  - Temperature, humidity:           emulates THGR122NX  (id 0x1D, 0x20)
- *  - Temperature, humidity, pressure: emulates BTHR968    (id 0x5D, 0x60)
+ *  - Temperature:                     emulates THN132N    (id 0xEC, 0x40)
+ *  - Temperature, humidity:           emulates THGN123N   (id 0x1D, 0x20)
+ *  - Temperature, humidity, pressure: emulates BTHR918    (id 0x5A, 0x5D)
  *
  * Payload data is stored in the `message` property. Payload is made of
  * 'nibbles' which are 4 bits long.
