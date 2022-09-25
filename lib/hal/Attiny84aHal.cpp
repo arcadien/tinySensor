@@ -5,6 +5,7 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
+#include <AnalogFilter.h>
 
 // #define LED_PIN PB1
 // #define TX_RADIO_PIN PB0
@@ -13,16 +14,14 @@
 // #define BAT_SENSOR_PIN PA1
 
 volatile uint8_t sleep_interval;
-static const uint16_t VREF = 1100l; // internal reference voltage of ADC
-static const uint16_t ADCSTEPS = 1024l;
 
 ISR(BADISR_vect)
 {
   while (1)
   {
-    PORTB |= _BV(PORTB1);
+    PORTB |= (1 << PB1);
     _delay_ms(100);
-    PORTA |= _BV(PORTB1);
+    PORTB &= ~(1 << PB1);
     _delay_ms(100);
   }
 }
@@ -71,7 +70,7 @@ static void UseLessPowerAsPossible()
   MCUSR &= ~(1 << BODSE);
 }
 
-static inline void startADCReading() { ADCSRA |= (1 << ADSC) | (1 << ADEN) | ( 1 << ADPS0) | (1<<ADPS1) | ( 1<< ADPS2) ; }
+static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
 static inline bool ADCReadInProgress()
 {
   return (ADCSRA & (1 << ADSC)) == ADSC;
@@ -83,7 +82,7 @@ static inline bool ADCReadInProgress()
  */
 static uint16_t adcRead(uint8_t discard, uint8_t samples)
 {
-  uint16_t result = 0;
+  AnalogFilter filter(discard, samples);
 
   for (uint8_t loopSamples = 0; loopSamples < (samples + discard);
        ++loopSamples)
@@ -92,11 +91,10 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples)
     while (ADCReadInProgress())
     {
     }
-    if (loopSamples >= discard)
-      result += ADC;
+    uint16_t value = ADC;
+    filter.Push(value);
   }
-  result /= samples;
-  return result;
+  return filter.Get();
 }
 
 /*
@@ -196,13 +194,17 @@ void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
  */
 uint16_t Attiny84aHal::GetBatteryVoltageMv(void)
 {
+  ADCSRA |= (1 << ADEN) | (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+  
   // analog ref = VCC, input channel = ADC1 (PA1)
   ADMUX = 0b00000001;
-
-  uint16_t result = adcRead(1, 4);
-  uint16_t mvPerAdcStep = GetVccVoltageMv() / ADCSTEPS;
-  result *= mvPerAdcStep;
-  return result;
+  _delay_ms(1);
+  
+  uint16_t batteryAdcRead = adcRead(4, 12);
+  uint16_t vccVoltageMv = GetVccVoltageMv();
+  float mvPerAdcStep = (vccVoltageMv / 1024.0);
+  uint16_t batteryVoltageMv = batteryAdcRead * mvPerAdcStep;
+  return batteryVoltageMv;
 }
 
 /*!
@@ -215,8 +217,9 @@ uint16_t Attiny84aHal::GetVccVoltageMv(void)
   // analog ref = VCC, input channel = VREF
   ADMUX = 0b00100001;
   _delay_ms(1);
-  uint16_t result = adcRead(1, 4);
-  uint16_t vccMv = (uint16_t)(1100.0 * 1024.0 / result);
+
+  uint16_t vccAdcRead = adcRead(4, 12);
+  uint16_t vccMv = (uint16_t)(1100.0 * 1024.0 / vccAdcRead);
   return vccMv;
 }
 

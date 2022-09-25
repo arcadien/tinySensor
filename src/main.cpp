@@ -81,6 +81,7 @@ int main(void) {
 #endif
 
 #if defined(USE_BME280) || defined(USE_BMP280)
+	bmx280.Begin();
     oregon.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
     oregon.SetHumidity(bmx280.GetHumidity());
@@ -112,7 +113,7 @@ int main(void) {
       secondCounter = 0;
       shouldEmitVoltage = true;
     }
-shouldEmitVoltage = true;
+	
     if (shouldEmitVoltage) {
 
       uint16_t voltageInMv = hal.GetBatteryVoltageMv();
