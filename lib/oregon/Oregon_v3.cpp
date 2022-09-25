@@ -9,14 +9,7 @@ static const uint8_t POSTAMBLE[] = {0x0};
 // see "Message Layout" section
 static const uint8_t PREAMBLE[] = {0xFF, 0xFF, 0xFF};
 
-static const int ORDERS_COUNT_FOR_A_BIT = 6;
-
-// 6 unsigned chars per bit, 24 times "1"
-const static int PREAMBLE_BYTE_LENGTH = 24 * 6;
-const static int POSTAMBLE_BYTE_LENGTH = 2 * 6;
-
-static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
-unsigned char message[MESSAGE_SIZE_IN_BYTES];
+unsigned char message[OregonV3::MESSAGE_SIZE_IN_BYTES];
 
 static const uint16_t HALF_DELAY_US = 512;
 static const uint16_t DELAY_US = HALF_DELAY_US * 2;
@@ -35,17 +28,17 @@ static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
 // see "Message Layout" section
 static const uint8_t SYNC = {0b00001010};
 
-static bool BitRead(uint8_t value, uint8_t bit)
-{
-	return (((value) >> (bit)) & 0x01);
-}
-
 OregonV3::OregonV3(Hal *hal) : _hal(hal)
 {
 	for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++)
 	{
 		message[index] = 0;
 	}
+}
+
+const unsigned char *OregonV3::GetMessage()
+{
+	return message;
 }
 
 void OregonV3::SetBatteryLow() { message[4] |= 0xC; }

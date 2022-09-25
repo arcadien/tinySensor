@@ -41,6 +41,9 @@ void Expect_I2C_can_be_configured()
 }
 #endif
 
+void tearDown() {}
+void setUp() {}
+
 int main(int, char **)
 {
   UNITY_BEGIN();

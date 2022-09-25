@@ -32,8 +32,19 @@ class OregonV3
 {
 
 public:
+  static const int ORDERS_COUNT_FOR_A_BIT = 6;
+  static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
+
+  // 6 unsigned chars per bit, 24 times "1"
+  static const int PREAMBLE_BYTE_LENGTH = 24 * 6;
+  static const int POSTAMBLE_BYTE_LENGTH = 2 * 6;
 
   OregonV3(Hal *hal);
+
+  static bool BitRead(uint8_t value, uint8_t bit)
+  {
+    return (((value) >> (bit)) & 0x01);
+  }
 
   void SetChannel(unsigned char channel);
 
@@ -70,8 +81,9 @@ public:
 
   void SendData(const uint8_t *data, uint8_t size);
 
-private:
+  const unsigned char *GetMessage();
 
+private:
   /*
    * bit 0 : temperature is set
    * bit 1 : humidity is set

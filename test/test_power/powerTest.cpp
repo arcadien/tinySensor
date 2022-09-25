@@ -77,11 +77,14 @@ void Expect_sensors_can_be_unpowered() {
 }
 void Expect_target_can_hibernate() {
   auto begin = std::chrono::high_resolution_clock::now();
-  TestHal.Hibernate(2);
+  TestHal.Hibernate(1);
   auto end = std::chrono::high_resolution_clock::now();
-  TEST_ASSERT_EQUAL(2000, std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count());
+  TEST_ASSERT_INT16_WITHIN(20, 1000, std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count());
 }
 #endif
+
+void tearDown() {}
+void setUp() {}
 
 int main(int, char **) {
   UNITY_BEGIN();

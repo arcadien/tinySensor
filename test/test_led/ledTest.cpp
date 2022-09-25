@@ -22,8 +22,13 @@
 #include <string.h>
 #include <unity.h>
 
+void tearDown() {}
+void setUp() {}
+
 #ifdef AVR
 #include <Attiny84aHal.h>
+
+
 
 void Expect_led_can_switch_on() {
   Attiny84aHal hal;
