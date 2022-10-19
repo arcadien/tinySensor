@@ -1,21 +1,21 @@
 /*
-* This file is part of the TinySensor distribution
-* (https://github.com/arcadien/TinySensor)
-*
-* Copyright (c) 2019 Aurélien Labrosse
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, version 3.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of the TinySensor distribution
+ * (https://github.com/arcadien/TinySensor)
+ *
+ * Copyright (c) 2019 Aurélien Labrosse
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #if defined(AVR)
 
 #include <config.h>
@@ -26,13 +26,14 @@
 #include <avr/wdt.h>
 #include <string.h>
 #include <readVcc.h>
+#include <Oregon_TM.h>
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
 #include <x10rf.h>
 x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 #endif
 
-Oregon oregon;
+Oregon_TM oregon = Oregon_TM(&PORTB, TX_RADIO_PIN, OREGON_NIBBLES_COUNT);
 
 #if defined(USE_DS18B20)
 #include <ds18b20.h>
@@ -45,247 +46,213 @@ BME280 bmX280;
 
 void UseLessPowerAsPossible()
 {
-	// AVR4013: picoPower Basics
-	// unused pins should be set as
-	// input + pullup to minimize consumption
-	DDRA = 0;
-	DDRB = 0;
+  // AVR4013: picoPower Basics
+  // unused pins should be set as
+  // input + pullup to minimize consumption
+  DDRA = 0;
+  DDRB = 0;
 
-	// pull-up all unused pins by default
-	//
-	PORTA |= 0b01111001;
-	PORTB |= 0b11111100;
+  // pull-up all unused pins by default
+  //
+  PORTA |= 0b01111001;
+  PORTB |= 0b11111100;
 
-	// no timer1
-	PRR &= ~_BV(PRTIM1);
+  // no timer1
+  PRR &= ~_BV(PRTIM1);
 
-	// no analog p. 129, 146, 131
-	ADCSRA = 0;
+  // no analog p. 129, 146, 131
+  ADCSRA = 0;
 
-	/*
-	better, but not easy to invert for VCC sensing
-	PRR &= ~_BV(PRADC);
-	ADCSRA &= ~(1 << ADEN);
-	ACSR |= (1 << ACD);
-	DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
-	*/
+  /*
+  better, but not easy to invert for VCC sensing
+  PRR &= ~_BV(PRADC);
+  ADCSRA &= ~(1 << ADEN);
+  ACSR |= (1 << ACD);
+  DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
+  */
 
-	// deactivate brownout detection during sleep (p.36)
-	MCUCR |= (1 << BODS) | (1 << BODSE);
-	MCUCR |= (1 << BODS);
-	MCUSR &= ~(1 << BODSE);
+  // deactivate brownout detection during sleep (p.36)
+  MCUCR |= (1 << BODS) | (1 << BODSE);
+  MCUCR |= (1 << BODS);
+  MCUSR &= ~(1 << BODSE);
 }
 
 /*
-* The firmware force emission of
-* a signal at boot and every quarter of an hour
-* even if sensor data does not change,
-* just to be sure sensor is not out of
-* power or bugged (900s)
-*/
+ * The firmware force emission of
+ * a signal at boot and every quarter of an hour
+ * even if sensor data does not change,
+ * just to be sure sensor is not out of
+ * power or bugged (900s)
+ */
 volatile uint16_t secondCounter;
 
 /*!
-* Interrupt routine called each 8 seconds in the
-* default setup, which is the longest timeout period
-* accepted by the hardware watchdog
-*/
+ * Interrupt routine called each 8 seconds in the
+ * default setup, which is the longest timeout period
+ * accepted by the hardware watchdog
+ */
 volatile uint8_t sleep_interval;
 ISR(WATCHDOG_vect)
 {
-	wdt_reset();
-	++sleep_interval;
-	// Re-enable WDT interrupt
-	_WD_CONTROL_REG |= (1 << WDIE);
+  wdt_reset();
+  ++sleep_interval;
+  // Re-enable WDT interrupt
+  _WD_CONTROL_REG |= (1 << WDIE);
 }
 
 void setup()
 {
-	wdt_disable();
+  wdt_disable();
 
-	UseLessPowerAsPossible();
+  UseLessPowerAsPossible();
 
-	// 901 so that first emission
-	// is at boot
-	secondCounter = 901;
+  // 901 so that first emission is at boot
+  secondCounter = 901;
 
-	//Watchdog setup - 8s sleep time
-	_WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
-	_WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
+  // Watchdog setup - 8s sleep time
+  _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
 
-	// set output pins
-	DDRB |= _BV(TX_RADIO_PIN);
-	DDRA |= _BV(SENSOR_VCC);
-	DDRB |= _BV(LED_PIN);
+  // set output pins
+  DDRB |= _BV(TX_RADIO_PIN);
+  DDRA |= _BV(SENSOR_VCC);
+  DDRB |= _BV(LED_PIN);
 
-	#if defined(USE_BME280) || defined(USE_BMP280)
-	bmX280.setI2CAddress(0x76);
-	#endif
+#if defined(USE_BME280) || defined(USE_BMP280)
+  bmX280.setI2CAddress(0x76);
+#endif
 }
 
 /*
-* Puts MCU to sleep for specified number of seconds
-*
-* As the hardware watchdog is set for timeout after 8s,
-* the value used here will be divided by 8 (and rounded if needed).
-* It is better to use a multiple of 8 as value.
-*/
+ * Puts MCU to sleep for specified number of seconds
+ *
+ * As the hardware watchdog is set for timeout after 8s,
+ * the value used here will be divided by 8 (and rounded if needed).
+ * It is better to use a multiple of 8 as value.
+ */
 void sleep(uint8_t s)
 {
-	s >>= 3; // or s/8
-	if (s == 0)
-	s = 1;
-	sleep_interval = 0;
-	while (sleep_interval < s)
-	{
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-		sleep_enable();
-		sei();
+  s >>= 3; // or s/8
+  if (s == 0)
+    s = 1;
+  sleep_interval = 0;
 
-		uint8_t PRR_backup = PRR;
-		uint8_t porta_backup = PORTA;
-		uint8_t portb_backup = PORTB;
-		uint8_t ddra_backup = DDRA;
-		uint8_t ddrb_backup = DDRB;
+  uint8_t PRR_backup = PRR;
+  uint8_t porta_backup = PORTA;
+  uint8_t portb_backup = PORTB;
+  uint8_t ddra_backup = DDRA;
+  uint8_t ddrb_backup = DDRB;
 
-		PRR |= (1 << PRUSI) |(1 << PRTIM0)| (1 << PRTIM1)|(1 << PRADC);
-		
+  PRR |= (1 << PRUSI) | (1 << PRTIM0) | (1 << PRTIM1) | (1 << PRADC);
 
-		// all pins as input to avoid power draw
-		DDRA = 0;
-		DDRB = 0;
+  // all pins as input to avoid power draw
+  DDRA = 0;
+  DDRB = 0;
 
-		// pull-up all unused pins by default
-		PORTA |= 0b01110000;
+  // pull-up all unused pins by default
+  PORTA |= 0b01110000;
 
-		// pullup reset only
-		// ( only 4 lasts are available - p. 67)
-		PORTB |= 0b00001000;
+  // pullup reset only
+  // ( only 4 lasts are available - p. 67)
+  PORTB |= 0b00001000;
 
-		sleep_mode();
-		// here the system is sleeping
+  while (sleep_interval < s)
+  {
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sei();
+    sleep_mode();
+    // here the system is sleeping
 
-		// here the system wakes up
-		sleep_disable();
+    // sleep_interval incremented in interrupt routine
 
-		// restore
-		PRR = PRR_backup;
-		DDRA = ddra_backup;
-		DDRB = ddrb_backup;
-		PORTA = porta_backup;
-		PORTB = portb_backup;
-	}
-}
+    // here the system wakes up
+    sleep_disable();
+  }
 
-void emit(Oregon &oregon)
-{
-	oregon.txPinLow();
-	_delay_us(oregon.TWOTIME * 8);
-	oregon.sendOregon(oregon._oregonMessageBuffer,
-	sizeof(oregon._oregonMessageBuffer));
-	oregon.txPinLow();
+  // restore
+  PRR = PRR_backup;
+  DDRA = ddra_backup;
+  DDRB = ddrb_backup;
+  PORTA = porta_backup;
+  PORTB = portb_backup;
 }
 
 int avr_main(void)
 {
 
-	bool batteryIsLow = false;
+  // led on
+  PORTB |= _BV(LED_PIN);
 
-	setup();
-	
-	oregon.setType(oregon._oregonMessageBuffer, OREGON_TYPE);
-	oregon.setChannel(oregon._oregonMessageBuffer, Oregon::Channel::ONE);
-	oregon.setId(oregon._oregonMessageBuffer, OREGON_ID);
+  bool batteryIsLow = false;
 
+  setup();
 
-	while (1)
-	{
-		#if defined(USE_I2C)
-		PORTA |= _BV(SENSOR_VCC);
-		TinyI2C.init();
-		#endif
-		
-		#if defined(USE_BME280) || defined(USE_BMP280)
-		bmX280.beginI2C();
-		
-		oregon.setBatteryLevel(oregon._oregonMessageBuffer, 1);
-		oregon.setTemperature(oregon._oregonMessageBuffer, bmX280.readTempC());
+  oregon.setType(OREGON_TYPE);
+  oregon.setChannel(1);
+  oregon.setId(1);
 
-		#if defined(USE_BME280)
-		oregon.setHumidity(oregon._oregonMessageBuffer, bmX280.readFloatHumidity());
-		oregon.setPressure(oregon._oregonMessageBuffer,
-		(bmX280.readFloatPressure() / 100));
-		#endif
-		oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-		#endif
+  while (1)
+  {
+    // sensors and RF power
+    PORTA |= _BV(SENSOR_VCC);
 
-		#if defined(USE_DS18B20)
+#if defined(USE_I2C)
+    TinyI2C.init();
+#endif
 
-		ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
+#if defined(USE_BME280) || defined(USE_BMP280)
+    bmX280.beginI2C();
+    oregon.setTemperature(bmX280.readTempC());
 
-		// Delay (sensor needs time to perform conversion)
-		_delay_ms(1000);
+#if defined(USE_BME280)
+    oregon.setHumidity(bmX280.readFloatHumidity());
+    oregon.setPressure((bmX280.readFloatPressure() / 100));
+#endif
+#endif
 
-		// Read temperature (without ROM matching)
-		int16_t temperature = 0;
-		auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
-		if (readStatus == DS18B20_ERROR_OK)
-		{
-			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow);
-			oregon.setTemperature(oregon._oregonMessageBuffer, temperature / 16);
-			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
-		}
+#if defined(USE_DS18B20)
 
-		#endif
+    ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
 
-		bool shouldEmitVoltage = false;
+    // Delay (sensor needs time to perform conversion)
+    _delay_ms(1000);
 
-		// absolute counter for emission ~ each 15 minutes
-		if (secondCounter > 900)
-		{
-			secondCounter = 0;
-			shouldEmitVoltage = true;
-		}
+    // Read temperature (without ROM matching)
+    int16_t temperature = 0;
+    auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
+    if (readStatus == DS18B20_ERROR_OK)
+    {
+      oregon.setTemperature(temperature / 16);
+    }
 
-		if (shouldEmitVoltage)
-		{
-			
-			auto voltageInMv = readBatteryVoltage();
-			batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
-			oregon.setBatteryLevel(oregon._oregonMessageBuffer, batteryIsLow ? 0 : 1);
-			oregon.calculateAndSetChecksum(oregon._oregonMessageBuffer);
+#endif
 
-			#if defined(VOLTAGE_X10_SENSOR_ID)
-			voltageX10Sensor.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
-			#endif
-		}
+    // absolute counter for emission ~ each 15 minutes
+    if (secondCounter > 900)
+    {
+      auto voltageInMv = readBatteryVoltage();
+      batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
 
-		// led on
-		PORTB |= _BV(LED_PIN);
+#if defined(VOLTAGE_X10_SENSOR_ID)
+      voltageX10Sensor.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
+#endif
+      secondCounter = 0;
+    }
 
-		PORTA |= _BV(SENSOR_VCC);
-		_delay_ms(2);
+    oregon.setBatteryFlag(batteryIsLow ? true : false);
+    oregon.transmit();
 
-		// led off here, it will allow a short
-		// blink when actually emitting new data
-		PORTB &= ~_BV(LED_PIN);
+    _delay_ms(30);
 
-		emit(oregon);
-		
-		_delay_ms(30);
+    PORTB &= ~_BV(LED_PIN);
 
-		// second emission with led on
-		PORTB |= _BV(LED_PIN);
+    // sensor power off
+    PORTA &= ~_BV(SENSOR_VCC);
 
-		emit(oregon);
+    sleep((uint8_t)SLEEP_TIME_IN_SECONDS);
 
-		PORTA &= ~_BV(SENSOR_VCC);
-
-		// led off
-		PORTB &= ~_BV(LED_PIN);
-
-		sleep(SLEEP_TIME_IN_SECONDS);
-		secondCounter += SLEEP_TIME_IN_SECONDS;
-	}
+    secondCounter += SLEEP_TIME_IN_SECONDS;
+  }
 }
 #endif
