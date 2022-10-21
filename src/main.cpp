@@ -130,7 +130,7 @@ void setup()
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint8_t s)
+void sleep(uint16_t s)
 {
   s >>= 3; // or s/8
   if (s == 0)
@@ -250,7 +250,7 @@ int avr_main(void)
     // sensor power off
     PORTA &= ~_BV(SENSOR_VCC);
 
-    sleep((uint8_t)SLEEP_TIME_IN_SECONDS);
+    sleep((uint16_t)SLEEP_TIME_IN_SECONDS);
 
     secondCounter += SLEEP_TIME_IN_SECONDS;
   }
