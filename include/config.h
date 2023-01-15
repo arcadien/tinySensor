@@ -48,6 +48,7 @@ static const uint8_t OREGON_NIBBLES_COUNT = 24;
 #endif
 
 const uint8_t OREGON_ID = SENSOR_ID;
+const uint8_t OREGON_CHANNEL = SENSOR_CHANNEL;
 
 /*
  * 1-wire interface is on PA3
