@@ -20,20 +20,22 @@
 
 #include <config.h>
 
+#include <Oregon_TM.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
-#include <string.h>
 #include <readVcc.h>
-#include <Oregon_TM.h>
+#include <string.h>
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
 #include <x10rf.h>
 x10rf voltageX10Sensor = x10rf(TX_RADIO_PIN, LED_PIN, 3);
 #endif
 
+#if defined(OREGON_MODE)
 Oregon_TM oregon = Oregon_TM(&PORTB, TX_RADIO_PIN, OREGON_NIBBLES_COUNT);
+#endif
 
 #if defined(USE_DS18B20)
 #include <ds18b20.h>
@@ -44,8 +46,7 @@ Oregon_TM oregon = Oregon_TM(&PORTB, TX_RADIO_PIN, OREGON_NIBBLES_COUNT);
 BME280 bmX280;
 #endif
 
-void UseLessPowerAsPossible()
-{
+void UseLessPowerAsPossible() {
   // AVR4013: picoPower Basics
   // unused pins should be set as
   // input + pullup to minimize consumption
@@ -84,24 +85,16 @@ void UseLessPowerAsPossible()
  * just to be sure sensor is not out of
  * power or bugged (900s)
  */
-volatile uint16_t secondCounter;
+uint16_t secondCounter;
 
 /*!
  * Interrupt routine called each 8 seconds in the
  * default setup, which is the longest timeout period
  * accepted by the hardware watchdog
  */
-volatile uint8_t sleep_interval;
-ISR(WATCHDOG_vect)
-{
-  wdt_reset();
-  ++sleep_interval;
-  // Re-enable WDT interrupt
-  _WD_CONTROL_REG |= (1 << WDIE);
-}
+ISR(WATCHDOG_vect) { sleep_disable(); }
 
-void setup()
-{
+void setup() {
   wdt_disable();
 
   UseLessPowerAsPossible();
@@ -130,12 +123,13 @@ void setup()
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint16_t s)
-{
-  s >>= 3; // or s/8
+void sleep(uint16_t s) {
+
+  cli();
+
+  s = (uint16_t)(s / 8);
   if (s == 0)
     s = 1;
-  sleep_interval = 0;
 
   uint8_t PRR_backup = PRR;
   uint8_t porta_backup = PORTA;
@@ -156,19 +150,14 @@ void sleep(uint16_t s)
   // ( only 4 lasts are available - p. 67)
   PORTB |= 0b00001000;
 
-  while (sleep_interval < s)
-  {
+  for (uint16_t sleep_interval = 0; sleep_interval < s; sleep_interval++) {
+    cli();
+    wdt_reset();
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
     sei();
     sleep_mode();
-    // here the system is sleeping
-
-    // sleep_interval incremented in interrupt routine
-
-    // here the system wakes up
-    sleep_disable();
   }
+  wdt_disable();
 
   // restore
   PRR = PRR_backup;
@@ -178,8 +167,7 @@ void sleep(uint16_t s)
   PORTB = portb_backup;
 }
 
-int avr_main(void)
-{
+int avr_main(void) {
 
   // led on
   PORTB |= _BV(LED_PIN);
@@ -188,12 +176,13 @@ int avr_main(void)
 
   setup();
 
+#if defined(OREGON_MODE)
   oregon.setType(OREGON_TYPE);
-  oregon.setChannel(1);
-  oregon.setId(1);
+  oregon.setChannel(OREGON_CHANNEL);
+  oregon.setId(OREGON_ID);
+#endif
 
-  while (1)
-  {
+  while (1) {
     // sensors and RF power
     PORTA |= _BV(SENSOR_VCC);
 
@@ -203,6 +192,7 @@ int avr_main(void)
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmX280.beginI2C();
+    _delay_ms(5);
     oregon.setTemperature(bmX280.readTempC());
 
 #if defined(USE_BME280)
@@ -220,18 +210,21 @@ int avr_main(void)
 
     // Read temperature (without ROM matching)
     int16_t temperature = 0;
-    auto readStatus = ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
-    if (readStatus == DS18B20_ERROR_OK)
-    {
+    auto readStatus =
+        ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
+    if (readStatus == DS18B20_ERROR_OK) {
       oregon.setTemperature(temperature / 16);
     }
 
 #endif
 
     // absolute counter for emission ~ each 15 minutes
-    if (secondCounter > 900)
-    {
+    if (secondCounter > 900) {
+#if defined(USE_CHARGE_PUMP)
       auto voltageInMv = readBatteryVoltage();
+#else
+      auto voltageInMv = readVcc();
+#endif
       batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
@@ -240,9 +233,10 @@ int avr_main(void)
       secondCounter = 0;
     }
 
+#if defined(OREGON_MODE)
     oregon.setBatteryFlag(batteryIsLow ? true : false);
     oregon.transmit();
-
+#endif
     _delay_ms(30);
 
     PORTB &= ~_BV(LED_PIN);
@@ -250,7 +244,7 @@ int avr_main(void)
     // sensor power off
     PORTA &= ~_BV(SENSOR_VCC);
 
-    sleep((uint16_t)SLEEP_TIME_IN_SECONDS);
+    sleep(SLEEP_TIME_IN_SECONDS);
 
     secondCounter += SLEEP_TIME_IN_SECONDS;
   }
