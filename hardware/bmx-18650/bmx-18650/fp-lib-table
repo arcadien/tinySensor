@@ -1,0 +1,5 @@
+(fp_lib_table
+  (lib (name "Chinese breakouts")(type "KiCad")(uri "${KIPRJMOD}/Chinese breakouts.pretty")(options "")(descr ""))
+  (lib (name "battery supp.")(type "KiCad")(uri "${KIPRJMOD}/battery.pretty")(options "")(descr ""))
+  (lib (name "TinySensor lib")(type "KiCad")(uri "${KIPRJMOD}/library")(options "")(descr ""))
+)
