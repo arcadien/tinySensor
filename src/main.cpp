@@ -92,7 +92,13 @@ uint16_t secondCounter;
  * default setup, which is the longest timeout period
  * accepted by the hardware watchdog
  */
-ISR(WATCHDOG_vect) { sleep_disable(); }
+volatile uint8_t sleep_interval;
+ISR(WATCHDOG_vect) {
+  wdt_reset();
+  ++sleep_interval;
+  // Re-enable WDT interrupt
+  _WD_CONTROL_REG |= (1 << WDIE);
+}
 
 void setup() {
   wdt_disable();
@@ -150,14 +156,13 @@ void sleep(uint16_t s) {
   // ( only 4 lasts are available - p. 67)
   PORTB |= 0b00001000;
 
-  for (uint16_t sleep_interval = 0; sleep_interval < s; sleep_interval++) {
-    cli();
-    wdt_reset();
+  while (sleep_interval < s) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
     sei();
     sleep_mode();
+    sleep_disable();
   }
-  wdt_disable();
 
   // restore
   PRR = PRR_backup;
