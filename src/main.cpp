@@ -173,9 +173,6 @@ void sleep(uint16_t s) {
 
 int avr_main(void) {
 
-  // led on
-  PORTB |= _BV(LED_PIN);
-
   bool batteryIsLow = false;
 
   setup();
@@ -187,6 +184,10 @@ int avr_main(void) {
 #endif
 
   while (1) {
+
+    // led on
+    PORTB |= _BV(LED_PIN);
+
     // sensors and RF power
     PORTA |= _BV(SENSOR_VCC);
 
@@ -241,12 +242,12 @@ int avr_main(void) {
     oregon.setBatteryFlag(batteryIsLow ? true : false);
     oregon.transmit();
 #endif
-    _delay_ms(30);
-
-    PORTB &= ~_BV(LED_PIN);
 
     // sensor power off
     PORTA &= ~_BV(SENSOR_VCC);
+
+    _delay_ms(30);
+    PORTB &= ~_BV(LED_PIN);
 
     sleep(SLEEP_TIME_IN_SECONDS);
 
