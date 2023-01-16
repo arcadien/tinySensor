@@ -131,7 +131,7 @@ void setup() {
 void sleep(uint16_t s) {
 
   cli();
-
+  sleep_interval = 0;
   s = (uint16_t)(s / 8);
   if (s == 0)
     s = 1;
