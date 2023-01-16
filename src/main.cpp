@@ -93,14 +93,12 @@ uint16_t secondCounter;
  */
 volatile uint8_t sleep_interval;
 ISR(WATCHDOG_vect) {
-  wdt_reset();
   ++sleep_interval;
   // Re-enable WDT interrupt
   _WD_CONTROL_REG |= (1 << WDIE);
 }
 
 void setup() {
-  wdt_disable();
 
   UseLessPowerAsPossible();
 
@@ -108,8 +106,10 @@ void setup() {
   secondCounter = 901;
 
   // Watchdog setup - 8s sleep time
+  MCUSR = 0x00;
   _WD_CONTROL_REG |= (1 << WDCE) | (1 << WDE);
   _WD_CONTROL_REG = (1 << WDP3) | (1 << WDP0) | (1 << WDIE);
+  wdt_reset();
 
   // set output pins
   DDRB |= _BV(TX_RADIO_PIN);
@@ -155,13 +155,13 @@ void sleep(uint16_t s) {
   // ( only 4 lasts are available - p. 67)
   PORTB |= 0b00001000;
 
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   while (sleep_interval < s) {
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
+    wdt_reset();
     sei();
     sleep_mode();
-    sleep_disable();
   }
+  sleep_disable();
 
   // restore
   PRR = PRR_backup;
