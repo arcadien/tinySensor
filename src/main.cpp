@@ -63,14 +63,13 @@ void UseLessPowerAsPossible() {
 
   // no analog p. 129, 146, 131
   ADCSRA = 0;
-
   /*
-  better, but not easy to invert for VCC sensing
-  PRR &= ~_BV(PRADC);
   ADCSRA &= ~(1 << ADEN);
-  ACSR |= (1 << ACD);
   DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
   */
+
+  // Analog comparator power down
+  ACSR |= (1 << ACD);
 
   // deactivate brownout detection during sleep (p.36)
   MCUCR |= (1 << BODS) | (1 << BODSE);
