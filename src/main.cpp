@@ -61,6 +61,9 @@ void UseLessPowerAsPossible() {
   // no timer1
   PRR &= ~_BV(PRTIM1);
 
+  // no timer0
+  PRR &= ~_BV(PRTIM0);
+
   // no analog p. 129, 146, 131
   ADCSRA = 0;
   /*
