@@ -177,6 +177,7 @@ void sleep(uint16_t s) {
 int avr_main(void) {
 
   bool batteryIsLow = false;
+  uint16_t voltageInMv = 0;
 
   setup();
 
@@ -187,6 +188,8 @@ int avr_main(void) {
 #endif
 
   while (1) {
+
+    voltageInMv = 0;
 
     // led on
     PORTB |= _BV(LED_PIN);
@@ -229,9 +232,9 @@ int avr_main(void) {
     // absolute counter for emission ~ each 15 minutes
     if (secondCounter > 900) {
 #if defined(USE_CHARGE_PUMP)
-      auto voltageInMv = readBatteryVoltage();
+      voltageInMv = readBatteryVoltage();
 #else
-      auto voltageInMv = readVcc();
+      voltageInMv = readVcc();
 #endif
       batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
 
