@@ -53,7 +53,7 @@ uint16_t readVcc(void) {
 
   // The reference has a very high impedance,
   // so it need several conversions to charge
-  uint16_t result = adcRead(5, 5);
+  uint16_t result = adcRead(15, 8);
 
   // now to convert to vcc. Work in millivolts
   // adc = 1024*vref/vcc. Therefore vcc = 1024*vref/adc
@@ -72,7 +72,7 @@ uint16_t readBatteryVoltage(void) {
   // Read on ADC1
   ADMUX = (1 << MUX0);
 
-  uint16_t result = adcRead(8, 8);
+  uint16_t result = adcRead(15, 8);
 
   float mvPerAdcStep = ADCMAX / (float)readVcc();
   result /= mvPerAdcStep;
