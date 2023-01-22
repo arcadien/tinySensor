@@ -244,5 +244,29 @@
     <CleanTarget>clean</CleanTarget>
     <ExternalMakeFilePath>Makefile</ExternalMakeFilePath>
   </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="include" />
+    <Folder Include="src" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="include\Arduino.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\config.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\readVcc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\TinySensor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\main.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\mainWrapper.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
