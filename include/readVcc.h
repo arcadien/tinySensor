@@ -8,7 +8,7 @@
 #endif
 #define ADCMAX 1024l
 
-uint16_t adcRead(uint8_t discard, uint8_t samples) {
+uint16_t adcRead(uint8_t discard, uint8_t samples, uint8_t admux) {
   uint16_t result = 0;
 
   // enable ADC
@@ -16,7 +16,16 @@ uint16_t adcRead(uint8_t discard, uint8_t samples) {
 
   // prescaler of 16 = 1MHz/16 = 62.5KHz.
   ADCSRA = (1 << ADPS2);
+
+  ADMUX = admux;
+
   ADCSRA |= (1 << ADEN);
+
+  // need at least 1ms delay for vref to settle
+  // see datasheet p. 151
+  // The reference may have a very high impedance,
+  // so it need several conversions to charge
+  _delay_ms(2);
 
   while (discard > 0) {
     ADCSRA |= (1 << ADSC); // start conversion by writing 1 to ADSC
@@ -48,22 +57,15 @@ uint16_t adcRead(uint8_t discard, uint8_t samples) {
 uint16_t readVcc(void) {
 
   // Reference : VCC, single end: 1.1v internal ref
-  ADMUX = (1 << MUX5) | (1 << MUX0);
+  uint8_t admux = (1 << MUX5) | (1 << MUX0);
 
-  // need at least 1ms delay for vref to settle
-  // see datasheet p. 151
-  // The reference has a very high impedance,
-  // so it need several conversions to charge
-  _delay_ms(2);
-
-  uint16_t result = adcRead(5, 5);
+  uint16_t result = adcRead(5, 5, admux);
 
   // for 3.3v, ADC should be around 341
   // for 5v, ADC should be around 225
 
   // now to convert to vcc. Work in millivolts
   // adc = (VIn*1024)/vRef
-  // adc = (vcc*1024)/vRef
   // adc = (INTERNAL_1v1*ADCMAX)/vcc
   // vcc = (INTERNAL_1v1*ADCMAX)/adc
   uint32_t intermediate = (ADCMAX * INTERNAL_1v1) / result;
@@ -79,10 +81,10 @@ uint16_t readVcc(void) {
  */
 uint16_t readBatteryVoltage(void) {
 
-  // Read on PA1/ADC1
-  ADMUX = (1 << MUX0);
+  // Read on PA1/ADC1, ref VCC
+  uint8_t admux = (1 << MUX0);
 
-  uint16_t result = adcRead(5, 5);
+  uint16_t result = adcRead(5, 5, admux);
 
   float mvPerAdcStep = ADCMAX / (float)readVcc();
   result /= mvPerAdcStep;
