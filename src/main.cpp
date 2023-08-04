@@ -18,6 +18,7 @@
 */
 
 #include <config.h>
+#include <Oregon_v3.h>
 
 #if defined(__AVR_ATtiny84a__)
 #include <Attiny84aHal.h>
@@ -27,14 +28,7 @@ Attiny84aHal hal;
 TestHal_ hal;
 #endif
 
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include <readVcc.h>
-#include <string.h>
-#include <Hal.h>
-#include <Oregon_v3.h>
+
 #if defined(USE_BME280) or defined(USE_BMP280)
 #include <BMx280.h>
 BMx280 bmx280(&hal);
@@ -51,13 +45,9 @@ x10 voltageEmitter;
 #endif
 */
 
-/*
-wdt_disable();
-*/
 
 int main(void)
 {
-
   OregonV3 oregon(&hal);
   oregon.SetChannel(1);
   oregon.SetRollingCode(OREGON_ID);
