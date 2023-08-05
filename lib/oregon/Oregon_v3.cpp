@@ -131,10 +131,8 @@ void OregonV3::SetTemperature(float temperature) {
 
   messageStatus |= 1;
   if (temperature < 0) {
-    message[6] = 0x08;
+    message[5] = 0x08;
     temperature *= -1;
-  } else {
-    message[6] = 0x00;
   }
 
   // Determine decimal and float part
@@ -156,7 +154,7 @@ void OregonV3::SetTemperature(float temperature) {
 
   message[4] |= (temperatureDecimal << 4);
   message[4] |= temperatureUnit;
-  message[5] = (temperatureDozen << 4);
+  message[5] |= (temperatureDozen << 4);
 }
 
 void OregonV3::ComputeSensorId() {

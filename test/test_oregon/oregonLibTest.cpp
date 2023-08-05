@@ -214,11 +214,10 @@ void Expect_right_positive_temperature_encoding()
   unsigned char byte4 = 5 << 4; // 0x50
                 byte4 |= 7;     // 0x57
   unsigned char byte5 = 2 << 4; // 0x20
-  unsigned char byte6 = 0x0;    // 0x00 (positive temp)
   // clang-format on
 
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
+      0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
 
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
@@ -234,11 +233,11 @@ void Expect_right_negative_temperature_encoding() {
     unsigned char byte4 = 5 << 4; // 0x50
                   byte4 |= 7;     // 0x57
     unsigned char byte5 = 2 << 4; // 0x20
-    unsigned char byte6 = 0x08;   // 0x08 (negative temp)
+                  byte5 |= 0x08;   // 0x08 (negative temp)
     // clang-format on
 
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
+        0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
 
     OregonV3 oregonv3(&TestHal);
     oregonv3.SetTemperature(-27.5);
@@ -254,11 +253,11 @@ void Expect_right_negative_temperature_encoding() {
     unsigned char byte4 = 4 << 4; // 0x40
                   byte4 |= 8;     // 0x48
     unsigned char byte5 = 0x00;   // 0x00
-    unsigned char byte6 = 0x08;   // 0x08 (negative temp)
+                  byte5 |= 0x08;   // 0x08 (negative temp)
     // clang-format on
 
     unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
+        0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
 
     OregonV3 oregonv3(&TestHal);
     oregonv3.SetTemperature(-8.4);
