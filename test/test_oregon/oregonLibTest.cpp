@@ -210,9 +210,13 @@ void Expect_right_positive_temperature_encoding()
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetTemperature(27.5);
 
-  unsigned char byte4 = 5 << 4;
-  unsigned char byte5 = 2 << 4 | 7;
-  unsigned char byte6 = 0x0; // positive temp
+  // clang-format off
+  unsigned char byte4 = 5 << 4; // 0x50
+                byte4 |= 7;     // 0x57
+  unsigned char byte5 = 2 << 4; // 0x20
+  unsigned char byte6 = 0x0;    // 0x00 (positive temp)
+  // clang-format on
+
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
 
@@ -221,6 +225,49 @@ void Expect_right_positive_temperature_encoding()
   TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,
                                        "Failed with positive temp. with dozen");
+}
+
+void Expect_right_negative_temperature_encoding() {
+  {
+
+    // clang-format off
+    unsigned char byte4 = 5 << 4; // 0x50
+                  byte4 |= 7;     // 0x57
+    unsigned char byte5 = 2 << 4; // 0x20
+    unsigned char byte6 = 0x08;   // 0x08 (negative temp)
+    // clang-format on
+
+    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
+
+    OregonV3 oregonv3(&TestHal);
+    oregonv3.SetTemperature(-27.5);
+    const unsigned char *actualMessage = oregonv3.GetMessage();
+
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
+        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
+        "Failed with negative temp. with dozen");
+  }
+  {
+
+    // clang-format off
+    unsigned char byte4 = 4 << 4; // 0x40
+                  byte4 |= 8;     // 0x48
+    unsigned char byte5 = 0x00;   // 0x00
+    unsigned char byte6 = 0x08;   // 0x08 (negative temp)
+    // clang-format on
+
+    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
+
+    OregonV3 oregonv3(&TestHal);
+    oregonv3.SetTemperature(-8.4);
+    const unsigned char *actualMessage = oregonv3.GetMessage();
+
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
+        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
+        "Failed with negative temp without dozen");
+  }
 }
 
 void Expect_right_pressure_encoding() {
@@ -239,41 +286,6 @@ void Expect_right_pressure_encoding() {
   TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,
                                        "Failed with possible pressure value");
-}
-
-void Expect_right_negative_temperature_encoding() {
-  {
-
-    unsigned char byte4 = 5 << 4;
-    unsigned char byte5 = 2 << 4 | 7;
-    unsigned char byte6 = 0x08; // negative temp
-    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
-
-    OregonV3 oregonv3(&TestHal);
-    oregonv3.SetTemperature(-27.5);
-    const unsigned char *actualMessage = oregonv3.GetMessage();
-
-    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
-        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-        "Failed with negative temp. with dozen");
-  }
-  {
-
-    unsigned char byte4 = 4 << 4;
-    unsigned char byte5 = 8;
-    unsigned char byte6 = 0x08; // negative temp
-    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, byte6, 0, 0, 0, 0};
-
-    OregonV3 oregonv3(&TestHal);
-    oregonv3.SetTemperature(-8.4);
-    const unsigned char *actualMessage = oregonv3.GetMessage();
-
-    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
-        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-        "Failed with negative temp without dozen");
-  }
 }
 
 void Expect_right_humidity_encoding() {
@@ -498,7 +510,8 @@ void Expect_sample_message_to_be_well_encoded() {
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0x5A, 0x5D, 0x48, 0x54, 0x48, 0x08, 0x82, 0x80, 0x44, 0xC0};
+      0x5A, 0x5D, 0x48, 0x54, 0x48, 0x08, 0x82, 0x80, 0x44, 0xC0, 0x00};
+  //     0     1      2     3     4    5     6     7     8     9     10
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
       expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,

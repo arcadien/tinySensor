@@ -140,23 +140,23 @@ void OregonV3::SetTemperature(float temperature) {
   // Determine decimal and float part
 
   // ex. for 27.4 degrees C
-  int tempIntegerPart = (int)temperature; // 27
+  uint8_t tempIntegerPart = (uint8_t)temperature; // 27
 
   // (int)(27/10) = 2
-  int temperatureDozen = (int)(tempIntegerPart / 10);
+  uint8_t temperatureDozen = (uint8_t)(tempIntegerPart / 10);
 
   // 2.7 - 20 = (int)7.4=7
-  int temperatureUnit = (int)round(
+  uint8_t temperatureUnit = (uint8_t)round(
       (float)((float)tempIntegerPart / 10.0 - (float)temperatureDozen) * 10.0);
 
-  int temperatureDecimal = (int)round(
+  uint8_t temperatureDecimal = (uint8_t)round(
       (float)(temperature - (float)tempIntegerPart) // 27.4 - 27 = 0.4
       * 10                                          // 0.4 * 10 = 4
   );
 
   message[4] |= (temperatureDecimal << 4);
+  message[4] |= temperatureUnit;
   message[5] = (temperatureDozen << 4);
-  message[5] |= temperatureUnit;
 }
 
 void OregonV3::ComputeSensorId() {
