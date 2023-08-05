@@ -123,13 +123,13 @@ void OregonV3::SendOne() {
   DelayHalfPeriod();
 }
 
-void OregonV3::SetHumidity(int humidity) {
+void OregonV3::SetHumidity(uint8_t humidity) {
   messageStatus |= 1 << 1;
 
-  // humidity nibbles are spread on bytes 6 and 7
-  // bit 6 also contains the negative temp flag (lsb)
-  message[7] = (humidity / 10);
-  message[6] |= (humidity - message[7] * 10) << 4;
+  // flip dozens and unit
+  uint8_t dozens = humidity / 10;
+  message[6] = (humidity - (dozens*10)) << 4;
+  message[6] |= dozens;
 }
 
 void OregonV3::SetTemperature(float temperature) {

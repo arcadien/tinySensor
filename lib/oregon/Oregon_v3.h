@@ -57,7 +57,7 @@ public:
 
   void SetTemperature(float temperature);
 
-  void SetHumidity(int humidity);
+  void SetHumidity(uint8_t humidity);
 
   /*!
    *

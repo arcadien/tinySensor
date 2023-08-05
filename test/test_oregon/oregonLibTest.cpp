@@ -294,16 +294,17 @@ void Expect_right_pressure_encoding() {
 void Expect_right_humidity_encoding() {
 
   uint8_t byte3 = 0x01; // batt. status ok
-  unsigned char byte6 = 2 << 4;
-  unsigned char byte7 = 5;
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, byte3, 0, 0, byte6, byte7, 0, 0, 0};
+
+  uint8_t byte6 = 0x25;
+
+  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, byte3, 0, 0, byte6, 0, 0, 0, 0};
 
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetHumidity(52);
-  const unsigned char *actualMessage = oregonv3.GetMessage();
+  const uint8_t *actualMessage = oregonv3.GetMessage();
 
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actualMessage,
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 void Expect_right_channel_encoding() {
