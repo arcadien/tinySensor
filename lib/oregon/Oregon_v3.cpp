@@ -96,17 +96,17 @@ void OregonV3::SendZero() {
   DelayHalfPeriod();
 }
 
-void OregonV3::SetChannel(unsigned char channel) {
+void OregonV3::SetChannel(uint8_t channel) {
   message[2] |= 1 << (4 + (channel - 1));
 }
 
 /*
  * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
  */
-void OregonV3::SetRollingCode(unsigned char rollingCode) {
-  unsigned char rollingCodeTens = (unsigned char)rollingCode / 10;
-  message[2] |= rollingCodeTens & 0x0f;                    // nibble 4
-  message[3] |= (rollingCode - rollingCodeTens * 10) << 4; // nibble 5
+void OregonV3::SetRollingCode(uint8_t rollingCode) {
+  uint8_t rollingCodeTens = (uint8_t)rollingCode / 10;
+  message[2] |= (rollingCode & 0xf0) >> 4; // nibble 4
+  message[3] |= (rollingCode & 0x0f) << 4; // nibble 5
 }
 
 void OregonV3::SendOne() {

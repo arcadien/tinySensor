@@ -353,7 +353,7 @@ void Expect_right_rolling_code_encoding() {
                                                           0, 0, 0,    0,    0};
 
   OregonV3 oregonv3(&TestHal);
-  oregonv3.SetRollingCode(85);
+  oregonv3.SetRollingCode(0x85);
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
