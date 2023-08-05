@@ -20,11 +20,11 @@
 
 #include <cstdarg>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <iomanip>
 
 #include <Oregon_v3.h>
 #include <TestHal.h>
@@ -79,8 +79,9 @@ static std::string MessageNibblesToString(const unsigned char *message,
                                           unsigned char length) {
   std::stringstream ss;
   for (int index = 0; index < length; index++) {
-      ss << std::uppercase <<  std::setfill('0') << std::setw(2) << std::hex << ((int)(message[index]));
-    }
+    ss << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
+       << ((int)(message[index]));
+  }
   return ss.str();
 }
 
@@ -260,19 +261,23 @@ void Expect_right_negative_temperature_encoding() {
 
 void Expect_right_pressure_encoding() {
 
-  const int actualPressureInHPa = 900;
-  const int pressureScalingValue = 856; // //OregonV3::PRESSURE_SCALING_VALUE;
-  unsigned char byte8 = actualPressureInHPa - pressureScalingValue;
-  unsigned char byte9 = 0xC0;
+  const int actualPressureInHPa = 1200;
+  const int pressureScalingValue = 795; // //OregonV3::PRESSURE_SCALING_VALUE;
+  uint16_t pressureValue = (uint16_t)(actualPressureInHPa - pressureScalingValue); // 405, 0x195
+  
   uint8_t byte3 = 0x01; // batt. status ok
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, byte3, 0, 0, 0, 0, byte8, byte9, 0};
+  uint8_t byte7 = 0x05; // last 195 nibble
+  uint8_t byte8 = 0x91; // inverted 19
+  uint8_t byte9 = 0xC0; // sunny
+
+  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0, 0, 0, byte3, 0, 0, 0, byte7, byte8, byte9, 0};
 
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetPressure(actualPressureInHPa);
-  const unsigned char *actualMessage = oregonv3.GetMessage();
+  const uint8_t *actualMessage = oregonv3.GetMessage();
 
-  TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
+  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,
                                        "Failed with possible pressure value");
 }
@@ -283,8 +288,8 @@ void Expect_right_humidity_encoding() {
 
   uint8_t byte6 = 0x25;
 
-  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, byte3, 0, 0, byte6, 0, 0, 0, 0};
+  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0,     0, 0, byte3, 0, 0,
+                                                    byte6, 0, 0, 0,     0};
 
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetHumidity(52);
@@ -500,12 +505,12 @@ void Expect_sample_message_to_be_well_encoded() {
    * nibble 12,14,15 : humidity (or-ed with temperature)
    * nibbles 16..19  : pressure
    */
-  std::string expectedMessage = "5A5D485C480882844C0";
+  std::string expectedMessage = "5A5D485C480882844C000";
 
   OregonV3 oregonv3(&TestHal);
 
   oregonv3.SetChannel(3);
-  oregonv3.SetRollingCode(85);
+  oregonv3.SetRollingCode(0x23);
 
   oregonv3.SetTemperature(-8.4);
   oregonv3.SetHumidity(28);
@@ -518,28 +523,28 @@ void Expect_sample_message_to_be_well_encoded() {
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0x5A, 0x5D, 0x48, 0x54, 0x48, 0x08, 0x82, 0x80, 0x44, 0xC0, 0x00};
-  //     0     1      2     3     4    5     6     7     8     9     10
+      0x5A, 0x5D, 0x42, 0x34, 0x48, 0x08, 0x82, 0x00, 0x2C, 0xC0, 0x5C};
+  //   0     1      2     3     4    5     6     7     8     9     10
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
       expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
       "Expect right encoding for full message");
 
-  // std::string decodedMessage =
-  //     MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
-  // std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
+  std::string decodedMessage =
+      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
+  std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
 
-  // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
+  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
 void Expect_implementation_follows_samples_1() {
 
   /*
 
-  This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of 0x85.
-  The first flag nibble contains the battery low flag bit (0x4). The
-  temperature is -8.4 ºC since nibbles 11..8 are “8084”. The first “8” indicates a
-  negative temperature and the next three (“084”) represent the decimal value
+  This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
+  0x85. The first flag nibble contains the battery low flag bit (0x4). The
+  temperature is -8.4 ºC since nibbles 11..8 are “8084”. The first “8” indicates
+  a negative temperature and the next three (“084”) represent the decimal value
   8.4. Humidity is 28% and the checksum byte is 0x53 and is valid.
 
   NOTE: as byte 7 has been set to 0, checksum changes to 0x93

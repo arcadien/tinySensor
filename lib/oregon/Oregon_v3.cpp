@@ -17,7 +17,7 @@ static const uint16_t DELAY_US = HALF_DELAY_US * 2;
 // pressure is a value expressed in hPa, in interval ]850, 1100[
 // To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
 // pressure value. It is added when decoding the message
-static const int PRESSURE_SCALING_VALUE = 856;
+static const int PRESSURE_SCALING_VALUE = 795;
 
 // As rolling code is spread on two bytes, then its
 // max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
@@ -39,16 +39,31 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
 const unsigned char *OregonV3::GetMessage() { return message; }
 
 void OregonV3::SetBatteryLow() {
-	message[3] &= ~(0x01); // remove good status
-	message[3] |= 0x04;    // set low status
+  message[3] &= ~(0x01); // remove good status
+  message[3] |= 0x04;    // set low status
 }
 
 void OregonV3::SetPressure(int pressure) {
 
   messageStatus |= 1 << 2;
+ 
+  pressure = (uint8_t)(pressure - PRESSURE_SCALING_VALUE);
+  message[7] &= 0xF0;
+  message[7] += pressure & 0x0F;
+  message[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
 
-  if ((pressure > 850) && (pressure < 1100)) {
-    message[8] = pressure - PRESSURE_SCALING_VALUE;
+  // prediction
+  if (pressure < 1000) {
+    // rainy
+    message[9] = 0x30;
+  } else if (pressure < 1010) {
+    // cloudy
+    message[9] = 0x20;
+  } else if (pressure < 1025) {
+    // partly cloudy
+    message[9] = 0x60;
+  } else {
+    // Sunny
     message[9] = 0xC0;
   }
 }
@@ -109,7 +124,6 @@ void OregonV3::SetChannel(uint8_t channel) {
  * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
  */
 void OregonV3::SetRollingCode(uint8_t rollingCode) {
-  uint8_t rollingCodeTens = (uint8_t)rollingCode / 10;
   message[2] |= (rollingCode & 0xf0) >> 4; // nibble 4
   message[3] |= (rollingCode & 0x0f) << 4; // nibble 5
 }
@@ -128,7 +142,7 @@ void OregonV3::SetHumidity(uint8_t humidity) {
 
   // flip dozens and unit
   uint8_t dozens = humidity / 10;
-  message[6] = (humidity - (dozens*10)) << 4;
+  message[6] = (humidity - (dozens * 10)) << 4;
   message[6] |= dozens;
 }
 
