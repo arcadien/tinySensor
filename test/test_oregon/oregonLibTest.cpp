@@ -74,29 +74,29 @@ static const unsigned char EXPECTED_PREAMBLE[OregonV3::PREAMBLE_BYTE_LENGTH] = {
     'L', 'D', 'H', 'P', 'L', 'D', // 1
 };
 
-static std::string MessageNibblesToString(const unsigned char *message,
-                                          unsigned char length)
-{
+// static std::string MessageNibblesToString(const unsigned char *message,
+//                                           unsigned char length)
+// {
 
-  std::stringstream ss;
-  for (int index = 0; index < length; index++)
-  {
-    unsigned char currentMessageElement = message[index];
+//   std::stringstream ss;
+//   for (int index = 0; index < length; index++)
+//   {
+//     unsigned char currentMessageElement = message[index];
 
-    if (index == 8)
-    {
-      ss << +currentMessageElement;
-    }
-    else
-    {
-      unsigned char lsb = message[index] & 0x0F;
-      unsigned char msb = (message[index] & 0xF0) >> 4;
-      ss << +msb;
-      ss << +lsb;
-    }
-  }
-  return ss.str();
-}
+//     if (index == 8)
+//     {
+//       ss << +currentMessageElement;
+//     }
+//     else
+//     {
+//       unsigned char lsb = message[index] & 0x0F;
+//       unsigned char msb = (message[index] & 0xF0) >> 4;
+//       ss << +msb;
+//       ss << +lsb;
+//     }
+//   }
+//   return ss.str();
+// }
 
 /*
  * This testsuite is based on the document
@@ -360,7 +360,7 @@ void Expect_right_rolling_code_encoding()
   // nibbles 5..6    : rolling code
 
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, (unsigned char)8, (unsigned char)(5 << 4), 0, 0, 0, 0, 0, 0};
+      0, 0, 0x08, 0x50, 0, 0, 0, 0, 0, 0};
 
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetRollingCode(85);
@@ -375,10 +375,10 @@ void Expect_right_low_battery_encoding()
 
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-  //                                 C
+  //                                 4
   // nibbles 7    : low batt
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0xC,
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0, 0x04,
                                                           0, 0, 0, 0, 0};
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetBatteryLow();
@@ -502,8 +502,7 @@ void Expect_sample_message_to_be_well_encoded()
   /*
    * byte:      0    1    2    3    4     5      6      7      8      9
    * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-   *           1 D  2 0  4 8  5 C  4 8   0  8   8  2  8        44    C  0
-   *           0 0  0 0  4 1  3 3  1 2   4  0   0  8  8  8   0  2    4 4   120
+   *           5 A  5 D  4 8  5 C  4 8   0  8   8  2  8        44    C  0
    *
    * nibbles 0..3    : sensor ID
    * nibble  4       : channel
@@ -513,12 +512,12 @@ void Expect_sample_message_to_be_well_encoded()
    * nibble 12,14,15 : humidity (or-ed with temperature)
    * nibbles 16..19  : pressure
    */
-  std::string expectedMessage = "0000485C480882844C0";
+  std::string expectedMessage = "5A5D485C480882844C0";
 
   OregonV3 oregonv3(&TestHal);
 
   oregonv3.SetChannel(3);
-  oregonv3.SetRollingCode(0x85);
+  oregonv3.SetRollingCode(85);
 
   oregonv3.SetTemperature(-8.4);
   oregonv3.SetHumidity(28);
@@ -526,13 +525,22 @@ void Expect_sample_message_to_be_well_encoded()
 
   oregonv3.SetBatteryLow();
 
+  oregonv3.Send();
+  
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
-  std::string decodedMessage =
-      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
-  std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      0x5A, 0x5D, 0x48, 0x5C, 0x48, 0x08, 0x82, 0x80, 0x44, 0xC0};
 
-  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
+  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
+                                      OregonV3::MESSAGE_SIZE_IN_BYTES,
+                                      "Expect right encoding for full message");
+
+  // std::string decodedMessage =
+  //     MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
+  // std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
+
+  // TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 
 int main(int, char **)

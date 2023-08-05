@@ -22,7 +22,7 @@ static const int PRESSURE_SCALING_VALUE = 856;
 // As rolling code is spread on two bytes, then its
 // max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
 // bits
-static const unsigned char MAX_ROLLING_CODE_VALUE = 165;
+static const unsigned char MAX_ROLLING_CODE_VALUE = 0xA5; // 165
 
 // one nibble as 0101, so 0b00001010
 // see "Message Layout" section
@@ -36,7 +36,7 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
 
 const unsigned char *OregonV3::GetMessage() { return message; }
 
-void OregonV3::SetBatteryLow() { message[4] |= 0xC; }
+void OregonV3::SetBatteryLow() { message[4] |= 0x04; }
 
 void OregonV3::SetPressure(int pressure) {
 
