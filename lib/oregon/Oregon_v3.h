@@ -97,6 +97,7 @@ private:
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
 
+  void ComputeSensorId();
   void DelayHalfPeriod();
   void DelayPeriod();
 };

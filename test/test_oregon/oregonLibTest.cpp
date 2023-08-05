@@ -437,6 +437,58 @@ void Expect_all_values_set_to_change_message_status()
   messageStatus = oregonv3.GetMessageStatus();
   TEST_ASSERT_TRUE((messageStatus & 0x7) == 0x7);
 }
+
+void Expect_temperature_set_to_change_sensor_type()
+{
+  OregonV3 oregonv3(&TestHal);
+  oregonv3.SetTemperature(10.f);
+
+  static const uint16_t THN132 = 0xEC40;
+
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      (THN132 >> 8), (THN132 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  oregonv3.Send();
+  const unsigned char *actualMessage = oregonv3.GetMessage();
+
+  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
+                                      2,
+                                      "Expect THN132 (0xEC40) with temperature only");
+}
+void Expect_humidity_set_to_change_sensor_type()
+{
+ OregonV3 oregonv3(&TestHal);
+  oregonv3.SetHumidity(10.f);
+  static const uint16_t THGN123N = 0x1D20;
+
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      (THGN123N >> 8), (THGN123N & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  oregonv3.Send();
+  const unsigned char *actualMessage = oregonv3.GetMessage();
+
+  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
+                                      2,
+                                      "Expect THGN123N (0x1D20) with humidity");
+}
+
+void Expect_pressure_set_to_change_sensor_type()
+{
+  OregonV3 oregonv3(&TestHal);
+  oregonv3.SetPressure(900);
+  static const uint16_t BTHR918 = 0x5A5D;
+
+  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
+      (BTHR918 >> 8), (BTHR918 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  oregonv3.Send();
+  const unsigned char *actualMessage = oregonv3.GetMessage();
+
+  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
+                                      2,
+                                      "Expect BTHR918 (0x5A5D) with pressure");
+}
+
 void Expect_sample_message_to_be_well_encoded()
 {
 
@@ -486,23 +538,31 @@ void Expect_sample_message_to_be_well_encoded()
 int main(int, char **)
 {
   UNITY_BEGIN();
+
   RUN_TEST(Expect_good_hardware_orders_for_zero);
   RUN_TEST(Expect_good_hardware_orders_for_one);
   RUN_TEST(Expect_bitread_to_read_each_bit_separately);
   RUN_TEST(Expect_nibbles_to_be_sent_lsb_first);
   RUN_TEST(Expect_messages_to_have_preamble_and_postamble);
+
   RUN_TEST(Expect_right_negative_temperature_encoding);
   RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
   RUN_TEST(Expect_right_pressure_encoding);
   RUN_TEST(Expect_right_channel_encoding);
   RUN_TEST(Expect_right_rolling_code_encoding);
-  RUN_TEST(Expect_sample_message_to_be_well_encoded);
   RUN_TEST(Expect_right_low_battery_encoding);
+
   RUN_TEST(Expect_temperature_set_to_change_message_status);
   RUN_TEST(Expect_humidity_set_to_change_message_status);
   RUN_TEST(Expect_pressure_set_to_change_message_status);
   RUN_TEST(Expect_all_values_set_to_change_message_status);
+
+  RUN_TEST(Expect_temperature_set_to_change_sensor_type);
+  RUN_TEST(Expect_humidity_set_to_change_sensor_type);
+  RUN_TEST(Expect_pressure_set_to_change_sensor_type);
+
+  RUN_TEST(Expect_sample_message_to_be_well_encoded);
   return UNITY_END();
 }
 #endif
