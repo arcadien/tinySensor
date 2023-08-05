@@ -36,7 +36,7 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
 
 const unsigned char *OregonV3::GetMessage() { return message; }
 
-void OregonV3::SetBatteryLow() { message[4] |= 0x04; }
+void OregonV3::SetBatteryLow() { message[3] |= 0x04; }
 
 void OregonV3::SetPressure(int pressure) {
 
