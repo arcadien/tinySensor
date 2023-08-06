@@ -174,7 +174,7 @@ void OregonV3::SetTemperature(float temperature) {
   message[5] |= (temperatureDozen << 4);
 }
 
-void OregonV3::ComputeSensorId() {
+void OregonV3::FinalizeMessage() {
   uint8_t messageLength = 7;
   if ((messageStatus & 0b00000100) == 0b00000100) {
     messageLength += 4;
@@ -209,7 +209,6 @@ void OregonV3::ComputeSensorId() {
 }
 void OregonV3::Send() {
 
-  ComputeSensorId();
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.

@@ -82,6 +82,8 @@ public:
   void SendData(const uint8_t *data, uint8_t size);
 
   const unsigned char *GetMessage();
+  
+  void FinalizeMessage();
 
 private:
   /*
@@ -97,7 +99,6 @@ private:
   void SendMSB(const uint8_t data);
   void SendLSB(const uint8_t data);
 
-  void ComputeSensorId();
   void DelayHalfPeriod();
   void DelayPeriod();
 };

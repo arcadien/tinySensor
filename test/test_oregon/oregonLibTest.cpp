@@ -424,7 +424,7 @@ void Expect_temperature_set_to_change_sensor_type() {
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       (THN132 >> 8), (THN132 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
@@ -439,7 +439,7 @@ void Expect_humidity_set_to_change_sensor_type() {
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       (THGN123N >> 8), (THGN123N & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
@@ -453,7 +453,7 @@ void Expect_pressure_set_to_change_sensor_type() {
   unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       (BTHR918 >> 8), (BTHR918 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage, 2,
@@ -496,7 +496,7 @@ void Expect_sample_message_to_be_well_encoded() {
 
   oregonv3.SetBatteryLow();
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
 
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
@@ -538,7 +538,7 @@ void Expect_implementation_follows_samples_1() {
   oregonv3.SetTemperature(-8.4);
   oregonv3.SetHumidity(28);
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
 
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
@@ -576,7 +576,7 @@ void Expect_implementation_follows_samples_2() {
   oregonv3.SetTemperature(19);
   oregonv3.SetHumidity(37);
 
-  oregonv3.Send();
+  oregonv3.FinalizeMessage();
 
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
