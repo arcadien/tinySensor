@@ -45,6 +45,14 @@ void Expected_zero_exclusion_to_not_exclude()
   TEST_ASSERT_EQUAL(3, filter.Get());
 }
 
+void Expected_filter_to_mean_actual_values()
+{
+  AnalogFilter filter(0, 3);
+  filter.Push(2);
+  filter.Push(4);
+  TEST_ASSERT_EQUAL(3, filter.Get());
+}
+
 void Expected_filter_to_mean_values_and_floor_result()
 {
   AnalogFilter filter(0, 4);
@@ -54,6 +62,15 @@ void Expected_filter_to_mean_values_and_floor_result()
   filter.Push(4);
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
+void Expected_filter_to_ignore_supernumerary_values()
+{
+  AnalogFilter filter(0, 2);
+  filter.Push(2);
+  filter.Push(2);
+  filter.Push(3); // supernumerary
+  filter.Push(4); // supernumerary
+  TEST_ASSERT_EQUAL(2, filter.Get());
+}
 
 int main(int, char **)
 {
@@ -61,5 +78,7 @@ int main(int, char **)
   RUN_TEST(Expected_exclusion_to_exclude_value);
   RUN_TEST(Expected_zero_exclusion_to_not_exclude);
   RUN_TEST(Expected_filter_to_mean_values_and_floor_result);
+  RUN_TEST(Expected_filter_to_mean_actual_values);
+  RUN_TEST(Expected_filter_to_ignore_supernumerary_values);
   return UNITY_END();
 }
