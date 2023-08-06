@@ -28,6 +28,7 @@ public:
   void PowerOnSensors() override;
   void PowerOffSensors() override;
 
+  void Delay1s() override;
   void Delay30ms() override;
   void Delay512Us() override;
   void Delay1024Us() override;

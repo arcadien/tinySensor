@@ -86,8 +86,8 @@ int main(void)
     ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
 
     // Delay (sensor needs time to perform conversion)
-    _delay_ms(1000);
-
+    hal.Delay1s();
+    
     // Read temperature (without ROM matching)
     int16_t temperature = 0;
     auto readStatus =
@@ -116,6 +116,7 @@ int main(void)
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
       voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
+      hal.Delay30ms();
 #endif
     }
 

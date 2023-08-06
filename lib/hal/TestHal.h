@@ -26,6 +26,10 @@ public:
     batteryVoltage = 2400; // AAA*2, little used
     vccVoltage = 3300;     // voltage after charge pump
   }
+  
+  void Delay1s() override {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
 
   void Delay30ms() override {
     std::this_thread::sleep_for(std::chrono::milliseconds(30));

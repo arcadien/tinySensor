@@ -11,6 +11,7 @@ public:
     virtual void LedOn() = 0;
     virtual void LedOff() = 0;
 
+    virtual void Delay1s() = 0;
     virtual void Delay30ms() = 0;
     virtual void Delay512Us() = 0;
     virtual void Delay1024Us() = 0;

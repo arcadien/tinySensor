@@ -1,11 +1,11 @@
 #ifdef AVR
+#include <AnalogFilter.h>
 #include <Attiny84aHal.h>
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
-#include <AnalogFilter.h>
 
 // #define LED_PIN PB1
 // #define TX_RADIO_PIN PB0
@@ -15,10 +15,8 @@
 
 volatile uint8_t sleep_interval;
 
-ISR(BADISR_vect)
-{
-  while (1)
-  {
+ISR(BADISR_vect) {
+  while (1) {
     PORTB |= (1 << PB1);
     _delay_ms(100);
     PORTB &= ~(1 << PB1);
@@ -31,16 +29,14 @@ ISR(BADISR_vect)
 // * default setup, which is the longest timeout period
 // * accepted by the hardware watchdog
 //
-ISR(WATCHDOG_vect)
-{
+ISR(WATCHDOG_vect) {
   wdt_reset();
   ++sleep_interval;
   // Re-enable WDT interrupt
   _WD_CONTROL_REG |= (1 << WDIE);
 }
 
-static void UseLessPowerAsPossible()
-{
+static void UseLessPowerAsPossible() {
   // AVR4013: picoPower Basics
   // unused pins should be set as
   // input + pullup to minimize consumption
@@ -70,26 +66,20 @@ static void UseLessPowerAsPossible()
   MCUSR &= ~(1 << BODSE);
 }
 
-static  void startADCReading() { ADCSRA |= (1 << ADSC); }
-static  bool ADCReadInProgress()
-{
-  return (ADCSRA & (1 << ADSC)) == ADSC;
-}
+static void startADCReading() { ADCSRA |= (1 << ADSC); }
+static bool ADCReadInProgress() { return (ADCSRA & (1 << ADSC)) == ADSC; }
 
 /*!
  * Read the ADC, discarding `discard` first readings,
  * and then return average of `samples` readings
  */
-static uint16_t adcRead(uint8_t discard, uint8_t samples)
-{
+static uint16_t adcRead(uint8_t discard, uint8_t samples) {
   AnalogFilter filter(discard, samples);
 
   for (uint8_t loopSamples = 0; loopSamples < (samples + discard);
-       ++loopSamples)
-  {
+       ++loopSamples) {
     startADCReading();
-    while (ADCReadInProgress())
-    {
+    while (ADCReadInProgress()) {
     }
     filter.Push(ADC);
   }
@@ -103,14 +93,12 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples)
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint8_t s)
-{
+void sleep(uint8_t s) {
   s >>= 3; // or s/8
   if (s == 0)
     s = 1;
   sleep_interval = 0;
-  while (sleep_interval < s)
-  {
+  while (sleep_interval < s) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     sei();
@@ -149,8 +137,7 @@ void sleep(uint8_t s)
   }
 }
 
-Attiny84aHal::Attiny84aHal()
-{
+Attiny84aHal::Attiny84aHal() {
   PORTB = 0;
   UseLessPowerAsPossible();
 
@@ -164,15 +151,9 @@ Attiny84aHal::Attiny84aHal()
   DDRA |= _BV(PA2); // sensor VCC
 }
 
-void Attiny84aHal::PowerOnSensors()
-{
-  PORTA |= _BV(PA2);
-}
+void Attiny84aHal::PowerOnSensors() { PORTA |= _BV(PA2); }
 
-void Attiny84aHal::PowerOffSensors()
-{
-  PORTA &= ~_BV(PA2);
-}
+void Attiny84aHal::PowerOffSensors() { PORTA &= ~_BV(PA2); }
 
 void inline Attiny84aHal::LedOn() { PORTB |= (1 << PB1); }
 
@@ -185,20 +166,20 @@ void Attiny84aHal::RadioGoHigh() { PORTB |= (1 << PB0); }
 void Attiny84aHal::Delay30ms() { _delay_ms(30); }
 void Attiny84aHal::Delay512Us() { _delay_us(512); }
 void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
+void Attiny84aHal::Delay1s() { _delay_ms(1000); }
 
 /*!
  *
  * Reads voltage on ADC1 pin, relative to Vcc
  *
  */
-uint16_t Attiny84aHal::GetBatteryVoltageMv(void)
-{
+uint16_t Attiny84aHal::GetBatteryVoltageMv(void) {
   ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
-  
+
   // analog ref = VCC, input channel = ADC1 (PA1)
   ADMUX = 0b00000001;
   _delay_ms(1);
-  
+
   uint16_t batteryAdcRead = adcRead(4, 12);
   uint16_t vccVoltageMv = GetVccVoltageMv();
   float mvPerAdcStep = (vccVoltageMv / 1024.0);
@@ -211,8 +192,7 @@ uint16_t Attiny84aHal::GetBatteryVoltageMv(void)
  * Reads Vcc using internal 1.1v tension reference
  *
  */
-uint16_t Attiny84aHal::GetVccVoltageMv(void)
-{
+uint16_t Attiny84aHal::GetVccVoltageMv(void) {
   // analog ref = VCC, input channel = VREF
   ADMUX = 0b00100001;
   _delay_ms(1);
@@ -224,8 +204,7 @@ uint16_t Attiny84aHal::GetVccVoltageMv(void)
 
 void Attiny84aHal::Hibernate(uint8_t seconds) { sleep(seconds); }
 
-void InitI2C(void)
-{
+void InitI2C(void) {
 #if defined(USE_I2C)
   TinyI2C.init();
 #endif
