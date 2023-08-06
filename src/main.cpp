@@ -20,7 +20,7 @@
 #include <config.h>
 #include <Oregon_v3.h>
 
-#if defined(__AVR_ATtiny84a__)
+#if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
 Attiny84aHal hal;
 #else
@@ -49,7 +49,7 @@ x10 voltageEmitter;
 int main(void)
 {
   OregonV3 oregon(&hal);
-  oregon.SetChannel(1);
+  oregon.SetChannel(OREGON_CHANNEL);
   oregon.SetRollingCode(OREGON_ID);
 
   /*
