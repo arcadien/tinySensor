@@ -70,8 +70,8 @@ static void UseLessPowerAsPossible()
   MCUSR &= ~(1 << BODSE);
 }
 
-static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
-static inline bool ADCReadInProgress()
+static  void startADCReading() { ADCSRA |= (1 << ADSC); }
+static  bool ADCReadInProgress()
 {
   return (ADCSRA & (1 << ADSC)) == ADSC;
 }
@@ -91,8 +91,7 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples)
     while (ADCReadInProgress())
     {
     }
-    uint16_t value = ADC;
-    filter.Push(value);
+    filter.Push(ADC);
   }
   return filter.Get();
 }
@@ -175,7 +174,7 @@ void Attiny84aHal::PowerOffSensors()
   PORTA &= ~_BV(PA2);
 }
 
-void Attiny84aHal::LedOn() { PORTB |= (1 << PB1); }
+void inline Attiny84aHal::LedOn() { PORTB |= (1 << PB1); }
 
 void Attiny84aHal::LedOff() { PORTB &= ~(1 << PB1); }
 

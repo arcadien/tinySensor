@@ -5,7 +5,6 @@
 #endif
 
 #include <Hal.h>
-
 #include <stdint.h>
 
 #if defined(USE_I2C)
@@ -29,9 +28,9 @@ public:
   void PowerOnSensors() override;
   void PowerOffSensors() override;
 
-  void inline Delay30ms() override;
-  void inline Delay512Us() override;
-  void inline Delay1024Us() override;
+  void Delay30ms() override;
+  void Delay512Us() override;
+  void Delay1024Us() override;
 
   void InitI2C(void) override
   {
