@@ -32,21 +32,19 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
   for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++) {
     message[index] = 0;
   }
-  // battery status is good unless explicitely bad
-  message[3] = 0x01;
 }
 
 const unsigned char *OregonV3::GetMessage() { return message; }
 
 void OregonV3::SetBatteryLow() {
-  message[3] &= ~(0x01); // remove good status
-  message[3] |= 0x04;    // set low status
+  message[3] &= 0xFB; // remove good status
+  message[3] |= 0x04; // set low status
 }
 
 void OregonV3::SetPressure(int pressure) {
 
   messageStatus |= 1 << 2;
- 
+
   pressure = (uint8_t)(pressure - PRESSURE_SCALING_VALUE);
   message[7] &= 0xF0;
   message[7] += pressure & 0x0F;
