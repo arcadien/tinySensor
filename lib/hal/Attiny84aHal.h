@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __AVR_ATtiny84A__
-#define __AVR_ATtiny84A__ 1
+#ifndef __AVR_ATtiny84A_HAL__
+#define __AVR_ATtiny84A_HAL__
 #endif
 
 #include <Hal.h>
