@@ -1,5 +1,6 @@
 #include <Hal.h>
 #include <Oregon_v3.h>
+#include <string.h>
 
 // v3, two nibbles with unknown format
 // see "Message Layout" section
@@ -9,7 +10,7 @@ static const uint8_t POSTAMBLE[] = {0x0};
 // see "Message Layout" section
 static const uint8_t PREAMBLE[] = {0xFF, 0xFF, 0xFF};
 
-unsigned char message[OregonV3::MESSAGE_SIZE_IN_BYTES];
+uint8_t message[OregonV3::MESSAGE_SIZE_IN_BYTES];
 
 static const uint16_t HALF_DELAY_US = 512;
 static const uint16_t DELAY_US = HALF_DELAY_US * 2;
@@ -29,9 +30,7 @@ static const unsigned char MAX_ROLLING_CODE_VALUE = 0xA5; // 165
 static const uint8_t SYNC = {0b00001010};
 
 OregonV3::OregonV3(Hal *hal) : _hal(hal) {
-  for (uint8_t index = 0; index < MESSAGE_SIZE_IN_BYTES; index++) {
-    message[index] = 0;
-  }
+  memset(message, 0, MESSAGE_SIZE_IN_BYTES);
 }
 
 const unsigned char *OregonV3::GetMessage() { return message; }
@@ -41,15 +40,10 @@ void OregonV3::SetBatteryLow() {
   message[3] |= 0x04; // set low status
 }
 
-void OregonV3::SetPressure(int pressure) {
+void OregonV3::SetPressure(uint16_t pressure) {
 
   messageStatus |= 1 << 2;
-
-  pressure = (uint8_t)(pressure - PRESSURE_SCALING_VALUE);
-  message[7] &= 0xF0;
-  message[7] += pressure & 0x0F;
-  message[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
-
+  
   // prediction
   if (pressure < 1000) {
     // rainy
@@ -64,6 +58,13 @@ void OregonV3::SetPressure(int pressure) {
     // Sunny
     message[9] = 0xC0;
   }
+
+  pressure -= PRESSURE_SCALING_VALUE;
+  message[7] &= 0xF0;
+  message[7] |= pressure & 0x000f;
+  message[8] = (pressure & 0x0f0) + ((pressure & 0xf00) >> 8);
+ 
+
 }
 
 void OregonV3::SendMSB(const uint8_t data) {

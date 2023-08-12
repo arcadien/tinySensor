@@ -256,8 +256,8 @@ void Expect_right_pressure_encoding() {
   uint16_t pressureValue =
       (uint16_t)(actualPressureInHPa - pressureScalingValue); // 405, 0x195
 
-  uint8_t byte7 = 0x05; // last 195 nibble
-  uint8_t byte8 = 0x91; // inverted 19
+  uint8_t byte7 = 0x05;
+  uint8_t byte8 = 0x91;
   uint8_t byte9 = 0xC0; // sunny
 
   uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
@@ -265,7 +265,8 @@ void Expect_right_pressure_encoding() {
 
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetPressure(actualPressureInHPa);
-  const uint8_t *actualMessage = oregonv3.GetMessage();
+  uint8_t actualMessage[OregonV3::MESSAGE_SIZE_IN_BYTES];
+  memcpy(&actualMessage, oregonv3.GetMessage(),OregonV3::MESSAGE_SIZE_IN_BYTES);
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,

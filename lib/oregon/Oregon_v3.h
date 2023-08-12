@@ -66,7 +66,7 @@ public:
    * Values out of possible ones on earth (less that 850, more than 1099) are
    * ignored.
    */
-  void SetPressure(int pressure);
+  void SetPressure(uint16_t pressure);
 
   /*!
    * Emit message according to available data
