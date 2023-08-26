@@ -266,7 +266,8 @@ void Expect_right_pressure_encoding() {
   OregonV3 oregonv3(&TestHal);
   oregonv3.SetPressure(actualPressureInHPa);
   uint8_t actualMessage[OregonV3::MESSAGE_SIZE_IN_BYTES];
-  memcpy(&actualMessage, oregonv3.GetMessage(),OregonV3::MESSAGE_SIZE_IN_BYTES);
+  memcpy(&actualMessage, oregonv3.GetMessage(),
+         OregonV3::MESSAGE_SIZE_IN_BYTES);
 
   TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
                                        OregonV3::MESSAGE_SIZE_IN_BYTES,
@@ -350,13 +351,15 @@ void Expect_right_battery_ok_encoding() {
   //                            4
   // nibble 7    : low batt
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0x00, 0,
-                                                          0, 0, 0, 0,    0};
   OregonV3 oregonv3(&TestHal);
+  oregonv3.SetBatteryLow(false);
+
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
-                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+  uint8_t thirdByte = actualMessage[3];
+
+  TEST_ASSERT_EQUAL_HEX8_MESSAGE(0b00000000, (thirdByte & 0x00000100),
+                           "Testing battery ok flag");
 }
 void Expect_right_low_battery_encoding() {
 
@@ -365,14 +368,15 @@ void Expect_right_low_battery_encoding() {
   //                            4
   // nibble 7    : low batt
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0, 0x04, 0,
-                                                          0, 0, 0, 0,    0};
   OregonV3 oregonv3(&TestHal);
-  oregonv3.SetBatteryLow();
+  oregonv3.SetBatteryLow(true);
   const unsigned char *actualMessage = oregonv3.GetMessage();
 
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
-                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+  uint8_t thirdByte = actualMessage[3];
+
+  TEST_ASSERT_EQUAL_HEX8_MESSAGE(0x04, (thirdByte & 0x04),
+                           "Testing battery low flag");
+
 }
 void Expect_temperature_set_to_change_message_status() {
   OregonV3 oregonv3(&TestHal);
@@ -495,7 +499,7 @@ void Expect_sample_message_to_be_well_encoded() {
   oregonv3.SetHumidity(28);
   oregonv3.SetPressure(900);
 
-  oregonv3.SetBatteryLow();
+  oregonv3.SetBatteryLow(true);
 
   oregonv3.FinalizeMessage();
 
@@ -535,7 +539,7 @@ void Expect_implementation_follows_samples_1() {
 
   oregonv3.SetChannel(3);
   oregonv3.SetRollingCode(0x85);
-  oregonv3.SetBatteryLow();
+  oregonv3.SetBatteryLow(true);
   oregonv3.SetTemperature(-8.4);
   oregonv3.SetHumidity(28);
 

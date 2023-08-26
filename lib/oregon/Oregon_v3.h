@@ -53,7 +53,7 @@ public:
    */
   void SetRollingCode(unsigned char rollingCode);
 
-  void SetBatteryLow();
+  void SetBatteryLow(bool batteryIsLow);
 
   void SetTemperature(float temperature);
 

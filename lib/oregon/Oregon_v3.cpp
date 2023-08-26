@@ -35,15 +35,18 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
 
 const unsigned char *OregonV3::GetMessage() { return message; }
 
-void OregonV3::SetBatteryLow() {
-  message[3] &= 0xFB; // remove good status
-  message[3] |= 0x04; // set low status
+void OregonV3::SetBatteryLow(bool batteryIsLow) {
+  if (batteryIsLow) {
+    message[3] |= (1 << 2); // set low status
+  } else {
+    message[3] &= 0xF0; // ~(1 << 2); // clear low status
+  }
 }
 
 void OregonV3::SetPressure(uint16_t pressure) {
 
   messageStatus |= 1 << 2;
-  
+
   // prediction
   if (pressure < 1000) {
     // rainy
@@ -63,8 +66,6 @@ void OregonV3::SetPressure(uint16_t pressure) {
   message[7] &= 0xF0;
   message[7] |= pressure & 0x000f;
   message[8] = (pressure & 0x0f0) + ((pressure & 0xf00) >> 8);
- 
-
 }
 
 void OregonV3::SendMSB(const uint8_t data) {
