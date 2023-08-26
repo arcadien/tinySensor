@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __HAL_DEF__
+#define __HAL_DEF__
 
 #include <stdint.h>
 /*
@@ -30,3 +31,4 @@ public:
     virtual void InitI2C() = 0;
 
 };
+#endif
