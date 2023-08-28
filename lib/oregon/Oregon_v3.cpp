@@ -39,7 +39,7 @@ void OregonV3::SetBatteryLow(bool batteryIsLow) {
   if (batteryIsLow) {
     message[3] |= (1 << 2); // set low status
   } else {
-    message[3] &= 0xF0; // ~(1 << 2); // clear low status
+    message[3] &= 0xFB; // clear low status
   }
 }
 
