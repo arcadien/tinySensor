@@ -164,6 +164,7 @@ void Attiny84aHal::RadioGoLow() { PORTB &= ~(1 << PB0); }
 void Attiny84aHal::RadioGoHigh() { PORTB |= (1 << PB0); }
 
 void Attiny84aHal::Delay30ms() { _delay_ms(30); }
+void Attiny84aHal::Delay400Us() { _delay_us(400); }
 void Attiny84aHal::Delay512Us() { _delay_us(512); }
 void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
 void Attiny84aHal::Delay1s() { _delay_ms(1000); }
