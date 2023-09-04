@@ -19,7 +19,7 @@ void LacrosseWS7000::SetHumidity(uint8_t humidity) {
   if (humidity > 100) {
     humidity = 100;
   }
-  this->humidity = NumericalSplit(humidity);
+  this->humidity.Set(humidity);
 }
 void LacrosseWS7000::SetPressure(float pressure) {
   availableData |= PRESSURE_AVAILABLE;
@@ -30,7 +30,7 @@ void LacrosseWS7000::SetPressure(float pressure) {
   if(pressure < 850) pressure = 850;
   if(pressure > 1100) pressure = 1100;
   pressure -= 200;
-  this->pressure = NumericalSplitHundreds(pressure);
+  this->pressure.Set(pressure);
 }
 void LacrosseWS7000::SetLight(uint16_t luminosity) {
   availableData |= LUMINOSITY_AVAILABLE;
@@ -38,7 +38,7 @@ void LacrosseWS7000::SetLight(uint16_t luminosity) {
 }
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
-  this->temperature = NumericalSplit(temperature);
+  this->temperature.Set(temperature);
 }
 
 void LacrosseWS7000::SendOne() {
@@ -84,7 +84,7 @@ uint8_t LacrosseWS7000::SendType() {
 
   } else if (8 == availableData) {
     nibble = 0b00000101;
-    
+
   } else {
     nibble = 0x0F;
   }

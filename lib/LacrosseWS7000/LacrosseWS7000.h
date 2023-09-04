@@ -27,16 +27,15 @@ public:
   public:
     NumericalSplit() : dozens(0), units(0), decimals(0), isNegative(false) {}
 
-    NumericalSplit(float initialValue)
-        : dozens(0), units(0), decimals(0), isNegative(false) {
-      if (initialValue < 0) {
+    void Set(float value) {
+      if (value < 0) {
         isNegative = true;
-        initialValue = -initialValue;
+        value = -value;
       } else {
         isNegative = false;
       }
 
-      uint8_t integerValue = floor(initialValue);
+      uint8_t integerValue = floor(value);
       if (integerValue >= 100) {
         dozens = 10;
         units = 0;
@@ -44,9 +43,10 @@ public:
       } else {
         dozens = ((uint8_t)(floor(integerValue / 10))) & 0x0F;
         units = ((uint8_t)(floor(integerValue - (dozens * 10)))) & 0x0F;
-        decimals = ((uint8_t)round((initialValue - integerValue) * 10)) & 0x0F;
+        decimals = ((uint8_t)round((value - integerValue) * 10)) & 0x0F;
       }
     }
+
     uint8_t dozens;
     uint8_t units;
     uint8_t decimals;
@@ -58,16 +58,14 @@ public:
     NumericalSplitHundreds()
         : hundreds(0), dozens(0), units(0), decimals(0), isNegative(false) {}
 
-    NumericalSplitHundreds(float initialValue)
-        : hundreds(0), dozens(0), units(0), decimals(0), isNegative(false) {
-
-      if (initialValue < 0) {
+    void Set(float value) {
+      if (value < 0) {
         isNegative = true;
-        initialValue = -initialValue;
+        value = -value;
       } else {
         isNegative = false;
       }
-      uint16_t integerValue = floor(initialValue);
+      uint16_t integerValue = floor(value);
       uint16_t totalIntegerValue = integerValue;
 
       hundreds = ((uint8_t)(floor(integerValue / 100))) & 0x0F;
@@ -75,8 +73,7 @@ public:
       dozens = (uint8_t)(floor((integerValue / 10))) & 0x0F;
       integerValue -= dozens * 10;
       units = integerValue & 0x0F;
-      decimals =
-          ((uint8_t)round((initialValue - totalIntegerValue) * 10)) & 0x0F;
+      decimals = ((uint8_t)round((value - totalIntegerValue) * 10)) & 0x0F;
     }
 
     uint8_t hundreds;
@@ -140,6 +137,9 @@ private:
   NumericalSplit humidity;
   NumericalSplitHundreds pressure;
   uint16_t luminosity;
+  Address address;
+
+  Hal *_hal;
 
   /*
    * bit 0 : temperature is set
@@ -148,7 +148,4 @@ private:
    * bit 3 : light is set
    */
   uint8_t availableData = 0;
-
-  Address address;
-  Hal *_hal;
 };

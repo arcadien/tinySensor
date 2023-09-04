@@ -75,7 +75,8 @@ void Expect_good_numerical_split() {
 
   for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter--) {
     TestData testData = testDatas[testCounter];
-    LacrosseWS7000::NumericalSplit temp(testData.givenTemperature);
+    LacrosseWS7000::NumericalSplit temp;
+    temp.Set(testData.givenTemperature);
 
     sprintf(buffer, "Temperature sign #%u", testCounter);
     TEST_ASSERT_MESSAGE(testData.expectedIsNegative == temp.isNegative, buffer);
@@ -116,7 +117,8 @@ void Expect_NumericalSplitHundreds_to_split_well() {
 
   for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter--) {
     TestData testData = testDatas[testCounter];
-    LacrosseWS7000::NumericalSplitHundreds temp(testData.givenValue);
+    LacrosseWS7000::NumericalSplitHundreds temp;
+    temp.Set(testData.givenValue);
 
     sprintf(buffer, "NumericalSplitHundreds sign #%u", testCounter);
     TEST_ASSERT_MESSAGE(testData.expectedIsNegative == temp.isNegative, buffer);
