@@ -36,7 +36,7 @@ void Expect_I2C_can_be_configured()
 void Expect_I2C_can_be_configured()
 {
   TestHal.I2CIsConfigured = false;
-  TestHal.InitI2C();
+  TestHal.Init();
   TEST_ASSERT_EQUAL(true, TestHal.I2CIsConfigured);
 }
 #endif

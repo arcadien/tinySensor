@@ -26,7 +26,7 @@ public:
     batteryVoltage = 2400; // AAA*2, little used
     vccVoltage = 3300;     // voltage after charge pump
   }
-  
+
   void Delay1s() override {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
@@ -34,6 +34,8 @@ public:
   void Delay30ms() override {
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
   }
+
+  void inline Delay400Us() { Orders.push_back('A'); }
 
   void inline Delay1024Us() { Orders.push_back('P'); }
   void inline Delay512Us() { Orders.push_back('D'); }
@@ -57,7 +59,7 @@ public:
     std::this_thread::sleep_for(std::chrono::seconds(seconds));
   }
 
-  void InitI2C() override { I2CIsConfigured = true; }
+  void Init() override { I2CIsConfigured = true; }
 };
 
 extern TestHal_ TestHal;

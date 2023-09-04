@@ -46,7 +46,7 @@ public:
   void Delay512Us() override;
   void Delay1024Us() override;
 
-  void InitI2C(void) override
+  void Init(void) override
   {
 #if defined(USE_I2C)
     TinyI2C.init();

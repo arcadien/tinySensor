@@ -204,7 +204,7 @@ uint16_t Attiny84aHal::GetVccVoltageMv(void) {
 
 void Attiny84aHal::Hibernate(uint8_t seconds) { sleep(seconds); }
 
-void InitI2C(void) {
+void Init(void) {
 #if defined(USE_I2C)
   TinyI2C.init();
 #endif
