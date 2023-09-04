@@ -26,7 +26,7 @@
 #include <ds18b20.h>
 #endif
 
-#include <Oregon_v3.h>
+#include <LacrosseWS7000.h>
 
 #if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
@@ -45,9 +45,8 @@ x10rf voltageEmitter(&hal, 5);
 #endif
 
 int main(void) {
-  OregonV3 oregon(&hal);
-  oregon.SetChannel(SENSOR_CHANNEL);
-  oregon.SetRollingCode(SENSOR_ID);
+  LacrosseWS7000 encoder(&hal);
+  encoder.SetAddress(SENSOR_ID);
 
   /*
    * The firmware force emission of
@@ -60,20 +59,17 @@ int main(void) {
 
   while (1) {
 
+    hal.Init();
     hal.PowerOnSensors();
     hal.Delay30ms();
     hal.LedOn();
 
-#if defined(USE_I2C)
-    hal.InitI2C();
-#endif
-
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    oregon.SetTemperature(bmx280.GetTemperature());
+    encoder.SetTemperature(bmx280.GetTemperature()); 
 #if defined(USE_BME280)
-    oregon.SetHumidity(bmx280.GetHumidity());
-    oregon.SetPressure(bmx280.GetPressure() / 100);
+    encoder.SetHumidity(bmx280.GetHumidity());
+    encoder.SetPressure(bmx280.GetPressure() / 100);
 #endif
 #endif
 
@@ -89,23 +85,24 @@ int main(void) {
     auto readStatus =
         ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
     if (readStatus == DS18B20_ERROR_OK) {
-      oregon.SetTemperature(temperature / 16);
+      encoder.SetTemperature(temperature / 16);
     }
 
 #endif
 
     uint32_t voltageInMv = (uint32_t)hal.GetBatteryVoltageMv();
-    oregon.SetBatteryLow((voltageInMv < LOW_BATTERY_VOLTAGE));
+    //oregon.SetBatteryLow((voltageInMv < LOW_BATTERY_VOLTAGE));
 
     // absolute counter for emission ~ each 15 minutes
     if (secondCounter > 900) {
       secondCounter = 0;
       voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00, voltageInMv);
+      
       hal.Delay30ms();
     }
-    oregon.Send();
+    encoder.Send();
     hal.Delay30ms();
-    oregon.Send();
+    encoder.Send();
 
     hal.LedOff();
     hal.PowerOffSensors();
