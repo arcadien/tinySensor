@@ -14,12 +14,12 @@ LacrosseWS7000::LacrosseWS7000(Hal *hal) : _hal(hal), availableData(0) {}
 void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
   this->address = address;
 }
-void LacrosseWS7000::SetHumidity(uint8_t humidity) {
+void LacrosseWS7000::SetHumidity(float humidity) {
   availableData |= HUMIDITY_AVAILABLE;
-  if (humidity > 100) {
-    humidity = 100;
+  if (humidity >= 100) {
+    humidity = 99.9;
   }
-  this->humidity.Set(humidity);
+  NumericalValueSplitter::Split(humidity, &this->humidity);
 }
 void LacrosseWS7000::SetPressure(float pressure) {
   availableData |= PRESSURE_AVAILABLE;
@@ -27,10 +27,14 @@ void LacrosseWS7000::SetPressure(float pressure) {
   // pressure should be between 870 and 1085 (recorded extreme values)
   // we need to substract 200 to avoid "10" hundreds in further encoding.
   // decoders shall be aware of that.
-  if(pressure < 850) pressure = 850;
-  if(pressure > 1100) pressure = 1100;
+  if (pressure < 200)
+    pressure = 200;
+  if (pressure < 850)
+    pressure = 850;
+  if (pressure > 1100)
+    pressure = 1100;
   pressure -= 200;
-  this->pressure.Set(pressure);
+  NumericalValueSplitter::Split(pressure, &this->pressure);
 }
 void LacrosseWS7000::SetLight(uint16_t luminosity) {
   availableData |= LUMINOSITY_AVAILABLE;
@@ -38,7 +42,12 @@ void LacrosseWS7000::SetLight(uint16_t luminosity) {
 }
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
-  this->temperature.Set(temperature);
+  // /!\ temperature does not manage hundreds, clamp below 100
+  if (temperature > 99)
+    temperature = 99;
+  if (temperature < -99)
+    temperature = -99;
+  NumericalValueSplitter::Split(temperature, &this->temperature);
 }
 
 void LacrosseWS7000::SendOne() {
@@ -114,7 +123,7 @@ void LacrosseWS7000::SendTemperature(uint8_t *nibbles) {
 void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {}
 
 void LacrosseWS7000::SendHumidity(uint8_t *nibbles) {
-  SendNibble(0x00);
+  SendNibble(humidity.decimals);
   SendNibble(humidity.units);
   SendNibble(humidity.dozens);
 

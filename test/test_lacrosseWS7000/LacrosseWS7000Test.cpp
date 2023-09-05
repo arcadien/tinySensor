@@ -52,89 +52,47 @@ void tearDown(void) {}
 void Expect_good_numerical_split() {
 
   struct TestData {
-    float givenTemperature;
-    bool expectedIsNegative;
-    uint8_t expectedDozen;
-    uint8_t expectedUnits;
-    uint8_t expectedDecimal;
-  };
-
-#define TEST_COUNT 7
-
-  // clang-format off
-  TestData testDatas[TEST_COUNT] = {
-    {20,   false, 2, 0, 0},
-    {-20,  true,  2, 0, 0},
-    {200,  false, 9, 9, 0},
-    {12.5, false, 1, 2, 5},
-    {-200, true,  9, 9, 0},
-    {-12.7, true,  1, 2, 7},
-    {200.1, false, 9, 9, 1}
-  };
-  // clang-format on
-
-  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter--) {
-    TestData testData = testDatas[testCounter];
-    LacrosseWS7000::NumericalSplit temp;
-    temp.Set(testData.givenTemperature);
-
-    sprintf(buffer, "Temperature sign #%u", testCounter);
-    TEST_ASSERT_MESSAGE(testData.expectedIsNegative == temp.isNegative, buffer);
-
-    sprintf(buffer, "Temperature dozens #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedDozen, temp.dozens, buffer);
-
-    sprintf(buffer, "Temperature units #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedUnits, temp.units, buffer);
-
-    sprintf(buffer, "Temperature decimals #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedDecimal, temp.decimals,
-                                   buffer);
-  }
-#undef TEST_COUNT
-}
-void Expect_NumericalSplitHundreds_to_split_well() {
-
-  struct TestData {
     float givenValue;
-    bool expectedIsNegative;
-    uint8_t expectedHundreds;
-    uint8_t expectedDozen;
-    uint8_t expectedUnits;
-    uint8_t expectedDecimal;
+    LacrosseWS7000::NumericalValueSplitter::Result expected;
   };
 
-#define TEST_COUNT 4
+#define TEST_COUNT 6
 
   // clang-format off
   TestData testDatas[TEST_COUNT] = {
-    {0.,    false, 0, 0, 0, 0},
-    {200.,  false, 2, 0, 0, 0},
-    {-921., true,  9, 2, 1, 0},
-    {1024.2, true,  9, 2, 1, 2},
+    {0.,     {false, 0, 0, 0, 0}},
+    {200.2,   {false, 2, 0, 0, 2}},
+    {-921.,  {true,  9, 2, 1, 0}},
+    {1024.2, {false, 10,2, 4, 2}},
+    {26.1,   {false, 0, 2, 6, 1}},
+    {96.8,   {false, 0, 9, 6, 8}}
   };
   // clang-format on
 
-  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter--) {
+  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter++) {
     TestData testData = testDatas[testCounter];
-    LacrosseWS7000::NumericalSplitHundreds temp;
-    temp.Set(testData.givenValue);
 
-    sprintf(buffer, "NumericalSplitHundreds sign #%u", testCounter);
-    TEST_ASSERT_MESSAGE(testData.expectedIsNegative == temp.isNegative, buffer);
+    LacrosseWS7000::NumericalValueSplitter::Result actual;
+    LacrosseWS7000::NumericalValueSplitter::Split(testData.givenValue, &actual);
 
-    sprintf(buffer, "NumericalSplitHundreds hundreds #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedHundreds, temp.hundreds,
+    sprintf(buffer, "NumericalValueSplitter sign #%u", testCounter);
+    TEST_ASSERT_MESSAGE((testData.expected.isNegative == actual.isNegative),
+                        buffer);
+
+    sprintf(buffer, "NumericalValueSplitter hundreds #%u", testCounter);
+    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expected.hundreds, actual.hundreds,
                                    buffer);
 
-    sprintf(buffer, "NumericalSplitHundreds dozens #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedDozen, temp.dozens, buffer);
+    sprintf(buffer, "NumericalValueSplitter dozens #%u", testCounter);
+    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expected.dozens, actual.dozens,
+                                   buffer);
 
-    sprintf(buffer, "NumericalSplitHundreds units #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedUnits, temp.units, buffer);
+    sprintf(buffer, "NumericalValueSplitter units #%u", testCounter);
+    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expected.units, actual.units,
+                                   buffer);
 
-    sprintf(buffer, "NumericalSplitHundreds decimals #%u", testCounter);
-    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expectedDecimal, temp.decimals,
+    sprintf(buffer, "NumericalValueSplitter decimals #%u", testCounter);
+    TEST_ASSERT_EQUAL_INT8_MESSAGE(testData.expected.decimals, actual.decimals,
                                    buffer);
   }
 #undef TEST_COUNT
@@ -220,8 +178,9 @@ void Expect_good_sensor_address_emission() {
 
 #define TEST_COUNT 8
   // clang-format off
-  TestData testDatas[8] = {
+  TestData testDatas[9] = {
     {LacrosseWS7000::Address::ZERO,  true,  {BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ONE}  },
+    {LacrosseWS7000::Address::ONE,   true,  {BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE}  },
     {LacrosseWS7000::Address::ONE,   false, {BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO} },
     {LacrosseWS7000::Address::TWO,   false, {BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO} },
     {LacrosseWS7000::Address::THREE, false, {BIT_ONE,  BIT_ONE,  BIT_ZERO, BIT_ZERO} },
@@ -239,6 +198,8 @@ void Expect_good_sensor_address_emission() {
     lacrosse.SetAddress(testData.givenAddress);
     if (testData.isTemperatureNegative) {
       lacrosse.SetTemperature(-10.2);
+    } else {
+      lacrosse.SetTemperature(10.2);
     }
     lacrosse.Send();
 
@@ -272,49 +233,49 @@ void Expect_good_temperature_emission() {
   { // #0
     0.0,
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
     } 
   },
   {// #1
     -12.7,
     {
-      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
+      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // decimals
+      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
     } 
   },
   {// #2
     10.0,
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
     } 
   },
   {// #3
-    200.1, // overlimit, set to 100
+    200.1, // overlimit, set to 99
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ONE,  SKIPPED_ONE
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 0 decimals
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // 9 units
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // 9 dozens
     }
   },
   {// #4
     23.32,
     {
-      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
+      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
+      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
+      BIT_ZERO, BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
     } 
   },
   {// #5
-    -100.1, // overlimit, set to -100
+    -100.1, // overlimit, set to -99
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, 
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ONE,  SKIPPED_ONE
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // units
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // dozens
     } 
   }
   };
@@ -374,19 +335,19 @@ void Expect_good_humidity_emission() {
     } 
   },
   {// #2
-    100,
+    100, // clamped to 99.9
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ONE,  SKIPPED_ONE
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // decimals
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // units
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // dozens
     } 
   },
   {// #3
-    101, // clamped to 100
+    101, // clamped to 99.9
     {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ONE,  SKIPPED_ONE
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE,
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE,
+      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE
     } 
   }
 };
@@ -553,8 +514,8 @@ void Expect_encoding_of_simple_temperature_and_humi_message() {
   TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, 305);
 }
 
-void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message(){
-    // clang-format off
+void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
+  // clang-format off
   static const  uint8_t EXPECTED_ORDERS[405] = {
       
       BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO,     // 25  - preamble 1/2
@@ -597,7 +558,6 @@ int main(int, char **) {
   UNITY_BEGIN();
 
   RUN_TEST(Expect_good_numerical_split);
-  RUN_TEST(Expect_NumericalSplitHundreds_to_split_well);
   RUN_TEST(Expect_preamble_is_10_times_0);
   RUN_TEST(Expect_good_sensor_type_emission);
   RUN_TEST(Expect_good_sensor_address_emission);
