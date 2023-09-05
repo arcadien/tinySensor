@@ -9,3 +9,5 @@ Release/
 web/data/
 volume
 hardware/kicad/fp-info-cache
+flash.log
+*.elf
