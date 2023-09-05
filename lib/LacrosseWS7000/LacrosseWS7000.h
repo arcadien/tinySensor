@@ -96,16 +96,8 @@ private:
    */
   void SendPreamble();
 
-  /**
-   * Emit sensor type and return equivalent nibble
-   */
-  uint8_t SendType();
-
-  /**
-   * Emit sensor address and temperature sign and return equivalent nibble
-   */
-  uint8_t SendAddressAndTemperatureSign();
-
+  void SendType(uint8_t *nibbles);
+  void SendAddressAndTemperatureSign(uint8_t *nibbles);
   void SendTemperature(uint8_t *nibbles);
   void SendHumidity(uint8_t *nibbles);
   void SendPressure(uint8_t *nibbles);

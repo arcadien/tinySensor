@@ -80,7 +80,7 @@ void LacrosseWS7000::SendPreamble() {
   }
 }
 
-uint8_t LacrosseWS7000::SendType() {
+void LacrosseWS7000::SendType(uint8_t *nibbles) {
   uint8_t nibble = 0x0F;
   if (1 == availableData) { // temp
     nibble = 0x00;
@@ -98,17 +98,19 @@ uint8_t LacrosseWS7000::SendType() {
     nibble = 0x0F;
   }
   SendNibble(nibble);
-  return nibble;
+
+  nibbles[0] = (nibble & 0xF);
 }
 
-uint8_t LacrosseWS7000::SendAddressAndTemperatureSign() {
+void LacrosseWS7000::SendAddressAndTemperatureSign(uint8_t *nibbles) {
   uint8_t addressAndTempSign = address;
   if (temperature.isNegative) {
     addressAndTempSign |= (1 << 3);
   }
   SendNibble(addressAndTempSign);
-  return addressAndTempSign;
+  nibbles[0] = (addressAndTempSign & 0xF);
 }
+
 void LacrosseWS7000::SendTemperature(uint8_t *nibbles) {
 
   SendNibble(temperature.decimals);
@@ -127,7 +129,7 @@ void LacrosseWS7000::SendHumidity(uint8_t *nibbles) {
   SendNibble(humidity.units);
   SendNibble(humidity.dozens);
 
-  nibbles[0] = 0x00;
+  nibbles[0] = (humidity.decimals & 0xF);
   nibbles[1] = (humidity.units & 0xF);
   nibbles[2] = (humidity.dozens & 0xF);
 }
@@ -147,18 +149,18 @@ void LacrosseWS7000::Send() {
 
   uint8_t checkXor = 0;
   uint8_t checkSum = 5;
-  uint8_t temporaryNibbles[7];
+  uint8_t temporaryNibbles[8];
 
   SendPreamble(); // 10 bits
   SendOne();      // dead bit
 
-  uint8_t typeNibble = SendType();
-  checkXor ^= typeNibble;
-  checkSum += typeNibble;
+  SendType(temporaryNibbles);
+  checkXor ^= temporaryNibbles[0];
+  checkSum += temporaryNibbles[0];
 
-  uint8_t addressAndSignNibble = SendAddressAndTemperatureSign();
-  checkXor ^= addressAndSignNibble;
-  checkSum += addressAndSignNibble;
+  SendAddressAndTemperatureSign(temporaryNibbles);
+  checkXor ^= temporaryNibbles[0];
+  checkSum += temporaryNibbles[0];
 
   if (LUMINOSITY_AVAILABLE == (availableData & LUMINOSITY_AVAILABLE)) {
     SendLuminosity(temporaryNibbles);
