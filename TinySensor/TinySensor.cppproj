@@ -26,7 +26,7 @@
     <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
     <ResetRule>0</ResetRule>
-    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <eraseonlaunchrule>1</eraseonlaunchrule>
     <EraseKey />
     <avrtool>com.atmel.avrdbg.tool.avrdragon</avrtool>
     <avrtoolserialnumber>00A200031599</avrtoolserialnumber>
@@ -34,195 +34,189 @@
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
         <InterfaceProperties>
-          <IspClock>250000</IspClock>
+          <IspClock>125000</IspClock>
         </InterfaceProperties>
-        <InterfaceName>ISP</InterfaceName>
+        <InterfaceName>debugWIRE</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.avrdragon</ToolType>
       <ToolNumber>00A200031599</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
-    <avrtoolinterface>ISP</avrtoolinterface>
-    <avrtoolinterfaceclock>250000</avrtoolinterfaceclock>
+    <avrtoolinterface>debugWIRE</avrtoolinterface>
+    <avrtoolinterfaceclock>125000</avrtoolinterfaceclock>
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+  <options />
+  <configurations />
+  <files />
+  <documentation help="" />
+  <offline-documentation help="" />
+  <dependencies>
+    <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.52.0" />
+  </dependencies>
+</framework-data>
+    </AsfFrameworkConfig>
+    <UseGdb>True</UseGdb>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
       <AvrGccCpp>
-  <avrgcc.common.Device>-mmcu=attiny84a -B "%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\gcc\dev\attiny84a"</avrgcc.common.Device>
-  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
-  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
-  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
-  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
-  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcc.compiler.symbols.DefSymbols><ListValues>
-  <Value>DOREGON_MODE_0=1</Value>
-  <Value>NDEBUG</Value>
-</ListValues></avrgcc.compiler.symbols.DefSymbols>
-  <avrgcc.compiler.directories.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value><Value>../../include</Value></ListValues></avrgcc.compiler.directories.IncludePaths>
-  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-  <avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcccpp.compiler.symbols.DefSymbols><ListValues>
-  <Value>SENSOR_TYPE="{0xEA, 0x4C}"</Value>
-  <Value>SENSOR_ID=0xCE</Value>
-  <Value>OREGON_MODE_0=1</Value>
-  <Value>USE_BMP280=1</Value>
-  <Value>SLEEP_TIME_IN_SECONDS=900</Value>
-  <Value>LOW_BATTERY_VOLTAGE=2200</Value>
-  <Value>AVR</Value>
-  <Value>F_CPU=1000000U</Value>
-  <Value>__AVR_ATtiny84__</Value>
-  <Value>VOLTAGE_X10_SENSOR_ID=2</Value>
-  <Value>NDEBUG</Value>
-</ListValues></avrgcccpp.compiler.symbols.DefSymbols>
-  <avrgcccpp.compiler.directories.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value><Value>../../include</Value><Value>../third_party/BMX</Value><Value>../third_party/I2C</Value><Value>../third_party/X10</Value></ListValues></avrgcccpp.compiler.directories.IncludePaths>
-  <avrgcccpp.compiler.optimization.PackStructureMembers>True</avrgcccpp.compiler.optimization.PackStructureMembers>
-  <avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
-  <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
-  <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
-  <avrgcccpp.linker.libraries.Libraries><ListValues><Value>libm</Value></ListValues></avrgcccpp.linker.libraries.Libraries>
-  <avrgcccpp.assembler.general.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value></ListValues></avrgcccpp.assembler.general.IncludePaths>
-  <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
-  <avrgcccpp.compiler.optimization.level>Optimize for size (-Os)</avrgcccpp.compiler.optimization.level>
-</AvrGccCpp>
+        <avrgcc.common.Device>-mmcu=attiny84a -B "%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\gcc\dev\attiny84a"</avrgcc.common.Device>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>DOREGON_MODE_0=1</Value>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+            <Value>../../include</Value>
+          </ListValues>
+        </avrgcc.compiler.directories.IncludePaths>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcccpp.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>SENSOR_TYPE="{0xEA, 0x4C}"</Value>
+            <Value>SENSOR_ID=0xCE</Value>
+            <Value>OREGON_MODE_0=1</Value>
+            <Value>USE_BMP280=1</Value>
+            <Value>SLEEP_TIME_IN_SECONDS=900</Value>
+            <Value>LOW_BATTERY_VOLTAGE=2200</Value>
+            <Value>AVR</Value>
+            <Value>F_CPU=1000000U</Value>
+            <Value>__AVR_ATtiny84__</Value>
+            <Value>VOLTAGE_X10_SENSOR_ID=2</Value>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </avrgcccpp.compiler.symbols.DefSymbols>
+        <avrgcccpp.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+            <Value>../../include</Value>
+            <Value>../third_party/BMX</Value>
+            <Value>../third_party/I2C</Value>
+            <Value>../third_party/X10</Value>
+          </ListValues>
+        </avrgcccpp.compiler.directories.IncludePaths>
+        <avrgcccpp.compiler.optimization.PackStructureMembers>True</avrgcccpp.compiler.optimization.PackStructureMembers>
+        <avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
+        <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
+        <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
+        <avrgcccpp.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcccpp.linker.libraries.Libraries>
+        <avrgcccpp.assembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+          </ListValues>
+        </avrgcccpp.assembler.general.IncludePaths>
+        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+        <avrgcccpp.compiler.optimization.level>Optimize for size (-Os)</avrgcccpp.compiler.optimization.level>
+      </AvrGccCpp>
     </ToolchainSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
       <AvrGccCpp>
-  <avrgcc.common.Device>-mmcu=attiny84a -B "%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\gcc\dev\attiny84a"</avrgcc.common.Device>
-  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
-  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
-  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
-  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
-  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcc.compiler.symbols.DefSymbols><ListValues>
-  <Value>DOREGON_MODE_0=1</Value>
-  <Value>DEBUG</Value>
-</ListValues></avrgcc.compiler.symbols.DefSymbols>
-  <avrgcc.compiler.directories.IncludePaths><ListValues>
-  <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
-  <Value>../../include</Value>
-  <Value>../../include/protocol</Value>
-</ListValues></avrgcc.compiler.directories.IncludePaths>
-  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-  <avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcccpp.compiler.symbols.DefSymbols><ListValues>
-  <Value>SENSOR_TYPE="{0xEA, 0x4C}"</Value>
-  <Value>SENSOR_ID=0xCE</Value>
-  <Value>OREGON_MODE_0=1</Value>
-  <Value>USE_BMP280=1</Value>
-  <Value>SLEEP_TIME_IN_SECONDS=900</Value>
-  <Value>LOW_BATTERY_VOLTAGE=2200</Value>
-  <Value>AVR</Value>
-  <Value>F_CPU=1000000U</Value>
-  <Value>__AVR_ATtiny84__</Value>
-  <Value>VOLTAGE_X10_SENSOR_ID=2</Value>
-  <Value>VOLTAGE_X10_SENSOR_ID=10</Value>
-  <Value>DEBUG</Value>
-</ListValues></avrgcccpp.compiler.symbols.DefSymbols>
-  <avrgcccpp.compiler.directories.IncludePaths><ListValues>
-  <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
-  <Value>../../include</Value>
-  <Value>../third_party/BMX</Value>
-  <Value>../third_party/I2C</Value>
-  <Value>../third_party/X10</Value>
-  <Value>../../include/protocol</Value>
-</ListValues></avrgcccpp.compiler.directories.IncludePaths>
-  <avrgcccpp.compiler.optimization.PackStructureMembers>True</avrgcccpp.compiler.optimization.PackStructureMembers>
-  <avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
-  <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
-  <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
-  <avrgcccpp.linker.libraries.Libraries><ListValues><Value>libm</Value></ListValues></avrgcccpp.linker.libraries.Libraries>
-  <avrgcccpp.assembler.general.IncludePaths><ListValues><Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value></ListValues></avrgcccpp.assembler.general.IncludePaths>
-  <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
-  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
-  <avrgcccpp.compiler.optimization.level>Optimize debugging experience (-Og)</avrgcccpp.compiler.optimization.level>
-  <avrgcccpp.compiler.optimization.DebugLevel>Default (-g2)</avrgcccpp.compiler.optimization.DebugLevel>
-  <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
-</AvrGccCpp>
+        <avrgcc.common.Device>-mmcu=attiny84a -B "%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\gcc\dev\attiny84a"</avrgcc.common.Device>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>DOREGON_MODE_0=1</Value>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+            <Value>../../include</Value>
+            <Value>../../include/protocol</Value>
+          </ListValues>
+        </avrgcc.compiler.directories.IncludePaths>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcccpp.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcccpp.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>SENSOR_TYPE="{0xEA, 0x4C}"</Value>
+            <Value>SENSOR_ID=0xCE</Value>
+            <Value>OREGON_MODE_0=1</Value>
+            <Value>USE_BMP280=1</Value>
+            <Value>SLEEP_TIME_IN_SECONDS=900</Value>
+            <Value>LOW_BATTERY_VOLTAGE=2200</Value>
+            <Value>AVR</Value>
+            <Value>F_CPU=1000000U</Value>
+            <Value>__AVR_ATtiny84__</Value>
+            <Value>VOLTAGE_X10_SENSOR_ID=2</Value>
+            <Value>VOLTAGE_X10_SENSOR_ID=10</Value>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </avrgcccpp.compiler.symbols.DefSymbols>
+        <avrgcccpp.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+            <Value>../../include</Value>
+            <Value>../third_party/BMX</Value>
+            <Value>../third_party/I2C</Value>
+            <Value>../third_party/X10</Value>
+            <Value>../../include/protocol</Value>
+          </ListValues>
+        </avrgcccpp.compiler.directories.IncludePaths>
+        <avrgcccpp.compiler.optimization.PackStructureMembers>True</avrgcccpp.compiler.optimization.PackStructureMembers>
+        <avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcccpp.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
+        <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++11</avrgcccpp.compiler.miscellaneous.OtherFlags>
+        <avrgcccpp.compiler.miscellaneous.Verbose>True</avrgcccpp.compiler.miscellaneous.Verbose>
+        <avrgcccpp.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcccpp.linker.libraries.Libraries>
+        <avrgcccpp.assembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\atmel\ATtiny_DFP\1.3.229\include</Value>
+          </ListValues>
+        </avrgcccpp.assembler.general.IncludePaths>
+        <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
+        <avrgcccpp.compiler.optimization.level>Optimize debugging experience (-Og)</avrgcccpp.compiler.optimization.level>
+        <avrgcccpp.compiler.optimization.DebugLevel>Default (-g2)</avrgcccpp.compiler.optimization.DebugLevel>
+        <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
+      </AvrGccCpp>
     </ToolchainSettings>
+    <UsesExternalMakeFile>False</UsesExternalMakeFile>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <BuildTarget>all</BuildTarget>
+    <CleanTarget>clean</CleanTarget>
+    <ExternalMakeFilePath>C:\Users\aurelien\Documents\git\tinySensor\Makefile</ExternalMakeFilePath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\include\Arduino.h">
-      <SubType>compile</SubType>
-      <Link>Arduino.h</Link>
-    </Compile>
-    <Compile Include="..\include\config.h">
-      <SubType>compile</SubType>
-      <Link>config.h</Link>
-    </Compile>
-    <Compile Include="..\include\protocol\Oregon_v3.h">
-      <SubType>compile</SubType>
-      <Link>Oregon_v3.h</Link>
-    </Compile>
-    <Compile Include="..\include\readVcc.h">
-      <SubType>compile</SubType>
-      <Link>readVcc.h</Link>
-    </Compile>
-    <Compile Include="..\include\TinySensor.h">
-      <SubType>compile</SubType>
-      <Link>TinySensor.h</Link>
-    </Compile>
-    <Compile Include="..\include\Attiny84aHal.h">
-      <SubType>compile</SubType>
-      <Link>Attiny84aHal.h</Link>
-    </Compile>
-    <Compile Include="..\src\Attiny84aHal.cpp">
-      <SubType>compile</SubType>
-      <Link>Attiny84aHal.cpp</Link>
-    </Compile>
-    <Compile Include="..\src\main.cpp">
-      <SubType>compile</SubType>
-      <Link>main.cpp</Link>
-    </Compile>
-    <Compile Include="..\src\mainWrapper.cpp">
-      <SubType>compile</SubType>
-      <Link>mainWrapper.cpp</Link>
-    </Compile>
-    <Compile Include="..\src\readVCC.cpp">
-      <SubType>compile</SubType>
-      <Link>readVCC.cpp</Link>
-    </Compile>
-    <Compile Include="..\src\protocol\Oregon_v3.cpp">
-      <SubType>compile</SubType>
-      <Link>Oregon_v3.cpp</Link>
-    </Compile>
-    <Compile Include="third_party\BMX\SparkFunBME280.cpp">
+    <Compile Include="CPPFile1.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="third_party\BMX\SparkFunBME280.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="third_party\I2C\TinyI2CMaster.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="third_party\I2C\TinyI2CMaster.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="third_party\X10\x10rf.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="third_party\X10\x10rf.h">
-      <SubType>compile</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="third_party" />
-    <Folder Include="third_party\BMX" />
-    <Folder Include="third_party\I2C" />
-    <Folder Include="third_party\X10" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
