@@ -17,9 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
-
 #include <BMx280.h>
+#include <config.h>
+#include <conversionTools.h>
 #include <x10rf.h>
 
 #if defined(AVR)
@@ -66,7 +66,7 @@ int main(void) {
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    encoder.SetTemperature(bmx280.GetTemperature()); 
+    encoder.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
     encoder.SetHumidity(bmx280.GetHumidity());
     encoder.SetPressure(bmx280.GetPressure() / 100);
@@ -90,18 +90,21 @@ int main(void) {
 
 #endif
 
-    uint32_t voltageInMv = (uint32_t)hal.GetBatteryVoltageMv();
-    //oregon.SetBatteryLow((voltageInMv < LOW_BATTERY_VOLTAGE));
+    uint16_t batteryVoltageInMv;
+#ifdef BATTERY_IS_VCC
+    batteryVoltageInMv = hal.GetVccVoltageMv();
+#else
+    batteryVoltageInMv = hal.GetBatteryVoltageMv();
+#endif
+    voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
+                            ConversionTools::dec16ToHex(batteryVoltageInMv));
 
-    // absolute counter for emission ~ each 15 minutes
-    if (secondCounter > 900) {
-      secondCounter = 0;
-      voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00, voltageInMv);
-      
-      hal.Delay30ms();
-    }
+    voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00, batteryVoltageInMv);
+    hal.Delay30ms();
+
     encoder.Send();
     hal.Delay30ms();
+
     encoder.Send();
 
     hal.LedOff();

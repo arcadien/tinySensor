@@ -66,9 +66,8 @@ static void UseLessPowerAsPossible() {
   MCUSR &= ~(1 << BODSE);
 }
 
-static void startADCReading() { ADCSRA |= (1 << ADSC); }
-static bool ADCReadInProgress() { return (ADCSRA & (1 << ADSC)) == ADSC; }
-
+static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
+static inline bool ADCReadInProgress() { return (ADCSRA & (1 << ADSC)) == ADSC; }
 /*!
  * Read the ADC, discarding `discard` first readings,
  * and then return average of `samples` readings
@@ -175,32 +174,33 @@ void Attiny84aHal::Delay1s() { _delay_ms(1000); }
  *
  */
 uint16_t Attiny84aHal::GetBatteryVoltageMv(void) {
-  ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+	
+	// analog ref = VCC, input channel = ADC1 (PA1)
+	ADMUX = 0b00000001;
+	_delay_ms(1);
 
-  // analog ref = VCC, input channel = ADC1 (PA1)
-  ADMUX = 0b00000001;
-  _delay_ms(1);
-
-  uint16_t batteryAdcRead = adcRead(4, 12);
-  uint16_t vccVoltageMv = GetVccVoltageMv();
-  float mvPerAdcStep = (vccVoltageMv / 1024.0);
-  uint16_t batteryVoltageMv = batteryAdcRead * mvPerAdcStep;
-  return batteryVoltageMv;
+	uint16_t batteryAdcRead = adcRead(4, 12);
+	uint16_t vccVoltageMv = GetVccVoltageMv();
+	float mvPerAdcStep = (vccVoltageMv / 1024.f);
+	uint16_t batteryVoltageMv = (uint16_t)(batteryAdcRead * mvPerAdcStep);
+	return batteryVoltageMv;
 }
 
 /*!
  *
- * Reads Vcc using internal 1.1v tension reference
+ * Reads internal 1.1v tension with VCC reference
  *
  */
 uint16_t Attiny84aHal::GetVccVoltageMv(void) {
-  // analog ref = VCC, input channel = VREF
-  ADMUX = 0b00100001;
-  _delay_ms(1);
+	
+	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+	ADMUX = 0b00100001;
+	_delay_ms(1);
 
-  uint16_t vccAdcRead = adcRead(4, 12);
-  uint16_t vccMv = (uint16_t)(1100.0 * 1024.0 / vccAdcRead);
-  return vccMv;
+	uint16_t vccAdcRead = adcRead(4, 12);
+	uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
+	return vccMv;
 }
 
 void Attiny84aHal::Hibernate(uint8_t seconds) { sleep(seconds); }
