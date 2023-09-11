@@ -31,6 +31,9 @@
 #if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
 Attiny84aHal hal;
+#elif defined(__AVR_ATmega328p__)
+#include <Atmega328pHal.h>
+Atmega328pHal hal;
 #else
 #include <TestHal.h>
 TestHal_ hal;
