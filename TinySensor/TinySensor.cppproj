@@ -214,7 +214,7 @@
     <ExternalMakeFilePath>C:\Users\aurelien\Documents\git\tinySensor\Makefile</ExternalMakeFilePath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CPPFile1.cpp">
+    <Compile Include="11refCalibration.cpp">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
