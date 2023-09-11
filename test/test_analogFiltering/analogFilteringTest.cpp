@@ -71,6 +71,16 @@ void Expected_filter_to_ignore_supernumerary_values()
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
 
+void Expected_filter_to_account_exclusion()
+{
+  AnalogFilter filter(2, 4);
+  filter.Push(2);
+  filter.Push(2);
+  filter.Push(4);
+  filter.Push(4);
+  TEST_ASSERT_EQUAL(4, filter.Get());
+}
+
 int main(int, char **)
 {
   UNITY_BEGIN();
@@ -79,5 +89,7 @@ int main(int, char **)
   RUN_TEST(Expected_filter_to_mean_values_and_floor_result);
   RUN_TEST(Expected_filter_to_mean_actual_values);
   RUN_TEST(Expected_filter_to_ignore_supernumerary_values);
+  RUN_TEST(Expected_filter_to_account_exclusion);
+
   return UNITY_END();
 }

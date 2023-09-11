@@ -1,9 +1,13 @@
 #include <AnalogFilter.h>
 
 void AnalogFilter::Push(uint16_t value) {
-  if (actualValuesCount >= exclusion && actualValuesCount < samples) {
-    accumulator += value;
-    actualValuesCount++;
+  if (exclusion == 0) {
+    if (actualValuesCount < (samples + exclusion)) {
+      accumulator += value;
+      actualValuesCount++;
+    }
+  } else {
+    exclusion--;
   }
 }
 
