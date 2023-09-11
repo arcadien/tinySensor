@@ -90,18 +90,18 @@ int main(void) {
 
 #endif
 
-    uint16_t batteryVoltageInMv;
+    if (secondCounter > 900) {
+      secondCounter = 0;
+      uint16_t batteryVoltageInMv;
 #ifdef BATTERY_IS_VCC
-    batteryVoltageInMv = hal.GetVccVoltageMv();
+      batteryVoltageInMv = hal.GetVccVoltageMv();
 #else
-    batteryVoltageInMv = hal.GetBatteryVoltageMv();
+      batteryVoltageInMv = hal.GetBatteryVoltageMv();
 #endif
-    voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
-                            ConversionTools::dec16ToHex(batteryVoltageInMv));
-
-    voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00, batteryVoltageInMv);
-    hal.Delay30ms();
-
+      voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
+                              ConversionTools::dec16ToHex(batteryVoltageInMv));
+      hal.Delay30ms();
+    }
     encoder.Send();
     hal.Delay30ms();
 
