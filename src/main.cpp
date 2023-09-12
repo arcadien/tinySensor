@@ -41,12 +41,12 @@ BMx280 bmx280(&hal);
 #endif
 
 #if defined(VOLTAGE_X10_SENSOR_ID)
-x10rf voltageEmitter(&hal, 5);
+x10rf x10encoder(&hal, 5);
 #endif
 
 int main(void) {
-  LacrosseWS7000 encoder(&hal);
-  encoder.SetAddress(SENSOR_ID);
+  LacrosseWS7000 lacrosseEncoder(&hal);
+  lacrosseEncoder.SetAddress(SENSOR_ID);
 
   /*
    * The firmware force emission of
@@ -66,10 +66,10 @@ int main(void) {
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    encoder.SetTemperature(bmx280.GetTemperature());
+    lacrosseEncoder.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
-    encoder.SetHumidity(bmx280.GetHumidity());
-    encoder.SetPressure(bmx280.GetPressure() / 100);
+    lacrosseEncoder.SetHumidity(bmx280.GetHumidity());
+    lacrosseEncoder.SetPressure(bmx280.GetPressure() / 100);
 #endif
 #endif
 
@@ -85,7 +85,7 @@ int main(void) {
     auto readStatus =
         ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
     if (readStatus == DS18B20_ERROR_OK) {
-      encoder.SetTemperature(temperature / 16);
+      lacrosseEncoder.SetTemperature(temperature / 16);
     }
 
 #endif
@@ -100,16 +100,16 @@ int main(void) {
 #else
       batteryVoltageInMv = hal.GetBatteryVoltageMv();
 #endif
-      voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
+      x10encoder.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
                               ConversionTools::dec16ToHex(batteryVoltageInMv));
       hal.Delay30ms();
     }
 #endif
 
-    encoder.Send();
+    lacrosseEncoder.Send();
     hal.Delay30ms();
 
-    encoder.Send();
+    lacrosseEncoder.Send();
 
     hal.LedOff();
     hal.PowerOffSensors();
