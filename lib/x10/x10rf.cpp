@@ -228,7 +228,7 @@ void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
   case 'h': // RFU (humidity sensor)
     _message[3] = 0x20;
     break;
-  case 'p': // RFU (pressure sensor)
+  case 'p': // RFU (pressure sensor, value + shift of 900)
     _message[3] = 0x40;
     break;
   default:

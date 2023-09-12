@@ -48,6 +48,14 @@ typedef struct X10SwitchTestData {
   uint8_t expectedMessage[4];
 } X10SwitchTestData;
 
+typedef struct X10SensorTestData {
+  uint8_t address;
+  uint8_t type;
+  uint8_t packetType;
+  uint8_t value;
+  uint8_t expectedMessage[4];
+} X10SensorTestData;
+
 typedef struct X10MeterTestData {
   uint8_t address;
   uint8_t packetType;
@@ -128,11 +136,9 @@ void Expect_x10_meter_right_encoding() {
     // set interval within 5s
     // calibration mode within 5s
     // set address mode
-
-
   };
-
   // clang-format on
+
   uint8_t testCount = sizeof(testDatas) / sizeof(X10MeterTestData);
   for (uint8_t testIndex = 0; testIndex < testCount; testIndex++) {
     x10rf x10Encoder(&TestHal, 1);
@@ -148,6 +154,34 @@ void Expect_x10_meter_right_encoding() {
   }
 }
 
+void Expect_x10_sensor_right_encoding() {
+  char buffer[256];
+
+  // clang-format off
+  X10SensorTestData testDatas[] = {
+    {0xF2, 't', 't', 24,  {0xC8,0x38,0x18, 0x07}}, // temp. 24.0
+    {0xF3, 't', 'T', 24,  {0xCC,0x3C,0x18, 0x87}}, // temp 24.5
+    {0xF4, 'a', 'h', 42,  {0xD1,0x21,0x2A, 0x20}}, // RH 42%
+    {0xF5, 'm', 'x', 100, {0xD7,0x27,0x64, 0x08}}, // message, not decoded in RFLink
+    {0xF6, 'v', 'v', 18,  {0xDA,0x2A,0x12, 0x09}}, // voltage, 18
+  };
+  // clang-format on
+
+  uint8_t testCount = sizeof(testDatas) / sizeof(X10SensorTestData);
+  for (uint8_t testIndex = 0; testIndex < testCount; testIndex++) {
+    x10rf x10Encoder(&TestHal, 1);
+
+    X10SensorTestData testData = testDatas[testIndex];
+    x10Encoder.RFXsensor(testData.address, testData.type, testData.packetType,
+                         testData.value);
+    uint8_t *actual = x10Encoder.getMessage();
+
+    sprintf(buffer, "Checking X10 sensor message test #%u", testIndex);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(testData.expectedMessage, actual, 4,
+                                         buffer);
+  }
+}
+
 void setUp(void) { TestHal.ClearOrders(); }
 void tearDown(void) {}
 
@@ -157,6 +191,7 @@ int main(int, char **) {
   RUN_TEST(Expect_x10_switch_right_encoding);
   RUN_TEST(Expect_x10_security_right_parity);
   RUN_TEST(Expect_x10_meter_right_encoding);
+  RUN_TEST(Expect_x10_sensor_right_encoding);
 
   return UNITY_END();
 }
