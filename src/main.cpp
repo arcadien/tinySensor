@@ -90,6 +90,8 @@ int main(void) {
 
 #endif
 
+#if defined(VOLTAGE_X10_SENSOR_ID)
+
     if (secondCounter > 900) {
       secondCounter = 0;
       uint16_t batteryVoltageInMv;
@@ -102,6 +104,8 @@ int main(void) {
                               ConversionTools::dec16ToHex(batteryVoltageInMv));
       hal.Delay30ms();
     }
+#endif
+
     encoder.Send();
     hal.Delay30ms();
 
