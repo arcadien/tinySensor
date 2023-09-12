@@ -30,9 +30,10 @@ testing support.
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
+#ifndef bitWrite
 #define bitWrite(value, bit, bitvalue)                                         \
   (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
-
+#endif
 #include <Hal.h>
 #include <stdint.h>
 
@@ -43,7 +44,7 @@ class x10rf {
 public:
   x10rf(Hal *hal, uint8_t rf_repeats);
 
-/** Max value is 16777215 (0xffffff) because only 3 bytes are used */
+  /** Max value is 16777215 (0xffffff) because only 3 bytes are used */
   void RFXmeter(uint8_t rfxm_address, uint8_t rfxm_packet_type,
                 uint32_t rfxm_value);
   void RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type, char rfxs_packet_type,

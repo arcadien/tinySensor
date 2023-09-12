@@ -5,22 +5,8 @@
 #define __AVR_ATmega328_HAL__
 #endif
 
-/*
- * 1-wire interface is on PA3
- * Power for radio is on PA2 (sensor_vcc)
- * LED pin is PB1
- * PWM pin is PA7   // no PA on UNO
- * SDA pin is PA6   // no PA on UNO
- * SCL pin is PA4   // no PA on UNO
- * MISO pin is PA5  // no PA on UNO
- * TX radio pin is PB0
- * BAT sensor pin is PA1    // no PA on UNO
- * analog sensor pin is PA0 // no PA on UNO
- */
-
 #include <Hal.h>
 #include <stdint.h>
-
 
 class Atmega328pHal : public Hal
 {
@@ -36,7 +22,7 @@ public:
   void RadioGoLow() override;
   void RadioGoHigh() override;
 
-  void Hibernate(uint8_t seconds) override;
+  void Hibernate(uint16_t seconds) override;
   void PowerOnSensors() override;
   void PowerOffSensors() override;
 

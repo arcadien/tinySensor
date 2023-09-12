@@ -95,7 +95,7 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples) {
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint8_t s) {
+void sleep(uint16_t s) {
   s >>= 3; // or s/8
   if (s == 0)
     s = 1;
@@ -185,7 +185,7 @@ uint16_t Atmega328pHal::GetBatteryVoltageMv(void) {
 
   uint16_t batteryAdcRead = adcRead(4, 12);
   uint16_t vccVoltageMv = GetVccVoltageMv();
-  float mvPerAdcStep = (vccVoltageMv / 1024.0);
+  float mvPerAdcStep = (vccVoltageMv / 1024.f);
   uint16_t batteryVoltageMv = batteryAdcRead * mvPerAdcStep;
   return batteryVoltageMv;
 }
@@ -196,16 +196,17 @@ uint16_t Atmega328pHal::GetBatteryVoltageMv(void) {
  *
  */
 uint16_t Atmega328pHal::GetVccVoltageMv(void) {
-  // analog ref = VCC, input channel = VREF
+
+	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
   ADMUX = 0b00100001;
   _delay_ms(1);
 
   uint16_t vccAdcRead = adcRead(4, 12);
-  uint16_t vccMv = (uint16_t)(1100.0 * 1024.0 / vccAdcRead);
+  uint16_t vccMv = (uint16_t)(INTERNAL_1v1 * 1024.f / vccAdcRead);
   return vccMv;
 }
 
-void Atmega328pHal::Hibernate(uint8_t seconds) { sleep(seconds); }
+void Atmega328pHal::Hibernate(uint16_t seconds) { sleep(seconds); }
 
 void Init(void) {
 }
