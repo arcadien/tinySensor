@@ -64,12 +64,17 @@ int main(void) {
     hal.Delay30ms();
     hal.LedOn();
 
+    static const float NOT_SET = -1000;
+    float temperature = NOT_SET;
+    float humidity = NOT_SET;
+    float pressure = NOT_SET;
+
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    lacrosseEncoder.SetTemperature(bmx280.GetTemperature());
+    temperature = bmx280.GetTemperature();
 #if defined(USE_BME280)
-    lacrosseEncoder.SetHumidity(bmx280.GetHumidity());
-    lacrosseEncoder.SetPressure(bmx280.GetPressure() / 100);
+    humidity = bmx280.GetHumidity();
+    pressure = bmx280.GetPressure() / 100; // Pa -> hPa
 #endif
 #endif
 
@@ -85,7 +90,7 @@ int main(void) {
     auto readStatus =
         ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
     if (readStatus == DS18B20_ERROR_OK) {
-      lacrosseEncoder.SetTemperature(temperature / 16);
+      temperature = (temperature / 16);
     }
 
 #endif
@@ -101,15 +106,28 @@ int main(void) {
       batteryVoltageInMv = hal.GetBatteryVoltageMv();
 #endif
       x10encoder.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
-                              ConversionTools::dec16ToHex(batteryVoltageInMv));
+                          ConversionTools::dec16ToHex(batteryVoltageInMv));
       hal.Delay30ms();
     }
 #endif
 
-    lacrosseEncoder.Send();
-    hal.Delay30ms();
+    if (temperature != NOT_SET) {
+      lacrosseEncoder.SetTemperature(temperature);
+      // x10encoder.RFXsensor(TEMP_SENSOR_ID, 't', 't', temperature);
+    }
+    if (humidity != NOT_SET) {
+      lacrosseEncoder.SetHumidity(humidity);
+      // x10encoder.RFXsensor(HUM_SENSOR_ID, 'a', 'h', humidity);
+    }
+    if (pressure != NOT_SET) {
+      lacrosseEncoder.SetPressure(pressure);
+      // x10encoder.RFXsensor(PRESSURE_SENSOR_ID, 'a', 'p', (pressure/10));
+    }
 
     lacrosseEncoder.Send();
+    hal.Delay30ms();
+    lacrosseEncoder.Send();
+    hal.Delay30ms();
 
     hal.LedOff();
     hal.PowerOffSensors();
