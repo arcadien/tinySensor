@@ -19,7 +19,7 @@ public:
   virtual void Delay512Us() = 0;
   virtual void Delay1024Us() = 0;
 
-  virtual void Hibernate(uint8_t seconds) = 0;
+  virtual void Hibernate(uint16_t seconds) = 0;
 
   virtual void RadioGoLow() = 0;
   virtual void RadioGoHigh() = 0;

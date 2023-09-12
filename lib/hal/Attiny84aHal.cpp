@@ -92,7 +92,7 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples) {
  * the value used here will be divided by 8 (and rounded if needed).
  * It is better to use a multiple of 8 as value.
  */
-void sleep(uint8_t s) {
+void sleep(uint16_t s) {
   s >>= 3; // or s/8
   if (s == 0)
     s = 1;
@@ -203,7 +203,7 @@ uint16_t Attiny84aHal::GetVccVoltageMv(void) {
 	return vccMv;
 }
 
-void Attiny84aHal::Hibernate(uint8_t seconds) { sleep(seconds); }
+void Attiny84aHal::Hibernate(uint16_t seconds) { sleep(seconds); }
 
 void Init(void) {
 #if defined(USE_I2C)

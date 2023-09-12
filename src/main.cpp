@@ -109,7 +109,7 @@ int main(void) {
 
     hal.LedOff();
     hal.PowerOffSensors();
-    hal.Hibernate((uint8_t)SLEEP_TIME_IN_SECONDS);
+    hal.Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
     secondCounter += SLEEP_TIME_IN_SECONDS;
   }
 }

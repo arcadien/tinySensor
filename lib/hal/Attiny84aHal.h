@@ -37,7 +37,7 @@ public:
   void RadioGoLow() override;
   void RadioGoHigh() override;
 
-  void Hibernate(uint8_t seconds) override;
+  void Hibernate(uint16_t seconds) override;
   void PowerOnSensors() override;
   void PowerOffSensors() override;
 

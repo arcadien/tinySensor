@@ -55,7 +55,7 @@ public:
   uint16_t GetBatteryVoltageMv() override { return batteryVoltage; }
   uint16_t GetVccVoltageMv() override { return vccVoltage; }
 
-  void Hibernate(uint8_t seconds) override {
+  void Hibernate(uint16_t seconds) override {
     std::this_thread::sleep_for(std::chrono::seconds(seconds));
   }
 
