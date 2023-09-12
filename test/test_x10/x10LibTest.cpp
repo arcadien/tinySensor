@@ -48,6 +48,13 @@ typedef struct X10SwitchTestData {
   uint8_t expectedMessage[4];
 } X10SwitchTestData;
 
+typedef struct X10MeterTestData {
+  uint8_t address;
+  uint8_t packetType;
+  uint32_t value;
+  uint8_t expectedMessage[6];
+} X10MeterTestData;
+
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 #define bitWrite(value, bit, bitvalue)                                         \
   (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
@@ -62,18 +69,18 @@ void Expect_x10_switch_right_encoding() {
     {'b', 0x0f, OFF, {0x74,0x8B,0x68,0x97}}
   };
   // clang-format on
-  
+
   for (uint8_t testIndex = 0; testIndex < testCount; testIndex++) {
     X10SwitchTestData testData = testDatas[testIndex];
     x10rf x10Encoder(&TestHal, 1);
     x10Encoder.x10Switch(testData.houseCode, testData.unitCode,
                          testData.command);
 
-    uint8_t* actual = x10Encoder.getMessage();
+    uint8_t *actual = x10Encoder.getMessage();
 
     sprintf(buffer, "Checking X10 Switch message test #%u", testIndex);
-    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(testData.expectedMessage, actual, 4, buffer);
-
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(testData.expectedMessage, actual, 4,
+                                         buffer);
   }
 }
 
@@ -99,6 +106,48 @@ void Expect_x10_security_right_parity() {
   }
 }
 
+void Expect_x10_meter_right_encoding() {
+
+  char buffer[256];
+
+  // clang-format off
+  X10MeterTestData testDatas[] = {
+    // simple value
+    {0xFA, 0x00, 0x0,       {0xFA,0x0A,0x00,0x00,0x00,0x0C}}, // normal type, simple set value (0)
+    {0xFB, 0x00, 0x0005DC,  {0xFB,0x0B,0x05,0xDC,0x00,0x0C}}, // normal type, simple set value 
+    {0xFB, 0x00, 0xFE0102,  {0xFB,0x0B,0x01,0x02,0xFE,0x0A}}, // normal type, simple set value 
+    {0xFC, 0x00, 0xFFFFFF,  {0xFC,0x0C,0xFF,0xFF,0xFF,0x0E}}, // normal type, simple set value (max, FFFFFF)
+    {0xFE, 0x00, 0x1000000, {0xFE,0x0E,0x00,0x00,0x00,0x04}}, // normal type, simple set value (overflow)
+
+    // TODO: tests for other modes
+    // interval set
+    // calibration in microseconds
+    // new address set
+    // counter reset
+    // counter set to value
+    // set interval within 5s
+    // calibration mode within 5s
+    // set address mode
+
+
+  };
+
+  // clang-format on
+  uint8_t testCount = sizeof(testDatas) / sizeof(X10MeterTestData);
+  for (uint8_t testIndex = 0; testIndex < testCount; testIndex++) {
+    x10rf x10Encoder(&TestHal, 1);
+
+    X10MeterTestData testData = testDatas[testIndex];
+    x10Encoder.RFXmeter(testData.address, testData.packetType, testData.value);
+
+    uint8_t *actual = x10Encoder.getMessage();
+
+    sprintf(buffer, "Checking X10 meter message test #%u", testIndex);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(testData.expectedMessage, actual, 6,
+                                         buffer);
+  }
+}
+
 void setUp(void) { TestHal.ClearOrders(); }
 void tearDown(void) {}
 
@@ -107,6 +156,7 @@ int main(int, char **) {
 
   RUN_TEST(Expect_x10_switch_right_encoding);
   RUN_TEST(Expect_x10_security_right_parity);
+  RUN_TEST(Expect_x10_meter_right_encoding);
 
   return UNITY_END();
 }

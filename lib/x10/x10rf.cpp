@@ -92,10 +92,6 @@ static void clearMessageBuffer(uint8_t *messageBuffer) {
 }
 
 static void setMeterValue(uint8_t *buffer, uint32_t value) {
-  //buffer[2] = (uint8_t)(value & 0xff0000 >> 16);
-  //buffer[3] = (uint8_t)(value & 0x00ff00 >> 8);
-  //buffer[4] = (uint8_t)(value & 0x0000ff);
-
    buffer[4] = (uint8_t)((value >> 16) & 0xff);
    buffer[2] = (uint8_t)((value >> 8) & 0xff);
    buffer[3] = (uint8_t)(value & 0xff);
