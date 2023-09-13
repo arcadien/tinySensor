@@ -178,16 +178,16 @@ void Attiny84aHal::Delay1s() { _delay_ms(1000); }
  *
  */
 uint16_t Attiny84aHal::GetBatteryVoltageMv(void) {
-  
-	uint16_t vccVoltageMv = GetVccVoltageMv();
 
-	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
-	ADMUX = 0b00000001;
-	_delay_ms(1);
-	uint16_t batteryAdcRead = adcRead(4, 12);
-	float mvPerAdcStep = (vccVoltageMv / 1024.f);
-	uint16_t batteryVoltageMv = (uint16_t)(batteryAdcRead * mvPerAdcStep);
-	return batteryVoltageMv;
+  uint16_t vccVoltageMv = GetVccVoltageMv();
+
+  ADMUX = 0b00000001;
+  _delay_ms(1);
+
+  uint16_t batteryAdcRead = adcRead(4, 12);
+  float mvPerAdcStep = (vccVoltageMv / 1024.f);
+  uint16_t batteryVoltageMv = (uint16_t)(batteryAdcRead * mvPerAdcStep);
+  return batteryVoltageMv;
 }
 
 /*!
@@ -196,14 +196,16 @@ uint16_t Attiny84aHal::GetBatteryVoltageMv(void) {
  *
  */
 uint16_t Attiny84aHal::GetVccVoltageMv(void) {
-	
-	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
-	ADMUX = 0b00100001;
-	_delay_ms(1);
 
-	uint16_t vccAdcRead = adcRead(4, 12);
-	uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
-	return vccMv;
+  // prescaler of 16 = 1MHz/16 = 62.5KHz
+  ADCSRA |= (1 << ADEN) | (1 << ADPS2);
+
+  ADMUX = 0b00100001;
+  _delay_ms(1);
+
+  uint16_t vccAdcRead = adcRead(4, 12);
+  uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
+  return vccMv;
 }
 
 void Attiny84aHal::Hibernate(uint16_t seconds) { sleep(seconds); }
