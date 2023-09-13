@@ -70,7 +70,9 @@ static void UseLessPowerAsPossible() {
 }
 
 static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
-static inline bool ADCReadInProgress() { return (ADCSRA & (1 << ADSC)) == ADSC; }
+static inline bool ADCReadInProgress() {
+  return (ADCSRA & (1 << ADSC)) == ADSC;
+}
 /*!
  * Read the ADC, discarding `discard` first readings,
  * and then return average of `samples` readings
