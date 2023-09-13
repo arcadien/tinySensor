@@ -26,7 +26,11 @@
 #include <ds18b20.h>
 #endif
 
+#if defined(USE_LACROSSE)
 #include <LacrosseWS7000.h>
+#elif defined(USE_OREGON)
+#include <Oregon_v3.h>
+#endif
 
 #if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
@@ -45,8 +49,15 @@ x10rf x10encoder(&hal, 5);
 #endif
 
 int main(void) {
-  LacrosseWS7000 lacrosseEncoder(&hal);
-  lacrosseEncoder.SetAddress(SENSOR_ID);
+
+#if defined(USE_LACROSSE)
+  LacrosseWS7000 encoder(&hal);
+  encoder.SetAddress(LACROSSE_ID);
+#elif defined(USE_OREGON)
+  OregonV3 encoder(&hal);
+  encoder.SetChannel(OREGON_CHANNEL);
+  encoder.SetRollingCode(OREGON_RCODE);
+#endif
 
   /*
    * The firmware force emission of
@@ -111,22 +122,23 @@ int main(void) {
     }
 #endif
 
+
     if (temperature != NOT_SET) {
-      lacrosseEncoder.SetTemperature(temperature);
+      encoder.SetTemperature(temperature);
       // x10encoder.RFXsensor(TEMP_SENSOR_ID, 't', 't', temperature);
     }
     if (humidity != NOT_SET) {
-      lacrosseEncoder.SetHumidity(humidity);
+      encoder.SetHumidity(humidity);
       // x10encoder.RFXsensor(HUM_SENSOR_ID, 'a', 'h', humidity);
     }
     if (pressure != NOT_SET) {
-      lacrosseEncoder.SetPressure(pressure);
+      encoder.SetPressure(pressure);
       // x10encoder.RFXsensor(PRESSURE_SENSOR_ID, 'a', 'p', (pressure/10));
     }
 
-    lacrosseEncoder.Send();
+    encoder.Send();
     hal.Delay30ms();
-    lacrosseEncoder.Send();
+    encoder.Send();
     hal.Delay30ms();
 
     hal.LedOff();
