@@ -5,9 +5,12 @@
 TinySensor aims to provide a customisable firmware and a hardware design for low-power environment sensors using wireless communication.
 
 In the complete system, data is processed by a [Domoticz](https://domoticz.com/)/[RFlink](http://www.rflink.nl/blog2/) couple.
+Data decoding is also tested using [RTL_433](https://github.com/merbanan/rtl_433) decoder.
+Large part of the code, especially wireless encoders, are unit-tested.
 
 ## Supported MCUs
 * ATTiny84a
+* ATMega328p (ongoing)
 
 ## Supported sensors
 * I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
@@ -18,15 +21,16 @@ In the complete system, data is processed by a [Domoticz](https://domoticz.com/)
 * "one pin" emmiters. Tested with low-cost 433Mhz emmitters.
 
 ## Wireless protocol
-* Oregon(c) for environment measurement
+* Oregon(c) for environment measurement transmission
 * X10(c) for (optional) battery level transmission
+* Lacrosse Technology for enviroment measurement transmission
 
 ## Used libraries
 Various libraries are used here, and some where tweaked to remove any Arduino dependencies, making the whole firmware more compact:
-* Oregon(c) library from [connectingstuff.net](http://www.connectingstuff.net/blog/encodage-protocoles-oregon-scientific-sur-arduino/)
 * Sparkfun [BME280 sensor library](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library) with all SPI related code removed
-* [USI wire library](https://github.com/puuu/USIWire.git) with little addition for ATTiny84A support
-* [X10 library support](https://github.com/arcadien/X10RF-Arduino), fork with only AVR and no Arduino code
+* [Tiny I2C](https://github.com/arcadien/tiny-i2c.git) of [David Johnson-Davies](https://github.com/technoblogy)
+* [Unity test harness](http://www.throwtheswitch.org/unity) from Throw The Switch, for all testing code
+* DS18B20 library of [Jacek Wieczorek](https://github.com/Jacajack/avr-ds18b20)
 
 ## Firmware builder
 A web application wrapped in a Docker container allow to build the firmware in a sealed environment. NOTE: It is at his early stage!
@@ -40,9 +44,7 @@ TinySensor build environment now uses [PlatformIO](https://platformio.org/).
 
 ## Hardware options
 
-TinySensor has been tested in 'single sensor' and 'multiple sensor'. Multiple sensor setup is DS18B20 + LM35.
-Due to memory limit in the Attiny84a used by default, some sensor combinations are not possible.
-
+TinySensor can use combination of sensors, the limit comes from amount of flash memory on the ATTiny.
 
 ### DS18B20
 
