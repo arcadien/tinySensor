@@ -100,43 +100,42 @@ void sleep(uint16_t s) {
   if (s == 0)
     s = 1;
   sleep_interval = 0;
+
+  uint8_t PRR_backup = PRR;
+  uint8_t porta_backup = PORTA;
+  uint8_t portb_backup = PORTB;
+  uint8_t ddra_backup = DDRA;
+  uint8_t ddrb_backup = DDRB;
+
+  PRR |= (1 << PRUSI) | (1 << PRTIM0) | (1 << PRTIM1) | (1 << PRADC);
+
+  // all pins as input to avoid power draw
+  DDRA = 0;
+  DDRB = 0;
+
+  // pull-up all unused pins by default
+  PORTA |= 0b01110000;
+
+  // pullup reset only
+  // ( only 4 lasts are available - p. 67)
+  PORTB |= 0b00001000;
+
   while (sleep_interval < s) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     sei();
 
-    uint8_t PRR_backup = PRR;
-    uint8_t porta_backup = PORTA;
-    uint8_t portb_backup = PORTB;
-    uint8_t ddra_backup = DDRA;
-    uint8_t ddrb_backup = DDRB;
-
-    PRR |= (1 << PRUSI) | (1 << PRTIM0) | (1 << PRTIM1) | (1 << PRADC);
-
-    // all pins as input to avoid power draw
-    DDRA = 0;
-    DDRB = 0;
-
-    // pull-up all unused pins by default
-    PORTA |= 0b01110000;
-
-    // pullup reset only
-    // ( only 4 lasts are available - p. 67)
-    PORTB |= 0b00001000;
-
     sleep_mode();
     // here the system is sleeping
-
     // here the system wakes up
     sleep_disable();
-
-    // restore
-    PRR = PRR_backup;
-    DDRA = ddra_backup;
-    DDRB = ddrb_backup;
-    PORTA = porta_backup;
-    PORTB = portb_backup;
   }
+  // restore
+  PRR = PRR_backup;
+  DDRA = ddra_backup;
+  DDRB = ddrb_backup;
+  PORTA = porta_backup;
+  PORTB = portb_backup;
 }
 
 Attiny84aHal::Attiny84aHal() {
