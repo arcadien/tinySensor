@@ -48,6 +48,9 @@ static void UseLessPowerAsPossible() {
   PORTA |= 0b01111001;
   PORTB |= 0b11111100;
 
+  // Analog comparator power down
+  ACSR |= (1 << ACD);
+
   // no timer1
   PRR &= ~_BV(PRTIM1);
 
