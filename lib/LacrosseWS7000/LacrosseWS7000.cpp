@@ -36,10 +36,12 @@ void LacrosseWS7000::SetPressure(float pressure) {
   pressure -= 200;
   NumericalValueSplitter::Split(pressure, &this->pressure);
 }
-void LacrosseWS7000::SetLight(uint16_t luminosity) {
+
+void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
   availableData |= LUMINOSITY_AVAILABLE;
-  this->luminosity = luminosity;
+  NumericalValueSplitter::Split(luminosity, &this->luminosity);
 }
+
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
   // /!\ temperature does not manage hundreds, clamp below 100
@@ -91,7 +93,7 @@ void LacrosseWS7000::SendType(uint8_t *nibbles) {
   } else if (7 == availableData) { // temp + humi + baro
     nibble = 0b00000100;
 
-  } else if (8 == availableData) {
+  } else if (8 == availableData) { // light
     nibble = 0b00000101;
 
   } else {
@@ -104,7 +106,8 @@ void LacrosseWS7000::SendType(uint8_t *nibbles) {
 
 void LacrosseWS7000::SendAddressAndTemperatureSign(uint8_t *nibbles) {
   uint8_t addressAndTempSign = address;
-  if (temperature.isNegative) {
+  if (TEMPERATURE_AVAILABLE == (availableData & TEMPERATURE_AVAILABLE) &&
+      temperature.isNegative) {
     addressAndTempSign |= (1 << 3);
   }
   SendNibble(addressAndTempSign);
@@ -122,7 +125,29 @@ void LacrosseWS7000::SendTemperature(uint8_t *nibbles) {
   nibbles[2] = (temperature.dozens & 0xF);
 }
 
-void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {}
+void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
+
+  SendNibble(luminosity.units);
+  SendNibble(luminosity.dozens);
+  SendNibble(luminosity.hundreds);
+
+  nibbles[0] = (luminosity.units & 0xF);
+  nibbles[1] = (luminosity.dozens & 0xF);
+  nibbles[2] = (luminosity.hundreds & 0xF);
+
+  // todo: power of 10
+  SendNibble(0x00);
+  nibbles[3] = 0x00;
+
+  // todo: exposure time
+  SendNibble(0x00);
+  SendNibble(0x00);
+  SendNibble(0x00);
+
+  nibbles[4] = 0x00;
+  nibbles[5] = 0x00;
+  nibbles[6] = 0x00;
+}
 
 void LacrosseWS7000::SendHumidity(uint8_t *nibbles) {
   SendNibble(humidity.decimals);
@@ -133,6 +158,7 @@ void LacrosseWS7000::SendHumidity(uint8_t *nibbles) {
   nibbles[1] = (humidity.units & 0xF);
   nibbles[2] = (humidity.dozens & 0xF);
 }
+
 void LacrosseWS7000::SendPressure(uint8_t *nibbles) {
 
   SendNibble(pressure.units);
@@ -145,6 +171,7 @@ void LacrosseWS7000::SendPressure(uint8_t *nibbles) {
   nibbles[2] = (pressure.hundreds & 0xF);
   nibbles[3] = (pressure.decimals & 0xF);
 }
+
 void LacrosseWS7000::Send() {
 
   uint8_t checkXor = 0;
@@ -186,8 +213,6 @@ void LacrosseWS7000::Send() {
     checkXor ^= temporaryNibbles[6];
     checkSum += temporaryNibbles[6];
 
-    checkXor ^= temporaryNibbles[7];
-    checkSum += temporaryNibbles[7];
   } else {
 
     if (TEMPERATURE_AVAILABLE == (availableData & TEMPERATURE_AVAILABLE)) {
@@ -233,13 +258,12 @@ void LacrosseWS7000::Send() {
       checkXor ^= temporaryNibbles[3];
       checkSum += temporaryNibbles[3];
     }
-
-    checkXor &= 0x0F;
-
-    checkSum += checkXor;
-    checkSum &= 0x0F;
-
-    SendNibble(checkXor);
-    SendNibble(checkSum);
   }
+  checkXor &= 0x0F;
+
+  checkSum += checkXor;
+  checkSum &= 0x0F;
+
+  SendNibble(checkXor);
+  SendNibble(checkSum);
 }

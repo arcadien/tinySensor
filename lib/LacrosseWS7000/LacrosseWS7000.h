@@ -68,7 +68,7 @@ public:
   void SetTemperature(float temperature);
   void SetHumidity(float humidity);
   void SetPressure(float pressure);
-  void SetLight(uint16_t luminosity);
+  void SetLuminosity(uint16_t luminosity);
 
   void Send();
 
@@ -106,7 +106,7 @@ private:
   NumericalValueSplitter::Result temperature;
   NumericalValueSplitter::Result humidity;
   NumericalValueSplitter::Result pressure;
-  uint16_t luminosity;
+  NumericalValueSplitter::Result luminosity;
   Address address;
 
   Hal *_hal;

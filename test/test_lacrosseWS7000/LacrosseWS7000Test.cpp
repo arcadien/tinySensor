@@ -138,7 +138,7 @@ void Expect_good_sensor_type_emission() {
     LacrosseWS7000 lacrosse(&TestHal);
 
     if (testData.givenHasLux)
-      lacrosse.SetLight(1000);
+      lacrosse.SetLuminosity(1000);
 
     if (testData.givenHasTemperature)
       lacrosse.SetTemperature(24.0);
@@ -482,7 +482,7 @@ void Expect_encoding_of_simple_temperature_message() {
   lacrosse.SetTemperature(-12.7);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, 230);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
 }
 
 void Expect_encoding_of_simple_temperature_and_humi_message() {
@@ -511,7 +511,7 @@ void Expect_encoding_of_simple_temperature_and_humi_message() {
   lacrosse.SetHumidity(61);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, 305);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
 }
 
 void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
@@ -527,10 +527,10 @@ void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
       BIT_ONE, BIT_ONE,  BIT_ZERO,  BIT_ZERO,  SKIPPED_ONE,  // 105 - address and sign
 
       BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,  // 130 - temp. decimals
+
       BIT_ZERO, BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE,  // 155 - temp. unit
       BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE,  // 180 - temp. dozen
-
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,  // 205 - humi. decimals
+      BIT_ZERO, BIT_ZERO, BIT_ONE,  BIT_ZERO, SKIPPED_ONE,  // 205 - humi. decimals
       BIT_ONE,  BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE,  // 230 - humi. unit
       BIT_ONE,  BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE,  // 255 - humi. dozen
 
@@ -547,11 +547,41 @@ void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
   LacrosseWS7000 lacrosse(&TestHal);
   lacrosse.SetAddress(LacrosseWS7000::Address::THREE);
   lacrosse.SetTemperature(26.1);
-  lacrosse.SetHumidity(33);
+  lacrosse.SetHumidity(33.4);
   lacrosse.SetPressure(994.8);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, 305);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
+}
+
+void Expect_encoding_of_simple_luminosity_message() {
+  // clang-format off
+  static const  uint8_t EXPECTED_ORDERS[] = {
+      
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO,    // 25  - preamble 1/2
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO,    // 50  - preamble 2/2
+      SKIPPED_ONE,                                         // 55  - check bit
+      BIT_ONE,  BIT_ZERO,  BIT_ONE, BIT_ZERO, SKIPPED_ONE, // 80  - type
+      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // 105 - address and sign
+      BIT_ZERO, BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // 130 - lum. unit
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // 155 - lum. dozen
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 180 - lum. hundreds
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 205 - lum. power of 10
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 230 - lum. expo nibble 1
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 255 - lum. expo nibble 2
+      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 280 - lum. expo nibble 3
+      BIT_ZERO, BIT_ZERO, BIT_ONE,  BIT_ONE,  SKIPPED_ONE, // 380 - checkXor
+      BIT_ONE,  BIT_ONE,  BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // 405 - checkSum
+  };
+  // clang-format on
+
+  LacrosseWS7000 lacrosse(&TestHal);
+  lacrosse.SetAddress(LacrosseWS7000::Address::SEVEN);
+  lacrosse.SetLuminosity(86.0);
+  lacrosse.Send();
+  uint8_t *actualOrders = TestHal.GetOrders();
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders,
+                               sizeof(EXPECTED_ORDERS));
 }
 
 int main(int, char **) {
@@ -567,6 +597,7 @@ int main(int, char **) {
   RUN_TEST(Expect_encoding_of_simple_temperature_message);
   RUN_TEST(Expect_encoding_of_simple_temperature_and_humi_message);
   RUN_TEST(Expect_encoding_of_simple_temperature_and_humi_and_pressure_message);
+  RUN_TEST(Expect_encoding_of_simple_luminosity_message);
 
   return UNITY_END();
 }
