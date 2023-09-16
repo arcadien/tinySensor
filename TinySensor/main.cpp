@@ -5,6 +5,9 @@
 #include <avr/wdt.h>
 #include <util/delay.h>
 
+#include "bh1750.h"
+
+#define INTERNAL_1v1 1100
 
 /**
 * @brief Accumulate and mean values with exclusion behavior
@@ -83,46 +86,75 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples) {
 
 /*!
 *
-* Reads internal 1.1v tension reference using VCC
+* Reads internal 1.1v tension with VCC reference
 *
 */
 uint16_t GetVccVoltageMv(void) {
-	// analog ref = VCC, input channel = VREF
-	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+
+	// prescaler of 16 = 1MHz/16 = 62.5KHz
+	ADCSRA |= (1 << ADEN) | (1 << ADPS2);
+
 	ADMUX = 0b00100001;
 	_delay_ms(1);
 
-	static const uint16_t REF11 = 1101;
 	uint16_t vccAdcRead = adcRead(4, 12);
-	uint16_t vccMv = (uint16_t)((REF11 * 1023.0) / vccAdcRead);
+	uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
 	return vccMv;
 }
 
-/*!
-*
-* Reads voltage on ADC1 pin, relative to Vcc
-*
-*/
-uint16_t GetBatteryVoltageMv(void) {
+
+static uint16_t GetAnalogMv(uint8_t admux) {
 
 	uint16_t vccVoltageMv = GetVccVoltageMv();
-
-	ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 	
-	// analog ref = VCC, input channel = ADC1 (PA1)
-	ADMUX = 0b00000001;
+	ADCSRA &= ~(1 << ADEN);
+	ADMUX = admux;
+	ADCSRA |= (1 << ADEN) | (1 << ADPS2);
+	
 	_delay_ms(1);
 
-	uint16_t batteryAdcRead = adcRead(4, 12);
-	float mvPerAdcStep = (vccVoltageMv / 1024.0);
-	uint16_t batteryVoltageMv = (uint16_t)(batteryAdcRead * mvPerAdcStep);
-	return batteryVoltageMv;
+	uint16_t adcReading = adcRead(4, 12);
+	float mvPerAdcStep = (vccVoltageMv / 1024.f);
+	uint16_t valueInMv = (uint16_t)(adcReading * mvPerAdcStep);
+	return valueInMv;
 }
 
+uint16_t GetBatteryVoltageMv(void) {
+
+	return GetAnalogMv(0b00000001);
+}
+
+uint16_t GetAnalog1VoltageMv() {
+	return GetAnalogMv(0b00000000);
+}
+
+#define _BV(bit) (1 << (bit))
+
 int main(){
+
+	PORTA = 0b01111000;
+	
+	DDRA |= _BV(PA2); // sensor VCC
+	PORTA |= _BV(PA2);
+
+	TinyI2C.init();
+
 	auto vcc = GetVccVoltageMv();
 	vcc += 1;
 	
 	auto batt = GetBatteryVoltageMv();
 	batt += 1;
+	
+	auto analog1 = GetAnalog1VoltageMv();
+	analog1 += 1;
+	
+	BH1750 lightMeter;
+	lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE,0x23,
+	&TinyI2C);
+	
+	_delay_ms(150);
+
+	uint16_t lux = lightMeter.readLightLevel();
+	lux += 1;
+
 }
