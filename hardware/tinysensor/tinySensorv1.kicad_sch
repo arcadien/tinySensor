@@ -2476,7 +2476,7 @@
     (property "Datasheet" "" (at 57.15 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid a1b81152-adc7-407e-85c7-bf8527bea8b8))
+    (pin "1" (uuid f8b4ac5d-544b-4e1f-a4cc-051e4bd8dc66))
     (instances
       (project "tinySensorv1"
         (path "/eb855259-2cba-4af8-afff-692b59e22651"
@@ -3014,7 +3014,7 @@
     (property "Datasheet" "" (at 54.61 120.65 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid e6930983-d228-4fe1-8ec0-3f757cf8db2e))
+    (pin "1" (uuid 17050bfb-a886-40f9-82a8-67c146d8cd9d))
     (instances
       (project "tinySensorv1"
         (path "/eb855259-2cba-4af8-afff-692b59e22651"
