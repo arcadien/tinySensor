@@ -44,9 +44,8 @@ static void UseLessPowerAsPossible() {
   DDRB = 0;
 
   // pull-up all unused pins by default
-  //
-  PORTA |= 0b01111001;
-  PORTB |= 0b11111100;
+  PORTA = 0b01111000;
+  PORTB = 0b11111100;
 
   // Analog comparator power down
   ACSR |= (1 << ACD);
@@ -61,33 +60,12 @@ static void UseLessPowerAsPossible() {
   // PRR &= ~_BV(PRADC);
   // ADCSRA &= ~(1 << ADEN);
   // ACSR |= (1 << ACD);
-  // DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // buffers
+  DIDR0 |= (1 << ADC2D) | (1 << ADC1D); // digital buffers
 
   // deactivate brownout detection during sleep (p.36)
   MCUCR |= (1 << BODS) | (1 << BODSE);
   MCUCR |= (1 << BODS);
   MCUSR &= ~(1 << BODSE);
-}
-
-static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
-static inline bool ADCReadInProgress() {
-  return (ADCSRA & (1 << ADSC)) == ADSC;
-}
-/*!
- * Read the ADC, discarding `discard` first readings,
- * and then return average of `samples` readings
- */
-static uint16_t adcRead(uint8_t discard, uint8_t samples) {
-  AnalogFilter filter(discard, samples);
-
-  for (uint8_t loopSamples = 0; loopSamples < (samples + discard);
-       ++loopSamples) {
-    startADCReading();
-    while (ADCReadInProgress()) {
-    }
-    filter.Push(ADC);
-  }
-  return filter.Get();
 }
 
 /*
@@ -141,7 +119,7 @@ void sleep(uint16_t s) {
 }
 
 Attiny84aHal::Attiny84aHal() {
-  PORTB = 0;
+
   UseLessPowerAsPossible();
 
   // Watchdog setup - 8s sleep time
@@ -152,6 +130,7 @@ Attiny84aHal::Attiny84aHal() {
   DDRB |= _BV(PB0); // TX_RADIO_PIN
   DDRB |= _BV(PB1); // LED_PIN
   DDRA |= _BV(PA2); // sensor VCC
+  DDRA |= _BV(PA7); // serial out
 }
 
 void Attiny84aHal::PowerOnSensors() { PORTA |= _BV(PA2); }
@@ -166,46 +145,57 @@ void Attiny84aHal::RadioGoLow() { PORTB &= ~(1 << PB0); }
 
 void Attiny84aHal::RadioGoHigh() { PORTB |= (1 << PB0); }
 
+inline void Attiny84aHal::SerialGoHigh() { PORTA |= (1 << PA7); };
+
+inline void Attiny84aHal::SerialGoLow() { PORTA &= ~(1 << PA7); };
+
 void Attiny84aHal::Delay30ms() { _delay_ms(30); }
 void Attiny84aHal::Delay400Us() { _delay_us(400); }
 void Attiny84aHal::Delay512Us() { _delay_us(512); }
 void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
 void Attiny84aHal::Delay1s() { _delay_ms(1000); }
 
-/*!
- *
- * Reads voltage on ADC1 pin, relative to Vcc
- *
- */
-uint16_t Attiny84aHal::GetBatteryVoltageMv(void) {
-
-  uint16_t vccVoltageMv = GetVccVoltageMv();
-
-  ADMUX = 0b00000001;
-  _delay_ms(1);
-
-  uint16_t batteryAdcRead = adcRead(4, 12);
-  float mvPerAdcStep = (vccVoltageMv / 1024.f);
-  uint16_t batteryVoltageMv = (uint16_t)(batteryAdcRead * mvPerAdcStep);
-  return batteryVoltageMv;
+static inline void startADCReading() { ADCSRA |= (1 << ADSC); }
+static inline bool ADCReadInProgress() {
+  return (ADCSRA & (1 << ADSC)) == ADSC;
 }
 
-/*!
- *
- * Reads internal 1.1v tension with VCC reference
- *
- */
-uint16_t Attiny84aHal::GetVccVoltageMv(void) {
+static uint16_t AdcRead(Hal &hal, volatile uint8_t admux) {
 
-  // prescaler of 16 = 1MHz/16 = 62.5KHz
-  ADCSRA |= (1 << ADEN) | (1 << ADPS2);
+  ADMUX = admux;
+  ADCSRA = (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 
-  ADMUX = 0b00100001;
-  _delay_ms(1);
+  static const uint8_t IGNORED_SAMPLES = 8;
+  static const uint8_t COUNTED_SAMPLES = 16;
+  uint32_t accumulator = 0;
+  uint8_t loopSamples = 0;
 
-  uint16_t vccAdcRead = adcRead(4, 12);
-  uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
-  return vccMv;
+  for (loopSamples = 0; loopSamples < IGNORED_SAMPLES; loopSamples++) {
+    startADCReading();
+    while (ADCReadInProgress()) {
+    }
+    accumulator += ADC;
+  }
+  accumulator = 0;
+  for (loopSamples = 0; loopSamples < COUNTED_SAMPLES; loopSamples++) {
+    startADCReading();
+    while (ADCReadInProgress()) {
+    }
+    accumulator += ADC;
+  }
+  return (uint16_t)(accumulator / COUNTED_SAMPLES);
+}
+
+uint16_t Attiny84aHal::GetRawBattery(void) {
+  return AdcRead(*this, 0b00000001);
+}
+
+uint16_t Attiny84aHal::GetRawAnalogSensor() {
+  return AdcRead(*this, 0b00000000);
+}
+
+uint16_t Attiny84aHal::GetRawInternal11Ref(void) {
+  return AdcRead(*this, 0b00100001);
 }
 
 void Attiny84aHal::Hibernate(uint16_t seconds) { sleep(seconds); }

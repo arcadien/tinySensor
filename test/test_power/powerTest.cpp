@@ -17,81 +17,80 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <TestHal.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
 
-#ifdef AVR
-#include <Attiny84aHal.h>
+static char buffer[512];
 
-void Expect_vcc_voltage_is_read() {
-  Attiny84aHal hal;
-  uint16_t vccVoltage = hal.GetVccVoltageMv();
-  TEST_ASSERT_EQUAL_INT16_MESSAGE(3300, vccVoltage, "vccVoltage");
-}
+void Expect_vcc_is_computed_using_internal_1v1_ref() {
 
-void Expect_battery_voltage_is_read() {
-  Attiny84aHal hal;
-  uint16_t batteryVoltage = hal.GetBatteryVoltageMv();
-  TEST_ASSERT_EQUAL_INT16_MESSAGE(2400, batteryVoltage, "batteryVoltage");
-}
-void Expect_sensors_can_be_powered() {
-  Attiny84aHal hal;
-  hal.PowerOnSensors();
-  TEST_ASSERT_EQUAL(PA2, (PORTA & PA2));
-}
-void Expect_sensors_can_be_unpowered() {
-  Attiny84aHal hal;
-  hal.PowerOffSensors();
-  TEST_ASSERT_EQUAL(0, (PORTA & PA2));
-}
+  struct TestData {
+    uint16_t raw1v1Measurement;
+    uint16_t known1v1value;
+    uint16_t expectedVccMv;
+  };
 
-void Expect_target_can_hibernate() {
-  // hard to test, need external way of time measurement
-  // because counters should be stopped during sleep
-  Attiny84aHal hal;
-  hal.Hibernate(0);
-}
-#else
-#include <TestHal.h>
+  // clang-format off
+  TestData testDatas[] = {
+    {0,   1100, 0},
+    {226, 1100, 4984},
+    {765, 1055, 1412},
+    {1024,1100, 1100},
+    {1,   1100, 12288},
+  };
+  // clang-format on
 
-void Expect_vcc_voltage_is_read() {
-  uint16_t vccVoltage = TestHal.GetVccVoltageMv();
-  TEST_ASSERT_EQUAL_INT16_MESSAGE(3300, vccVoltage, "vccVoltage");
+  uint8_t testCount = sizeof(testDatas) / 6;
+
+  for (uint8_t testCounter = 0; testCounter < testCount; testCounter++) {
+    TestData testData = testDatas[testCounter];
+    TestHal.rawInternal11ref = testData.raw1v1Measurement;
+    uint16_t actual = TestHal.ComputeVccMv(testData.known1v1value);
+
+    sprintf(buffer, "Test #%u", testCounter);
+
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(testData.expectedVccMv, actual, buffer);
+  }
 }
 
-void Expect_battery_voltage_is_read() {
-  uint16_t batteryVoltage = TestHal.GetBatteryVoltageMv();
-  TEST_ASSERT_EQUAL_INT16_MESSAGE(2400, batteryVoltage, "batteryVoltage");
+void Expect_convertion_from_adc_to_mv_is_right() {
+
+  struct TestData {
+    uint16_t vccMv;
+    uint16_t rawBatteryMeasurement;
+    uint16_t expectedVBatt;
+  };
+
+  // clang-format off
+  TestData testDatas[] = {
+    {0,    0,   0},
+    {5000, 512, 2500},
+    {5000, 1,   4},
+  };
+  // clang-format on
+
+  uint8_t testCount = sizeof(testDatas) / 6;
+
+  for (uint8_t testCounter = 0; testCounter < testCount; testCounter++) {
+    TestData testData = testDatas[testCounter];
+
+    uint16_t vBatt = TestHal.ConvertAnalogValueToMv(
+        testData.rawBatteryMeasurement, testData.vccMv);
+
+    sprintf(buffer, "Test #%u", testCounter);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(testData.expectedVBatt, vBatt, buffer);
+  }
 }
-void Expect_sensors_can_be_powered() {
-  TestHal.SensorIsPowered = false;
-  TestHal.PowerOnSensors();
-  TEST_ASSERT_EQUAL(true, TestHal.SensorIsPowered);
-}
-void Expect_sensors_can_be_unpowered() {
-  TestHal.SensorIsPowered = false;
-  TestHal.PowerOffSensors();
-  TEST_ASSERT_EQUAL(false, TestHal.SensorIsPowered);
-}
-void Expect_target_can_hibernate() {
-  auto begin = std::chrono::high_resolution_clock::now();
-  TestHal.Hibernate(1);
-  auto end = std::chrono::high_resolution_clock::now();
-  TEST_ASSERT_INT16_WITHIN(20, 1000, std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count());
-}
-#endif
 
 void tearDown() {}
 void setUp() {}
 
 int main(int, char **) {
   UNITY_BEGIN();
-  RUN_TEST(Expect_vcc_voltage_is_read);
-  RUN_TEST(Expect_battery_voltage_is_read);
-  RUN_TEST(Expect_sensors_can_be_unpowered);
-  RUN_TEST(Expect_sensors_can_be_powered);
-  RUN_TEST(Expect_target_can_hibernate);
+  RUN_TEST(Expect_vcc_is_computed_using_internal_1v1_ref);
+  RUN_TEST(Expect_convertion_from_adc_to_mv_is_right);
   return UNITY_END();
 }

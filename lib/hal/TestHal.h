@@ -18,13 +18,16 @@ public:
   mutable std::vector<unsigned char> Orders;
   mutable bool IsLedOn;
   mutable bool SensorIsPowered;
-  float batteryVoltage;
-  float vccVoltage;
+  uint16_t rawBattery;
+  uint16_t rawInternal11ref;
+  uint16_t rawAnalogSensor;
+
   mutable bool I2CIsConfigured;
 
   TestHal_() {
-    batteryVoltage = 2400; // AAA*2, little used
-    vccVoltage = 3300;     // voltage after charge pump
+    rawBattery = 4200;
+    rawInternal11ref = 1095;
+    rawAnalogSensor = 2442;
   }
 
   void Delay1s() override {
@@ -46,14 +49,18 @@ public:
   inline void RadioGoHigh() override { Orders.push_back('H'); }
   inline void RadioGoLow() override { Orders.push_back('L'); }
 
+  inline void SerialGoHigh() override { Orders.push_back('S'); }
+  inline void SerialGoLow() override { Orders.push_back('W'); }
+
   void LedOn() override { IsLedOn = true; }
   void LedOff() override { IsLedOn = false; }
 
   void PowerOnSensors() override { SensorIsPowered = true; }
   void PowerOffSensors() override { SensorIsPowered = false; }
 
-  uint16_t GetBatteryVoltageMv() override { return batteryVoltage; }
-  uint16_t GetVccVoltageMv() override { return vccVoltage; }
+  uint16_t GetRawBattery() override { return rawBattery; }
+  uint16_t GetRawInternal11Ref() override { return rawInternal11ref; }
+  uint16_t GetRawAnalogSensor() override { return rawAnalogSensor; }
 
   void Hibernate(uint16_t seconds) override {
     std::this_thread::sleep_for(std::chrono::seconds(seconds));

@@ -23,19 +23,21 @@
 #if defined(USE_I2C)
 #include <TinyI2CMaster.h>
 #endif
-class Attiny84aHal : public Hal
-{
+class Attiny84aHal : public Hal {
 public:
   Attiny84aHal();
 
-  uint16_t GetVccVoltageMv(void) override;
-  uint16_t GetBatteryVoltageMv() override;
+  uint16_t GetRawBattery() override;
+  uint16_t GetRawInternal11Ref() override;
+  uint16_t GetRawAnalogSensor() override;
 
   void LedOn() override;
   void LedOff() override;
 
   void RadioGoLow() override;
   void RadioGoHigh() override;
+  void SerialGoHigh() override;
+  void SerialGoLow() override;
 
   void Hibernate(uint16_t seconds) override;
   void PowerOnSensors() override;
@@ -47,8 +49,7 @@ public:
   void Delay512Us() override;
   void Delay1024Us() override;
 
-  void Init(void) override
-  {
+  void Init(void) override {
 #if defined(USE_I2C)
     TinyI2C.init();
 #endif
