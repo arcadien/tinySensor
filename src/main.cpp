@@ -22,6 +22,12 @@
 #include <conversionTools.h>
 #include <x10rf.h>
 
+#include <SoftwareSerial.h>
+
+#if defined(USE_BH1750)
+#include <BH1750.h>
+#endif
+
 #if defined(AVR)
 #include <ds18b20.h>
 #endif
@@ -44,7 +50,7 @@ TestHal_ hal;
 BMx280 bmx280(&hal);
 #endif
 
-#if defined(VOLTAGE_X10_SENSOR_ID)
+#if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
 x10rf x10encoder(&hal, 5);
 #endif
 
@@ -68,12 +74,17 @@ int main(void) {
    */
   volatile uint16_t secondCounter = 901;
 
+  SoftwareSerial Serial(&hal);
+
   while (1) {
+
+    Serial.begin();
+    Serial.print("------------");
+    Serial.println();
 
     hal.Init();
     hal.PowerOnSensors();
     hal.Delay30ms();
-    hal.LedOn();
 
     static const float NOT_SET = -1000;
     float temperature = NOT_SET;
@@ -106,23 +117,96 @@ int main(void) {
 
 #endif
 
-#if defined(VOLTAGE_X10_SENSOR_ID)
+#if defined(BATTERY_VOLTAGE_X10_ID)
 
-    if (secondCounter > 900) {
-      secondCounter = 0;
-      uint16_t batteryVoltageInMv;
-#ifdef BATTERY_IS_VCC
-      batteryVoltageInMv = hal.GetVccVoltageMv();
+    Serial.print("Raw vcc: ");
+    Serial.print(hal.GetRawInternal11Ref());
+    Serial.println();
+
+    uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
+
+    Serial.print("Vcc: ");
+    Serial.print(vccMv);
+    Serial.print("mV");
+    Serial.println();
+
+    // if (secondCounter > 900) {
+    secondCounter = 0;
+    uint16_t batteryVoltageInMv = 0;
+
+#if defined(BATTERY_IS_VCC)
+    batteryVoltageInMv = vccMv;
 #else
-      batteryVoltageInMv = hal.GetBatteryVoltageMv();
+    uint16_t rawBattery = hal.GetRawBattery();
+
+    Serial.print("Raw batt: ");
+    Serial.print(rawBattery);
+    Serial.println();
+
+    batteryVoltageInMv = hal.ConvertAnalogValueToMv(rawBattery, vccMv);
 #endif
-      x10encoder.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00,
-                          ConversionTools::dec16ToHex(batteryVoltageInMv));
-      hal.Delay30ms();
-    }
+    Serial.print("Vbatt: ");
+    Serial.print(batteryVoltageInMv);
+    Serial.print("mV");
+    Serial.println();
+
+    hal.LedOn();
+    x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
+                        ConversionTools::dec16ToHex(batteryVoltageInMv));
+    hal.LedOff();
+    hal.Delay30ms();
+    hal.Delay30ms();
+    //}
 #endif
 
+#if defined(ANALOG1_X10_ID)
 
+    uint16_t rawSolar = hal.GetRawAnalogSensor();
+    uint16_t solar_power = hal.ConvertAnalogValueToMv(rawSolar, vccMv);
+
+    Serial.print("Raw solar: ");
+    Serial.print(rawSolar);
+    Serial.println();
+
+    Serial.print("Vsolar: ");
+    Serial.print(solar_power);
+    Serial.print("mV");
+    Serial.println();
+
+    hal.LedOn();
+    x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
+                        ConversionTools::dec16ToHex(solar_power));
+    hal.LedOff();
+    hal.Delay30ms();
+    hal.Delay30ms();
+#endif
+
+#if defined(USE_BH1750)
+    LacrosseWS7000 lightEncoder(&hal);
+    lightEncoder.SetAddress(LACROSSE_ID);
+    BH1750 lightMeter(0x23);
+    lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+    _delay_ms(150); // around 120ms, be generous
+    uint16_t lux = (uint16_t)lightMeter.readLightLevel();
+
+    Serial.print("Lux: ");
+    Serial.print(lux);
+    Serial.println();
+
+    lightEncoder.SetLuminosity(lux);
+
+    hal.LedOn();
+    lightEncoder.Send();
+    hal.LedOff();
+    hal.Delay30ms();
+
+    hal.LedOn();
+    lightEncoder.Send();
+    hal.LedOff();
+    hal.Delay30ms();
+#endif
+
+#if defined(USE_LACROSSE) or defined(USE_OREGON)
     if (temperature != NOT_SET) {
       encoder.SetTemperature(temperature);
       // x10encoder.RFXsensor(TEMP_SENSOR_ID, 't', 't', temperature);
@@ -135,13 +219,20 @@ int main(void) {
       encoder.SetPressure(pressure);
       // x10encoder.RFXsensor(PRESSURE_SENSOR_ID, 'a', 'p', (pressure/10));
     }
+    // at least temperature should be set
+    // to use this encoder
+    if (temperature != NOT_SET) {
+      hal.LedOn();
+      encoder.Send();
+      hal.LedOff();
+      hal.Delay30ms();
 
-    encoder.Send();
-    hal.Delay30ms();
-    encoder.Send();
-    hal.Delay30ms();
+      hal.LedOn();
+      encoder.Send();
+      hal.LedOff();
+    }
+#endif
 
-    hal.LedOff();
     hal.PowerOffSensors();
     hal.Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
     secondCounter += SLEEP_TIME_IN_SECONDS;
