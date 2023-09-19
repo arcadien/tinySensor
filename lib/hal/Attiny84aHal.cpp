@@ -161,7 +161,7 @@ static uint16_t AdcRead(Hal &hal, uint8_t admux) {
   PRR &= ~_BV(PRADC);
   ADCSRA |= _BV(ADEN);
   ADMUX = admux;
-  _delay_ms(10);
+  _delay_ms(2);
 
   static const uint8_t IGNORED_SAMPLES = 8;
   static const uint8_t COUNTED_SAMPLES = 16;
@@ -170,17 +170,13 @@ static uint16_t AdcRead(Hal &hal, uint8_t admux) {
 
   for (loopSamples = 0; loopSamples < IGNORED_SAMPLES; loopSamples++) {
     ADCSRA |= _BV(ADSC);
-    //loop_until_bit_is_clear(ADCSRA, ADSC);
-    while(!bit_is_set(ADCSRA,ADIF));
-    ADCSRA |= _BV(ADIF); 
+    loop_until_bit_is_clear(ADCSRA, ADSC);
     accumulator += ADC;
   }
   accumulator = 0;
   for (loopSamples = 0; loopSamples < COUNTED_SAMPLES; loopSamples++) {
     ADCSRA |= _BV(ADSC);
-    //loop_until_bit_is_clear(ADCSRA, ADSC);
-    while(!bit_is_set(ADCSRA,ADIF));
-    ADCSRA |= _BV(ADIF); 
+    loop_until_bit_is_clear(ADCSRA, ADSC);
     accumulator += ADC;
   }
   ADCSRA &= ~_BV(ADEN);
