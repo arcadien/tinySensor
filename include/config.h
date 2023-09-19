@@ -26,6 +26,6 @@
 #define LOW_BATTERY_VOLTAGE 2000
 #endif
 
-#if defined(USE_BMP280) or defined(USE_BME280)
+#if defined(USE_BMP280) or defined(USE_BME280) or defined(USE_BH1750)
 #define USE_I2C
 #endif
