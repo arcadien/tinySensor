@@ -91,12 +91,10 @@ static uint16_t adcRead(uint8_t discard, uint8_t samples) {
 */
 uint16_t GetVccVoltageMv(void) {
 
-	// prescaler of 16 = 1MHz/16 = 62.5KHz
-	ADCSRA |= (1 << ADEN) | (1 << ADPS2);
-
+	ADCSRA |= (1 << ADEN) | (1 << ADPS2)| (1 << ADPS1)| (1 << ADPS0);
 	ADMUX = 0b00100001;
-	_delay_ms(1);
-
+	_delay_ms(10);
+	
 	uint16_t vccAdcRead = adcRead(4, 12);
 	uint16_t vccMv = (uint16_t)((INTERNAL_1v1 * 1024.f) / vccAdcRead);
 	return vccMv;
@@ -106,16 +104,14 @@ uint16_t GetVccVoltageMv(void) {
 static uint16_t GetAnalogMv(uint8_t admux) {
 
 	uint16_t vccVoltageMv = GetVccVoltageMv();
-	
-	ADCSRA &= ~(1 << ADEN);
+	ADCSRA |= (1 << ADEN) | (1 << ADPS2)| (1 << ADPS1)| (1 << ADPS0);
 	ADMUX = admux;
-	ADCSRA |= (1 << ADEN) | (1 << ADPS2);
-	
-	_delay_ms(1);
+	_delay_ms(10);
 
 	uint16_t adcReading = adcRead(4, 12);
 	float mvPerAdcStep = (vccVoltageMv / 1024.f);
 	uint16_t valueInMv = (uint16_t)(adcReading * mvPerAdcStep);
+	ADCSRA &= ~(1 << ADEN);
 	return valueInMv;
 }
 
