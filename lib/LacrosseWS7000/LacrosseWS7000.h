@@ -3,6 +3,7 @@
 #include <Hal.h>
 #include <math.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /*
  * Emulation of environment sensors using WS7000 family Lacrosse Technology
@@ -42,20 +43,17 @@ public:
     };
 
     static void Split(float input, Result *result) {
-      if (input < 0) {
-        result->isNegative = true;
-        input = -input;
-      } else {
-        result->isNegative = false;
-      }
+
+      result->isNegative = (input < 0);
+      input = abs(input);
+
       uint16_t integerValue = floor(input);
       uint16_t totalIntegerValue = integerValue;
 
       result->hundreds = ((uint8_t)(floor(integerValue / 100))) & 0x0F;
-      integerValue -= 100 * result->hundreds;
+      integerValue = integerValue % 100;
       result->dozens = (uint8_t)(floor((integerValue / 10))) & 0x0F;
-      integerValue -= result->dozens * 10;
-      result->units = integerValue & 0x0F;
+      result->units = integerValue % 10;
       result->decimals =
           ((uint8_t)round((input - totalIntegerValue) * 10)) & 0x0F;
     }

@@ -44,11 +44,13 @@ void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
 
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
+
   // /!\ temperature does not manage hundreds, clamp below 100
   if (temperature > 99)
     temperature = 99;
   if (temperature < -99)
     temperature = -99;
+
   NumericalValueSplitter::Split(temperature, &this->temperature);
 }
 
