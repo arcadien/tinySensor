@@ -45,7 +45,7 @@ public:
 
   unsigned char *GetOrders() { return Orders.data(); }
   void ClearOrders() { Orders.clear(); }
-
+ 
   inline void RadioGoHigh() override { Orders.push_back('H'); }
   inline void RadioGoLow() override { Orders.push_back('L'); }
 

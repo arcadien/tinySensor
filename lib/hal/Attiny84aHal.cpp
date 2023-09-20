@@ -13,8 +13,6 @@
 #define SENSOR_VCC PA2
 #define BAT_SENSOR_PIN PA1
 
-volatile uint8_t sleep_interval;
-
 ISR(BADISR_vect) {
   while (1) {
     PORTB |= _BV(LED_PIN);
@@ -31,8 +29,6 @@ ISR(BADISR_vect) {
 //
 ISR(WATCHDOG_vect) {
   wdt_reset();
-  ++sleep_interval;
-  // Re-enable WDT interrupt
   _WD_CONTROL_REG |= _BV(WDIE);
 }
 
@@ -77,7 +73,6 @@ void sleep(uint16_t s) {
   s >>= 3; // or s/8
   if (s == 0)
     s = 1;
-  sleep_interval = 0;
 
   uint8_t PRR_backup = PRR;
   uint8_t porta_backup = PORTA;
@@ -98,7 +93,7 @@ void sleep(uint16_t s) {
   // ( only 4 lasts are available - p. 67)
   PORTB |= 0b00001000;
 
-  while (sleep_interval < s) {
+  while (s > 0) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     sei();
@@ -107,7 +102,9 @@ void sleep(uint16_t s) {
     // here the system is sleeping
     // here the system wakes up
     sleep_disable();
+    s--;
   }
+
   // restore
   PRR = PRR_backup;
   DDRA = ddra_backup;
