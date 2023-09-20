@@ -17,18 +17,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <BMx280.h>
 #include <config.h>
 #include <conversionTools.h>
-#include <x10rf.h>
-
-#include <SoftwareSerial.h>
 
 #if defined(USE_BH1750)
 #include <BH1750.h>
 #endif
 
-#if defined(AVR)
+#if defined(USE_DS18B20)
 #include <ds18b20.h>
 #endif
 
@@ -47,44 +43,59 @@ TestHal_ hal;
 #endif
 
 #if defined(USE_BME280) or defined(USE_BMP280)
+#include <BMx280.h>
 BMx280 bmx280(&hal);
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
-x10rf x10encoder(&hal, 5);
+#include <x10rf.h>
+x10rf x10encoder(&hal, 2);
 #endif
 
+static const char *MILLIVOLT = " mV";
+static const char *ANALOG = " ADC";
+static const char *LUX = " Lux";
+static const char *SECOND = " s";
+static const char *CELCIUS = " °C";
+static const char *PERCENT = " %";
+static const char *HECTOPASCAL = " hPA";
+
+#if defined(USE_SERIAL_LOG)
+#include <SoftSerial.h>
+SoftSerial swSerial(&hal);
+
+static void SerialPrintInfo(const char *name, uint16_t value,
+                            const char *unit) {
+  swSerial.print(name);
+  swSerial.print(": ");
+  swSerial.print(value);
+  swSerial.print(unit);
+  swSerial.println();
+}
+#else
+static void SerialPrintInfo(const char *, uint16_t, const char *) {}
+#endif
 int main(void) {
-
-#if defined(USE_LACROSSE)
-  LacrosseWS7000 encoder(&hal);
-  encoder.SetAddress(LACROSSE_ID);
-#elif defined(USE_OREGON)
-  OregonV3 encoder(&hal);
-  encoder.SetChannel(OREGON_CHANNEL);
-  encoder.SetRollingCode(OREGON_RCODE);
-#endif
-
-  /*
-   * The firmware force emission of
-   * a signal at boot and every quarter of an hour
-   * even if sensor data does not change,
-   * just to be sure sensor is not out of
-   * power or bugged (900s)
-   */
-  volatile uint16_t secondCounter = 901;
-
-  SoftwareSerial Serial(&hal);
 
   while (1) {
 
-    Serial.begin();
-    Serial.print("------------");
-    Serial.println();
+#if defined(USE_LACROSSE)
+    LacrosseWS7000 environmentEncoder(&hal);
+    environmentEncoder.SetAddress(LACROSSE_ID);
+#elif defined(USE_OREGON)
+    OregonV3 environmentEncoder(&hal);
+    environmentEncoder.SetChannel(OREGON_CHANNEL);
+    environmentEncoder.SetRollingCode(OREGON_RCODE);
+#endif
+
+#if defined(USE_SERIAL_LOG)
+    //  swSerial.begin();
+    //  swSerial.print("------------");
+    //  swSerial.println();
+#endif
 
     hal.Init();
     hal.PowerOnSensors();
-    hal.Delay30ms();
 
     static const float NOT_SET = -1000;
     float temperature = NOT_SET;
@@ -119,36 +130,23 @@ int main(void) {
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
 
-    Serial.print("Raw vcc: ");
-    Serial.print(hal.GetRawInternal11Ref());
-    Serial.println();
+    // SerialPrintInfo("Raw Vcc", hal.GetRawInternal11Ref(), ANALOG);
 
     uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
+    //SerialPrintInfo("1v1", hal.GetRawInternal11Ref(), ANALOG);
 
-    Serial.print("Vcc: ");
-    Serial.print(vccMv);
-    Serial.print("mV");
-    Serial.println();
-
-    // if (secondCounter > 900) {
-    secondCounter = 0;
     uint16_t batteryVoltageInMv = 0;
 
 #if defined(BATTERY_IS_VCC)
     batteryVoltageInMv = vccMv;
 #else
     uint16_t rawBattery = hal.GetRawBattery();
-
-    Serial.print("Raw batt: ");
-    Serial.print(rawBattery);
-    Serial.println();
+    //SerialPrintInfo("Raw batt", rawBattery, ANALOG);
 
     batteryVoltageInMv = hal.ConvertAnalogValueToMv(rawBattery, vccMv);
 #endif
-    Serial.print("Vbatt: ");
-    Serial.print(batteryVoltageInMv);
-    Serial.print("mV");
-    Serial.println();
+
+    SerialPrintInfo("Vbatt", batteryVoltageInMv, MILLIVOLT);
 
     hal.LedOn();
     x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
@@ -156,28 +154,20 @@ int main(void) {
     hal.LedOff();
     hal.Delay30ms();
     hal.Delay30ms();
-    //}
 #endif
 
 #if defined(ANALOG1_X10_ID)
 
     uint16_t rawSolar = hal.GetRawAnalogSensor();
+    SerialPrintInfo("Raw solar", rawSolar, ANALOG);
+
     uint16_t solar_power = hal.ConvertAnalogValueToMv(rawSolar, vccMv);
-
-    Serial.print("Raw solar: ");
-    Serial.print(rawSolar);
-    Serial.println();
-
-    Serial.print("Vsolar: ");
-    Serial.print(solar_power);
-    Serial.print("mV");
-    Serial.println();
+    SerialPrintInfo("Vsolar", solar_power, MILLIVOLT);
 
     hal.LedOn();
     x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
                         ConversionTools::dec16ToHex(solar_power));
     hal.LedOff();
-    hal.Delay30ms();
     hal.Delay30ms();
 #endif
 
@@ -189,9 +179,7 @@ int main(void) {
     _delay_ms(150); // around 120ms, be generous
     uint16_t lux = (uint16_t)lightMeter.readLightLevel();
 
-    Serial.print("Lux: ");
-    Serial.print(lux);
-    Serial.println();
+    SerialPrintInfo("Luminosity", lux, LUX);
 
     lightEncoder.SetLuminosity(lux);
 
@@ -208,33 +196,53 @@ int main(void) {
 
 #if defined(USE_LACROSSE) or defined(USE_OREGON)
     if (temperature != NOT_SET) {
-      encoder.SetTemperature(temperature);
-      // x10encoder.RFXsensor(TEMP_SENSOR_ID, 't', 't', temperature);
+      environmentEncoder.SetTemperature(temperature);
     }
     if (humidity != NOT_SET) {
-      encoder.SetHumidity(humidity);
-      // x10encoder.RFXsensor(HUM_SENSOR_ID, 'a', 'h', humidity);
+      environmentEncoder.SetHumidity(humidity);
     }
     if (pressure != NOT_SET) {
-      encoder.SetPressure(pressure);
-      // x10encoder.RFXsensor(PRESSURE_SENSOR_ID, 'a', 'p', (pressure/10));
+      environmentEncoder.SetPressure(pressure);
     }
+
+#if defined(USE_SERIAL_LOG)
+    SerialPrintInfo("Temp.", temperature * 10, CELCIUS);
+    SerialPrintInfo("RH ", humidity, PERCENT);
+    SerialPrintInfo("Pressure ", pressure, HECTOPASCAL);
+#endif
+
     // at least temperature should be set
     // to use this encoder
     if (temperature != NOT_SET) {
+
+#if defined(USE_OREGON)
+      if (batteryVoltageInMv > LOW_BATTERY_VOLTAGE) {
+        environmentEncoder.SetBatteryLow(false);
+      }
+#endif
       hal.LedOn();
-      encoder.Send();
+      environmentEncoder.Send();
       hal.LedOff();
       hal.Delay30ms();
 
       hal.LedOn();
-      encoder.Send();
+      environmentEncoder.Send();
       hal.LedOff();
     }
 #endif
 
+#if defined(USE_SERIAL_LOG)
+    // SerialPrintInfo("Going to sleep", (uint16_t)SLEEP_TIME_IN_SECONDS,
+    // SECOND);
+#endif
+
     hal.PowerOffSensors();
     hal.Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
-    secondCounter += SLEEP_TIME_IN_SECONDS;
+
+#if defined(USE_SERIAL_LOG)
+    //  swSerial.begin();
+    //  swSerial.print("Wakeup!");
+    //  swSerial.println();
+#endif
   }
 }
