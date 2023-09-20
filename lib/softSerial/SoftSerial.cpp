@@ -1,22 +1,22 @@
-#include "SoftwareSerial.h"
+#include "SoftSerial.h"
 
 #define __DELAY_ROUND_CLOSEST__
 #include <util/delay.h>
 
 #define BIT_PERIOD ((1000000L / 9600) - 25)
 
-SoftwareSerial::SoftwareSerial(Hal *hal) : _hal(hal) {}
+SoftSerial::SoftSerial(Hal *hal) : _hal(hal) {}
 
 /******************************************************************************
  * User API
  ******************************************************************************/
 
-void SoftwareSerial::begin() {
+void SoftSerial::begin() {
   _hal->SerialGoHigh();
   _delay_us(BIT_PERIOD);
 }
 
-void SoftwareSerial::print(uint8_t b) {
+void SoftSerial::print(uint8_t b) {
 
   uint8_t mask;
 
@@ -36,18 +36,18 @@ void SoftwareSerial::print(uint8_t b) {
   _delay_us(BIT_PERIOD);
 }
 
-void SoftwareSerial::print(const char *s) {
+void SoftSerial::print(const char *s) {
   while (*s)
     print(*s++);
 }
 
-void SoftwareSerial::print(char c) { print((uint8_t)c); }
+void SoftSerial::print(char c) { print((uint8_t)c); }
 
-void SoftwareSerial::print(int n) { print((long)n); }
+void SoftSerial::print(int n) { print((long)n); }
 
-void SoftwareSerial::print(unsigned int n) { print((unsigned long)n); }
+void SoftSerial::print(unsigned int n) { print((unsigned long)n); }
 
-void SoftwareSerial::print(long n) {
+void SoftSerial::print(long n) {
   if (n < 0) {
     print('-');
     n = -n;
@@ -55,9 +55,9 @@ void SoftwareSerial::print(long n) {
   printNumber(n, 10);
 }
 
-void SoftwareSerial::print(unsigned long n) { printNumber(n, 10); }
+void SoftSerial::print(unsigned long n) { printNumber(n, 10); }
 
-void SoftwareSerial::print(long n, int base) {
+void SoftSerial::print(long n, int base) {
   if (base == 0)
     print((char)n);
   else if (base == 10)
@@ -66,49 +66,49 @@ void SoftwareSerial::print(long n, int base) {
     printNumber(n, base);
 }
 
-void SoftwareSerial::println(void) {
+void SoftSerial::println(void) {
   print('\r');
   print('\n');
 }
 
-void SoftwareSerial::println(char c) {
+void SoftSerial::println(char c) {
   print(c);
   println();
 }
 
-void SoftwareSerial::println(const char c[]) {
+void SoftSerial::println(const char c[]) {
   print(c);
   println();
 }
 
-void SoftwareSerial::println(uint8_t b) {
+void SoftSerial::println(uint8_t b) {
   print(b);
   println();
 }
 
-void SoftwareSerial::println(int n) {
+void SoftSerial::println(int n) {
   print(n);
   println();
 }
 
-void SoftwareSerial::println(long n) {
+void SoftSerial::println(long n) {
   print(n);
   println();
 }
 
-void SoftwareSerial::println(unsigned long n) {
+void SoftSerial::println(unsigned long n) {
   print(n);
   println();
 }
 
-void SoftwareSerial::println(long n, int base) {
+void SoftSerial::println(long n, int base) {
   print(n, base);
   println();
 }
 
 // Private Methods /////////////////////////////////////////////////////////////
 
-void SoftwareSerial::printNumber(unsigned long n, uint8_t base) {
+void SoftSerial::printNumber(unsigned long n, uint8_t base) {
   unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
   unsigned long i = 0;
 

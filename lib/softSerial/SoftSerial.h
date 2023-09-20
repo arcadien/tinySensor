@@ -26,13 +26,13 @@
 /**
  * Ouput only, baudrate fixed to 9600. Does not use Arduino API but HAL
  */
-class SoftwareSerial {
+class SoftSerial {
 private:
   Hal *_hal;
   void printNumber(unsigned long, uint8_t);
 
 public:
-  SoftwareSerial(Hal *hal);
+  SoftSerial(Hal *hal);
   void begin();
   void print(char);
   void print(const char[]);
