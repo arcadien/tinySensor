@@ -214,6 +214,8 @@ void OregonV3::Send() {
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
+  
+  FinalizeMessage();
 
   SendData(PREAMBLE, 3);
   SendData(message, MESSAGE_SIZE_IN_BYTES);
