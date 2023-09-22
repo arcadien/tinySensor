@@ -220,4 +220,5 @@ void OregonV3::Send() {
   SendData(PREAMBLE, 3);
   SendData(message, MESSAGE_SIZE_IN_BYTES);
   SendData(POSTAMBLE, 1);
+  _hal->RadioGoLow();
 }
