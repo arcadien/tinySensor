@@ -17,17 +17,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
 
 #ifdef AVR
-#include <Attiny84aHal.h>
+#include <TestHal.h>
 void Expect_I2C_can_be_configured()
 {
-  Attiny84aHal hal;
-  hal.InitI2C();
+  TestHal.Init();
   TEST_ASSERT_EQUAL(true, TestHal.I2CIsConfigured);
 }
 #else

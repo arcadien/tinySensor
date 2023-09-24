@@ -17,7 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
@@ -26,8 +25,9 @@ void tearDown() {}
 void setUp() {}
 
 #ifdef AVR
-#include <Attiny84aHal.h>
 
+#include <avr/io.h>
+#include <Attiny84aHal.h>
 
 
 void Expect_led_can_switch_on() {
@@ -38,7 +38,7 @@ void Expect_led_can_switch_on() {
 
 void Expect_led_can_switch_off() {
   Attiny84aHal hal;
-  hal..LedOff();
+  hal.LedOff();
   TEST_ASSERT((PORTB & PB1) == 0);
 }
 #else
