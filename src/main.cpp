@@ -52,13 +52,13 @@ BMx280 bmx280(&hal);
 x10rf x10encoder(&hal, 2);
 #endif
 
-static const char *MILLIVOLT = " mV";
-static const char *ANALOG = " ADC";
-static const char *LUX = " Lux";
-static const char *SECOND = " s";
-static const char *CELCIUS = " °C";
-static const char *PERCENT = " %";
-static const char *HECTOPASCAL = " hPA";
+#define MILLIVOLT   " mV"
+#define ANALOG      " ADC"
+#define LUX         " Lux"
+#define SECOND      " s"
+#define CELCIUS     " °C"
+#define PERCENT     " %"
+#define HECTOPASCAL " hPA"
 
 #if defined(USE_SERIAL_LOG)
 #include <SoftSerial.h>
