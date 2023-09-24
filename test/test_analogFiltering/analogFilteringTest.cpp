@@ -17,16 +17,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <Arduino.h>
+#include <AnalogFilter.h>
 #include <stdio.h>
 #include <string.h>
 #include <unity.h>
-#include <AnalogFilter.h>
+
 
 void tearDown() {}
 void setUp() {}
 
-void Expected_exclusion_to_exclude_value()
-{
+void Expected_exclusion_to_exclude_value() {
   AnalogFilter filter(1, 3);
   filter.Push(10);
   filter.Push(0);
@@ -35,8 +36,7 @@ void Expected_exclusion_to_exclude_value()
   TEST_ASSERT_EQUAL(0, filter.Get());
 }
 
-void Expected_zero_exclusion_to_not_exclude()
-{
+void Expected_zero_exclusion_to_not_exclude() {
   AnalogFilter filter(0, 3);
   filter.Push(2);
   filter.Push(3);
@@ -44,16 +44,14 @@ void Expected_zero_exclusion_to_not_exclude()
   TEST_ASSERT_EQUAL(3, filter.Get());
 }
 
-void Expected_filter_to_mean_actual_values()
-{
+void Expected_filter_to_mean_actual_values() {
   AnalogFilter filter(0, 3);
   filter.Push(2);
   filter.Push(4);
   TEST_ASSERT_EQUAL(3, filter.Get());
 }
 
-void Expected_filter_to_mean_values_and_floor_result()
-{
+void Expected_filter_to_mean_values_and_floor_result() {
   AnalogFilter filter(0, 4);
   filter.Push(1);
   filter.Push(2);
@@ -61,8 +59,7 @@ void Expected_filter_to_mean_values_and_floor_result()
   filter.Push(4);
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
-void Expected_filter_to_ignore_supernumerary_values()
-{
+void Expected_filter_to_ignore_supernumerary_values() {
   AnalogFilter filter(0, 2);
   filter.Push(2);
   filter.Push(2);
@@ -71,8 +68,7 @@ void Expected_filter_to_ignore_supernumerary_values()
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
 
-void Expected_filter_to_account_exclusion()
-{
+void Expected_filter_to_account_exclusion() {
   AnalogFilter filter(2, 4);
   filter.Push(2);
   filter.Push(2);
@@ -81,8 +77,7 @@ void Expected_filter_to_account_exclusion()
   TEST_ASSERT_EQUAL(4, filter.Get());
 }
 
-int main(int, char **)
-{
+int runUnityTests(void) {
   UNITY_BEGIN();
   RUN_TEST(Expected_exclusion_to_exclude_value);
   RUN_TEST(Expected_zero_exclusion_to_not_exclude);
@@ -93,3 +88,19 @@ int main(int, char **)
 
   return UNITY_END();
 }
+
+/**
+ * For native dev-platform or for some embedded frameworks
+ */
+int main(int, char **) { return runUnityTests(); }
+
+/**
+ * For Arduino framework
+ */
+void setup() {
+  // Wait ~2 seconds before the Unity test runner
+  // establishes connection with a board Serial interface
+  //__delay_ms(2000);
+}
+
+void loop() { runUnityTests();UNITY_END(); }
