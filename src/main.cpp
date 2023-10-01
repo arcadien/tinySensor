@@ -96,7 +96,7 @@ int main(void) {
 
     hal.Init();
     hal.PowerOnSensors();
-
+    
     static const float NOT_SET = -1000;
     float temperature = NOT_SET;
     float humidity = NOT_SET;
@@ -104,11 +104,13 @@ int main(void) {
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
+    while(bmx280.IsMeasuring()){}
     temperature = bmx280.GetTemperature();
 #if defined(USE_BME280)
     humidity = bmx280.GetHumidity();
     pressure = bmx280.GetPressure() / 100; // Pa -> hPa
 #endif
+    bmx280.Shutdown();
 #endif
 
 #if defined(USE_DS18B20)
