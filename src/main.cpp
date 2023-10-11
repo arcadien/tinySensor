@@ -52,12 +52,12 @@ BMx280 bmx280(&hal);
 x10rf x10encoder(&hal, 2);
 #endif
 
-#define MILLIVOLT   " mV"
-#define ANALOG      " ADC"
-#define LUX         " Lux"
-#define SECOND      " s"
-#define CELCIUS     " °C"
-#define PERCENT     " %"
+#define MILLIVOLT " mV"
+#define ANALOG " ADC"
+#define LUX " Lux"
+#define SECOND " s"
+#define CELCIUS " °C"
+#define PERCENT " %"
 #define HECTOPASCAL " hPA"
 
 #if defined(USE_SERIAL_LOG)
@@ -96,7 +96,7 @@ int main(void) {
 
     hal.Init();
     hal.PowerOnSensors();
-    
+
     static const float NOT_SET = -1000;
     float temperature = NOT_SET;
     float humidity = NOT_SET;
@@ -104,7 +104,8 @@ int main(void) {
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    while(bmx280.IsMeasuring()){}
+    while (bmx280.IsMeasuring()) {
+    }
     temperature = bmx280.GetTemperature();
 #if defined(USE_BME280)
     humidity = bmx280.GetHumidity();
@@ -121,11 +122,11 @@ int main(void) {
     hal.Delay1s();
 
     // Read temperature (without ROM matching)
-    int16_t temperature = 0;
+    int16_t temp = 0;
     auto readStatus =
-        ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temperature);
+        ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temp);
     if (readStatus == DS18B20_ERROR_OK) {
-      temperature = (temperature / 16);
+      temperature = (temp / 16);
     }
 
 #endif
@@ -135,7 +136,7 @@ int main(void) {
     // SerialPrintInfo("Raw Vcc", hal.GetRawInternal11Ref(), ANALOG);
 
     uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
-    //SerialPrintInfo("1v1", hal.GetRawInternal11Ref(), ANALOG);
+    // SerialPrintInfo("1v1", hal.GetRawInternal11Ref(), ANALOG);
 
     uint16_t batteryVoltageInMv = 0;
 
@@ -143,7 +144,7 @@ int main(void) {
     batteryVoltageInMv = vccMv;
 #else
     uint16_t rawBattery = hal.GetRawBattery();
-    //SerialPrintInfo("Raw batt", rawBattery, ANALOG);
+    // SerialPrintInfo("Raw batt", rawBattery, ANALOG);
 
     batteryVoltageInMv = hal.ConvertAnalogValueToMv(rawBattery, vccMv);
 #endif
