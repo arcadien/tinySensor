@@ -25,7 +25,12 @@
 #endif
 
 #if defined(USE_DS18B20)
+#if defined(AVR)
+#include <avr/io.h>
 #include <ds18b20.h>
+#else
+#warning Cannot use DS18B20 in native environment for now
+#endif
 #endif
 
 #if defined(USE_LACROSSE)
@@ -115,7 +120,7 @@ int main(void) {
 #endif
 
 #if defined(USE_DS18B20)
-
+#if defined(AVR)
     ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
 
     // Delay (sensor needs time to perform conversion)
@@ -128,7 +133,7 @@ int main(void) {
     if (readStatus == DS18B20_ERROR_OK) {
       temperature = (temp / 16);
     }
-
+#endif
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
@@ -161,15 +166,16 @@ int main(void) {
 
 #if defined(ANALOG1_X10_ID)
 
-    uint16_t rawSolar = hal.GetRawAnalogSensor();
-    SerialPrintInfo("Raw solar", rawSolar, ANALOG);
+    uint16_t analogMeasurement = hal.GetRawAnalogSensor();
+    SerialPrintInfo("Raw analog", analogMeasurement, ANALOG);
 
-    uint16_t solar_power = hal.ConvertAnalogValueToMv(rawSolar, vccMv);
-    SerialPrintInfo("Vsolar", solar_power, MILLIVOLT);
+    uint16_t analogVoltage =
+        hal.ConvertAnalogValueToMv(analogMeasurement, vccMv);
+    SerialPrintInfo("Analog voltage", analogVoltage, MILLIVOLT);
 
     hal.LedOn();
     x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
-                        ConversionTools::dec16ToHex(solar_power));
+                        ConversionTools::dec16ToHex(analogVoltage));
     hal.LedOff();
     hal.Delay30ms();
 #endif
@@ -234,18 +240,7 @@ int main(void) {
     }
 #endif
 
-#if defined(USE_SERIAL_LOG)
-    // SerialPrintInfo("Going to sleep", (uint16_t)SLEEP_TIME_IN_SECONDS,
-    // SECOND);
-#endif
-
     hal.PowerOffSensors();
     hal.Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
-
-#if defined(USE_SERIAL_LOG)
-    //  swSerial.begin();
-    //  swSerial.print("Wakeup!");
-    //  swSerial.println();
-#endif
   }
 }
