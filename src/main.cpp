@@ -96,15 +96,34 @@ int main(void) {
     // absolute counter for emission ~ each 15 minutes
     if (secondCounter > 900) {
       secondCounter = 0;
-      voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0x00, voltageInMv);
-      
-      hal.Delay30ms();
+      shouldEmitVoltage = true;
     }
+
+    if (shouldEmitVoltage)
+    {
+
+      uint16_t voltageInMv = hal.GetBatteryVoltageMv();
+      batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
+
+#if defined(VOLTAGE_X10_SENSOR_ID)
+      voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
+      hal.Delay30ms();
+      hal.Delay30ms();
+#endif
+    }
+
+    hal.LedOn();
     encoder.Send();
     hal.Delay30ms();
     encoder.Send();
 
+    /*
+    hal.Delay30ms();
+    hal.LedOn();
+    oregon.Send();
     hal.LedOff();
+    */
+   
     hal.PowerOffSensors();
     hal.Hibernate((uint8_t)SLEEP_TIME_IN_SECONDS);
     secondCounter += SLEEP_TIME_IN_SECONDS;
