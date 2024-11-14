@@ -26,8 +26,6 @@
 #include <ds18b20.h>
 #endif
 
-#include <LacrosseWS7000.h>
-
 #if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
 Attiny84aHal hal;
@@ -35,6 +33,18 @@ Attiny84aHal hal;
 #include <TestHal.h>
 TestHal_ hal;
 #endif
+
+
+#if defined(USE_LACROSSE)
+#include <LacrosseWS7000.h>
+LacrosseWS7000 encoder(&hal);
+#endif
+
+#if defined(USE_OREGON)
+#include <Oregon_v3.h>
+OregonV3 encoder(&hal);
+#endif
+
 
 #if defined(USE_BME280) or defined(USE_BMP280)
 BMx280 bmx280(&hal);
@@ -45,8 +55,16 @@ x10rf voltageEmitter(&hal, 5);
 #endif
 
 int main(void) {
-  LacrosseWS7000 encoder(&hal);
+  
+  #if defined(USE_LACROSSE)
   encoder.SetAddress(SENSOR_ID);
+#endif
+
+  #if defined(USE_OREGON)
+encoder.SetRollingCode(SENSOR_ID);
+#endif
+
+  boolean shouldEmitVoltage = true;
 
   /*
    * The firmware force emission of
@@ -91,39 +109,29 @@ int main(void) {
 #endif
 
     uint32_t voltageInMv = (uint32_t)hal.GetBatteryVoltageMv();
-    //oregon.SetBatteryLow((voltageInMv < LOW_BATTERY_VOLTAGE));
 
+    //oregon.SetBatteryLow((voltageInMv < LOW_BATTERY_VOLTAGE));
     // absolute counter for emission ~ each 15 minutes
     if (secondCounter > 900) {
       secondCounter = 0;
       shouldEmitVoltage = true;
     }
 
+#if defined(VOLTAGE_X10_SENSOR_ID)
     if (shouldEmitVoltage)
     {
-
-      uint16_t voltageInMv = hal.GetBatteryVoltageMv();
-      batteryIsLow = (voltageInMv < LOW_BATTERY_VOLTAGE);
-
-#if defined(VOLTAGE_X10_SENSOR_ID)
       voltageEmitter.RFXmeter(VOLTAGE_X10_SENSOR_ID, 0, voltageInMv);
       hal.Delay30ms();
       hal.Delay30ms();
-#endif
     }
+#endif
 
     hal.LedOn();
     encoder.Send();
     hal.Delay30ms();
     encoder.Send();
-
-    /*
-    hal.Delay30ms();
-    hal.LedOn();
-    oregon.Send();
     hal.LedOff();
-    */
-   
+
     hal.PowerOffSensors();
     hal.Hibernate((uint8_t)SLEEP_TIME_IN_SECONDS);
     secondCounter += SLEEP_TIME_IN_SECONDS;
