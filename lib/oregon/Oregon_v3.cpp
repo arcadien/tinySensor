@@ -4,30 +4,19 @@
 
 // v3, two nibbles with unknown format
 // see "Message Layout" section
-static const uint8_t POSTAMBLE[] = {0x0};
-
-// v3, preamble is 6 nibbles of 1, 24 times '1'
-// see "Message Layout" section
-static const uint8_t PREAMBLE[] = {0xFF, 0xFF, 0xFF};
+#define POSTAMBLE_VALUE 0x0
+#define PREAMBLE_BYTE1 0xFF
+#define PREAMBLE_BYTE2 0xFF
+#define PREAMBLE_BYTE3 0xFF
 
 uint8_t message[OregonV3::MESSAGE_SIZE_IN_BYTES];
 
-static const uint16_t HALF_DELAY_US = 512;
-static const uint16_t DELAY_US = HALF_DELAY_US * 2;
-
-// pressure is a value expressed in hPa, in interval ]850, 1100[
-// To allow storage in a char, PRESSURE_SCALING_VALUE is removed from actual
-// pressure value. It is added when decoding the message
-static const int PRESSURE_SCALING_VALUE = 795;
-
-// As rolling code is spread on two bytes, then its
-// max value is 15 tens and 15 units, because 15 aka 0xF is the max value on 4
-// bits
-static const unsigned char MAX_ROLLING_CODE_VALUE = 0xA5; // 165
-
-// one nibble as 0101, so 0b00001010
-// see "Message Layout" section
-static const uint8_t SYNC = {0b00001010};
+#define HALF_DELAY_US 512
+#define DELAY_US (HALF_DELAY_US * 2)
+#define PRESSURE_SCALING_VALUE 795
+#define MAX_ROLLING_CODE_VALUE 0xA5
+#define SYNC_NIBBLE 0x0A
+#define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
 
 OregonV3::OregonV3(Hal *hal) : _hal(hal) {
   memset(message, 0, MESSAGE_SIZE_IN_BYTES);
@@ -69,17 +58,17 @@ void OregonV3::SetPressure(uint16_t pressure) {
 }
 
 void OregonV3::SendMSB(const uint8_t data) {
-  (BitRead(data, 4)) ? SendOne() : SendZero();
-  (BitRead(data, 5)) ? SendOne() : SendZero();
-  (BitRead(data, 6)) ? SendOne() : SendZero();
-  (BitRead(data, 7)) ? SendOne() : SendZero();
+  (BITREAD(data, 4)) ? SendOne() : SendZero();
+  (BITREAD(data, 5)) ? SendOne() : SendZero();
+  (BITREAD(data, 6)) ? SendOne() : SendZero();
+  (BITREAD(data, 7)) ? SendOne() : SendZero();
 }
 
 void OregonV3::SendLSB(const uint8_t data) {
-  (BitRead(data, 0)) ? SendOne() : SendZero();
-  (BitRead(data, 1)) ? SendOne() : SendZero();
-  (BitRead(data, 2)) ? SendOne() : SendZero();
-  (BitRead(data, 3)) ? SendOne() : SendZero();
+  (BITREAD(data, 0)) ? SendOne() : SendZero();
+  (BITREAD(data, 1)) ? SendOne() : SendZero();
+  (BITREAD(data, 2)) ? SendOne() : SendZero();
+  (BITREAD(data, 3)) ? SendOne() : SendZero();
 }
 
 int OregonV3::Sum(uint8_t count, const uint8_t *data) {
@@ -217,8 +206,10 @@ void OregonV3::Send() {
   
   FinalizeMessage();
 
-  SendData(PREAMBLE, 3);
+  const uint8_t preamble[] = {PREAMBLE_BYTE1, PREAMBLE_BYTE2, PREAMBLE_BYTE3};
+  SendData(preamble, 3);
   SendData(message, MESSAGE_SIZE_IN_BYTES);
-  SendData(POSTAMBLE, 1);
+  const uint8_t postamble[] = {POSTAMBLE_VALUE};
+  SendData(postamble, 1);
   _hal->RadioGoLow();
 }

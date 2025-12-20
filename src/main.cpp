@@ -14,7 +14,7 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/\>.
  */
 
 #include <config.h>
@@ -57,13 +57,8 @@ BMx280 bmx280(&hal);
 x10rf x10encoder(&hal, 2);
 #endif
 
-#define MILLIVOLT " mV"
-#define ANALOG " ADC"
-#define LUX " Lux"
-#define SECOND " s"
-#define CELCIUS " °C"
-#define PERCENT " %"
-#define HECTOPASCAL " hPA"
+#define NOT_SET (-1000.0f)
+#define TRANSMIT_WITH_LED(code) do { hal.LedOn(); code; hal.LedOff(); hal.Delay30ms(); } while(0)
 
 #if defined(USE_SERIAL_LOG)
 #include <SoftSerial.h>
@@ -80,41 +75,38 @@ static void SerialPrintInfo(const char *name, uint16_t value,
 #else
 static void SerialPrintInfo(const char *, uint16_t, const char *) {}
 #endif
+
 int main(void) {
 
-  while (1) {
+  // Initialize hardware once at startup
+  hal.Init();
+
+  uint16_t batteryVoltageInMv = 0;
+  bool lowBattery = false;
 
 #if defined(USE_LACROSSE)
-    LacrosseWS7000 environmentEncoder(&hal);
-    environmentEncoder.SetAddress(LACROSSE_ID);
+  LacrosseWS7000 environmentEncoder(&hal);
+  environmentEncoder.SetAddress(LACROSSE_ID);
 #elif defined(USE_OREGON)
-    OregonV3 environmentEncoder(&hal);
-    environmentEncoder.SetChannel(OREGON_CHANNEL);
-    environmentEncoder.SetRollingCode(OREGON_RCODE);
+  OregonV3 environmentEncoder(&hal);
+  environmentEncoder.SetChannel(OREGON_CHANNEL);
+  environmentEncoder.SetRollingCode(OREGON_RCODE);
 #endif
 
-#if defined(USE_SERIAL_LOG)
-    //  swSerial.begin();
-    //  swSerial.print("------------");
-    //  swSerial.println();
-#endif
-
-    hal.Init();
+  while (1) {
     hal.PowerOnSensors();
 
-    static const float NOT_SET = -1000;
     float temperature = NOT_SET;
     float humidity = NOT_SET;
     float pressure = NOT_SET;
 
 #if defined(USE_BME280) || defined(USE_BMP280)
     bmx280.Begin();
-    while (bmx280.IsMeasuring()) {
-    }
+    hal.Delay30ms();
     temperature = bmx280.GetTemperature();
 #if defined(USE_BME280)
     humidity = bmx280.GetHumidity();
-    pressure = bmx280.GetPressure() / 100; // Pa -> hPa
+    pressure = bmx280.GetPressure() / 100;
 #endif
     bmx280.Shutdown();
 #endif
@@ -122,11 +114,7 @@ int main(void) {
 #if defined(USE_DS18B20)
 #if defined(AVR)
     ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
-
-    // Delay (sensor needs time to perform conversion)
     hal.Delay1s();
-
-    // Read temperature (without ROM matching)
     int16_t temp = 0;
     auto readStatus =
         ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temp);
@@ -137,70 +125,46 @@ int main(void) {
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
-
-    // SerialPrintInfo("Raw Vcc", hal.GetRawInternal11Ref(), ANALOG);
-
     uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
-    // SerialPrintInfo("1v1", hal.GetRawInternal11Ref(), ANALOG);
-
-    uint16_t batteryVoltageInMv = 0;
-
 #if defined(BATTERY_IS_VCC)
     batteryVoltageInMv = vccMv;
 #else
     uint16_t rawBattery = hal.GetRawBattery();
-    // SerialPrintInfo("Raw batt", rawBattery, ANALOG);
-
     batteryVoltageInMv = hal.ConvertAnalogValueToMv(rawBattery, vccMv);
 #endif
-
-    SerialPrintInfo("Vbatt", batteryVoltageInMv, MILLIVOLT);
-
-    hal.LedOn();
-    x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
-                        ConversionTools::dec16ToHex(batteryVoltageInMv));
-    hal.LedOff();
-    hal.Delay30ms();
-    hal.Delay30ms();
+    lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
+    SerialPrintInfo("Vbatt", batteryVoltageInMv, " mV");
+    if (!lowBattery) {
+      TRANSMIT_WITH_LED(x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
+                                            ConversionTools::dec16ToHex(batteryVoltageInMv)));
+    }
 #endif
 
 #if defined(ANALOG1_X10_ID)
-
-    uint16_t analogMeasurement = hal.GetRawAnalogSensor();
-    SerialPrintInfo("Raw analog", analogMeasurement, ANALOG);
-
-    uint16_t analogVoltage =
-        hal.ConvertAnalogValueToMv(analogMeasurement, vccMv);
-    SerialPrintInfo("Analog voltage", analogVoltage, MILLIVOLT);
-
-    hal.LedOn();
-    x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
-                        ConversionTools::dec16ToHex(analogVoltage));
-    hal.LedOff();
-    hal.Delay30ms();
+    if (!lowBattery) {
+      uint16_t analogMeasurement = hal.GetRawAnalogSensor();
+      SerialPrintInfo("Raw analog", analogMeasurement, " ADC");
+      uint16_t analogVoltage =
+          hal.ConvertAnalogValueToMv(analogMeasurement, vccMv);
+      SerialPrintInfo("Analog voltage", analogVoltage, " mV");
+      TRANSMIT_WITH_LED(x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
+                                            ConversionTools::dec16ToHex(analogVoltage)));
+    }
 #endif
 
 #if defined(USE_BH1750)
-    LacrosseWS7000 lightEncoder(&hal);
-    lightEncoder.SetAddress(LACROSSE_ID);
-    BH1750 lightMeter(0x23);
-    lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
-    _delay_ms(150); // around 120ms, be generous
-    uint16_t lux = (uint16_t)lightMeter.readLightLevel();
-
-    SerialPrintInfo("Luminosity", lux, LUX);
-
-    lightEncoder.SetLuminosity(lux);
-
-    hal.LedOn();
-    lightEncoder.Send();
-    hal.LedOff();
-    hal.Delay30ms();
-
-    hal.LedOn();
-    lightEncoder.Send();
-    hal.LedOff();
-    hal.Delay30ms();
+    if (!lowBattery) {
+      LacrosseWS7000 lightEncoder(&hal);
+      lightEncoder.SetAddress(LACROSSE_ID);
+      BH1750 lightMeter(0x23);
+      lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+      _delay_ms(150);
+      uint16_t lux = (uint16_t)lightMeter.readLightLevel();
+      SerialPrintInfo("Luminosity", lux, " Lux");
+      lightEncoder.SetLuminosity(lux);
+      TRANSMIT_WITH_LED(lightEncoder.Send());
+      TRANSMIT_WITH_LED(lightEncoder.Send());
+    }
 #endif
 
 #if defined(USE_LACROSSE) or defined(USE_OREGON)
@@ -215,28 +179,16 @@ int main(void) {
     }
 
 #if defined(USE_SERIAL_LOG)
-    SerialPrintInfo("Temp.", temperature * 10, CELCIUS);
-    SerialPrintInfo("RH ", humidity, PERCENT);
-    SerialPrintInfo("Pressure ", pressure, HECTOPASCAL);
+    SerialPrintInfo("Temp.", temperature * 10, " °C");
+    SerialPrintInfo("RH ", humidity, " %");
+    SerialPrintInfo("Pressure ", pressure, " hPA");
 #endif
 
-    // at least temperature should be set
-    // to use this encoder
     if (temperature != NOT_SET) {
-
 #if defined(USE_OREGON)
-      if (batteryVoltageInMv > LOW_BATTERY_VOLTAGE) {
-        environmentEncoder.SetBatteryLow(false);
-      }
+      environmentEncoder.SetBatteryLow(lowBattery);
 #endif
-      hal.LedOn();
-      environmentEncoder.Send();
-      hal.LedOff();
-      hal.Delay30ms();
-
-      hal.LedOn();
-      environmentEncoder.Send();
-      hal.LedOff();
+      TRANSMIT_WITH_LED(environmentEncoder.Send());
     }
 #endif
 

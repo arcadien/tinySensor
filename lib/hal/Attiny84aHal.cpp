@@ -160,8 +160,8 @@ static uint16_t AdcRead(Hal &hal, uint8_t admux) {
   ADMUX = admux;
   _delay_ms(2);
 
-  static const uint8_t IGNORED_SAMPLES = 8;
-  static const uint8_t COUNTED_SAMPLES = 16;
+    static const uint8_t IGNORED_SAMPLES = 2;
+    static const uint8_t COUNTED_SAMPLES = 8;
   uint32_t accumulator = 0;
   uint8_t loopSamples = 0;
 

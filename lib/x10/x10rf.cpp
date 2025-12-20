@@ -23,6 +23,17 @@ testing support.
 #include <stdlib.h>
 #include <string.h>
 
+#define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
+#define BITWRITE(value, bit, bitvalue) \
+  do                                   \
+  {                                    \
+    if (bitvalue)                      \
+      (value) |= (1 << (bit));         \
+    else                               \
+      (value) &= ~(1 << (bit));        \
+  } while (0)
+#define NIBBLE_SUM(b) ((((b) & 0xF0) >> 4) + ((b) & 0xF))
+
 #define PREAMBLE_LOW 4500  // Start silence (leader) = 4,5 ms
 #define PREAMBLE_HIGH 8960 // Start burst (leader) = 9ms
 
@@ -186,12 +197,9 @@ void x10rf::RFXmeter(uint8_t rfxm_address, uint8_t rfxm_packet_type,
   _message[5] =
       (rfxm_packet_type << 4); // Packet type goes into byte 5's upper nibble.
   // Calculate parity which
-  uint8_t parity = ~(((_message[0] & 0XF0) >> 4) + (_message[0] & 0XF) +
-                     ((_message[1] & 0XF0) >> 4) + (_message[1] & 0XF) +
-                     ((_message[2] & 0XF0) >> 4) + (_message[2] & 0XF) +
-                     ((_message[3] & 0XF0) >> 4) + (_message[3] & 0XF) +
-                     ((_message[4] & 0XF0) >> 4) + (_message[4] & 0XF) +
-                     ((_message[5] & 0XF0) >> 4));
+  uint8_t parity = ~(NIBBLE_SUM(_message[0]) + NIBBLE_SUM(_message[1]) +
+                     NIBBLE_SUM(_message[2]) + NIBBLE_SUM(_message[3]) +
+                     NIBBLE_SUM(_message[4]) + ((_message[5] & 0xF0) >> 4));
   _message[5] = (_message[5] & 0xf0) + (parity & 0X0F);
   SendCommand(_message, 6); // Send byte to be broadcasted
 }
@@ -234,68 +242,24 @@ void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
   default:
     _message[3] = 0x00;
   }
-  uint8_t parity = ~(((_message[0] & 0XF0) >> 4) + (_message[0] & 0XF) +
-                     ((_message[1] & 0XF0) >> 4) + (_message[1] & 0XF) +
-                     ((_message[2] & 0XF0) >> 4) + (_message[2] & 0XF) +
-                     ((_message[3] & 0XF0) >> 4));
+  uint8_t parity = ~(NIBBLE_SUM(_message[0]) + NIBBLE_SUM(_message[1]) +
+                     NIBBLE_SUM(_message[2]) + ((_message[3] & 0xF0) >> 4));
   _message[3] = (_message[3] & 0xf0) + (parity & 0XF);
   SendCommand(_message, 4);
 }
 
 void x10rf::x10Switch(char house_code, uint8_t unit_code, uint8_t command) {
   clearMessageBuffer(_message);
-  switch (tolower(house_code)) {
-  case 'a':
-    _message[0] = 0B0110;
-    break;
-  case 'b':
-    _message[0] = 0B0111;
-    break;
-  case 'c':
-    _message[0] = 0B0100;
-    break;
-  case 'd':
-    _message[0] = 0B0101;
-    break;
-  case 'e':
-    _message[0] = 0B1000;
-    break;
-  case 'f':
-    _message[0] = 0B1001;
-    break;
-  case 'g':
-    _message[0] = 0B1010;
-    break;
-  case 'h':
-    _message[0] = 0B1011;
-    break;
-  case 'i':
-    _message[0] = 0B1110;
-    break;
-  case 'j':
-    _message[0] = 0B1111;
-    break;
-  case 'k':
-    _message[0] = 0B1100;
-    break;
-  case 'l':
-    _message[0] = 0B1101;
-    break;
-  case 'm':
-    _message[0] = 0B0000;
-    break;
-  case 'n':
-    _message[0] = 0B0001;
-    break;
-  case 'o':
-    _message[0] = 0B0010;
-    break;
-  case 'p':
-    _message[0] = 0B0011;
-    break;
-  default:
+  // House code lookup table: indices a-p map to nibble values
+  static const uint8_t house_codes[] = {0b0110, 0b0111, 0b0100, 0b0101, 0b1000, 0b1001, 0b1010, 0b1011, 0b1110, 0b1111, 0b1100, 0b1101, 0b0000, 0b0001, 0b0010, 0b0011};
+  char lower = tolower(house_code);
+  if (lower >= 'a' && lower <= 'p')
+  {
+    _message[0] = house_codes[lower - 'a'];
+  }
+  else
+  {
     _message[0] = 0;
-    break;
   }
   _message[0] = _message[0] << 4; // House code goes into the upper nibble
 
@@ -309,10 +273,10 @@ void x10rf::x10Switch(char house_code, uint8_t unit_code, uint8_t command) {
   }
   // Set unit number
   unit_code = unit_code - 1;
-  bitWrite(_message[2], 6, bitRead(unit_code, 2));
-  bitWrite(_message[2], 3, bitRead(unit_code, 1));
-  bitWrite(_message[2], 4, bitRead(unit_code, 0));
-  bitWrite(_message[0], 2, bitRead(unit_code, 3));
+  BITWRITE(_message[2], 6, BITREAD(unit_code, 2));
+  BITWRITE(_message[2], 3, BITREAD(unit_code, 1));
+  BITWRITE(_message[2], 4, BITREAD(unit_code, 0));
+  BITWRITE(_message[0], 2, BITREAD(unit_code, 3));
   // Set parity
   _message[1] = ~_message[0];
   _message[3] = ~_message[2];
