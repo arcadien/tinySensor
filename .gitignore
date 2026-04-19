@@ -1,13 +1,28 @@
-Debug/ Release/
-.vs
-*bak
+# --- Build output (PlatformIO, Atmel Studio, CMake) ---
+.pio
 build/
-.vscode
 Debug/
 Release/
-.pio
+
+# --- Firmware / object / dependency / map files ---
+*.o
+*.d
+*.elf
+*.hex
+*.eep
+*.lss
+*.map
+*.srec
+
+# --- Editor / IDE ---
+.vs
+.vscode
+*bak
+
+# --- Runtime / data / logs ---
 web/data/
 volume
-hardware/kicad/fp-info-cache
 flash.log
-*.elf
+
+# --- KiCAD cache ---
+hardware/kicad/fp-info-cache
