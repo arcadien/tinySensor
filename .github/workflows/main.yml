@@ -1,24 +1,66 @@
 name: PlatformIO CI
 
-on: [push]
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
 
 jobs:
-  build:
+  # Native Unity tests (Oregon / Lacrosse / X10 encoders, analog filter, ...)
+  test-native:
+    name: Native tests
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
-
-      - name: Test project in native environment
+      - name: Run native tests
         run: pio test -e native_debug
+
+  # Firmware build for every physical target
+  # (addresses T1 of the tech-debt audit: the previous workflow
+  #  did NOT compile any AVR target, so a refactor could silently
+  #  break production firmware)
+  build-avr:
+    name: Build ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - name: Build firmware
+        run: pio run -e ${{ matrix.env }}
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.env }}
+          path: |
+            .pio/build/${{ matrix.env }}/firmware.hex
+            .pio/build/${{ matrix.env }}/firmware.elf
+          if-no-files-found: error
+          retention-days: 30
