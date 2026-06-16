@@ -106,6 +106,7 @@ void OregonV3::SendZero() {
 }
 
 void OregonV3::SetChannel(uint8_t channel) {
+  if (channel < 1 || channel > 3) return;
   message[2] |= 1 << (4 + (channel - 1));
 }
 
