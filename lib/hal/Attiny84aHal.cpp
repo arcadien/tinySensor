@@ -47,11 +47,11 @@ static void UseLessPowerAsPossible() {
   ACSR |= _BV(ACD);
 
   // no timer1
-  PRR &= ~_BV(PRTIM1);
+  PRR |= _BV(PRTIM1);
 
   // no analog p. 129, 146, 131
   ADCSRA = 0;
-  PRR &= ~_BV(PRADC);
+  PRR |= _BV(PRADC);
 
   // better, but not easy to invert for VCC sensing
   DIDR0 |= _BV(ADC2D) | _BV(ADC1D); // digital buffers
