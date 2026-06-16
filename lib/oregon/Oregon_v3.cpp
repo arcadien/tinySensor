@@ -9,8 +9,6 @@
 #define PREAMBLE_BYTE2 0xFF
 #define PREAMBLE_BYTE3 0xFF
 
-uint8_t message[OregonV3::MESSAGE_SIZE_IN_BYTES];
-
 #define HALF_DELAY_US 512
 #define DELAY_US (HALF_DELAY_US * 2)
 #define PRESSURE_SCALING_VALUE 795

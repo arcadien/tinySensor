@@ -93,6 +93,8 @@ private:
    */
   uint8_t messageStatus = 0;
 
+  uint8_t message[MESSAGE_SIZE_IN_BYTES];
+
   Hal *_hal;
 
   int Sum(uint8_t count, const uint8_t *data);
