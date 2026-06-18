@@ -61,6 +61,26 @@ Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionT
 
 `TinySensor/` is an Atmel Studio project kept for debugWIRE/JTAG step-debugging. It is intentionally not in sync with `src/` and `lib/` — treat it as a debug tool, not a source of truth.
 
+### RBD workflow
+
+This project uses Requirement-Based Development. **Every code change must originate from a validated requirement.**
+
+- Requirements live in `requirements/*.md` (functional, technical, performance, ui, configuration, platform).
+- Architecture is tracked in `docs/architecture.md` — updated with an `arch(ID):` commit whenever a requirement changes the component diagram.
+- Commit prefixes are mandatory: `req()`, `test()`, `feat()`, `tech()`, `perf()`, `ui()`, `conf()`, `arch()`, `plan:`.
+- Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it.
+- ID format: `FUNC-DOMAIN-NNN` (e.g. `FUNC-OREGON-001`, `TECH-HAL-001`).
+
+To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
+
+**Linter**: `clang-format --dry-run --Werror` on all `*.cpp`/`*.h` under `src/`, `lib/`, `include/`, `test/`. Must pass before every test or implementation commit. Run it with:
+
+```bash
+find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+# Auto-fix:
+find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
+```
+
 ### Key `build_flags` per environment
 
 | Flag | Meaning |
