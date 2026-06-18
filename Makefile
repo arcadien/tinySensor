@@ -1,3 +1,6 @@
-all: 
-	c:\users\aurelien\.platformio\penv\Scripts\pio run -e S_03
-	copy .pio\build\S_03\firmware.elf TinySensor.elf
+PIO     ?= $(HOME)/.platformio/penv/bin/pio
+TARGET  ?= S_03
+
+all:
+	$(PIO) run -e $(TARGET)
+	cp .pio/build/$(TARGET)/firmware.elf TinySensor.elf

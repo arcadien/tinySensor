@@ -83,10 +83,12 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **C11 (15) — Branche morte `SetPressure` supprimée**. `if (pressure < 200) pressure = 200;` était immédiatement écrasé par le clamp à 850 ; supprimé. → **Résolu**.
 - **D5 (20) — `avrdude.conf` sorti du repo**. Le fichier (534 KB) provient du toolchain PlatformIO (`~/.platformio/packages/tool-avrdude/`) ; supprimé avec `git rm`. → **Résolu**.
 - **I3 — Requalifié**. Audit revisité : le ZIP KiCAD n'était pas tracké git (sur disque uniquement) ; `*.zip` déjà couvert par `.gitignore`. Non-issue, comme I1. → **Résolu (par prévention)**.
+- **I2 (25) — Chemins absolus paramétrés**. `Makefile` : `PIO ?= $(HOME)/.platformio/penv/bin/pio`, `TARGET ?= S_03`, `cp` remplace `copy`. `scripts/flash_tinySensor` : `PIO_HOME` et `PROJECT_DIR` avec défauts portables (`${HOME}/.platformio` et `$(dirname $0)/..`). → **Résolu**.
+- **D3 (24) + D4 (24) — Dépendances PlatformIO épinglées sur SHA**. Les 5 dépendances (BH1750, tiny-i2c, Unity, avr-ds18b20, SparkFun_BME280) épinglées sur leur commit HEAD courant dans `platformio.ini`. Reproductibilité garantie, risque supply-chain éliminé. → **Résolu**.
 
-Impact 2026-06-18 : **198 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20).
+Impact 2026-06-18 : **271 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20 + I2:25 + D3:24 + D4:24).
 
-Impact cumulé toutes dates : **505 points** (307 + 198).
+Impact cumulé toutes dates : **578 points** (307 + 271).
 
 ---
 
@@ -165,8 +167,8 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~D1~~ | ~~**Image Docker `php:7.4-apache` EOL depuis novembre 2022.** Utilisée comme base du firmware builder web.~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/` — plus de Dockerfile PHP dans le repo) | 4 | 5 | 2 | ~~36~~ |
 | ~~D2~~ | ~~GitHub Actions obsolètes : `actions/checkout@v3`, `actions/cache@v3`, `actions/setup-python@v4`. Python 3.9 utilisé — EOL octobre 2025 (nous sommes en avril 2026).~~ — ✅ **Résolu 2026-04-19** (v4/v4/v5, Python 3.12) | 3 | 3 | 1 | ~~30~~ |
-| D3 | Toutes les dépendances PlatformIO sont tirées de **forks personnels** (`arcadien/BH1750`, `arcadien/tiny-i2c`, `arcadien/Unity`, `arcadien/avr-ds18b20`, `arcadien/SparkFun_BME280_Arduino_Library`) **sans épinglage de commit ni de tag**. Un `pio update` peut casser le build. Risque supply-chain + reproductibilité. | 4 | 4 | 3 | 24 |
-| D4 | `bh1750` épinglé sur **une branche** (`feat/attiny_support`), pas un tag ou SHA. La branche peut être rebasée ou supprimée à tout moment. | 3 | 3 | 2 | **24** |
+| ~~D3~~ | ~~Dépendances PlatformIO tirées de forks personnels sans épinglage de commit.~~ — ✅ **Résolu 2026-06-18** (toutes les 5 dépendances épinglées sur leur SHA HEAD courant dans `platformio.ini`) | 4 | 4 | 3 | ~~24~~ |
+| ~~D4~~ | ~~`bh1750` épinglé sur la branche `feat/attiny_support` au lieu d'un SHA.~~ — ✅ **Résolu 2026-06-18** (subsumed par D3 — épinglé sur `6d06b87`) | 3 | 3 | 2 | ~~24~~ |
 | ~~D5~~ | ~~`avrdude.conf` (534 KB) commité dans le repo.~~ — ✅ **Résolu 2026-06-18** (`git rm avrdude.conf` ; vient du toolchain PlatformIO, pas de la source) | 2 | 2 | 1 | ~~20~~ |
 | ~~D6~~ | ~~`web/build.php` charge jQuery 1.12.4 depuis CDN (sortie 2016, EOL).~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/`) | 1 | 2 | 2 | ~~12~~ |
 | D7 | Copies tierces vendored dans `TinySensor/third_party/` (BMX, I2C, X10) figées, risque de divergence vs. upstream. | 2 | 2 | 2 | 16 |
@@ -190,7 +192,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~I1~~ | ~~**Artefacts de build commités** dans `TinySensor/Debug/` : `.o`, `.d`, `.elf`, `.hex`, `.lss`, `.map`, `.srec`.~~ — ✅ **Résolu 2026-04-19** (audit revisité : aucun artefact n'était réellement tracké ; `TinySensor/Debug/` désormais couvert par `.gitignore`). | 3 | 2 | 1 | ~~25~~ |
-| I2 | Chemins absolus spécifiques à l'auteur : `Makefile` (`c:\users\aurelien\.platformio\penv\Scripts\pio`), `scripts/flash_tinySensor` (`~aurelien/…`, `/var/services/homes/aurelien/…`). Non-portable pour tout autre contributeur. | 3 | 2 | 1 | **25** |
+| ~~I2~~ | ~~Chemins absolus spécifiques à l'auteur dans `Makefile` et `scripts/flash_tinySensor`.~~ — ✅ **Résolu 2026-06-18** (`PIO ?= $(HOME)/.platformio/penv/bin/pio`, `TARGET ?= S_03` dans `Makefile` ; `PIO_HOME` et `PROJECT_DIR` avec défauts `${HOME}/.platformio` et `$(dirname $0)/..` dans le script) | 3 | 2 | 1 | ~~25~~ |
 | ~~I3~~ | ~~Archive de backup KiCAD commitée (`tinySensorv1-2025-05-01_183922.zip`).~~ — ✅ **Résolu 2026-06-18** (audit revisité : le ZIP n'était pas tracké par git — sur disque uniquement ; `*.zip` déjà couvert par `.gitignore`) | 2 | 2 | 1 | ~~20~~ |
 | ~~I4~~ | ~~La CI ne produit aucun artefact (firmware `.hex` téléchargeable).~~ — ✅ **Résolu 2026-06-16** (job `release` ajouté sur `v*` tags : télécharge tous les artefacts et publie une GitHub Release avec notes auto-générées — complète la résolution partielle du 2026-04-19) | 2 | 1 | 2 | ~~12~~ |
 | I5 | CI single-runner, single-python, single-env. Pas de matrice pour tester différentes versions d'outillage. | 3 | 2 | 2 | **20** |
@@ -216,9 +218,9 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | — | ~~M2~~ | ~~`SetChannel()` sans validation de bornes~~ ✅ | Code | ~~30~~ |
 | — | ~~D9~~ | ~~Pas de Dependabot/Renovate~~ ✅ | Dep | ~~25~~ |
 | — | ~~I1~~ | ~~Artefacts de build commités (`Debug/`)~~ ✅ | Infra | ~~25~~ |
-| 5 | I2 | Chemins absolus auteur dans Makefile/scripts | Infra | 25 |
-| 6 | D3 | Deps pointent vers forks personnels non épinglés | Dep | 24 |
-| 6 | D4 | `bh1750` épinglé sur une branche au lieu d'un tag/SHA | Dep | 24 |
+| — | ~~I2~~ | ~~Chemins absolus auteur dans Makefile/scripts~~ ✅ | Infra | ~~25~~ |
+| — | ~~D3~~ | ~~Deps pointent vers forks personnels non épinglés~~ ✅ | Dep | ~~24~~ |
+| — | ~~D4~~ | ~~`bh1750` épinglé sur une branche au lieu d'un tag/SHA~~ ✅ | Dep | ~~24~~ |
 | — | ~~C3~~ | ~~`Init()` orphelin dans `Attiny84aHal.cpp`~~ ✅ | Code | ~~20~~ |
 | — | ~~C4~~ | ~~Dead-code `if (int(count) != count)` dans `Sum`~~ ✅ | Code | ~~20~~ |
 | 8 | C5 | `main.cpp` accède aux registres sans passer par le HAL | Code | 20 |
