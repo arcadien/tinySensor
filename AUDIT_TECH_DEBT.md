@@ -4,7 +4,7 @@
 
 **Auditeur** : Claude (modèle opus 4.7) — revue statique
 
-**Date** : 19 avril 2026 — mise à jour 16 juin 2026 (voir §1bis)
+**Date** : 19 avril 2026 — mise à jour 18 juin 2026 (voir §1bis)
 
 **Périmètre** : ensemble du dépôt au commit `aa53a83` (branche `master`) — code firmware (`src/`, `lib/`, `include/`), tests (`test/`), projet Atmel Studio legacy (`TinySensor/`), outillage (`scripts/`, `shared/`), web builder (`web/`), hardware (`hardware/`), CI (`.github/workflows/`), Docker/devcontainer.
 
@@ -71,6 +71,16 @@ Impact 2026-06-16 : **176 points** résolus (M1:30 + M2:30 + M3:16 + C4:20 + C7:
 
 Impact cumulé toutes dates : **307 points** (131 + 176).
 
+### 2026-06-18 — Révocation du token Coveralls + suppression de `web/` + requalification A1
+
+- **C1 (35) — Token Coveralls révoqué et sorti du repo**. Le token `K1UMmvKnmugffPWriB48kR274KXcAuvuK` présent dans `.coveralls.yml` a été révoqué côté coveralls.io et remplacé par un secret GitHub Actions `COVERALLS_REPO_TOKEN`. → **Résolu**.
+- **D1 (36) + A4 (15) + D6 (12) — `web/` supprimé**. Décision : le firmware builder web n'a jamais été finalisé ni déployé. Suppression des deux fichiers (`web/build.php`, `web/index.html`). Élimine d'un coup l'image Docker PHP 7.4 EOL, la vulnérabilité `shell_exec`, et jQuery 1.12.4. → **Résolu (D1, A4, D6)**.
+- **A1 — Requalifié (risque accepté)**. `TinySensor/` n'est pas du code mort : il est conservé intentionnellement pour le workflow de debug/flash Atmel Studio (debugWIRE/JTAG), non remplaçable par PlatformIO. Score abaissé de 32 → 20, catégorie "risque de divergence à surveiller". Mitigations recommandées : commentaires croisés dans les deux `main.cpp` + step CI `diff` en warn-only. → **Requalifié, non supprimé**.
+
+Impact 2026-06-18 : **98 points** résolus (C1:35 + D1:36 + A4:15 + D6:12).
+
+Impact cumulé toutes dates : **405 points** (307 + 98).
+
 ---
 
 ## 2. Méthodologie
@@ -100,7 +110,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 
 | ID | Item | Localisation | Impact | Risque | Effort | Priorité |
 |----|------|--------------|:------:|:------:|:------:|:--------:|
-| C1 | Token Coveralls commité en clair (`repo_token: K1UMmvKnmugffPWriB48kR274KXcAuvuK`) | `.coveralls.yml` | 2 | 5 | 1 | **35** |
+| ~~C1~~ | ~~Token Coveralls commité en clair (`repo_token: K1UMmvKnmugffPWriB48kR274KXcAuvuK`)~~ — ✅ **Résolu 2026-06-18** (token révoqué, déplacé en secret GitHub Actions `COVERALLS_REPO_TOKEN`) | `.coveralls.yml` | 2 | 5 | 1 | ~~35~~ |
 | C2 | `TestHal` référence un `OREGON_DELAY_US(x) TestHal.Delay(x)` qui n'existe pas (la méthode s'appelle `Delay400Us`/`Delay1024Us`). Macro cassée, incohérence d'API. | `lib/hal/TestHal.h:74` | 3 | 3 | 1 | **30** |
 | C3 | Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée (shadow de `Attiny84aHal::Init`). | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | **20** |
 | ~~C4~~ | ~~Dead-code dans `OregonV3::Sum` : `if (int(count) != count)` est toujours faux pour un `uint8_t`.~~ — ✅ **Résolu 2026-06-16** (branche morte supprimée ; héritage d'une impl. internet avec `float count`) | `lib/oregon/Oregon_v3.cpp:82` | 2 | 2 | 1 | ~~20~~ |
@@ -123,10 +133,10 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
-| A1 | **Arbre source dupliqué** : `TinySensor/` (projet Atmel Studio legacy) contient `main.cpp`, `bh1750.cpp/h`, `TinyI2CMaster.cpp/h` qui sont des versions parallèles du code de `src/` et `lib/`. Deux vérités pour un même firmware → divergence garantie à la première modif. Inclut aussi `TinySensor/third_party/` (BMX, I2C, X10) qui duplique `lib/x10` et les libs PlatformIO. | 4 | 4 | 2 | **32** |
+| A1 | **Arbre source dupliqué — risque accepté** : `TinySensor/` (projet Atmel Studio) est conservé intentionnellement pour le workflow de debug pas-à-pas et de flashage via debugWIRE/JTAG, que PlatformIO ne remplace pas complètement. Contient `main.cpp`, `bh1750.cpp/h`, `TinyI2CMaster.cpp/h` + `third_party/`. Risque résiduel : divergence silencieuse si un fix appliqué dans `src/` n'est pas reporté dans `TinySensor/main.cpp`. Mitigations recommandées : (1) commentaire croisé dans les deux `main.cpp` pointant l'un vers l'autre, (2) step CI `diff -u src/main.cpp TinySensor/main.cpp` en mode warn-only pour rendre la divergence visible. | 2 | 3 | 2 | **20** |
 | A2 | Pas d'interface commune `EnvironmentEncoder` : `main.cpp` dispatche Oregon vs Lacrosse avec des `#if defined(USE_OREGON)/USE_LACROSSE` répétés 4× dans la même fonction. Ajouter un 3e protocole coûtera un passage dans toute la `main()`. | 3 | 2 | 3 | 15 |
 | A3 | Le bloc BH1750 dans `main.cpp:155-168` instancie en ligne un `LacrosseWS7000 lightEncoder(&hal)` — logique capteur mélangée avec logique de transmission. | 3 | 2 | 2 | **20** |
-| A4 | Web firmware builder (`web/build.php`) : `shell_exec` sans sanitisation des inputs (aujourd'hui pas de form → pas d'exploit actuel, mais fragile). Commentaire README : "NOTE: It is at his early stage!" — projet abandonné en l'état ? Décision architecturale à prendre : maintenir ou supprimer. | 2 | 3 | 3 | 15 |
+| ~~A4~~ | ~~Web firmware builder (`web/build.php`) : `shell_exec` sans sanitisation des inputs.~~ — ✅ **Résolu 2026-06-18** (décision : supprimer `web/` ; builder jamais finalisé, jamais utilisé en production — `web/build.php` + `web/index.html` supprimés) | 2 | 3 | 3 | ~~15~~ |
 | A5 | Configuration 100 % build-time : chaque capteur physique = un env PIO + une recompilation. Pas de config runtime, donc aucune mise à jour terrain sans reflashage manuel. Architecture acceptable pour un hobby / production très petite série ; limitante si on veut scaler. | 3 | 2 | 4 | 10 |
 | A6 | HAL ATmega328p absent malgré mention README. Branche `feat/328p_hal` existe mais non mergée — code parallèle qui va dériver. | 2 | 1 | 4 | 6 |
 
@@ -146,12 +156,12 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
-| D1 | **Image Docker `php:7.4-apache` EOL depuis novembre 2022** (~3,5 ans de CVE non patchées accumulées). Utilisée comme base du firmware builder web. | 4 | 5 | 2 | **36** |
+| ~~D1~~ | ~~**Image Docker `php:7.4-apache` EOL depuis novembre 2022.** Utilisée comme base du firmware builder web.~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/` — plus de Dockerfile PHP dans le repo) | 4 | 5 | 2 | ~~36~~ |
 | ~~D2~~ | ~~GitHub Actions obsolètes : `actions/checkout@v3`, `actions/cache@v3`, `actions/setup-python@v4`. Python 3.9 utilisé — EOL octobre 2025 (nous sommes en avril 2026).~~ — ✅ **Résolu 2026-04-19** (v4/v4/v5, Python 3.12) | 3 | 3 | 1 | ~~30~~ |
 | D3 | Toutes les dépendances PlatformIO sont tirées de **forks personnels** (`arcadien/BH1750`, `arcadien/tiny-i2c`, `arcadien/Unity`, `arcadien/avr-ds18b20`, `arcadien/SparkFun_BME280_Arduino_Library`) **sans épinglage de commit ni de tag**. Un `pio update` peut casser le build. Risque supply-chain + reproductibilité. | 4 | 4 | 3 | 24 |
 | D4 | `bh1750` épinglé sur **une branche** (`feat/attiny_support`), pas un tag ou SHA. La branche peut être rebasée ou supprimée à tout moment. | 3 | 3 | 2 | **24** |
 | D5 | `avrdude.conf` (534 KB) commité dans le repo. Doit venir du toolchain (`~/.platformio/packages/tool-avrdude/`), pas de la source. Contribue au bruit et au risque de divergence avec la version réellement utilisée au build. | 2 | 2 | 1 | **20** |
-| D6 | `web/build.php` charge jQuery 1.12.4 depuis CDN (sortie 2016, EOL). | 1 | 2 | 2 | 12 |
+| ~~D6~~ | ~~`web/build.php` charge jQuery 1.12.4 depuis CDN (sortie 2016, EOL).~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/`) | 1 | 2 | 2 | ~~12~~ |
 | D7 | Copies tierces vendored dans `TinySensor/third_party/` (BMX, I2C, X10) figées, risque de divergence vs. upstream. | 2 | 2 | 2 | 16 |
 | ~~D8~~ | ~~Badge README pointe vers **Travis CI** (`api.travis-ci.org`) — service fermé aux OSS non payants depuis 2020. Badge cassé = signal négatif pour les contributeurs.~~ — ✅ **Résolu 2026-06-16** (badge GitHub Actions dans `README.md`) | 1 | 1 | 1 | ~~10~~ |
 | ~~D9~~ | ~~Pas de configuration Dependabot/Renovate. Dérive des versions non notifiée.~~ — ✅ **Résolu 2026-06-16** (`.github/dependabot.yml` : hebdomadaire pour `github-actions`, mensuel pour `docker` + `pip`) | 2 | 3 | 1 | ~~25~~ |
@@ -190,9 +200,9 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | Rang | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
 | — | ~~T1~~ | ~~CI ne compile aucune cible AVR~~ ✅ | Test | ~~36~~ |
-| 1 | D1 | Image Docker PHP 7.4 EOL | Dep | 36 |
-| 2 | C1 | Token Coveralls en clair dans le repo | Code | 35 |
-| 3 | A1 | Arbre source dupliqué `TinySensor/` + `third_party/` | Archi | 32 |
+| — | ~~D1~~ | ~~Image Docker PHP 7.4 EOL~~ ✅ | Dep | ~~36~~ |
+| — | ~~C1~~ | ~~Token Coveralls en clair dans le repo~~ ✅ | Code | ~~35~~ |
+| — | ~~A1~~ | ~~Arbre source dupliqué `TinySensor/`~~ → requalifié, risque accepté (score 20, voir §3.2) | Archi | ~~32~~ |
 | — | ~~D2~~ | ~~GitHub Actions obsolètes + Python 3.9 EOL~~ ✅ | Dep | ~~30~~ |
 | 4 | C2 | Macro `OREGON_DELAY_US` réfère une méthode inexistante | Code | 30 |
 | — | ~~M1~~ | ~~PRR bit inversé dans `UseLessPowerAsPossible()`~~ ✅ | Code | ~~30~~ |
