@@ -44,35 +44,35 @@ static const unsigned char
 static const unsigned char
     EXPECTED_POSTAMBLE[2 * OregonV3::ORDERS_COUNT_FOR_A_BIT] = {
         // postamble : two nibbles at zero
-        'H', 'D', 'L', 'P', 'H', 'D', // 0
-        'H', 'D', 'L', 'P', 'H', 'D'  // 0
+        'H', 'D', 'L', 'P', 'H', 'D',  // 0
+        'H', 'D', 'L', 'P', 'H', 'D'   // 0
 };
 
 static const unsigned char EXPECTED_PREAMBLE[OregonV3::PREAMBLE_BYTE_LENGTH] = {
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
-    'L', 'D', 'H', 'P', 'L', 'D', // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
+    'L', 'D', 'H', 'P', 'L', 'D',  // 1
 };
 
 static std::string MessageNibblesToString(const unsigned char *message,
@@ -92,12 +92,13 @@ static std::string MessageNibblesToString(const unsigned char *message,
  *  October 2015"
  *  A copy of the document should be provided along the implementation
  */
-void setUp(void) { TestHal.ClearOrders(); }
+void setUp(void) {
+  TestHal.ClearOrders();
+}
 void tearDown(void) {}
 
 // ---------------- Test helpers tests
 void Expect_bitread_to_read_each_bit_separately() {
-
   std::string message = "";
 
   uint8_t value = 0;
@@ -108,9 +109,8 @@ void Expect_bitread_to_read_each_bit_separately() {
                               message.c_str());
   }
 
-  value = 1; // 0b00000001
+  value = 1;  // 0b00000001
   for (uint8_t positionOfOne = 0; positionOfOne < 8; ++positionOfOne) {
-
     for (uint8_t bitIndex = 0; bitIndex < 8; ++bitIndex) {
       message = "Failed when 1 is at index " + std::to_string(positionOfOne) +
                 ", for bit " + std::to_string(bitIndex);
@@ -122,7 +122,7 @@ void Expect_bitread_to_read_each_bit_separately() {
                                   message.c_str());
       }
     }
-    value <<= 1; // 0b00000010
+    value <<= 1;  // 0b00000010
   }
 }
 
@@ -150,21 +150,20 @@ void Expect_nibbles_to_be_sent_lsb_first() {
   oregonv3.SendData(&value, 1);
 
   unsigned char expectedOrders[8 * OregonV3::ORDERS_COUNT_FOR_A_BIT] = {
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'L', 'D', 'H', 'P', 'L', 'D', // 1
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'H', 'D', 'L', 'P', 'H', 'D', // 0
-      'H', 'D', 'L', 'P', 'H', 'D'  // 0
+      'H', 'D', 'L', 'P', 'H', 'D',  // 0
+      'L', 'D', 'H', 'P', 'L', 'D',  // 1
+      'H', 'D', 'L', 'P', 'H', 'D',  // 0
+      'H', 'D', 'L', 'P', 'H', 'D',  // 0
+      'L', 'D', 'H', 'P', 'L', 'D',  // 1
+      'H', 'D', 'L', 'P', 'H', 'D',  // 0
+      'H', 'D', 'L', 'P', 'H', 'D',  // 0
+      'H', 'D', 'L', 'P', 'H', 'D'   // 0
   };
   unsigned char *actualOrdersForOneByte = TestHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expectedOrders, actualOrdersForOneByte,
                                8 * OregonV3::ORDERS_COUNT_FOR_A_BIT);
 }
 void Expect_messages_to_have_preamble_and_postamble() {
-
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
@@ -209,7 +208,6 @@ void Expect_right_positive_temperature_encoding()
 }
 void Expect_right_negative_temperature_encoding() {
   {
-
     // clang-format off
     unsigned char byte4 = 5 << 4; // 0x50
                   byte4 |= 7;     // 0x57
@@ -229,7 +227,6 @@ void Expect_right_negative_temperature_encoding() {
         "Failed with negative temp. with dozen");
   }
   {
-
     // clang-format off
     unsigned char byte4 = 4 << 4; // 0x40
                   byte4 |= 8;     // 0x48
@@ -250,15 +247,14 @@ void Expect_right_negative_temperature_encoding() {
   }
 }
 void Expect_right_pressure_encoding() {
-
   const int actualPressureInHPa = 1200;
-  const int pressureScalingValue = 795; // //OregonV3::PRESSURE_SCALING_VALUE;
+  const int pressureScalingValue = 795;  // //OregonV3::PRESSURE_SCALING_VALUE;
   uint16_t pressureValue =
-      (uint16_t)(actualPressureInHPa - pressureScalingValue); // 405, 0x195
+      (uint16_t)(actualPressureInHPa - pressureScalingValue);  // 405, 0x195
 
   uint8_t byte7 = 0x05;
   uint8_t byte8 = 0x91;
-  uint8_t byte9 = 0xC0; // sunny
+  uint8_t byte9 = 0xC0;  // sunny
 
   uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
       0, 0, 0, 0, 0, 0, 0, byte7, byte8, byte9, 0};
@@ -274,7 +270,6 @@ void Expect_right_pressure_encoding() {
                                        "Failed with possible pressure value");
 }
 void Expect_right_humidity_encoding() {
-
   uint8_t byte6 = 0x25;
 
   uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0,     0, 0, 0, 0, 0,
@@ -288,7 +283,6 @@ void Expect_right_humidity_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 void Expect_right_channel_encoding() {
-
   struct Given {
     const char *label;
     unsigned char channel;
@@ -316,7 +310,6 @@ void Expect_right_channel_encoding() {
   givens.push_back(Given("channel 3", 3, msg3));
 
   for (auto const given : givens) {
-
     OregonV3 oregonv3(&TestHal);
 
     oregonv3.SetChannel(given.channel);
@@ -328,7 +321,6 @@ void Expect_right_channel_encoding() {
   }
 }
 void Expect_right_rolling_code_encoding() {
-
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
   //
@@ -345,7 +337,6 @@ void Expect_right_rolling_code_encoding() {
                                OregonV3::MESSAGE_SIZE_IN_BYTES);
 }
 void Expect_right_battery_ok_encoding() {
-
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
   //                            4
@@ -359,10 +350,9 @@ void Expect_right_battery_ok_encoding() {
   uint8_t thirdByte = actualMessage[3];
 
   TEST_ASSERT_EQUAL_HEX8_MESSAGE(0b00000000, (thirdByte & 0x00000100),
-                           "Testing battery ok flag");
+                                 "Testing battery ok flag");
 }
 void Expect_right_low_battery_encoding() {
-
   //  byte:      0    1    2    3    4     5      6      7      8      9
   // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
   //                            4
@@ -375,8 +365,7 @@ void Expect_right_low_battery_encoding() {
   uint8_t thirdByte = actualMessage[3];
 
   TEST_ASSERT_EQUAL_HEX8_MESSAGE(0x04, (thirdByte & 0x04),
-                           "Testing battery low flag");
-
+                                 "Testing battery low flag");
 }
 void Expect_temperature_set_to_change_message_status() {
   OregonV3 oregonv3(&TestHal);
@@ -465,7 +454,6 @@ void Expect_pressure_set_to_change_sensor_type() {
                                        "Expect BTHR918 (0x5A5D) with pressure");
 }
 void Expect_sample_message_to_be_well_encoded() {
-
   // nibbles 0..3 are sensor ID. All measurement, shall be 0x5A, 0x5D
   // nibble 4 is channel 3 (1 << (3-1))
   // nibbles 5 and 6 are rolling code, 0x85
@@ -520,7 +508,6 @@ void Expect_sample_message_to_be_well_encoded() {
   TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 void Expect_implementation_follows_samples_1() {
-
   /*
 
   This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
@@ -561,7 +548,6 @@ void Expect_implementation_follows_samples_1() {
   TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
 }
 void Expect_implementation_follows_samples_2() {
-
   /*
   This sensor is set to channel 1 (1 << (1-1)) and has a rolling ID code of
   0x6B, and the battery low bit is not set in the flag nibble. Temperature

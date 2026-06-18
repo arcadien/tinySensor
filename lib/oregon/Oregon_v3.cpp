@@ -20,18 +20,19 @@ OregonV3::OregonV3(Hal *hal) : _hal(hal) {
   memset(message, 0, MESSAGE_SIZE_IN_BYTES);
 }
 
-const unsigned char *OregonV3::GetMessage() { return message; }
+const unsigned char *OregonV3::GetMessage() {
+  return message;
+}
 
 void OregonV3::SetBatteryLow(bool batteryIsLow) {
   if (batteryIsLow) {
-    message[3] |= (1 << 2); // set low status
+    message[3] |= (1 << 2);  // set low status
   } else {
-    message[3] &= 0xFB; // clear low status
+    message[3] &= 0xFB;  // clear low status
   }
 }
 
 void OregonV3::SetPressure(uint16_t pressure) {
-
   messageStatus |= 1 << 2;
 
   // prediction
@@ -85,9 +86,13 @@ void OregonV3::SendData(const uint8_t *data, uint8_t size) {
   }
 }
 
-void OregonV3::DelayHalfPeriod() { _hal->Delay512Us(); }
+void OregonV3::DelayHalfPeriod() {
+  _hal->Delay512Us();
+}
 
-void OregonV3::DelayPeriod() { _hal->Delay1024Us(); }
+void OregonV3::DelayPeriod() {
+  _hal->Delay1024Us();
+}
 
 void OregonV3::SendZero() {
   _hal->RadioGoHigh();
@@ -99,7 +104,8 @@ void OregonV3::SendZero() {
 }
 
 void OregonV3::SetChannel(uint8_t channel) {
-  if (channel < 1 || channel > 3) return;
+  if (channel < 1 || channel > 3)
+    return;
   message[2] |= 1 << (4 + (channel - 1));
 }
 
@@ -107,8 +113,8 @@ void OregonV3::SetChannel(uint8_t channel) {
  * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
  */
 void OregonV3::SetRollingCode(uint8_t rollingCode) {
-  message[2] |= (rollingCode & 0xf0) >> 4; // nibble 4
-  message[3] |= (rollingCode & 0x0f) << 4; // nibble 5
+  message[2] |= (rollingCode & 0xf0) >> 4;  // nibble 4
+  message[3] |= (rollingCode & 0x0f) << 4;  // nibble 5
 }
 
 void OregonV3::SendOne() {
@@ -130,7 +136,6 @@ void OregonV3::SetHumidity(uint8_t humidity) {
 }
 
 void OregonV3::SetTemperature(float temperature) {
-
   messageStatus |= 1;
   if (temperature < 0) {
     message[5] = 0x08;
@@ -140,7 +145,7 @@ void OregonV3::SetTemperature(float temperature) {
   // Determine decimal and float part
 
   // ex. for 27.4 degrees C
-  uint8_t tempIntegerPart = (uint8_t)temperature; // 27
+  uint8_t tempIntegerPart = (uint8_t)temperature;  // 27
 
   // (int)(27/10) = 2
   uint8_t temperatureDozen = (uint8_t)(tempIntegerPart / 10);
@@ -150,8 +155,8 @@ void OregonV3::SetTemperature(float temperature) {
       (float)((float)tempIntegerPart / 10.0 - (float)temperatureDozen) * 10.0);
 
   uint8_t temperatureDecimal = (uint8_t)round(
-      (float)(temperature - (float)tempIntegerPart) // 27.4 - 27 = 0.4
-      * 10                                          // 0.4 * 10 = 4
+      (float)(temperature - (float)tempIntegerPart)  // 27.4 - 27 = 0.4
+      * 10                                           // 0.4 * 10 = 4
   );
 
   message[4] |= (temperatureDecimal << 4);
@@ -193,11 +198,10 @@ void OregonV3::FinalizeMessage() {
   }
 }
 void OregonV3::Send() {
-
   // The specification document says that the SYNC must be sent.
   // With the RFLINK decoder, which is the reference for this library,
   // the SYNC is not needed.
-  
+
   FinalizeMessage();
 
   const uint8_t preamble[] = {PREAMBLE_BYTE1, PREAMBLE_BYTE2, PREAMBLE_BYTE3};

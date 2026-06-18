@@ -22,7 +22,6 @@
 #include <string.h>
 #include <unity.h>
 
-
 void tearDown() {}
 void setUp() {}
 
@@ -62,8 +61,8 @@ void Expected_filter_to_ignore_supernumerary_values() {
   AnalogFilter filter(0, 2);
   filter.Push(2);
   filter.Push(2);
-  filter.Push(3); // supernumerary
-  filter.Push(4); // supernumerary
+  filter.Push(3);  // supernumerary
+  filter.Push(4);  // supernumerary
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
 
@@ -91,7 +90,9 @@ int runUnityTests(void) {
 /**
  * For native dev-platform or for some embedded frameworks
  */
-int main(int, char **) { return runUnityTests(); }
+int main(int, char **) {
+  return runUnityTests();
+}
 
 /**
  * For Arduino framework
@@ -102,4 +103,7 @@ void setup() {
   //__delay_ms(2000);
 }
 
-void loop() { runUnityTests();UNITY_END(); }
+void loop() {
+  runUnityTests();
+  UNITY_END();
+}

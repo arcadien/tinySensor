@@ -1,0 +1,11 @@
+plan_files:
+  - .rbd/config.yml
+  - .rbd/plan-files.yml
+  - requirements/functional.md
+  - requirements/technical.md
+  - requirements/performance.md
+  - requirements/ui.md
+  - requirements/configuration.md
+  - requirements/platform.md
+  - audits/exclusions.yml
+  - docs/architecture.md

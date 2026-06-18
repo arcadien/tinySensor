@@ -26,3 +26,9 @@ flash.log
 
 # --- KiCAD cache ---
 hardware/kicad/fp-info-cache
+
+# --- RBD ephemeral push validation cache ---
+.rbd/.push-validated
+
+# --- RBD ephemeral push validation cache ---
+.rbd/.push-validated

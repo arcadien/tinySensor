@@ -1,0 +1,12 @@
+id_format:
+  categories: [FUNC, TECH, PERF, UI, CONF, PLAT]
+  levels: ["domain"]
+  example: "FUNC-OREGON-001"
+
+test_tagging:
+  language: cpp
+  framework: unity
+  convention: "// @req {id}"  # placed above the test function
+
+linter:
+  command: "find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror"

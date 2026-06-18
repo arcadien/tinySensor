@@ -28,10 +28,8 @@
  * nibbles 20..21  : checksum
  *
  */
-class OregonV3
-{
-
-public:
+class OregonV3 {
+ public:
   static const int ORDERS_COUNT_FOR_A_BIT = 6;
   static const uint8_t MESSAGE_SIZE_IN_BYTES = 11;
 
@@ -41,8 +39,7 @@ public:
 
   OregonV3(Hal *hal);
 
-  static bool BitRead(uint8_t value, uint8_t bit)
-  {
+  static bool BitRead(uint8_t value, uint8_t bit) {
     return (((value) >> (bit)) & 0x01);
   }
 
@@ -82,10 +79,10 @@ public:
   void SendData(const uint8_t *data, uint8_t size);
 
   const unsigned char *GetMessage();
-  
+
   void FinalizeMessage();
 
-private:
+ private:
   /*
    * bit 0 : temperature is set
    * bit 1 : humidity is set

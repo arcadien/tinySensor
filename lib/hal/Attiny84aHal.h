@@ -24,7 +24,7 @@
 #include <TinyI2CMaster.h>
 #endif
 class Attiny84aHal : public Hal {
-public:
+ public:
   Attiny84aHal();
 
   uint16_t GetRawBattery() override;

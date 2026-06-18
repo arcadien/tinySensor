@@ -7,8 +7,7 @@
  *
  */
 class Hal {
-
-public:
+ public:
   virtual void LedOn() = 0;
   virtual void LedOff() = 0;
 

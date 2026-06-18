@@ -23,16 +23,14 @@
 
 #ifdef AVR
 #include <TestHal.h>
-void Expect_I2C_can_be_configured()
-{
+void Expect_I2C_can_be_configured() {
   TestHal.Init();
   TEST_ASSERT_EQUAL(true, TestHal.I2CIsConfigured);
 }
 #else
 #include <TestHal.h>
 
-void Expect_I2C_can_be_configured()
-{
+void Expect_I2C_can_be_configured() {
   TestHal.I2CIsConfigured = false;
   TestHal.Init();
   TEST_ASSERT_EQUAL(true, TestHal.I2CIsConfigured);
@@ -42,8 +40,7 @@ void Expect_I2C_can_be_configured()
 void tearDown() {}
 void setUp() {}
 
-int main(int, char **)
-{
+int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(Expect_I2C_can_be_configured);
   return UNITY_END();

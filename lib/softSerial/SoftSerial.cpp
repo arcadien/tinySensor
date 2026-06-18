@@ -17,17 +17,16 @@ void SoftSerial::begin() {
 }
 
 void SoftSerial::print(uint8_t b) {
-
   uint8_t mask;
 
   _hal->SerialGoLow();
   _delay_us(BIT_PERIOD);
 
   for (mask = 0x01; mask; mask <<= 1) {
-    if (b & mask) {         // choose bit
-      _hal->SerialGoHigh(); // send 1
+    if (b & mask) {          // choose bit
+      _hal->SerialGoHigh();  // send 1
     } else {
-      _hal->SerialGoLow(); // send 0
+      _hal->SerialGoLow();  // send 0
     }
     _delay_us(BIT_PERIOD);
   }
@@ -37,15 +36,20 @@ void SoftSerial::print(uint8_t b) {
 }
 
 void SoftSerial::print(const char *s) {
-  while (*s)
-    print(*s++);
+  while (*s) print(*s++);
 }
 
-void SoftSerial::print(char c) { print((uint8_t)c); }
+void SoftSerial::print(char c) {
+  print((uint8_t)c);
+}
 
-void SoftSerial::print(int n) { print((long)n); }
+void SoftSerial::print(int n) {
+  print((long)n);
+}
 
-void SoftSerial::print(unsigned int n) { print((unsigned long)n); }
+void SoftSerial::print(unsigned int n) {
+  print((unsigned long)n);
+}
 
 void SoftSerial::print(long n) {
   if (n < 0) {
@@ -55,7 +59,9 @@ void SoftSerial::print(long n) {
   printNumber(n, 10);
 }
 
-void SoftSerial::print(unsigned long n) { printNumber(n, 10); }
+void SoftSerial::print(unsigned long n) {
+  printNumber(n, 10);
+}
 
 void SoftSerial::print(long n, int base) {
   if (base == 0)
@@ -109,7 +115,7 @@ void SoftSerial::println(long n, int base) {
 // Private Methods /////////////////////////////////////////////////////////////
 
 void SoftSerial::printNumber(unsigned long n, uint8_t base) {
-  unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
+  unsigned char buf[8 * sizeof(long)];  // Assumes 8-bit chars.
   unsigned long i = 0;
 
   if (n == 0) {

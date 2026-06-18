@@ -58,7 +58,13 @@ x10rf x10encoder(&hal, 2);
 #endif
 
 #define NOT_SET (-1000.0f)
-#define TRANSMIT_WITH_LED(code) do { hal.LedOn(); code; hal.LedOff(); hal.Delay30ms(); } while(0)
+#define TRANSMIT_WITH_LED(code) \
+  do {                          \
+    hal.LedOn();                \
+    code;                       \
+    hal.LedOff();               \
+    hal.Delay30ms();            \
+  } while (0)
 
 #if defined(USE_SERIAL_LOG)
 #include <SoftSerial.h>
@@ -77,7 +83,6 @@ static void SerialPrintInfo(const char *, uint16_t, const char *) {}
 #endif
 
 int main(void) {
-
   // Initialize hardware once at startup
   hal.Init();
 
@@ -135,8 +140,9 @@ int main(void) {
     lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
     SerialPrintInfo("Vbatt", batteryVoltageInMv, " mV");
     if (!lowBattery) {
-      TRANSMIT_WITH_LED(x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
-                                            ConversionTools::dec16ToHex(batteryVoltageInMv)));
+      TRANSMIT_WITH_LED(
+          x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
+                              ConversionTools::dec16ToHex(batteryVoltageInMv)));
     }
 #endif
 
@@ -147,8 +153,8 @@ int main(void) {
       uint16_t analogVoltage =
           hal.ConvertAnalogValueToMv(analogMeasurement, vccMv);
       SerialPrintInfo("Analog voltage", analogVoltage, " mV");
-      TRANSMIT_WITH_LED(x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00,
-                                            ConversionTools::dec16ToHex(analogVoltage)));
+      TRANSMIT_WITH_LED(x10encoder.RFXmeter(
+          ANALOG1_X10_ID, 0x00, ConversionTools::dec16ToHex(analogVoltage)));
     }
 #endif
 

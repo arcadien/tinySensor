@@ -29,7 +29,6 @@ void setUp() {}
 #include <avr/io.h>
 #include <Attiny84aHal.h>
 
-
 void Expect_led_can_switch_on() {
   Attiny84aHal hal;
   hal.LedOn();

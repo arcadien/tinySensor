@@ -19,4 +19,4 @@ uint16_t dec16ToHex(uint16_t input);
  */
 uint32_t dec32ToHex(uint32_t input);
 
-} // namespace ConversionTools
+}  // namespace ConversionTools

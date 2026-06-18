@@ -25,30 +25,39 @@ testing support.
 
 #define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
 #define BITWRITE(value, bit, bitvalue) \
-  do                                   \
-  {                                    \
+  do {                                 \
     if (bitvalue)                      \
       (value) |= (1 << (bit));         \
     else                               \
       (value) &= ~(1 << (bit));        \
   } while (0)
-#define NIBBLE_SUM(b) ((((b) & 0xF0) >> 4) + ((b) & 0xF))
+#define NIBBLE_SUM(b) ((((b)&0xF0) >> 4) + ((b)&0xF))
 
-#define PREAMBLE_LOW 4500  // Start silence (leader) = 4,5 ms
-#define PREAMBLE_HIGH 8960 // Start burst (leader) = 9ms
+#define PREAMBLE_LOW 4500   // Start silence (leader) = 4,5 ms
+#define PREAMBLE_HIGH 8960  // Start burst (leader) = 9ms
 
-#define X10_RF_BIT_LONG 1120 // Bit 1 gap length
-#define X10_RF_BIT_SHORT 560 // Bit 0 gap length
+#define X10_RF_BIT_LONG 1120  // Bit 1 gap length
+#define X10_RF_BIT_SHORT 560  // Bit 0 gap length
 
-#define X10_RF_GAP 40000 // Length between commands
+#define X10_RF_GAP 40000  // Length between commands
 
 #if defined(AVR)
 #include <util/delay.h>
-static inline void x10_preamble_low() { _delay_us(PREAMBLE_LOW); }
-static inline void x10_preamble_high() { _delay_us(PREAMBLE_HIGH); }
-static inline void x10_cooldown_gap() { _delay_us(X10_RF_GAP); }
-static inline void x10_short() { _delay_us(X10_RF_BIT_SHORT); }
-static inline void x10_long() { _delay_us(X10_RF_BIT_LONG); }
+static inline void x10_preamble_low() {
+  _delay_us(PREAMBLE_LOW);
+}
+static inline void x10_preamble_high() {
+  _delay_us(PREAMBLE_HIGH);
+}
+static inline void x10_cooldown_gap() {
+  _delay_us(X10_RF_GAP);
+}
+static inline void x10_short() {
+  _delay_us(X10_RF_BIT_SHORT);
+}
+static inline void x10_long() {
+  _delay_us(X10_RF_BIT_LONG);
+}
 #else
 static void x10_preamble_low() {}
 static void x10_preamble_high() {}
@@ -60,7 +69,6 @@ static void x10_cooldown_gap() {}
 void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
   _hal->LedOn();
   for (int i = 0; i < _rf_repeats; i++) {
-    
     // preamble
     _hal->RadioGoHigh();
     x10_preamble_high();
@@ -96,16 +104,18 @@ x10rf::x10rf(Hal *hal, uint8_t rf_repeats) {
   _hal = hal;
 }
 
-uint8_t *x10rf::getMessage() { return _message; }
+uint8_t *x10rf::getMessage() {
+  return _message;
+}
 
 static void clearMessageBuffer(uint8_t *messageBuffer) {
   memset(messageBuffer, 0, 6);
 }
 
 static void setMeterValue(uint8_t *buffer, uint32_t value) {
-   buffer[4] = (uint8_t)((value >> 16) & 0xff);
-   buffer[2] = (uint8_t)((value >> 8) & 0xff);
-   buffer[3] = (uint8_t)(value & 0xff);
+  buffer[4] = (uint8_t)((value >> 16) & 0xff);
+  buffer[2] = (uint8_t)((value >> 8) & 0xff);
+  buffer[3] = (uint8_t)(value & 0xff);
 }
 
 void x10rf::RFXmeter(uint8_t rfxm_address, uint8_t rfxm_packet_type,
@@ -117,91 +127,91 @@ void x10rf::RFXmeter(uint8_t rfxm_address, uint8_t rfxm_packet_type,
   _message[1] = (~_message[0] & 0xF0) + (_message[0] & 0xF);
 
   if (rfxm_value > 0xFFFFFF) {
-    rfxm_value = 0; // We only have 3 byte for data. Is overflowed set to 0
+    rfxm_value = 0;  // We only have 3 byte for data. Is overflowed set to 0
     // Packet type goed into MSB nibble of byte 5. Max 15 (B1111) allowed
   }
 
   // Use switch case to filter invalid data types
   switch (rfxm_packet_type) {
-  case 0x00: // Normal. Put counter values in byte 4,2 and 3
-    setMeterValue(_message, rfxm_value);
-    break;
-  case 0x01: // New interval time set. Byte 2 should be filled with interval
-    switch (rfxm_value) {
-    case 0x01:
-      break; // 30sec
-    case 0x02:
-      break; // 01min
+    case 0x00:  // Normal. Put counter values in byte 4,2 and 3
+      setMeterValue(_message, rfxm_value);
+      break;
+    case 0x01:  // New interval time set. Byte 2 should be filled with interval
+      switch (rfxm_value) {
+        case 0x01:
+          break;  // 30sec
+        case 0x02:
+          break;  // 01min
+        case 0x04:
+          break;  // 06min (RFXpower = 05min)
+        case 0x08:
+          break;  // 12min (RFXpower = 10min)
+        case 0x10:
+          break;  // 15min
+        case 0x20:
+          break;  // 30min
+        case 0x40:
+          break;  // 45min
+        case 0x80:
+          break;  // 60min
+        default:
+          rfxm_value = 0x01;  // Set to 30 sec if no valid option is found
+      }
+      _message[2] = rfxm_value;
+      break;
+    case 0x02:  // calibrate value in <counter value> in µsec.
+      setMeterValue(_message, rfxm_value);
+      break;
+    case 0x03:
+      break;  // new address set
     case 0x04:
-      break; // 06min (RFXpower = 05min)
-    case 0x08:
-      break; // 12min (RFXpower = 10min)
-    case 0x10:
-      break; // 15min
-    case 0x20:
-      break; // 30min
-    case 0x40:
-      break; // 45min
-    case 0x80:
-      break; // 60min
-    default:
-      rfxm_value = 0x01; // Set to 30 sec if no valid option is found
-    }
-    _message[2] = rfxm_value;
-    break;
-  case 0x02: // calibrate value in <counter value> in µsec.
-    setMeterValue(_message, rfxm_value);
-    break;
-  case 0x03:
-    break; // new address set
-  case 0x04:
-    break;   // counter value reset to zero
-  case 0x0B: // counter value set
-    setMeterValue(_message, rfxm_value);
-    break;
-  case 0x0C:
-    break; // set interval mode within 5 seconds
-  case 0x0D:
-    break; // calibration mode within 5 seconds
-  case 0x0E:
-    break;   // set address mode within 5 seconds
-  case 0x0F: // identification packet (byte 2 = address, byte 3 = interval)
-    switch (rfxm_value) {
-    case 0x01:
-      break; // 30sec
-    case 0x02:
-      break; // 01min
-    case 0x04:
-      break; // 06min (RFXpower = 05min)
-    case 0x08:
-      break; // 12min (RFXpower = 10min)
-    case 0x10:
-      break; // 15min
-    case 0x20:
-      break; // 30min
-    case 0x40:
-      break; // 45min
-    case 0x80:
-      break; // 60min
-    default:
-      rfxm_value = 0x01; // Set to 30 sec if no valid option is found
-    }
-    _message[2] = rfxm_address;
-    _message[3] = rfxm_value;
-    break;
-  default: // Unknown packet type. Set packet type to zero and set counter to
-           // rfxm_value
-    rfxm_packet_type = 0;
-    setMeterValue(_message, rfxm_value);
+      break;    // counter value reset to zero
+    case 0x0B:  // counter value set
+      setMeterValue(_message, rfxm_value);
+      break;
+    case 0x0C:
+      break;  // set interval mode within 5 seconds
+    case 0x0D:
+      break;  // calibration mode within 5 seconds
+    case 0x0E:
+      break;    // set address mode within 5 seconds
+    case 0x0F:  // identification packet (byte 2 = address, byte 3 = interval)
+      switch (rfxm_value) {
+        case 0x01:
+          break;  // 30sec
+        case 0x02:
+          break;  // 01min
+        case 0x04:
+          break;  // 06min (RFXpower = 05min)
+        case 0x08:
+          break;  // 12min (RFXpower = 10min)
+        case 0x10:
+          break;  // 15min
+        case 0x20:
+          break;  // 30min
+        case 0x40:
+          break;  // 45min
+        case 0x80:
+          break;  // 60min
+        default:
+          rfxm_value = 0x01;  // Set to 30 sec if no valid option is found
+      }
+      _message[2] = rfxm_address;
+      _message[3] = rfxm_value;
+      break;
+    default:  // Unknown packet type. Set packet type to zero and set counter to
+              // rfxm_value
+      rfxm_packet_type = 0;
+      setMeterValue(_message, rfxm_value);
   }
   _message[5] =
-      (rfxm_packet_type << 4); // Packet type goes into byte 5's upper nibble.
+      (rfxm_packet_type << 4);  // Packet type goes into byte 5's upper nibble.
   // Calculate parity which
   uint8_t parity = ~(NIBBLE_SUM(_message[0]) + NIBBLE_SUM(_message[1]) +
                      NIBBLE_SUM(_message[2]) + NIBBLE_SUM(_message[3]) +
                      NIBBLE_SUM(_message[4]) + ((_message[5] & 0xF0) >> 4));
   _message[5] = (_message[5] & 0xf0) + (parity & 0X0F);
-  SendCommand(_message, 6); // Send byte to be broadcasted
+  SendCommand(_message, 6);  // Send byte to be broadcasted
 }
 
 void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
@@ -209,38 +219,38 @@ void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
   clearMessageBuffer(_message);
   _message[0] = (rfxs_address << 2);
   switch (rfxs_type) {
-  case 't':
-    break;  // Temperature (default)
-  case 'a': // A/D
-    _message[0] = _message[0] + 0B01;
-    break;
-  case 'm': // message
-    _message[0] = _message[0] + 0B11;
-    break;
-  case 'v': // voltage
-    _message[0] = _message[0] + 0B10;
-    break;
+    case 't':
+      break;   // Temperature (default)
+    case 'a':  // A/D
+      _message[0] = _message[0] + 0B01;
+      break;
+    case 'm':  // message
+      _message[0] = _message[0] + 0B11;
+      break;
+    case 'v':  // voltage
+      _message[0] = _message[0] + 0B10;
+      break;
   }
   _message[1] =
       (~_message[0] & 0xF0) +
       (_message[0] &
-       0xF); // Calculate byte1 (byte 1 complement MSB nibble of byte0)
+       0xF);  // Calculate byte1 (byte 1 complement MSB nibble of byte0)
   _message[2] = rfxs_value;
   switch (rfxs_packet_type) {
-  case 't': // temperature sensor (MSB = 0.5 degrees bit off)
-    _message[3] = 0x00;
-    break;
-  case 'T': // temperature sensor (MSB = 0.5 degrees bit on)
-    _message[3] = 0x80;
-    break;
-  case 'h': // RFU (humidity sensor)
-    _message[3] = 0x20;
-    break;
-  case 'p': // RFU (pressure sensor, value/10)
-    _message[3] = 0x40;
-    break;
-  default:
-    _message[3] = 0x00;
+    case 't':  // temperature sensor (MSB = 0.5 degrees bit off)
+      _message[3] = 0x00;
+      break;
+    case 'T':  // temperature sensor (MSB = 0.5 degrees bit on)
+      _message[3] = 0x80;
+      break;
+    case 'h':  // RFU (humidity sensor)
+      _message[3] = 0x20;
+      break;
+    case 'p':  // RFU (pressure sensor, value/10)
+      _message[3] = 0x40;
+      break;
+    default:
+      _message[3] = 0x00;
   }
   uint8_t parity = ~(NIBBLE_SUM(_message[0]) + NIBBLE_SUM(_message[1]) +
                      NIBBLE_SUM(_message[2]) + ((_message[3] & 0xF0) >> 4));
@@ -251,25 +261,24 @@ void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
 void x10rf::x10Switch(char house_code, uint8_t unit_code, uint8_t command) {
   clearMessageBuffer(_message);
   // House code lookup table: indices a-p map to nibble values
-  static const uint8_t house_codes[] = {0b0110, 0b0111, 0b0100, 0b0101, 0b1000, 0b1001, 0b1010, 0b1011, 0b1110, 0b1111, 0b1100, 0b1101, 0b0000, 0b0001, 0b0010, 0b0011};
+  static const uint8_t house_codes[] = {
+      0b0110, 0b0111, 0b0100, 0b0101, 0b1000, 0b1001, 0b1010, 0b1011,
+      0b1110, 0b1111, 0b1100, 0b1101, 0b0000, 0b0001, 0b0010, 0b0011};
   char lower = tolower(house_code);
-  if (lower >= 'a' && lower <= 'p')
-  {
+  if (lower >= 'a' && lower <= 'p') {
     _message[0] = house_codes[lower - 'a'];
-  }
-  else
-  {
+  } else {
     _message[0] = 0;
   }
-  _message[0] = _message[0] << 4; // House code goes into the upper nibble
+  _message[0] = _message[0] << 4;  // House code goes into the upper nibble
 
   switch (command) {
-  case ON:
-  case OFF:
-  case BRIGHT:
-  case DIM:
-    _message[2] = command;
-    break;
+    case ON:
+    case OFF:
+    case BRIGHT:
+    case DIM:
+      _message[2] = command;
+      break;
   }
   // Set unit number
   unit_code = unit_code - 1;
@@ -286,9 +295,9 @@ void x10rf::x10Switch(char house_code, uint8_t unit_code, uint8_t command) {
 uint8_t x10rf::x10SecurityParity(uint8_t *data) {
   uint8_t parity =
       data[0] ^ data[1] ^ data[2] ^ data[3] ^ data[4] ^ (data[5] & 0x80);
-  parity = (parity >> 4) ^ (parity & 0xf); // fold to nibble
-  parity = (parity >> 2) ^ (parity & 0x3); // fold to 2 bits
-  parity = (parity >> 1) ^ (parity & 0x1); // fold to 1 bit
+  parity = (parity >> 4) ^ (parity & 0xf);  // fold to nibble
+  parity = (parity >> 2) ^ (parity & 0x3);  // fold to 2 bits
+  parity = (parity >> 1) ^ (parity & 0x1);  // fold to 1 bit
   return parity;
 }
 

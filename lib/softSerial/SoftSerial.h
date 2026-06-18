@@ -27,11 +27,11 @@
  * Ouput only, baudrate fixed to 9600. Does not use Arduino API but HAL
  */
 class SoftSerial {
-private:
+ private:
   Hal *_hal;
   void printNumber(unsigned long, uint8_t);
 
-public:
+ public:
   SoftSerial(Hal *hal);
   void begin();
   void print(char);

@@ -7,20 +7,21 @@
  *
  */
 class AnalogFilter {
-
-private:
+ private:
   uint8_t exclusion;
   uint8_t samples;
   uint8_t actualValuesCount;
   uint16_t accumulator;
 
-public:
+ public:
   /**
    * Create a filter able to accumulate up to 'samples' values (max 255), and
    * ignore 'exclusion' first values
    */
   AnalogFilter(uint8_t exclusion, uint8_t samples)
-      : exclusion(exclusion), samples(samples), actualValuesCount(0),
+      : exclusion(exclusion),
+        samples(samples),
+        actualValuesCount(0),
         accumulator(0) {}
 
   /**

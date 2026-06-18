@@ -54,7 +54,7 @@ static void UseLessPowerAsPossible() {
   PRR |= _BV(PRADC);
 
   // better, but not easy to invert for VCC sensing
-  DIDR0 |= _BV(ADC2D) | _BV(ADC1D); // digital buffers
+  DIDR0 |= _BV(ADC2D) | _BV(ADC1D);  // digital buffers
 
   // deactivate brownout detection during sleep (p.36)
   MCUCR |= _BV(BODS) | _BV(BODSE);
@@ -70,7 +70,7 @@ static void UseLessPowerAsPossible() {
  * It is better to use a multiple of 8 as value.
  */
 void sleep(uint16_t s) {
-  s >>= 3; // or s/8
+  s >>= 3;  // or s/8
   if (s == 0)
     s = 1;
 
@@ -114,7 +114,6 @@ void sleep(uint16_t s) {
 }
 
 Attiny84aHal::Attiny84aHal() {
-
   UseLessPowerAsPossible();
 
   // Watchdog setup - 8s sleep time
@@ -131,37 +130,62 @@ Attiny84aHal::Attiny84aHal() {
   DDRA |= _BV(DIGITAL_OUT);
 }
 
-void Attiny84aHal::PowerOnSensors() { PORTA |= _BV(SENSOR_VCC); }
+void Attiny84aHal::PowerOnSensors() {
+  PORTA |= _BV(SENSOR_VCC);
+}
 
-void Attiny84aHal::PowerOffSensors() { PORTA &= ~_BV(SENSOR_VCC); }
+void Attiny84aHal::PowerOffSensors() {
+  PORTA &= ~_BV(SENSOR_VCC);
+}
 
-void inline Attiny84aHal::LedOn() { PORTB |= (1 << LED_PIN); }
+void inline Attiny84aHal::LedOn() {
+  PORTB |= (1 << LED_PIN);
+}
 
-void Attiny84aHal::LedOff() { PORTB &= ~(1 << LED_PIN); }
+void Attiny84aHal::LedOff() {
+  PORTB &= ~(1 << LED_PIN);
+}
 
-void Attiny84aHal::RadioGoLow() { PORTB &= ~(1 << TX_RADIO_PIN); }
+void Attiny84aHal::RadioGoLow() {
+  PORTB &= ~(1 << TX_RADIO_PIN);
+}
 
-void Attiny84aHal::RadioGoHigh() { PORTB |= (1 << TX_RADIO_PIN); }
+void Attiny84aHal::RadioGoHigh() {
+  PORTB |= (1 << TX_RADIO_PIN);
+}
 
-inline void Attiny84aHal::SerialGoHigh() { PORTA |= (1 << DIGITAL_OUT); };
+inline void Attiny84aHal::SerialGoHigh() {
+  PORTA |= (1 << DIGITAL_OUT);
+};
 
-inline void Attiny84aHal::SerialGoLow() { PORTA &= ~(1 << DIGITAL_OUT); };
+inline void Attiny84aHal::SerialGoLow() {
+  PORTA &= ~(1 << DIGITAL_OUT);
+};
 
-void Attiny84aHal::Delay30ms() { _delay_ms(30); }
-void Attiny84aHal::Delay400Us() { _delay_us(400); }
-void Attiny84aHal::Delay512Us() { _delay_us(512); }
-void Attiny84aHal::Delay1024Us() { _delay_us(1024); }
-void Attiny84aHal::Delay1s() { _delay_ms(1000); }
+void Attiny84aHal::Delay30ms() {
+  _delay_ms(30);
+}
+void Attiny84aHal::Delay400Us() {
+  _delay_us(400);
+}
+void Attiny84aHal::Delay512Us() {
+  _delay_us(512);
+}
+void Attiny84aHal::Delay1024Us() {
+  _delay_us(1024);
+}
+void Attiny84aHal::Delay1s() {
+  _delay_ms(1000);
+}
 
 static uint16_t AdcRead(Hal &hal, uint8_t admux) {
-
   PRR &= ~_BV(PRADC);
   ADCSRA |= _BV(ADEN);
   ADMUX = admux;
   _delay_ms(2);
 
-    static const uint8_t IGNORED_SAMPLES = 2;
-    static const uint8_t COUNTED_SAMPLES = 8;
+  static const uint8_t IGNORED_SAMPLES = 2;
+  static const uint8_t COUNTED_SAMPLES = 8;
   uint32_t accumulator = 0;
   uint8_t loopSamples = 0;
 
@@ -182,11 +206,11 @@ static uint16_t AdcRead(Hal &hal, uint8_t admux) {
 }
 
 uint16_t Attiny84aHal::GetRawBattery(void) {
-  return AdcRead(*this, _BV(MUX0)); // PA1
+  return AdcRead(*this, _BV(MUX0));  // PA1
 }
 
 uint16_t Attiny84aHal::GetRawAnalogSensor() {
-  return AdcRead(*this, 0x00); // PA0
+  return AdcRead(*this, 0x00);  // PA0
 }
 
 uint16_t Attiny84aHal::GetRawInternal11Ref(void) {
@@ -194,6 +218,8 @@ uint16_t Attiny84aHal::GetRawInternal11Ref(void) {
   return AdcRead(*this, _BV(MUX0) | _BV(MUX5));
 }
 
-void Attiny84aHal::Hibernate(uint16_t seconds) { sleep(seconds); }
+void Attiny84aHal::Hibernate(uint16_t seconds) {
+  sleep(seconds);
+}
 
 #endif

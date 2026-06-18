@@ -20,15 +20,12 @@
  *
  */
 class LacrosseWS7000 {
-
-public:
+ public:
   enum Address : uint8_t { ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN };
 
   class NumericalValueSplitter {
-
-  public:
+   public:
     struct Result {
-
       Result()
           : isNegative(false), hundreds(0), dozens(0), units(0), decimals(0) {}
 
@@ -43,7 +40,6 @@ public:
     };
 
     static void Split(float input, Result *result) {
-
       result->isNegative = (input < 0);
       input = abs(input);
 
@@ -73,7 +69,7 @@ public:
   void SendData(const uint8_t *data, uint8_t size);
   const unsigned char *GetMessage();
 
-private:
+ private:
   /**
    * 800µs pulse, 400µs pause
    */

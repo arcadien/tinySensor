@@ -45,12 +45,13 @@ static char buffer[512];
 #define ORDERS_PER_BIT 5
 #define ORDERS_PER_NIBBLE (4 * ORDERS_PER_BIT)
 
-void setUp(void) { TestHal.ClearOrders(); }
+void setUp(void) {
+  TestHal.ClearOrders();
+}
 void tearDown(void) {}
 
 // ----------------- Lacrosse WS7000 tests
 void Expect_good_numerical_split() {
-
   struct TestData {
     float givenValue;
     LacrosseWS7000::NumericalValueSplitter::Result expected;
@@ -99,7 +100,6 @@ void Expect_good_numerical_split() {
 }
 
 void Expect_preamble_is_10_times_0() {
-
   static const uint8_t PREAMBLE_IS_TEN_ZEROS[] = {
       BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO,
       BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO};
@@ -112,7 +112,6 @@ void Expect_preamble_is_10_times_0() {
 }
 
 void Expect_good_sensor_type_emission() {
-
   struct TestData {
     bool givenHasLux;
     bool givenHasTemperature;
@@ -167,7 +166,6 @@ void Expect_good_sensor_type_emission() {
 }
 
 void Expect_good_sensor_address_emission() {
-
   // Note: address is sent along with temperature sign flag
 
   struct TestData {
@@ -221,7 +219,6 @@ void Expect_good_sensor_address_emission() {
 }
 
 void Expect_good_temperature_emission() {
-
   struct TempTestData {
     float givenTemperature;
     uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 3) + (3 * ORDERS_PER_BIT)];
@@ -309,7 +306,6 @@ void Expect_good_temperature_emission() {
 }
 
 void Expect_good_humidity_emission() {
-
   struct TempTestData {
     uint8_t givenHumidity;
     uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 3) + (3 * ORDERS_PER_BIT)];
@@ -357,7 +353,7 @@ void Expect_good_humidity_emission() {
     TempTestData testData = testDatas[testCounter];
     TestHal.ClearOrders();
     LacrosseWS7000 lacrosse(&TestHal);
-    lacrosse.SetTemperature(42); // unchecked
+    lacrosse.SetTemperature(42);  // unchecked
     lacrosse.SetHumidity(testData.givenHumidity);
     lacrosse.Send();
 
@@ -383,7 +379,6 @@ void Expect_good_humidity_emission() {
 }
 
 void Expect_good_pressure_emission() {
-
   struct TempTestData {
     float givenPressure;
     uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 4) + (4 * ORDERS_PER_BIT)];
@@ -426,8 +421,8 @@ void Expect_good_pressure_emission() {
     TempTestData testData = testDatas[testCounter];
     TestHal.ClearOrders();
     LacrosseWS7000 lacrosse(&TestHal);
-    lacrosse.SetTemperature(42); // unchecked
-    lacrosse.SetHumidity(42);    // unchecked
+    lacrosse.SetTemperature(42);  // unchecked
+    lacrosse.SetHumidity(42);     // unchecked
     lacrosse.SetPressure(testData.givenPressure);
     lacrosse.Send();
 
@@ -482,7 +477,8 @@ void Expect_encoding_of_simple_temperature_message() {
   lacrosse.SetTemperature(-12.7);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders,
+                               sizeof(EXPECTED_ORDERS));
 }
 
 void Expect_encoding_of_simple_temperature_and_humi_message() {
@@ -511,7 +507,8 @@ void Expect_encoding_of_simple_temperature_and_humi_message() {
   lacrosse.SetHumidity(61);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders,
+                               sizeof(EXPECTED_ORDERS));
 }
 
 void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
@@ -551,7 +548,8 @@ void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
   lacrosse.SetPressure(994.8);
   lacrosse.Send();
   uint8_t *actualOrders = TestHal.GetOrders();
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders, sizeof(EXPECTED_ORDERS));
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(EXPECTED_ORDERS, actualOrders,
+                               sizeof(EXPECTED_ORDERS));
 }
 
 void Expect_encoding_of_simple_luminosity_message() {

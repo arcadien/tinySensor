@@ -64,11 +64,10 @@ typedef struct X10MeterTestData {
 } X10MeterTestData;
 
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#define bitWrite(value, bit, bitvalue)                                         \
+#define bitWrite(value, bit, bitvalue) \
   (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
 void Expect_x10_switch_right_encoding() {
-
   char buffer[256];
   uint8_t testCount = 1;
 
@@ -93,7 +92,6 @@ void Expect_x10_switch_right_encoding() {
 }
 
 void Expect_x10_security_right_parity() {
-
   char buffer[256];
   uint8_t testCount = 5;
   X10SecurityTestData testDatas[] = {{0x40, 0x02, 0x44, 0x01},
@@ -115,7 +113,6 @@ void Expect_x10_security_right_parity() {
 }
 
 void Expect_x10_meter_right_encoding() {
-
   char buffer[256];
 
   // clang-format off
@@ -183,7 +180,9 @@ void Expect_x10_sensor_right_encoding() {
   }
 }
 
-void setUp(void) { TestHal.ClearOrders(); }
+void setUp(void) {
+  TestHal.ClearOrders();
+}
 void tearDown(void) {}
 
 int main(int, char **) {

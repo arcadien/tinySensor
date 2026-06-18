@@ -5,7 +5,11 @@
 #define PRESSURE_AVAILABLE 0x04
 #define LUMINOSITY_AVAILABLE 0x08
 #define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
-#define UPDATE_CHECKSUM(nibble) do { checkXor ^= (nibble); checkSum += (nibble); } while(0)
+#define UPDATE_CHECKSUM(nibble) \
+  do {                          \
+    checkXor ^= (nibble);       \
+    checkSum += (nibble);       \
+  } while (0)
 
 LacrosseWS7000::LacrosseWS7000(Hal *hal) : _hal(hal), availableData(0) {}
 
@@ -15,14 +19,17 @@ void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
 
 void LacrosseWS7000::SetHumidity(float humidity) {
   availableData |= HUMIDITY_AVAILABLE;
-  if (humidity >= 100) humidity = 99.9;
+  if (humidity >= 100)
+    humidity = 99.9;
   NumericalValueSplitter::Split(humidity, &this->humidity);
 }
 
 void LacrosseWS7000::SetPressure(float pressure) {
   availableData |= PRESSURE_AVAILABLE;
-  if (pressure < 850) pressure = 850;
-  if (pressure > 1100) pressure = 1100;
+  if (pressure < 850)
+    pressure = 850;
+  if (pressure > 1100)
+    pressure = 1100;
   pressure -= 200;
   NumericalValueSplitter::Split(pressure, &this->pressure);
 }
@@ -34,8 +41,10 @@ void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
 
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
-  if (temperature > 99) temperature = 99;
-  if (temperature < -99) temperature = -99;
+  if (temperature > 99)
+    temperature = 99;
+  if (temperature < -99)
+    temperature = -99;
   NumericalValueSplitter::Split(temperature, &this->temperature);
 }
 
@@ -71,10 +80,14 @@ void LacrosseWS7000::SendPreamble() {
 
 void LacrosseWS7000::SendType(uint8_t *nibbles) {
   uint8_t nibble = 0x0F;
-  if (1 == availableData) nibble = 0x00;
-  else if (3 == availableData) nibble = 0x01;
-  else if (7 == availableData) nibble = 0x04;
-  else if (8 == availableData) nibble = 0x05;
+  if (1 == availableData)
+    nibble = 0x00;
+  else if (3 == availableData)
+    nibble = 0x01;
+  else if (7 == availableData)
+    nibble = 0x04;
+  else if (8 == availableData)
+    nibble = 0x05;
   SendNibble(nibble);
   nibbles[0] = nibble;
 }
@@ -105,7 +118,7 @@ void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
   SendNibble(0x00);
   SendNibble(0x00);
   SendNibble(0x00);
-  
+
   nibbles[0] = luminosity.units;
   nibbles[1] = luminosity.dozens;
   nibbles[2] = luminosity.hundreds;
@@ -135,7 +148,8 @@ void LacrosseWS7000::SendPressure(uint8_t *nibbles) {
   nibbles[3] = pressure.decimals;
 }
 
-static void UpdateChecks(uint8_t &checkXor, uint8_t &checkSum, const uint8_t *nibbles, uint8_t count) {
+static void UpdateChecks(uint8_t &checkXor, uint8_t &checkSum,
+                         const uint8_t *nibbles, uint8_t count) {
   for (uint8_t i = 0; i < count; i++) {
     UPDATE_CHECKSUM(nibbles[i]);
   }

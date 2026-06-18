@@ -40,4 +40,4 @@ uint32_t dec32ToHex(uint32_t input) {
   }
   return result;
 }
-} // namespace ConversionTools
+}  // namespace ConversionTools
