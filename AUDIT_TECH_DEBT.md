@@ -85,10 +85,11 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **I3 — Requalifié**. Audit revisité : le ZIP KiCAD n'était pas tracké git (sur disque uniquement) ; `*.zip` déjà couvert par `.gitignore`. Non-issue, comme I1. → **Résolu (par prévention)**.
 - **I2 (25) — Chemins absolus paramétrés**. `Makefile` : `PIO ?= $(HOME)/.platformio/penv/bin/pio`, `TARGET ?= S_03`, `cp` remplace `copy`. `scripts/flash_tinySensor` : `PIO_HOME` et `PROJECT_DIR` avec défauts portables (`${HOME}/.platformio` et `$(dirname $0)/..`). → **Résolu**.
 - **D3 (24) + D4 (24) — Dépendances PlatformIO épinglées sur SHA**. Les 5 dépendances (BH1750, tiny-i2c, Unity, avr-ds18b20, SparkFun_BME280) épinglées sur leur commit HEAD courant dans `platformio.ini`. Reproductibilité garantie, risque supply-chain éliminé. → **Résolu**.
+- **Doc1 (20) — `docs/environments.md` créé**. Convention `S_*` = numéro sur le PCB, guide de calibration `INTERNAL_1v1` par carte, table boards physiques + envs spéciaux (`robot`, `devmodule`, `SOLAR_TEST`), seuils batterie par chimie, procédure d'ajout d'une nouvelle carte. → **Résolu**.
 
-Impact 2026-06-18 : **271 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20 + I2:25 + D3:24 + D4:24).
+Impact 2026-06-18 : **291 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20 + I2:25 + D3:24 + D4:24 + Doc1:20).
 
-Impact cumulé toutes dates : **578 points** (307 + 271).
+Impact cumulé toutes dates : **598 points** (307 + 291).
 
 ---
 
@@ -179,7 +180,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
-| Doc1 | Sémantique des environnements `S_02`..`S_05` non documentée (quel capteur physique correspond à quel env, quelle calibration `INTERNAL_1v1` pour quelle carte). Tribal knowledge. | 3 | 2 | 2 | **20** |
+| ~~Doc1~~ | ~~Sémantique des environnements `S_02`..`S_05` non documentée.~~ — ✅ **Résolu 2026-06-18** (`docs/environments.md` créé : convention de nommage PCB, guide de calibration `INTERNAL_1v1`, table des boards physiques et envs spéciaux, seuils batterie) | 3 | 2 | 2 | ~~20~~ |
 | Doc2 | Pas de guide d'onboarding (stack requise, setup local, premier build). Le README est orienté utilisateur/hardware, pas contributeur. | 3 | 2 | 2 | **20** |
 | Doc3 | Workflow de flashage non documenté : `scripts/flash_tinySensor` + `waitForUpload` supposent une organisation NAS spécifique (`/var/services/homes/aurelien/…`). | 2 | 2 | 2 | 16 |
 | Doc4 | Spécifications Oregon et Lacrosse référencées en commentaires (*"A copy of the document should be provided along the implementation"*) mais les docs PDF ne sont pas au repo. Lien externe ou fichier embarqué requis. | 2 | 2 | 2 | 16 |
@@ -227,7 +228,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | 8 | C6 | `SoftSerial` utilise `_delay_us` directement (non testable) | Code | 20 |
 | 8 | A3 | Logique BH1750 mélangée dans `main.cpp` | Archi | 20 |
 | — | ~~D5~~ | ~~`avrdude.conf` (534 KB) commité~~ ✅ | Dep | ~~20~~ |
-| 8 | Doc1 | Envs `S_0x` non documentés (tribal knowledge) | Doc | 20 |
+| — | ~~Doc1~~ | ~~Envs `S_0x` non documentés (tribal knowledge)~~ ✅ | Doc | ~~20~~ |
 | 8 | Doc2 | Pas de guide d'onboarding | Doc | 20 |
 | — | ~~I3~~ | ~~Backup ZIP KiCAD commité~~ → non tracké git ✅ | Infra | ~~20~~ |
 | 8 | I5 | Matrice CI inexistante | Infra | 20 |
