@@ -21,7 +21,6 @@ void LacrosseWS7000::SetHumidity(float humidity) {
 
 void LacrosseWS7000::SetPressure(float pressure) {
   availableData |= PRESSURE_AVAILABLE;
-  if (pressure < 200) pressure = 200;
   if (pressure < 850) pressure = 850;
   if (pressure > 1100) pressure = 1100;
   pressure -= 200;

@@ -79,9 +79,14 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **C2 (30) — Macro `OREGON_DELAY_US` morte supprimée**. La macro n'était jamais appelée (Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement) et référençait une méthode inexistante. Supprimée de `TestHal.h`. → **Résolu**.
 - **C15 (15) — `override` ajouté sur les stubs de délai de `TestHal`**. `Delay400Us`, `Delay1024Us`, `Delay512Us` n'avaient pas `override` ; dérive de signature désormais détectable à la compilation. → **Résolu**.
 
-Impact 2026-06-18 : **143 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15).
+- **C3 (20) — `Init()` orphelin supprimé**. Fonction libre `void Init(void)` en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée — shadow silencieux de `Attiny84aHal::Init`. Supprimée. → **Résolu**.
+- **C11 (15) — Branche morte `SetPressure` supprimée**. `if (pressure < 200) pressure = 200;` était immédiatement écrasé par le clamp à 850 ; supprimé. → **Résolu**.
+- **D5 (20) — `avrdude.conf` sorti du repo**. Le fichier (534 KB) provient du toolchain PlatformIO (`~/.platformio/packages/tool-avrdude/`) ; supprimé avec `git rm`. → **Résolu**.
+- **I3 — Requalifié**. Audit revisité : le ZIP KiCAD n'était pas tracké git (sur disque uniquement) ; `*.zip` déjà couvert par `.gitignore`. Non-issue, comme I1. → **Résolu (par prévention)**.
 
-Impact cumulé toutes dates : **450 points** (307 + 143).
+Impact 2026-06-18 : **198 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20).
+
+Impact cumulé toutes dates : **505 points** (307 + 198).
 
 ---
 
@@ -114,7 +119,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 |----|------|--------------|:------:|:------:|:------:|:--------:|
 | ~~C1~~ | ~~Token Coveralls commité en clair (`repo_token: K1UMmvKnmugffPWriB48kR274KXcAuvuK`)~~ — ✅ **Résolu 2026-06-18** (token révoqué, déplacé en secret GitHub Actions `COVERALLS_REPO_TOKEN`) | `.coveralls.yml` | 2 | 5 | 1 | ~~35~~ |
 | ~~C2~~ | ~~`TestHal` référence un `OREGON_DELAY_US(x) TestHal.Delay(x)` qui n'existe pas.~~ — ✅ **Résolu 2026-06-18** (macro jamais appelée — Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement ; macro morte supprimée) | `lib/hal/TestHal.h:74` | 3 | 3 | 1 | ~~30~~ |
-| C3 | Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée (shadow de `Attiny84aHal::Init`). | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | **20** |
+| ~~C3~~ | ~~Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée.~~ — ✅ **Résolu 2026-06-18** (fonction supprimée) | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | ~~20~~ |
 | ~~C4~~ | ~~Dead-code dans `OregonV3::Sum` : `if (int(count) != count)` est toujours faux pour un `uint8_t`.~~ — ✅ **Résolu 2026-06-16** (branche morte supprimée ; héritage d'une impl. internet avec `float count`) | `lib/oregon/Oregon_v3.cpp:82` | 2 | 2 | 1 | ~~20~~ |
 | C5 | `main.cpp` fait des accès registres directs (`ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr)`), contournant le HAL. | `src/main.cpp:116,120` | 3 | 2 | 2 | **20** |
 | C6 | `SoftSerial` utilise `_delay_us()` directement au lieu du HAL → impossible à tester en natif et rompt le contrat d'abstraction. | `lib/softSerial/SoftSerial.cpp:3-6,16,24,32,36` | 3 | 2 | 2 | **20** |
@@ -122,7 +127,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | C8 | Magic numbers non documentés : `PRESSURE_SCALING_VALUE = 795`, `MAX_ROLLING_CODE_VALUE = 0xA5` (non utilisée), `SYNC_NIBBLE = 0x0A` (non utilisée), timings X10 (`PREAMBLE_LOW = 4500`, etc.) sans référence datasheet. | `lib/oregon/Oregon_v3.cpp`, `lib/x10/x10rf.cpp` | 2 | 2 | 2 | **16** |
 | C9 | `dec16ToHex` déborde silencieusement pour `input > 9999` (le test `conversionToolsTest.cpp` le prouve avec `10000 → 0xA000` marqué en commentaire "overflow"). Pas de `assert` ni de clamp. | `lib/utils/src/conversionTools.cpp:5-22` | 2 | 2 | 2 | **16** |
 | ~~C10~~ | ~~`USE_BMP280=1` déclaré **deux fois** dans `env:S_03` (lignes 88 et 90) — copier-coller résiduel.~~ — ✅ **Résolu 2026-06-16** (subsumed par C7 ; la refacto `extends` a éliminé le doublon) | `platformio.ini:88,90` | 2 | 1 | 1 | ~~15~~ |
-| C11 | Branche morte dans `LacrosseWS7000::SetPressure` : `if (pressure < 200) pressure = 200;` est immédiatement écrasé par `if (pressure < 850) pressure = 850;`. | `lib/LacrosseWS7000/LacrosseWS7000.cpp:24-25` | 1 | 2 | 1 | **15** |
+| ~~C11~~ | ~~Branche morte dans `LacrosseWS7000::SetPressure` : `if (pressure < 200) pressure = 200;` est immédiatement écrasé par `if (pressure < 850) pressure = 850;`.~~ — ✅ **Résolu 2026-06-18** (branche morte supprimée) | `lib/LacrosseWS7000/LacrosseWS7000.cpp:24-25` | 1 | 2 | 1 | ~~15~~ |
 | C12 | Macro `BITREAD` redéfinie dans 4 fichiers (`Oregon_v3.cpp`, `LacrosseWS7000.cpp`, `x10rf.cpp`, `x10rf.h`) avec des variantes (`bitRead`, `BITREAD`). | (multiple) | 2 | 1 | 2 | **12** |
 | C13 | HAL "leaky" : méthodes nommées `RadioGoHigh/Low`, `SerialGoHigh/Low` — pilotage sémantique d'IO, pas une vraie abstraction de bus radio. Un port sur un MCU sans GPIO configurable de la même façon obligera à retoucher le HAL. | `lib/hal/Hal.h` | 3 | 2 | 4 | **10** |
 | C14 | TODO isolé : `// TODO: tests for other modes` | `test/test_x10/x10LibTest.cpp:130` | 2 | 2 | 3 | **12** |
@@ -162,7 +167,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~D2~~ | ~~GitHub Actions obsolètes : `actions/checkout@v3`, `actions/cache@v3`, `actions/setup-python@v4`. Python 3.9 utilisé — EOL octobre 2025 (nous sommes en avril 2026).~~ — ✅ **Résolu 2026-04-19** (v4/v4/v5, Python 3.12) | 3 | 3 | 1 | ~~30~~ |
 | D3 | Toutes les dépendances PlatformIO sont tirées de **forks personnels** (`arcadien/BH1750`, `arcadien/tiny-i2c`, `arcadien/Unity`, `arcadien/avr-ds18b20`, `arcadien/SparkFun_BME280_Arduino_Library`) **sans épinglage de commit ni de tag**. Un `pio update` peut casser le build. Risque supply-chain + reproductibilité. | 4 | 4 | 3 | 24 |
 | D4 | `bh1750` épinglé sur **une branche** (`feat/attiny_support`), pas un tag ou SHA. La branche peut être rebasée ou supprimée à tout moment. | 3 | 3 | 2 | **24** |
-| D5 | `avrdude.conf` (534 KB) commité dans le repo. Doit venir du toolchain (`~/.platformio/packages/tool-avrdude/`), pas de la source. Contribue au bruit et au risque de divergence avec la version réellement utilisée au build. | 2 | 2 | 1 | **20** |
+| ~~D5~~ | ~~`avrdude.conf` (534 KB) commité dans le repo.~~ — ✅ **Résolu 2026-06-18** (`git rm avrdude.conf` ; vient du toolchain PlatformIO, pas de la source) | 2 | 2 | 1 | ~~20~~ |
 | ~~D6~~ | ~~`web/build.php` charge jQuery 1.12.4 depuis CDN (sortie 2016, EOL).~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/`) | 1 | 2 | 2 | ~~12~~ |
 | D7 | Copies tierces vendored dans `TinySensor/third_party/` (BMX, I2C, X10) figées, risque de divergence vs. upstream. | 2 | 2 | 2 | 16 |
 | ~~D8~~ | ~~Badge README pointe vers **Travis CI** (`api.travis-ci.org`) — service fermé aux OSS non payants depuis 2020. Badge cassé = signal négatif pour les contributeurs.~~ — ✅ **Résolu 2026-06-16** (badge GitHub Actions dans `README.md`) | 1 | 1 | 1 | ~~10~~ |
@@ -186,7 +191,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~I1~~ | ~~**Artefacts de build commités** dans `TinySensor/Debug/` : `.o`, `.d`, `.elf`, `.hex`, `.lss`, `.map`, `.srec`.~~ — ✅ **Résolu 2026-04-19** (audit revisité : aucun artefact n'était réellement tracké ; `TinySensor/Debug/` désormais couvert par `.gitignore`). | 3 | 2 | 1 | ~~25~~ |
 | I2 | Chemins absolus spécifiques à l'auteur : `Makefile` (`c:\users\aurelien\.platformio\penv\Scripts\pio`), `scripts/flash_tinySensor` (`~aurelien/…`, `/var/services/homes/aurelien/…`). Non-portable pour tout autre contributeur. | 3 | 2 | 1 | **25** |
-| I3 | Archive de backup KiCAD commitée : `hardware/tinysensor/tinySensorv1-backups/tinySensorv1-2025-05-01_183922.zip`. Git gère déjà l'historique — un ZIP binaire redondant pollue. | 2 | 2 | 1 | **20** |
+| ~~I3~~ | ~~Archive de backup KiCAD commitée (`tinySensorv1-2025-05-01_183922.zip`).~~ — ✅ **Résolu 2026-06-18** (audit revisité : le ZIP n'était pas tracké par git — sur disque uniquement ; `*.zip` déjà couvert par `.gitignore`) | 2 | 2 | 1 | ~~20~~ |
 | ~~I4~~ | ~~La CI ne produit aucun artefact (firmware `.hex` téléchargeable).~~ — ✅ **Résolu 2026-06-16** (job `release` ajouté sur `v*` tags : télécharge tous les artefacts et publie une GitHub Release avec notes auto-générées — complète la résolution partielle du 2026-04-19) | 2 | 1 | 2 | ~~12~~ |
 | I5 | CI single-runner, single-python, single-env. Pas de matrice pour tester différentes versions d'outillage. | 3 | 2 | 2 | **20** |
 | I6 | Pas de pre-commit ni de `.editorconfig`. `clang-format` est installé dans le devcontainer mais non appliqué automatiquement (le commit `68cefb8 chore: clang-format` laisse penser à une passe manuelle ponctuelle). | 2 | 1 | 2 | 12 |
@@ -214,15 +219,15 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | 5 | I2 | Chemins absolus auteur dans Makefile/scripts | Infra | 25 |
 | 6 | D3 | Deps pointent vers forks personnels non épinglés | Dep | 24 |
 | 6 | D4 | `bh1750` épinglé sur une branche au lieu d'un tag/SHA | Dep | 24 |
-| 8 | C3 | `Init()` orphelin dans `Attiny84aHal.cpp` | Code | 20 |
+| — | ~~C3~~ | ~~`Init()` orphelin dans `Attiny84aHal.cpp`~~ ✅ | Code | ~~20~~ |
 | — | ~~C4~~ | ~~Dead-code `if (int(count) != count)` dans `Sum`~~ ✅ | Code | ~~20~~ |
 | 8 | C5 | `main.cpp` accède aux registres sans passer par le HAL | Code | 20 |
 | 8 | C6 | `SoftSerial` utilise `_delay_us` directement (non testable) | Code | 20 |
 | 8 | A3 | Logique BH1750 mélangée dans `main.cpp` | Archi | 20 |
-| 8 | D5 | `avrdude.conf` (534 KB) commité | Dep | 20 |
+| — | ~~D5~~ | ~~`avrdude.conf` (534 KB) commité~~ ✅ | Dep | ~~20~~ |
 | 8 | Doc1 | Envs `S_0x` non documentés (tribal knowledge) | Doc | 20 |
 | 8 | Doc2 | Pas de guide d'onboarding | Doc | 20 |
-| 8 | I3 | Backup ZIP KiCAD commité | Infra | 20 |
+| — | ~~I3~~ | ~~Backup ZIP KiCAD commité~~ → non tracké git ✅ | Infra | ~~20~~ |
 | 8 | I5 | Matrice CI inexistante | Infra | 20 |
 | — | ~~I7~~ | ~~`.gitignore` minimaliste~~ ✅ | Infra | ~~20~~ |
 | — | ~~M3~~ | ~~`message[]` variable globale partagée entre instances~~ ✅ | Code | ~~16~~ |

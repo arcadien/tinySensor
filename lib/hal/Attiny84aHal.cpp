@@ -196,10 +196,4 @@ uint16_t Attiny84aHal::GetRawInternal11Ref(void) {
 
 void Attiny84aHal::Hibernate(uint16_t seconds) { sleep(seconds); }
 
-void Init(void) {
-#if defined(USE_I2C)
-  TinyI2C.init();
-#endif
-}
-
 #endif
