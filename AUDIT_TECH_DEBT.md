@@ -76,10 +76,12 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **C1 (35) — Token Coveralls révoqué et sorti du repo**. Le token `K1UMmvKnmugffPWriB48kR274KXcAuvuK` présent dans `.coveralls.yml` a été révoqué côté coveralls.io et remplacé par un secret GitHub Actions `COVERALLS_REPO_TOKEN`. → **Résolu**.
 - **D1 (36) + A4 (15) + D6 (12) — `web/` supprimé**. Décision : le firmware builder web n'a jamais été finalisé ni déployé. Suppression des deux fichiers (`web/build.php`, `web/index.html`). Élimine d'un coup l'image Docker PHP 7.4 EOL, la vulnérabilité `shell_exec`, et jQuery 1.12.4. → **Résolu (D1, A4, D6)**.
 - **A1 — Requalifié (risque accepté)**. `TinySensor/` n'est pas du code mort : il est conservé intentionnellement pour le workflow de debug/flash Atmel Studio (debugWIRE/JTAG), non remplaçable par PlatformIO. Score abaissé de 32 → 20, catégorie "risque de divergence à surveiller". Mitigations recommandées : commentaires croisés dans les deux `main.cpp` + step CI `diff` en warn-only. → **Requalifié, non supprimé**.
+- **C2 (30) — Macro `OREGON_DELAY_US` morte supprimée**. La macro n'était jamais appelée (Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement) et référençait une méthode inexistante. Supprimée de `TestHal.h`. → **Résolu**.
+- **C15 (15) — `override` ajouté sur les stubs de délai de `TestHal`**. `Delay400Us`, `Delay1024Us`, `Delay512Us` n'avaient pas `override` ; dérive de signature désormais détectable à la compilation. → **Résolu**.
 
-Impact 2026-06-18 : **98 points** résolus (C1:35 + D1:36 + A4:15 + D6:12).
+Impact 2026-06-18 : **143 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15).
 
-Impact cumulé toutes dates : **405 points** (307 + 98).
+Impact cumulé toutes dates : **450 points** (307 + 143).
 
 ---
 
@@ -111,7 +113,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ID | Item | Localisation | Impact | Risque | Effort | Priorité |
 |----|------|--------------|:------:|:------:|:------:|:--------:|
 | ~~C1~~ | ~~Token Coveralls commité en clair (`repo_token: K1UMmvKnmugffPWriB48kR274KXcAuvuK`)~~ — ✅ **Résolu 2026-06-18** (token révoqué, déplacé en secret GitHub Actions `COVERALLS_REPO_TOKEN`) | `.coveralls.yml` | 2 | 5 | 1 | ~~35~~ |
-| C2 | `TestHal` référence un `OREGON_DELAY_US(x) TestHal.Delay(x)` qui n'existe pas (la méthode s'appelle `Delay400Us`/`Delay1024Us`). Macro cassée, incohérence d'API. | `lib/hal/TestHal.h:74` | 3 | 3 | 1 | **30** |
+| ~~C2~~ | ~~`TestHal` référence un `OREGON_DELAY_US(x) TestHal.Delay(x)` qui n'existe pas.~~ — ✅ **Résolu 2026-06-18** (macro jamais appelée — Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement ; macro morte supprimée) | `lib/hal/TestHal.h:74` | 3 | 3 | 1 | ~~30~~ |
 | C3 | Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée (shadow de `Attiny84aHal::Init`). | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | **20** |
 | ~~C4~~ | ~~Dead-code dans `OregonV3::Sum` : `if (int(count) != count)` est toujours faux pour un `uint8_t`.~~ — ✅ **Résolu 2026-06-16** (branche morte supprimée ; héritage d'une impl. internet avec `float count`) | `lib/oregon/Oregon_v3.cpp:82` | 2 | 2 | 1 | ~~20~~ |
 | C5 | `main.cpp` fait des accès registres directs (`ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr)`), contournant le HAL. | `src/main.cpp:116,120` | 3 | 2 | 2 | **20** |
@@ -124,7 +126,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | C12 | Macro `BITREAD` redéfinie dans 4 fichiers (`Oregon_v3.cpp`, `LacrosseWS7000.cpp`, `x10rf.cpp`, `x10rf.h`) avec des variantes (`bitRead`, `BITREAD`). | (multiple) | 2 | 1 | 2 | **12** |
 | C13 | HAL "leaky" : méthodes nommées `RadioGoHigh/Low`, `SerialGoHigh/Low` — pilotage sémantique d'IO, pas une vraie abstraction de bus radio. Un port sur un MCU sans GPIO configurable de la même façon obligera à retoucher le HAL. | `lib/hal/Hal.h` | 3 | 2 | 4 | **10** |
 | C14 | TODO isolé : `// TODO: tests for other modes` | `test/test_x10/x10LibTest.cpp:130` | 2 | 2 | 3 | **12** |
-| C15 | `TestHal::Delay400Us/Delay1024Us/Delay512Us` manquent `override` ; fonctionne par héritage implicite mais empêche de détecter une dérive de signature. | `lib/hal/TestHal.h:41-44` | 2 | 1 | 1 | **15** |
+| ~~C15~~ | ~~`TestHal::Delay400Us/Delay1024Us/Delay512Us` manquent `override`.~~ — ✅ **Résolu 2026-06-18** (`override` ajouté sur les trois méthodes) | `lib/hal/TestHal.h:41-44` | 2 | 1 | 1 | ~~15~~ |
 | ~~M1~~ | ~~`PRR &= ~_BV(PRTIM1/PRADC)` logique inversée dans `UseLessPowerAsPossible()` : les périphériques restaient actifs (consommation inutile sur batterie).~~ — ✅ **Résolu 2026-06-16** (identifié par revue MAGI, corrigé en `\|=`) | `lib/hal/Attiny84aHal.cpp` | 3 | 3 | 1 | ~~30~~ |
 | ~~M2~~ | ~~`OregonV3::SetChannel()` sans validation de bornes : channel > 3 corrompt silencieusement `message[2]` en écrasant les nibbles ID capteur.~~ — ✅ **Résolu 2026-06-16** (guard `if (channel < 1 \|\| channel > 3) return;` ajouté) | `lib/oregon/Oregon_v3.cpp` | 3 | 3 | 1 | ~~30~~ |
 | ~~M3~~ | ~~`message[]` variable globale de fichier dans `Oregon_v3.cpp` — singleton accidentel : deux instances `OregonV3` auraient partagé le même buffer.~~ — ✅ **Résolu 2026-06-16** (déplacé en membre privé `uint8_t message[MESSAGE_SIZE_IN_BYTES]`) | `lib/oregon/Oregon_v3.cpp/.h` | 2 | 2 | 2 | ~~16~~ |
@@ -204,7 +206,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | — | ~~C1~~ | ~~Token Coveralls en clair dans le repo~~ ✅ | Code | ~~35~~ |
 | — | ~~A1~~ | ~~Arbre source dupliqué `TinySensor/`~~ → requalifié, risque accepté (score 20, voir §3.2) | Archi | ~~32~~ |
 | — | ~~D2~~ | ~~GitHub Actions obsolètes + Python 3.9 EOL~~ ✅ | Dep | ~~30~~ |
-| 4 | C2 | Macro `OREGON_DELAY_US` réfère une méthode inexistante | Code | 30 |
+| — | ~~C2~~ | ~~Macro `OREGON_DELAY_US` réfère une méthode inexistante~~ ✅ | Code | ~~30~~ |
 | — | ~~M1~~ | ~~PRR bit inversé dans `UseLessPowerAsPossible()`~~ ✅ | Code | ~~30~~ |
 | — | ~~M2~~ | ~~`SetChannel()` sans validation de bornes~~ ✅ | Code | ~~30~~ |
 | — | ~~D9~~ | ~~Pas de Dependabot/Renovate~~ ✅ | Dep | ~~25~~ |

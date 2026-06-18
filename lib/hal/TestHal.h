@@ -38,10 +38,10 @@ public:
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
   }
 
-  void inline Delay400Us() { Orders.push_back('A'); }
+  void inline Delay400Us() override { Orders.push_back('A'); }
 
-  void inline Delay1024Us() { Orders.push_back('P'); }
-  void inline Delay512Us() { Orders.push_back('D'); }
+  void inline Delay1024Us() override { Orders.push_back('P'); }
+  void inline Delay512Us() override { Orders.push_back('D'); }
 
   unsigned char *GetOrders() { return Orders.data(); }
   void ClearOrders() { Orders.clear(); }
@@ -70,7 +70,5 @@ public:
 };
 
 extern TestHal_ TestHal;
-
-#define OREGON_DELAY_US(x) TestHal.Delay(x);
 
 #endif
