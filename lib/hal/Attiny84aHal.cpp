@@ -1,5 +1,4 @@
 #ifdef AVR
-#include <AnalogFilter.h>
 #include <Attiny84aHal.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>

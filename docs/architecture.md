@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: PLAT-POWER-001..005_
+_Last updated: 2026-06-19 — arch: add ds18b20/BH1750 components, fix V2/V3/V4 violations_
 
 ## Component Diagram
 
@@ -12,6 +12,8 @@ graph TD
   main -->|Hal*| x10rf
   main -->|Hal*| BMx280
   main -->|Hal*| SoftSerial
+  main -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire temp sensor)"]
+  main -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
 
   HAL["Hal (interface)"] --> Attiny84aHal["Attiny84aHal (AVR)"]
   HAL --> TestHal["TestHal_ (host/test)"]
@@ -35,6 +37,8 @@ graph TD
 | `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors) | — |
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
+| `ds18b20` | 1-Wire temperature sensor driver on PA3; raw value / 16 = °C | FUNC-SENSOR-002 |
+| `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux | FUNC-SENSOR-003 |
 | `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
