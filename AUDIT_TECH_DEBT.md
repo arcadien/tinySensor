@@ -131,7 +131,11 @@ Analyse architecturale complète (`docs/analysis-2026-06-18.md`) suivie de 8 vag
 
 - **DevContainer** : Node.js 20 LTS + `@anthropic-ai/claude-code` ajoutés à `.devcontainer/Dockerfile` (installation système via NodeSource). Claude Code désormais disponible après `Rebuild Container`.
 
-Impact 2026-06-19 : **score symbolique** — les violations V1-V4 étaient des découvertes nouvelles (non dans l'audit initial) ; leur résolution immédiate les soustrait du backlog avant d'y entrer. Score cumulé inchangé à **598 points** sur les items de l'audit original.
+#### C5 — Accès DS18B20 encapsulé dans la classe `Ds18b20`
+
+- **C5 (20) — `main.cpp` accédait directement aux registres AVR pour DS18B20** (`ds18b20convert(&PORTA, &DDRA, &PINA, …)`). Cycle RBD complet : TECH-SENSOR-001 validé, 4 tests Unity natifs (`test/test_ds18b20/`), classe `include/Ds18b20.h` créée suivant exactement le patron `BMx280` (sections `#if defined(AVR)` / `#else` stub, constructeur `Hal*`). `main.cpp` réduit à `ds18b20sensor.Convert()` + `ds18b20sensor.Read()` — aucune référence résiduelle à `PORTA`/`DDRA`/`PINA`. → **Résolu**.
+
+Impact 2026-06-19 : **20 points** résolus (C5:20). Score cumulé : **618 points** (598 + 20).
 
 
 ---
@@ -167,7 +171,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~C2~~ | ~~`TestHal` référence un `OREGON_DELAY_US(x) TestHal.Delay(x)` qui n'existe pas.~~ — ✅ **Résolu 2026-06-18** (macro jamais appelée — Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement ; macro morte supprimée) | `lib/hal/TestHal.h:74` | 3 | 3 | 1 | ~~30~~ |
 | ~~C3~~ | ~~Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée.~~ — ✅ **Résolu 2026-06-18** (fonction supprimée) | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | ~~20~~ |
 | ~~C4~~ | ~~Dead-code dans `OregonV3::Sum` : `if (int(count) != count)` est toujours faux pour un `uint8_t`.~~ — ✅ **Résolu 2026-06-16** (branche morte supprimée ; héritage d'une impl. internet avec `float count`) | `lib/oregon/Oregon_v3.cpp:82` | 2 | 2 | 1 | ~~20~~ |
-| C5 | `main.cpp` fait des accès registres directs (`ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr)`), contournant le HAL. | `src/main.cpp:116,120` | 3 | 2 | 2 | **20** |
+| ~~C5~~ | ~~`main.cpp` fait des accès registres directs (`ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr)`), contournant le HAL.~~ — ✅ **Résolu 2026-06-19** (classe `Ds18b20` créée dans `include/Ds18b20.h` — même patron que `BMx280` ; `main.cpp` appelle `ds18b20sensor.Convert()` / `ds18b20sensor.Read()`, plus aucune référence à `PORTA`/`DDRA`/`PINA` ; TECH-SENSOR-001 + 4 tests Unity) | `src/main.cpp:116,120` | 3 | 2 | 2 | ~~20~~ |
 | C6 | `SoftSerial` utilise `_delay_us()` directement au lieu du HAL → impossible à tester en natif et rompt le contrat d'abstraction. | `lib/softSerial/SoftSerial.cpp:3-6,16,24,32,36` | 3 | 2 | 2 | **20** |
 | ~~C7~~ | ~~Config per-env avec duplication massive dans `platformio.ini` : S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST partagent 80 % de leurs `build_flags`.~~ — ✅ **Résolu 2026-06-16** (`[env:avr_base]` + `extends` ; `default_envs` pour exclure la base des builds) | `platformio.ini` | 4 | 2 | 3 | ~~18~~ |
 | C8 | Magic numbers non documentés : `PRESSURE_SCALING_VALUE = 795`, `MAX_ROLLING_CODE_VALUE = 0xA5` (non utilisée), `SYNC_NIBBLE = 0x0A` (non utilisée), timings X10 (`PREAMBLE_LOW = 4500`, etc.) sans référence datasheet. | `lib/oregon/Oregon_v3.cpp`, `lib/x10/x10rf.cpp` | 2 | 2 | 2 | **16** |
