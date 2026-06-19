@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: FUNC-X10-001..007_
+_Last updated: 2026-06-19 — requirements: TECH-HAL/FILTER/CONVERT_
 
 ## Component Diagram
 
@@ -36,6 +36,8 @@ graph TD
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
 | `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
+| `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
+| `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
 ## Dependency Injection Map
 
@@ -87,3 +89,13 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-X10-005 | `x10rf` | Transmission repeated rf_repeats times with 40 ms AVR-only inter-repeat cooldown |
 | FUNC-X10-006 | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | FUNC-X10-007 | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
+| TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Encoders and wrappers take Hal* at construction; no direct AVR register access |
+| TECH-HAL-002 | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W |
+| TECH-HAL-003 | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
+| TECH-HAL-004 | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; pull-ups unused pins; BOD-sleep disable |
+| TECH-HAL-005 | `Attiny84aHal` / `TestHal_` | LedOn/LedOff toggle PORTB PB1 on AVR; toggle IsLedOn in TestHal_ |
+| TECH-HAL-006 | `Attiny84aHal` / `TestHal_` | Init() calls TinyI2C.init() on AVR (USE_I2C); sets I2CIsConfigured in TestHal_ |
+| TECH-FILTER-001 | `AnalogFilter` | Discards first `exclusion` values; accumulates up to `samples`; Get() returns integer floor mean |
+| TECH-FILTER-002 | `AnalogFilter` | Push() after samples count reached is silently ignored; Get() returns mean of first samples values |
+| TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
+| TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
