@@ -23,6 +23,7 @@
 void tearDown() {}
 void setUp() {}
 
+// @req TECH-CONVERT-001
 void Test_dec16ToHex() {
   struct TestData {
     uint16_t given;
@@ -46,6 +47,7 @@ void Test_dec16ToHex() {
     TEST_ASSERT_EQUAL_UINT16(testData.expected, actual);
   }
 }
+// @req TECH-CONVERT-002
 void Test_dec32ToHex() {
   struct TestData {
     uint32_t given;
