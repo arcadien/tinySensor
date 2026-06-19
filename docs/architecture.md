@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — arch: add ds18b20/BH1750 components, fix V2/V3/V4 violations_
+_Last updated: 2026-06-19 — requirements: TECH-X10-001..002_
 
 ## Component Diagram
 
@@ -20,7 +20,7 @@ graph TD
 
   OregonV3 -->|RadioGoHigh/Low\nDelay512Us/1024Us| HAL
   LacrosseWS7000 -->|RadioGoHigh/Low\nDelay400Us| HAL
-  x10rf -->|RadioGoHigh/Low| HAL
+  x10rf -->|"RadioGoHigh/Low\nDelayX10PreambleHigh/Low\nDelayX10BitShort/Long\nDelayX10Gap"| HAL
   SoftSerial -->|SerialGoHigh/Low| HAL
   BMx280 -->|I2C via TinyI2C| HAL
 ```
@@ -34,7 +34,7 @@ graph TD
 | `TestHal_` | Host-native stub; records HAL calls as char tokens in `Orders` vector | — |
 | `OregonV3` | Encodes temperature/humidity/pressure into Oregon Scientific v3 frames | — |
 | `LacrosseWS7000` | Encodes temperature/humidity/pressure/luminosity into Lacrosse WS7000 frames | — |
-| `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors) | — |
+| `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors); routes all timing through Hal X10 delay methods | TECH-X10-001, TECH-X10-002 |
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
 | `ds18b20` | 1-Wire temperature sensor driver on PA3; raw value / 16 = °C | FUNC-SENSOR-002 |
@@ -90,7 +90,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-X10-002 | `x10rf` | RFXsensor 4-byte frame: address+type bits, partial complement, value, packet-type status + nibble-sum parity |
 | FUNC-X10-003 | `x10rf` | x10Switch 4-byte frame: house-code nibble lookup, bit-scattered unit code, full-byte complements |
 | FUNC-X10-004 | `x10rf` | x10Security 6-byte frame: address, swapped-nibble complement, command + complement, id, XOR-fold parity |
-| FUNC-X10-005 | `x10rf` | Transmission repeated rf_repeats times with 40 ms AVR-only inter-repeat cooldown |
+| FUNC-X10-005 | `x10rf` | Transmission repeated rf_repeats times with 40 ms inter-repeat cooldown via DelayX10Gap (see TECH-X10-001) |
 | FUNC-X10-006 | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | FUNC-X10-007 | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Encoders and wrappers take Hal* at construction; no direct AVR register access |
@@ -105,6 +105,8 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; bit period = (1 000 000 / 9600) − 25 µs; driven by SerialGoHigh/Low |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
+| TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
+| TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
 | FUNC-BATTERY-001 | `Hal` / `main.cpp` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
 | FUNC-BATTERY-002 | `Hal` / `main.cpp` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) |
 | FUNC-BATTERY-003 | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
