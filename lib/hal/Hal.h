@@ -18,6 +18,12 @@ class Hal {
   virtual void Delay512Us() = 0;
   virtual void Delay1024Us() = 0;
 
+  virtual void DelayX10PreambleHigh() = 0;  // 8960 µs
+  virtual void DelayX10PreambleLow() = 0;   // 4500 µs
+  virtual void DelayX10BitShort() = 0;      //  560 µs
+  virtual void DelayX10BitLong() = 0;       // 1120 µs
+  virtual void DelayX10Gap() = 0;           // 40000 µs
+
   virtual void Hibernate(uint16_t seconds) = 0;
 
   virtual void RadioGoLow() = 0;

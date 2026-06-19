@@ -43,6 +43,12 @@ class TestHal_ : public Hal {
   void inline Delay1024Us() override { Orders.push_back('P'); }
   void inline Delay512Us() override { Orders.push_back('D'); }
 
+  void inline DelayX10PreambleHigh() override { Orders.push_back('Q'); }
+  void inline DelayX10PreambleLow() override { Orders.push_back('R'); }
+  void inline DelayX10BitShort() override { Orders.push_back('T'); }
+  void inline DelayX10BitLong() override { Orders.push_back('U'); }
+  void inline DelayX10Gap() override { Orders.push_back('G'); }
+
   unsigned char *GetOrders() { return Orders.data(); }
   void ClearOrders() { Orders.clear(); }
 

@@ -176,6 +176,21 @@ void Attiny84aHal::Delay1024Us() {
 void Attiny84aHal::Delay1s() {
   _delay_ms(1000);
 }
+void Attiny84aHal::DelayX10PreambleHigh() {
+  _delay_us(8960);
+}
+void Attiny84aHal::DelayX10PreambleLow() {
+  _delay_us(4500);
+}
+void Attiny84aHal::DelayX10BitShort() {
+  _delay_us(560);
+}
+void Attiny84aHal::DelayX10BitLong() {
+  _delay_us(1120);
+}
+void Attiny84aHal::DelayX10Gap() {
+  _delay_us(40000);
+}
 
 static uint16_t AdcRead(Hal &hal, uint8_t admux) {
   PRR &= ~_BV(PRADC);

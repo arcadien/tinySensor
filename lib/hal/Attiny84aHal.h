@@ -49,6 +49,12 @@ class Attiny84aHal : public Hal {
   void Delay512Us() override;
   void Delay1024Us() override;
 
+  void DelayX10PreambleHigh() override;
+  void DelayX10PreambleLow() override;
+  void DelayX10BitShort() override;
+  void DelayX10BitLong() override;
+  void DelayX10Gap() override;
+
   void Init(void) override {
 #if defined(USE_I2C)
     TinyI2C.init();
