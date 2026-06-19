@@ -25,12 +25,7 @@
 #endif
 
 #if defined(USE_DS18B20)
-#if defined(AVR)
-#include <avr/io.h>
-#include <ds18b20.h>
-#else
-#warning Cannot use DS18B20 in native environment for now
-#endif
+#include <Ds18b20.h>
 #endif
 
 #if defined(USE_LACROSSE)
@@ -50,6 +45,10 @@ TestHal_ hal;
 #if defined(USE_BME280) or defined(USE_BMP280)
 #include <BMx280.h>
 BMx280 bmx280(&hal);
+#endif
+
+#if defined(USE_DS18B20)
+Ds18b20 ds18b20sensor(&hal);
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
@@ -117,16 +116,11 @@ int main(void) {
 #endif
 
 #if defined(USE_DS18B20)
-#if defined(AVR)
-    ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr);
-    hal.Delay1s();
-    int16_t temp = 0;
-    auto readStatus =
-        ds18b20read(&PORTA, &DDRA, &PINA, (1 << 3), nullptr, &temp);
-    if (readStatus == DS18B20_ERROR_OK) {
-      temperature = (temp / 16);
+    ds18b20sensor.Convert();
+    int16_t temp = ds18b20sensor.Read();
+    if (temp != 0) {
+      temperature = (float)temp;
     }
-#endif
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
