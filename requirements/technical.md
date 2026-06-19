@@ -112,3 +112,11 @@
 **Status:** validated
 **Dependencies:** TECH-X10-001
 **Description:** `x10rf::SendCommand()` and `x10rf::SendX10RfBit()` must replace all calls to the file-static `x10_*` delay functions with direct calls to the corresponding `Hal` methods (`DelayX10PreambleHigh()`, `DelayX10PreambleLow()`, `DelayX10BitShort()`, `DelayX10BitLong()`, `DelayX10Gap()`). The `#if defined(AVR)` block defining those static functions and including `<util/delay.h>` must be removed entirely from `lib/x10/x10rf.cpp`.
+
+---
+
+### TECH-SENSOR-001
+**Title:** DS18B20 access encapsulated in a Ds18b20 wrapper class; main.cpp must not reference AVR registers or ds18b20 library functions directly
+**Status:** validated
+**Dependencies:** TECH-HAL-001, FUNC-SENSOR-002
+**Description:** A `Ds18b20` wrapper class (header `include/Ds18b20.h`) must encapsulate all 1-Wire DS18B20 interactions following the same pattern as `BMx280`. On AVR, `Ds18b20` must accept a `Hal*` at construction and expose `Begin()`, `Convert()`, `Read()` (returning `int16_t` temperature in °C as integer), and use `hal->Delay1s()` between `ds18b20convert` and `ds18b20read` internally. On non-AVR targets all methods must be stubs returning 0. `main.cpp` must not call `ds18b20convert()`, `ds18b20read()`, or reference `PORTA`, `DDRA`, or `PINA` in any `USE_DS18B20` code path; all such calls are delegated exclusively to `Ds18b20`.
