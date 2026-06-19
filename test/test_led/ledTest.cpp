@@ -29,12 +29,14 @@ void setUp() {}
 #include <avr/io.h>
 #include <Attiny84aHal.h>
 
+// @req TECH-HAL-005
 void Expect_led_can_switch_on() {
   Attiny84aHal hal;
   hal.LedOn();
   TEST_ASSERT((PORTB & PB1) == PB1);
 }
 
+// @req TECH-HAL-005
 void Expect_led_can_switch_off() {
   Attiny84aHal hal;
   hal.LedOff();
