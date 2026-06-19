@@ -41,39 +41,14 @@ testing support.
 
 #define X10_RF_GAP 40000  // Length between commands
 
-#if defined(AVR)
-#include <util/delay.h>
-static inline void x10_preamble_low() {
-  _delay_us(PREAMBLE_LOW);
-}
-static inline void x10_preamble_high() {
-  _delay_us(PREAMBLE_HIGH);
-}
-static inline void x10_cooldown_gap() {
-  _delay_us(X10_RF_GAP);
-}
-static inline void x10_short() {
-  _delay_us(X10_RF_BIT_SHORT);
-}
-static inline void x10_long() {
-  _delay_us(X10_RF_BIT_LONG);
-}
-#else
-static void x10_preamble_low() {}
-static void x10_preamble_high() {}
-static void x10_short() {}
-static void x10_long() {}
-static void x10_cooldown_gap() {}
-#endif
-
 void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
   _hal->LedOn();
   for (int i = 0; i < _rf_repeats; i++) {
     // preamble
     _hal->RadioGoHigh();
-    x10_preamble_high();
+    _hal->DelayX10PreambleHigh();
     _hal->RadioGoLow();
-    x10_preamble_low();
+    _hal->DelayX10PreambleLow();
 
     for (int j = 0; j < byteCount; j++) {
       for (int i = 7; i >= 0; i--) {
@@ -83,7 +58,7 @@ void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
     SendX10RfBit(1);
 
     // space between message repeat
-    x10_cooldown_gap();
+    _hal->DelayX10Gap();
   }
   _hal->LedOff();
   _hal->RadioGoLow();
@@ -91,11 +66,11 @@ void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
 
 void x10rf::SendX10RfBit(uint8_t databit) {
   _hal->RadioGoHigh();
-  x10_short();
+  _hal->DelayX10BitShort();
   _hal->RadioGoLow();
-  x10_short();
+  _hal->DelayX10BitShort();
   if (databit) {
-    x10_long();
+    _hal->DelayX10BitLong();
   }
 }
 
