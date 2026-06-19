@@ -182,3 +182,45 @@
 **Status:** validated
 **Dependencies:** FUNC-X10-001, FUNC-ANALOG-001
 **Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` reads the raw analog sensor value, converts it to mV via `hal.ConvertAnalogValueToMv`, BCD-encodes via `ConversionTools::dec16ToHex`, and calls `x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00, value)`. The transmission is suppressed when `lowBattery` is true.
+
+### FUNC-BATTERY-001
+**Title:** VCC computed from ATtiny84a internal 1.1 V reference
+**Status:** validated
+**Dependencies:** —
+**Description:** `Hal::ComputeVccMv(known11refValue)` reads the raw ADC value of the internal 1.1 V reference via `GetRawInternal11Ref()` and returns `(uint16_t)(known11refValue * 1024.0 / rawAnalog11ref)`. The calibrated reference value is supplied as `INTERNAL_1v1` at build time.
+
+### FUNC-BATTERY-002
+**Title:** Battery voltage derived from VCC directly or resistor-divider on PA1
+**Status:** validated
+**Dependencies:** FUNC-BATTERY-001
+**Description:** When `BATTERY_IS_VCC` is defined, `batteryVoltageInMv` equals `vccMv`. Otherwise, `main()` reads PA1 via `hal.GetRawBattery()` and calls `hal.ConvertAnalogValueToMv(rawBattery, vccMv)` to obtain the battery voltage in millivolts from the external resistor divider.
+
+### FUNC-BATTERY-003
+**Title:** Low-battery flag suppresses X10 meter transmissions and sets Oregon battery-low bit
+**Status:** validated
+**Dependencies:** FUNC-BATTERY-002, FUNC-OREGON-011, FUNC-X10-006, FUNC-X10-007
+**Description:** When `batteryVoltageInMv < LOW_BATTERY_VOLTAGE`, `main()` sets `lowBattery = true`. Oregon frames receive `SetBatteryLow(true)`. All X10 RFXmeter transmissions guarded by `!lowBattery` (battery voltage and analog sensor) are suppressed entirely.
+
+### FUNC-SENSOR-001
+**Title:** BMx280 wraps BMP280 and BME280 behind a common interface at I2C address 0x76
+**Status:** validated
+**Dependencies:** —
+**Description:** The `BMx280` class initialises the sensor at I2C address 0x76 and exposes `Begin()`, `GetTemperature()` (°C), `GetPressure()` (Pa), `GetHumidity()` (%), and `Shutdown()` (sleep mode). On non-AVR targets the methods are stubs returning 0.
+
+### FUNC-SENSOR-002
+**Title:** DS18B20 temperature read on 1-Wire PA3; raw value divided by 16 gives degrees Celsius
+**Status:** validated
+**Dependencies:** —
+**Description:** When `USE_DS18B20` is defined on AVR, `main()` calls `ds18b20convert()` on PORTA bit 3, waits 1 s, then calls `ds18b20read()`. On `DS18B20_ERROR_OK`, the raw 16-bit fixed-point value is right-shifted by dividing by 16 to obtain temperature in °C as an integer.
+
+### FUNC-SENSOR-003
+**Title:** BH1750 light sensor read in ONE_TIME_HIGH_RES_MODE and reported as a Lacrosse type-5 luminosity frame transmitted twice
+**Status:** validated
+**Dependencies:** FUNC-LACROSSE-007
+**Description:** When `USE_BH1750` is defined and `lowBattery` is false, `main()` initialises a `BH1750` at I2C address 0x23 in `ONE_TIME_HIGH_RES_MODE`, waits 150 ms, reads the lux value, sets it on a `LacrosseWS7000` encoder, and calls `Send()` twice to maximise reception reliability.
+
+### FUNC-ANALOG-001
+**Title:** Auxiliary analog input on PA0 read and converted to millivolts
+**Status:** validated
+**Dependencies:** FUNC-BATTERY-001
+**Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` calls `hal.GetRawAnalogSensor()` (PA0 ADC reading) and converts it to millivolts via `hal.ConvertAnalogValueToMv(rawAdc, vccMv)`, where `vccMv` was computed by `ComputeVccMv(INTERNAL_1v1)`.
