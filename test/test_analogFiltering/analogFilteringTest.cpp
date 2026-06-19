@@ -25,6 +25,7 @@
 void tearDown() {}
 void setUp() {}
 
+// @req TECH-FILTER-001
 void Expected_exclusion_to_exclude_value() {
   AnalogFilter filter(1, 3);
   filter.Push(10);
@@ -34,6 +35,7 @@ void Expected_exclusion_to_exclude_value() {
   TEST_ASSERT_EQUAL(0, filter.Get());
 }
 
+// @req TECH-FILTER-001
 void Expected_zero_exclusion_to_not_exclude() {
   AnalogFilter filter(0, 3);
   filter.Push(2);
@@ -42,6 +44,7 @@ void Expected_zero_exclusion_to_not_exclude() {
   TEST_ASSERT_EQUAL(3, filter.Get());
 }
 
+// @req TECH-FILTER-001
 void Expected_filter_to_mean_actual_values() {
   AnalogFilter filter(0, 3);
   filter.Push(2);
@@ -49,6 +52,7 @@ void Expected_filter_to_mean_actual_values() {
   TEST_ASSERT_EQUAL(3, filter.Get());
 }
 
+// @req TECH-FILTER-001
 void Expected_filter_to_mean_values_and_floor_result() {
   AnalogFilter filter(0, 4);
   filter.Push(1);
@@ -57,6 +61,7 @@ void Expected_filter_to_mean_values_and_floor_result() {
   filter.Push(4);
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
+// @req TECH-FILTER-002
 void Expected_filter_to_ignore_supernumerary_values() {
   AnalogFilter filter(0, 2);
   filter.Push(2);
@@ -66,6 +71,7 @@ void Expected_filter_to_ignore_supernumerary_values() {
   TEST_ASSERT_EQUAL(2, filter.Get());
 }
 
+// @req TECH-FILTER-001
 void Expected_filter_to_account_exclusion() {
   AnalogFilter filter(2, 4);
   filter.Push(2);
