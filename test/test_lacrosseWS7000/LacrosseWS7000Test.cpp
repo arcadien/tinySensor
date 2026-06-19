@@ -51,6 +51,7 @@ void setUp(void) {
 void tearDown(void) {}
 
 // ----------------- Lacrosse WS7000 tests
+// @req FUNC-LACROSSE-004
 void Expect_good_numerical_split() {
   struct TestData {
     float givenValue;
@@ -99,6 +100,7 @@ void Expect_good_numerical_split() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-001
 void Expect_preamble_is_10_times_0() {
   static const uint8_t PREAMBLE_IS_TEN_ZEROS[] = {
       BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO,
@@ -111,6 +113,7 @@ void Expect_preamble_is_10_times_0() {
                                sizeof(PREAMBLE_IS_TEN_ZEROS));
 }
 
+// @req FUNC-LACROSSE-002
 void Expect_good_sensor_type_emission() {
   struct TestData {
     bool givenHasLux;
@@ -165,6 +168,7 @@ void Expect_good_sensor_type_emission() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-003
 void Expect_good_sensor_address_emission() {
   // Note: address is sent along with temperature sign flag
 
@@ -218,6 +222,7 @@ void Expect_good_sensor_address_emission() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-004
 void Expect_good_temperature_emission() {
   struct TempTestData {
     float givenTemperature;
@@ -305,6 +310,7 @@ void Expect_good_temperature_emission() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-005
 void Expect_good_humidity_emission() {
   struct TempTestData {
     uint8_t givenHumidity;
@@ -378,6 +384,7 @@ void Expect_good_humidity_emission() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-006
 void Expect_good_pressure_emission() {
   struct TempTestData {
     float givenPressure;
@@ -448,6 +455,7 @@ void Expect_good_pressure_emission() {
 #undef TEST_COUNT
 }
 
+// @req FUNC-LACROSSE-008
 void Expect_encoding_of_simple_temperature_message() {
   // clang-format off
   // 0 0 0 0  1 1 1 0  0 1 1 1  0 0 1 0  0 0 0 1  1 0 1 0  0 1 1 1
@@ -481,6 +489,7 @@ void Expect_encoding_of_simple_temperature_message() {
                                sizeof(EXPECTED_ORDERS));
 }
 
+// @req FUNC-LACROSSE-008
 void Expect_encoding_of_simple_temperature_and_humi_message() {
   // clang-format off
   static const  uint8_t EXPECTED_ORDERS[305] = {
@@ -511,6 +520,7 @@ void Expect_encoding_of_simple_temperature_and_humi_message() {
                                sizeof(EXPECTED_ORDERS));
 }
 
+// @req FUNC-LACROSSE-009
 void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
   // clang-format off
   static const  uint8_t EXPECTED_ORDERS[405] = {
@@ -552,6 +562,7 @@ void Expect_encoding_of_simple_temperature_and_humi_and_pressure_message() {
                                sizeof(EXPECTED_ORDERS));
 }
 
+// @req FUNC-LACROSSE-007
 void Expect_encoding_of_simple_luminosity_message() {
   // clang-format off
   static const  uint8_t EXPECTED_ORDERS[] = {
