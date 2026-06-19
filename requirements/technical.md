@@ -96,3 +96,19 @@
 **Status:** validated
 **Dependencies:** TECH-SERIAL-001
 **Description:** When `USE_SERIAL_LOG` is defined, `src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated.
+
+---
+
+### TECH-X10-001
+**Title:** Hal must expose five timing methods for X10 RF signal intervals
+**Status:** validated
+**Dependencies:** TECH-HAL-001
+**Description:** The `Hal` interface must declare five new pure-virtual methods for X10 RF timing: `DelayX10PreambleHigh()` (8960 µs), `DelayX10PreambleLow()` (4500 µs), `DelayX10BitShort()` (560 µs), `DelayX10BitLong()` (1120 µs), and `DelayX10Gap()` (40000 µs). `Attiny84aHal` must implement each with the corresponding `_delay_us()` call calibrated to `F_CPU = 1 000 000`. `TestHal_` must implement each by appending a distinct single-character token to `Orders`.
+
+---
+
+### TECH-X10-002
+**Title:** x10rf must call only Hal timing methods for all delays; direct _delay_us() calls are forbidden
+**Status:** validated
+**Dependencies:** TECH-X10-001
+**Description:** `x10rf::SendCommand()` and `x10rf::SendX10RfBit()` must replace all calls to the file-static `x10_*` delay functions with direct calls to the corresponding `Hal` methods (`DelayX10PreambleHigh()`, `DelayX10PreambleLow()`, `DelayX10BitShort()`, `DelayX10BitLong()`, `DelayX10Gap()`). The `#if defined(AVR)` block defining those static functions and including `<util/delay.h>` must be removed entirely from `lib/x10/x10rf.cpp`.
