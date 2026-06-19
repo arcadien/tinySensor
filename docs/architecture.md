@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: TECH-HAL/FILTER/CONVERT_
+_Last updated: 2026-06-19 — requirements: TECH-SERIAL-001..002_
 
 ## Component Diagram
 
@@ -99,3 +99,5 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-FILTER-002 | `AnalogFilter` | Push() after samples count reached is silently ignored; Get() returns mean of first samples values |
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
+| TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; bit period = (1 000 000 / 9600) − 25 µs; driven by SerialGoHigh/Low |
+| TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
