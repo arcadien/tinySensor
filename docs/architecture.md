@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: TECH-X10-001..002_
+_Last updated: 2026-06-19 — requirements: TECH-SENSOR-001_
 
 ## Component Diagram
 
@@ -12,7 +12,8 @@ graph TD
   main -->|Hal*| x10rf
   main -->|Hal*| BMx280
   main -->|Hal*| SoftSerial
-  main -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire temp sensor)"]
+  main -->|Hal*| Ds18b20["Ds18b20 (1-Wire wrapper)"]
+  Ds18b20 -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire driver library)"]
   main -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
 
   HAL["Hal (interface)"] --> Attiny84aHal["Attiny84aHal (AVR)"]
@@ -23,6 +24,7 @@ graph TD
   x10rf -->|"RadioGoHigh/Low\nDelayX10PreambleHigh/Low\nDelayX10BitShort/Long\nDelayX10Gap"| HAL
   SoftSerial -->|SerialGoHigh/Low| HAL
   BMx280 -->|I2C via TinyI2C| HAL
+  Ds18b20 -->|Delay1s| HAL
 ```
 
 ## Component Responsibilities
@@ -36,8 +38,9 @@ graph TD
 | `LacrosseWS7000` | Encodes temperature/humidity/pressure/luminosity into Lacrosse WS7000 frames | — |
 | `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors); routes all timing through Hal X10 delay methods | TECH-X10-001, TECH-X10-002 |
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
+| `Ds18b20` | Wrapper class encapsulating DS18B20 1-Wire access; accepts `Hal*` at construction; exposes `Begin()`, `Convert()`, `Read()`; uses `hal->Delay1s()` between convert and read on AVR; stubs on non-AVR | TECH-SENSOR-001 |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
-| `ds18b20` | 1-Wire temperature sensor driver on PA3; raw value / 16 = °C | FUNC-SENSOR-002 |
+| `ds18b20` | 1-Wire driver library on PA3; called only through `Ds18b20` wrapper | FUNC-SENSOR-002 |
 | `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux | FUNC-SENSOR-003 |
 | `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
@@ -51,6 +54,7 @@ graph TD
 | `LacrosseWS7000` | `Hal*` | constructor |
 | `x10rf` | `Hal*` | constructor |
 | `BMx280` | `Hal*` | constructor |
+| `Ds18b20` | `Hal*` | constructor |
 | `SoftSerial` | `Hal*` | constructor |
 
 All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly.
@@ -111,7 +115,8 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-BATTERY-002 | `Hal` / `main.cpp` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) |
 | FUNC-BATTERY-003 | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
 | FUNC-SENSOR-001 | `BMx280` | Wraps BMP280/BME280 at I2C 0x76; Begin/GetTemperature/GetPressure/GetHumidity/Shutdown interface |
-| FUNC-SENSOR-002 | `main.cpp` (ds18b20) | ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C |
+| FUNC-SENSOR-002 | `Ds18b20` | ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
+| TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
 | FUNC-SENSOR-003 | `main.cpp` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
 | CONF-BUILD-001 | `main.cpp` / `platformio.ini` | Exactly one of USE_OREGON or USE_LACROSSE per environment; violated at compile time otherwise |
