@@ -140,3 +140,45 @@
 **Status:** validated
 **Dependencies:** —
 **Description:** `SendNibble()` always calls `SendOne()` after transmitting its four data bits. This trailing one-bit separator is unconditional and applies to every nibble in the frame, including type, address, data, and checksum nibbles.
+
+### FUNC-X10-001
+**Title:** RFXmeter builds a 6-byte frame with address, partial complement, 24-bit value, packet-type nibble, and nibble-sum parity
+**Status:** validated
+**Dependencies:** —
+**Description:** `RFXmeter()` fills a 6-byte buffer: byte[0]=address, byte[1]=(upper nibble of ~address)+(lower nibble of address), bytes[2–4]=24-bit value (clamped to 0 on overflow), byte[5] upper nibble=packet type, byte[5] lower nibble=bitwise NOT of sum of all byte nibble-pairs. The buffer is transmitted via `SendCommand`.
+
+### FUNC-X10-002
+**Title:** RFXsensor builds a 4-byte frame with address-type encoding, value, packet-type status, and nibble-sum parity
+**Status:** validated
+**Dependencies:** —
+**Description:** `RFXsensor()` fills a 4-byte buffer: byte[0]=(address<<2)|type_bits (t=0,v=2,a=1,m=3), byte[1]=(upper nibble of ~byte[0])+(lower nibble of byte[0]), byte[2]=value, byte[3] upper nibble=packet-type status byte, byte[3] lower nibble=bitwise NOT of nibble sum of bytes[0–2] and byte[3] upper nibble. The buffer is transmitted via `SendCommand`.
+
+### FUNC-X10-003
+**Title:** x10Switch builds a 4-byte frame with house-code nibble lookup, bit-scattered unit encoding, and full-byte complements
+**Status:** validated
+**Dependencies:** —
+**Description:** `x10Switch()` maps house-code characters 'a'–'p' to a 4-bit lookup table value placed in byte[0] upper nibble. Unit code bits are scattered across byte[0] bit 2 and byte[2] bits 3, 4, 6. Byte[1]=~byte[0] and byte[3]=~byte[2]. The 4-byte buffer is transmitted via `SendCommand`.
+
+### FUNC-X10-004
+**Title:** x10Security builds a 6-byte frame with XOR-fold parity reduced to a single bit
+**Status:** validated
+**Dependencies:** —
+**Description:** `x10Security()` fills a 6-byte buffer: byte[0]=address, byte[1]=(lower nibble of ~byte[0])+(upper nibble of byte[0]), byte[2]=command, byte[3]=~command, byte[4]=id. Byte[5] is the XOR of all six bytes (using byte[5] bit 7 only), folded by successive XOR-halvings to a single bit. The buffer is transmitted via `SendCommand`.
+
+### FUNC-X10-005
+**Title:** Each transmission is repeated rf_repeats times with a 40 ms inter-repeat cooldown on AVR
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendCommand()` loops `_rf_repeats` times. Each iteration sends the preamble burst, all frame bits MSB-first, and a trailing stop bit, then calls `x10_cooldown_gap()` (40 000 µs delay on AVR, no-op on host). `LedOn`/`LedOff` bracket the full repeated sequence.
+
+### FUNC-X10-006
+**Title:** Battery voltage in mV is BCD-encoded and transmitted via RFXmeter when battery is not low
+**Status:** validated
+**Dependencies:** FUNC-X10-001, FUNC-BATTERY-001, FUNC-BATTERY-002
+**Description:** When `BATTERY_VOLTAGE_X10_ID` is defined and `lowBattery` is false, `main()` reads VCC in mV, converts it to BCD via `ConversionTools::dec16ToHex`, and calls `x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00, value)`. The transmission is suppressed entirely when `lowBattery` is true.
+
+### FUNC-X10-007
+**Title:** Auxiliary analog sensor voltage in mV is BCD-encoded and transmitted via RFXmeter when battery is not low
+**Status:** validated
+**Dependencies:** FUNC-X10-001, FUNC-ANALOG-001
+**Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` reads the raw analog sensor value, converts it to mV via `hal.ConvertAnalogValueToMv`, BCD-encodes via `ConversionTools::dec16ToHex`, and calls `x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00, value)`. The transmission is suppressed when `lowBattery` is true.
