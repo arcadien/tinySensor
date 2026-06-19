@@ -80,3 +80,19 @@
 **Status:** validated
 **Dependencies:** —
 **Description:** `ConversionTools::dec32ToHex(n)` packs each decimal digit of `n` into one nibble of the returned `uint32_t` (e.g. 1234567 → `0x01234567`). Inputs above 99,999,999 cause the most-significant nibble to overflow silently; no error is raised.
+
+---
+
+### TECH-SERIAL-001
+**Title:** SoftSerial transmits output-only UART at 9600 baud using SerialGoHigh/SerialGoLow HAL calls
+**Status:** validated
+**Dependencies:** TECH-HAL-001
+**Description:** `SoftSerial` accepts a `Hal*` at construction and drives UART output exclusively via `SerialGoHigh()` and `SerialGoLow()`. Each bit period is `(1 000 000 / 9600) − 25` µs, as defined by `BIT_PERIOD` in `lib/softSerial/SoftSerial.cpp:6`. No receive path is implemented.
+
+---
+
+### TECH-SERIAL-002
+**Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
+**Status:** validated
+**Dependencies:** TECH-SERIAL-001
+**Description:** When `USE_SERIAL_LOG` is defined, `src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated.
