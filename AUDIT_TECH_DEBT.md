@@ -4,7 +4,7 @@
 
 **Auditeur** : Claude (modèle opus 4.7) — revue statique
 
-**Date** : 19 avril 2026 — mise à jour 18 juin 2026 (voir §1bis)
+**Date** : 19 avril 2026 — mise à jour 19 juin 2026 (voir §1bis)
 
 **Périmètre** : ensemble du dépôt au commit `aa53a83` (branche `master`) — code firmware (`src/`, `lib/`, `include/`), tests (`test/`), projet Atmel Studio legacy (`TinySensor/`), outillage (`scripts/`, `shared/`), web builder (`web/`), hardware (`hardware/`), CI (`.github/workflows/`), Docker/devcontainer.
 
@@ -90,6 +90,49 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 Impact 2026-06-18 : **291 points** résolus (C1:35 + D1:36 + A4:15 + D6:12 + C2:30 + C15:15 + C3:20 + C11:15 + D5:20 + I2:25 + D3:24 + D4:24 + Doc1:20).
 
 Impact cumulé toutes dates : **598 points** (307 + 291).
+
+### 2026-06-19 — RBD setup, requirements reverse-engineering, architectural violations V1-V4
+
+#### Infrastructure RBD
+
+Le projet est passé sous **Requirement-Based Development (RBD)** via le plugin Claude Code `arcadien/rbd@0.12.0`. Cela comprend :
+
+- `.rbd/config.yml` — ID format `FUNC/TECH/CONF/PLAT-DOMAIN-NNN`, framework Unity/C++, linter `clang-format`
+- `.clang-format` — style Google, 2 espaces, 80 colonnes, `SortIncludes: false`
+- Baseline clang-format appliquée sur tous les `.cpp`/`.h` existants (37 fichiers)
+- `CLAUDE.md` mis à jour avec la section RBD (commit prefix obligatoire, `// @req {id}`, etc.)
+- Pre-push hook `~/.claude/hooks/rbd-pre-push-check.sh` installé
+
+#### Rétro-ingénierie des exigences
+
+Analyse architecturale complète (`docs/analysis-2026-06-18.md`) suivie de 8 vagues de `requirement-analyst` agents en parallèle. **67 exigences validées et committées** :
+
+| Fichier | Domaines | Nb exigences |
+|---------|----------|:------------:|
+| `requirements/functional.md` | FUNC-OREGON, LACROSSE, X10, BATTERY, SENSOR, ANALOG | 37 |
+| `requirements/technical.md` | TECH-HAL, FILTER, CONVERT, SERIAL, X10 | 14 |
+| `requirements/configuration.md` | CONF-BUILD | 11 |
+| `requirements/platform.md` | PLAT-POWER | 5 |
+| **Total** | | **67** |
+
+`docs/architecture.md` enrichi d'une table de traçabilité complète (67 lignes Requirement → Component).
+
+#### Violations architecturales V1-V4 résolues
+
+- **V1 — `x10rf` contournait le HAL pour tous les timings** : 5 fonctions statiques locales (`x10_preamble_high`, etc.) appelaient `_delay_us()` directement, violant `TECH-HAL-001`. Cycle RBD complet : TECH-X10-001 (5 nouvelles méthodes `Hal` : `DelayX10PreambleHigh` 8960 µs, `DelayX10PreambleLow` 4500 µs, `DelayX10BitShort` 560 µs, `DelayX10BitLong` 1120 µs, `DelayX10Gap` 40 000 µs) + TECH-X10-002 (x10rf remplacé — bloc `#if defined(AVR) _delay_us` supprimé, 5 appels `_hal->DelayX10*()` substitués). 14 nouveaux tests Unity. → **Résolu**. Note : **C6 (SoftSerial) reste ouvert** — même pattern, traitement séparé.
+
+- **V2 — `#include <AnalogFilter.h>` mort dans `Attiny84aHal.cpp`** : inclus ligne 2, jamais référencé — `AdcRead` utilisait des variables locales. Supprimé. → **Résolu**.
+
+- **V3 — `BH1750` absent de `docs/architecture.md`** : ajouté au diagramme Mermaid et à la table des responsabilités. → **Résolu**.
+
+- **V4 — `ds18b20` absent de `docs/architecture.md`** : idem. → **Résolu**.
+
+#### Devcontainer
+
+- **DevContainer** : Node.js 20 LTS + `@anthropic-ai/claude-code` ajoutés à `.devcontainer/Dockerfile` (installation système via NodeSource). Claude Code désormais disponible après `Rebuild Container`.
+
+Impact 2026-06-19 : **score symbolique** — les violations V1-V4 étaient des découvertes nouvelles (non dans l'audit initial) ; leur résolution immédiate les soustrait du backlog avant d'y entrer. Score cumulé inchangé à **598 points** sur les items de l'audit original.
+
 
 ---
 
@@ -344,7 +387,7 @@ Pour équilibrer, voici les forces du projet à ne pas casser lors des refactori
 | Environnements PlatformIO | 8 (1 natif + 7 AVR) |
 | Dépendances externes | 5 (toutes forks perso) |
 | Workflows CI | 1 (2 jobs : native + matrice AVR 7 envs, maj 2026-04-19) |
-| Secrets exposés | 1 (C1) |
+| Secrets exposés | 0 (C1 révoqué) |
 
 ### 7.2 Items non retenus (hors scope)
 
