@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: CONF-BUILD-001..011_
+_Last updated: 2026-06-19 — requirements: PLAT-POWER-001..005_
 
 ## Component Diagram
 
@@ -119,3 +119,8 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | CONF-BUILD-009 | `main.cpp` / `platformio.ini` | ANALOG1_X10_ID optionally enables PA0 analog transmission via x10rf::RFXmeter() |
 | CONF-BUILD-010 | `main.cpp` / `platformio.ini` | BATTERY_IS_VCC skips GetRawBattery(); batteryVoltageInMv = vccMv directly |
 | CONF-BUILD-011 | `platformio.ini` | USE_CHARGE_PUMP is an informational flag only; no firmware branch depends on it |
+| PLAT-POWER-001 | `Attiny84aHal` | Hibernate loops SLEEP_MODE_PWR_DOWN for ceil(s/8) WDT periods; minimum 1 period |
+| PLAT-POWER-002 | `Attiny84aHal` / `main.cpp` | PA2 (SENSOR_VCC) driven high before first sensor read; driven low after last transmission |
+| PLAT-POWER-003 | `Attiny84aHal` | PRR bits for USI/Timer0/Timer1/ADC set in sleep(); GPIO reconfigured as inputs with pull-ups; all restored on wake |
+| PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
+| PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
