@@ -86,3 +86,57 @@
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, FUNC-OREGON-013
 **Description:** The 11-byte payload produced by `FinalizeMessage()` for known channel, rolling code, battery, temperature, humidity, and pressure inputs must match the reference hex strings from the Oregon Scientific v3 protocol document (e.g., `5A5D423448088209603054`, `1D20485448088200390000`, `1D2016B0091073002C0000`).
+
+### FUNC-LACROSSE-001
+**Title:** Preamble is exactly 10 consecutive zero bits
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendPreamble()` transmits exactly 10 zero bits by calling `SendZero()` ten times. No other bits precede the preamble. The preamble is always followed by a single one-bit start marker emitted by `Send()` before the first nibble.
+
+### FUNC-LACROSSE-002
+**Title:** Sensor-type nibble encodes available data combination; unknown combination emits 0xF
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendType()` maps the `availableData` bitmask to a type nibble: temperature-only (0x01) → 0x0, temperature and humidity (0x03) → 0x1, temperature, humidity, and pressure (0x07) → 0x4, luminosity-only (0x08) → 0x5. Any other combination emits 0xF.
+
+### FUNC-LACROSSE-003
+**Title:** Address (0–7) in bits 0–2 of second nibble; negative temperature sign in bit 3
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendAddressAndTemperatureSign()` encodes the 3-bit sensor address in bits 0–2. If temperature is available and negative, bit 3 is set to 1. The resulting nibble is sent via `SendNibble()`.
+
+### FUNC-LACROSSE-004
+**Title:** Temperature clamped to ±99 °C and encoded as three nibbles: decimal, unit, dozen
+**Status:** validated
+**Dependencies:** —
+**Description:** `SetTemperature()` clamps the input to [−99, +99] °C. `SendTemperature()` then transmits three nibbles in order: tenths digit, units digit, dozens digit. The sign is communicated separately via FUNC-LACROSSE-003.
+
+### FUNC-LACROSSE-005
+**Title:** Humidity clamped to 99.9 % maximum and encoded as three nibbles: decimal, unit, dozen
+**Status:** validated
+**Dependencies:** —
+**Description:** `SetHumidity()` clamps any value ≥ 100 % to 99.9 %. `SendHumidity()` transmits three nibbles in order: tenths digit, units digit, dozens digit.
+
+### FUNC-LACROSSE-006
+**Title:** Pressure clamped to 850–1100 hPa, offset by −200, encoded as four nibbles: units, dozens, hundreds, decimal
+**Status:** validated
+**Dependencies:** —
+**Description:** `SetPressure()` clamps the input to [850, 1100] hPa then subtracts 200. `SendPressure()` transmits four nibbles in order: units digit, dozens digit, hundreds digit, tenths digit of the offset value.
+
+### FUNC-LACROSSE-007
+**Title:** Luminosity value encoded as 7 nibbles in a type-5 (light sensor) frame
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendLuminosity()` transmits the units, dozens, and hundreds nibbles of the lux value followed by four zero nibbles, giving a fixed 7-nibble payload. The type nibble for luminosity frames is 0x5 (see FUNC-LACROSSE-002).
+
+### FUNC-LACROSSE-008
+**Title:** Frame ends with XOR checksum nibble followed by running-sum nibble initialised to 5
+**Status:** validated
+**Dependencies:** FUNC-LACROSSE-001, FUNC-LACROSSE-002, FUNC-LACROSSE-003, FUNC-LACROSSE-004, FUNC-LACROSSE-005, FUNC-LACROSSE-006, FUNC-LACROSSE-007
+**Description:** `Send()` maintains a running XOR (`checkXor`, init 0) and a running sum (`checkSum`, init 5) over every transmitted nibble. After all data nibbles, `checkXor` is masked to 4 bits, added into `checkSum` (also masked to 4 bits), and both are transmitted as the final two nibbles.
+
+### FUNC-LACROSSE-009
+**Title:** Each nibble is followed by a mandatory trailing one-bit separator
+**Status:** validated
+**Dependencies:** —
+**Description:** `SendNibble()` always calls `SendOne()` after transmitting its four data bits. This trailing one-bit separator is unconditional and applies to every nibble in the frame, including type, address, data, and checksum nibbles.
