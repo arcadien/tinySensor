@@ -67,6 +67,7 @@ typedef struct X10MeterTestData {
 #define bitWrite(value, bit, bitvalue) \
   (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
+// @req FUNC-X10-003
 void Expect_x10_switch_right_encoding() {
   char buffer[256];
   uint8_t testCount = 1;
@@ -91,6 +92,7 @@ void Expect_x10_switch_right_encoding() {
   }
 }
 
+// @req FUNC-X10-004
 void Expect_x10_security_right_parity() {
   char buffer[256];
   uint8_t testCount = 5;
@@ -112,6 +114,7 @@ void Expect_x10_security_right_parity() {
   }
 }
 
+// @req FUNC-X10-001
 void Expect_x10_meter_right_encoding() {
   char buffer[256];
 
@@ -151,6 +154,7 @@ void Expect_x10_meter_right_encoding() {
   }
 }
 
+// @req FUNC-X10-002
 void Expect_x10_sensor_right_encoding() {
   char buffer[256];
 
