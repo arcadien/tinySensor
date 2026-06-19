@@ -24,6 +24,7 @@
 
 static char buffer[512];
 
+// @req FUNC-BATTERY-001
 void Expect_vcc_is_computed_using_internal_1v1_ref() {
   struct TestData {
     uint16_t raw1v1Measurement;
@@ -54,6 +55,7 @@ void Expect_vcc_is_computed_using_internal_1v1_ref() {
   }
 }
 
+// @req FUNC-BATTERY-002
 void Expect_convertion_from_adc_to_mv_is_right() {
   struct TestData {
     uint16_t vccMv;
