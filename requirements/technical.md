@@ -99,6 +99,22 @@
 
 ---
 
+### TECH-SERIAL-003
+**Title:** Hal must expose a DelaySerialBitPeriod() method for the 9600-baud bit period
+**Status:** validated
+**Dependencies:** TECH-HAL-001, TECH-SERIAL-001
+**Description:** The `Hal` interface must declare one new pure-virtual method `DelaySerialBitPeriod()`. `Attiny84aHal` must implement it as `_delay_us((1000000L / 9600) - 25)` (104 µs, calibrated to `F_CPU = 1 000 000`). `TestHal_` must implement it by appending the token `'B'` (for Baud) to `Orders`.
+
+---
+
+### TECH-SERIAL-004
+**Title:** SoftSerial must call Hal::DelaySerialBitPeriod() for all bit-period delays; direct _delay_us() calls are forbidden
+**Status:** validated
+**Dependencies:** TECH-SERIAL-003
+**Description:** All four `_delay_us(BIT_PERIOD)` calls in `lib/softSerial/SoftSerial.cpp` (`begin()`, `print(uint8_t)` start-bit, data-bit loop, stop-bit) must be replaced with `_hal->DelaySerialBitPeriod()`. The `#define __DELAY_ROUND_CLOSEST__`, `#include <util/delay.h>`, and `#define BIT_PERIOD` preprocessor lines must be removed entirely from `SoftSerial.cpp`. This unblocks native host compilation and testing of `SoftSerial`.
+
+---
+
 ### TECH-X10-001
 **Title:** Hal must expose five timing methods for X10 RF signal intervals
 **Status:** validated
