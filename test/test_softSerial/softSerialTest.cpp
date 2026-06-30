@@ -170,6 +170,7 @@ void Expect_softserial_send_alternating_bits_produces_B_tokens() {
 // TECH-SERIAL-004: SendChar produces 'S' and 'W' tokens (GPIO routing intact)
 // ---------------------------------------------------------------------------
 
+// @req TECH-SERIAL-001
 // @req TECH-SERIAL-004
 void Expect_softserial_uses_hal_serial_pins() {
   // Given

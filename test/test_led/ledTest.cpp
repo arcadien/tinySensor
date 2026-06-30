@@ -45,11 +45,13 @@ void Expect_led_can_switch_off() {
 #else
 #include <TestHal.h>
 
+// @req TECH-HAL-005
 void Expect_led_can_switch_on() {
   TestHal.LedOn();
   TEST_ASSERT(TestHal.IsLedOn);
 }
 
+// @req TECH-HAL-005
 void Expect_led_can_switch_off() {
   TestHal.LedOff();
   TEST_ASSERT(!(TestHal.IsLedOn));

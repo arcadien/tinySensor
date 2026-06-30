@@ -130,6 +130,8 @@ void Expect_bitread_to_read_each_bit_separately() {
 // ----------------- Oregon tests
 
 // @req FUNC-OREGON-001
+// @req TECH-HAL-001
+// @req TECH-HAL-002
 void Expect_good_hardware_orders_for_zero() {
   OregonV3 oregonv3(&TestHal);
   oregonv3.SendZero();
