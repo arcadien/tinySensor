@@ -1,1 +1,27 @@
-exclusions: []
+exclusions:
+  - ref: AVR-ONLY-001
+    findings: [12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+    requirements:
+      - TECH-HAL-004
+      - CONF-BUILD-001
+      - CONF-BUILD-002
+      - CONF-BUILD-003
+      - CONF-BUILD-004
+      - CONF-BUILD-005
+      - CONF-BUILD-006
+      - CONF-BUILD-007
+      - CONF-BUILD-008
+      - CONF-BUILD-009
+      - CONF-BUILD-010
+      - CONF-BUILD-011
+      - PLAT-POWER-001
+      - PLAT-POWER-002
+      - PLAT-POWER-003
+      - PLAT-POWER-004
+      - PLAT-POWER-005
+    justification: >
+      AVR-only behavior — requires hardware registers (PRR, DDRA/B, PORTA/B, WDT,
+      SLEEP_MODE_PWR_DOWN, PA2 GPIO), compile-time #error guards, or per-board
+      calibration constants. No native host test path exists by design.
+      Behavior is verified indirectly by the AVR CI build matrix
+      (7-environment pio run matrix in .github/workflows/main.yml).
