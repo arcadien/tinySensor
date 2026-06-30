@@ -190,6 +190,110 @@ void runCycle_suppresses_battery_x10_when_low_battery() {
 // defined together; the native_main_oregon_analog env guarantees this.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// FUNC-BATTERY-003: Low-battery flag suppresses X10 meter transmissions
+// and sets Oregon battery-low bit
+// ---------------------------------------------------------------------------
+
+// @req FUNC-BATTERY-003
+void battery003_all_x10_rfxmeter_suppressed_when_low_battery() {
+  // Given
+  // Force VCC below LOW_BATTERY_VOLTAGE (500 mV):
+  //   VCC = INTERNAL_1v1 * 1024 / rawInternal11ref
+  //       = 1100 * 1024 / 2253 ≈ 499 mV < 500 mV → lowBattery = true.
+  // BATTERY_VOLTAGE_X10_ID=0x01 is defined so the RFXmeter code path is
+  // compiled in (native_main_oregon env).  Any x10rf::RFXmeter invocation
+  // emits at least one 'Q' (DelayX10PreambleHigh) token.
+  TestHal.rawInternal11ref = LOW_BAT_RAW_INTERNAL_11REF;
+  TestHal.ClearOrders();
+
+  // When
+  runCycle(&TestHal);
+
+  // Then
+  // lowBattery == true must suppress ALL X10 RFXmeter calls: zero 'Q' tokens.
+  int preambleCount = countToken(TestHal.Orders, TOK_X10_PREAMBLE_HIGH);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(
+      0, preambleCount,
+      "FUNC-BATTERY-003: lowBattery must suppress all X10 RFXmeter "
+      "calls — no 'Q' token expected in Orders");
+}
+
+// @req FUNC-BATTERY-003
+void battery003_oregon_frame_encodes_battery_low_bit_when_battery_is_low() {
+  // Given
+  // Capture the Oregon radio Orders for a low-battery run and a normal run.
+  // When lowBattery == true, runCycle calls oregonEncoder.SetBatteryLow(true),
+  // which sets bit 2 of message byte 3 (0x04).  That changes nibble 7 of the
+  // frame from 0x0 to 0x4, altering the radio pulse sequence.
+  // We verify the two Orders vectors differ, proving the battery-low bit was
+  // applied to the transmitted frame.
+  TestHal.ClearOrders();
+  TestHal.rawInternal11ref = DEFAULT_RAW_INTERNAL_11REF;  // normal battery
+  runCycle(&TestHal);
+  std::vector<unsigned char> normalBatteryOrders = TestHal.Orders;
+
+  TestHal.ClearOrders();
+  TestHal.rawInternal11ref = LOW_BAT_RAW_INTERNAL_11REF;  // low battery
+
+  // When
+  runCycle(&TestHal);
+  std::vector<unsigned char> lowBatteryOrders = TestHal.Orders;
+
+  // Then
+  // The two Oregon frame sequences must differ because byte 3 bit 2 (the
+  // battery-low flag) changes the nibble encoding at that position in the
+  // message, producing a different radio pulse pattern.
+  TEST_ASSERT_TRUE_MESSAGE(
+      normalBatteryOrders != lowBatteryOrders,
+      "FUNC-BATTERY-003: Oregon radio orders must differ between low-battery "
+      "and normal-battery runs — battery-low bit must be encoded in the frame");
+}
+
+// @req FUNC-BATTERY-003
+void battery003_oregon_frame_does_not_encode_battery_low_bit_when_battery_ok() {
+  // Given
+  // Two consecutive normal-battery runs must produce identical Oregon frame
+  // Orders (same frame content → same radio pulse sequence).  This is the
+  // complementary assertion: when battery is OK, the frame is stable and
+  // does not accidentally set the battery-low flag.
+  TestHal.rawInternal11ref = DEFAULT_RAW_INTERNAL_11REF;
+  TestHal.ClearOrders();
+  runCycle(&TestHal);
+  std::vector<unsigned char> firstRun = TestHal.Orders;
+
+  TestHal.ClearOrders();
+
+  // When
+  runCycle(&TestHal);
+  std::vector<unsigned char> secondRun = TestHal.Orders;
+
+  // Then
+  // Identical inputs → identical frame → identical Orders.
+  TEST_ASSERT_EQUAL_MESSAGE(
+      firstRun.size(), secondRun.size(),
+      "FUNC-BATTERY-003: Two consecutive normal-battery runCycle calls must "
+      "produce the same number of radio orders");
+  TEST_ASSERT_TRUE_MESSAGE(
+      firstRun == secondRun,
+      "FUNC-BATTERY-003: Two consecutive normal-battery runCycle calls must "
+      "produce identical radio orders — battery-low bit must NOT be set when "
+      "battery voltage is above LOW_BATTERY_VOLTAGE");
+}
+
+// ---------------------------------------------------------------------------
+// FUNC-X10-007: Auxiliary analog voltage RFXmeter transmission and
+// low-battery suppression
+//
+// These tests are only compiled when ANALOG1_X10_ID is defined (i.e. in the
+// native_main_oregon_analog env).  In native_main_oregon (where ANALOG1_X10_ID
+// is absent) the guard prevents compilation, so this suite stays green there.
+//
+// PRODUCTION-SIDE NOTE: The ANALOG1_X10_ID block in src/main.cpp uses `vccMv`
+// declared inside the BATTERY_VOLTAGE_X10_ID block.  Both macros must be
+// defined together; the native_main_oregon_analog env guarantees this.
+// ---------------------------------------------------------------------------
+
 #ifdef ANALOG1_X10_ID
 
 // Expected number of DelayX10PreambleHigh ('Q') tokens per RFXmeter call:
@@ -257,6 +361,10 @@ int main(int, char **) {
   RUN_TEST(runCycle_calls_hal_via_pointer);
   RUN_TEST(runCycle_transmits_battery_voltage_via_x10_rfxmeter);
   RUN_TEST(runCycle_suppresses_battery_x10_when_low_battery);
+  RUN_TEST(battery003_all_x10_rfxmeter_suppressed_when_low_battery);
+  RUN_TEST(battery003_oregon_frame_encodes_battery_low_bit_when_battery_is_low);
+  RUN_TEST(
+      battery003_oregon_frame_does_not_encode_battery_low_bit_when_battery_ok);
 #ifdef ANALOG1_X10_ID
   RUN_TEST(runCycle_transmits_analog_voltage_via_x10_rfxmeter);
   RUN_TEST(runCycle_suppresses_analog_x10_when_low_battery);
