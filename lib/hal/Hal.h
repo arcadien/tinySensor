@@ -31,6 +31,7 @@ class Hal {
 
   virtual void SerialGoHigh() = 0;
   virtual void SerialGoLow() = 0;
+  virtual void DelaySerialBitPeriod() = 0;
 
   virtual void PowerOnSensors() = 0;
   virtual void PowerOffSensors() = 0;

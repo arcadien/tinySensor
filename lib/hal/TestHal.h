@@ -57,6 +57,7 @@ class TestHal_ : public Hal {
 
   inline void SerialGoHigh() override { Orders.push_back('S'); }
   inline void SerialGoLow() override { Orders.push_back('W'); }
+  inline void DelaySerialBitPeriod() override { Orders.push_back('B'); }
 
   void LedOn() override { IsLedOn = true; }
   void LedOff() override { IsLedOn = false; }

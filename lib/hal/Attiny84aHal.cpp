@@ -161,6 +161,10 @@ inline void Attiny84aHal::SerialGoLow() {
   PORTA &= ~(1 << DIGITAL_OUT);
 };
 
+void Attiny84aHal::DelaySerialBitPeriod() {
+  _delay_us((1000000L / 9600) - 25);
+}
+
 void Attiny84aHal::Delay30ms() {
   _delay_ms(30);
 }
