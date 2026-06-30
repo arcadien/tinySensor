@@ -52,8 +52,38 @@
 #include <main.h>
 #include <unity.h>
 
-void setUp() {}
-void tearDown() {}
+// ---------------------------------------------------------------------------
+// Helper: count occurrences of a token in the Orders vector
+// ---------------------------------------------------------------------------
+static int countToken(const std::vector<unsigned char> &orders,
+                      unsigned char token) {
+  int n = 0;
+  for (unsigned char c : orders) {
+    if (c == token)
+      n++;
+  }
+  return n;
+}
+
+// Default rawInternal11ref that TestHal_ constructor initialises (1095).
+// With INTERNAL_1v1=1100 this yields VCC = 1100*1024/1095 ≈ 1028 mV,
+// which is above LOW_BATTERY_VOLTAGE=500 → normal (non-suppressed) path.
+static const uint16_t DEFAULT_RAW_INTERNAL_11REF = 1095;
+
+// A raw ADC value that drives VCC below LOW_BATTERY_VOLTAGE=500:
+//   VCC = 1100 * 1024 / 2253 ≈ 499 mV
+static const uint16_t LOW_BAT_RAW_INTERNAL_11REF = 2253;
+
+// Token emitted by TestHal_::DelayX10PreambleHigh — produced on every
+// x10rf::SendCommand call (and therefore on every RFXmeter call).
+static const unsigned char TOK_X10_PREAMBLE_HIGH = 'Q';
+
+void setUp() {
+  TestHal.rawInternal11ref = DEFAULT_RAW_INTERNAL_11REF;
+}
+void tearDown() {
+  TestHal.rawInternal11ref = DEFAULT_RAW_INTERNAL_11REF;
+}
 
 // @req TECH-MAIN-001
 void runCycle_does_not_crash() {
@@ -97,10 +127,62 @@ void runCycle_calls_hal_via_pointer() {
   TEST_ASSERT_GREATER_THAN_UINT32(ordersAfterFirstCall, TestHal.Orders.size());
 }
 
+// ---------------------------------------------------------------------------
+// FUNC-X10-006: Battery voltage RFXmeter transmission and low-battery
+// suppression
+// ---------------------------------------------------------------------------
+
+// @req FUNC-X10-006
+void runCycle_transmits_battery_voltage_via_x10_rfxmeter() {
+  // Given
+  // TestHal.rawInternal11ref = 1095 (default, restored by setUp).
+  // VCC = 1100 * 1024 / 1095 ≈ 1028 mV, which is above LOW_BATTERY_VOLTAGE
+  // (500 mV).  The BATTERY_VOLTAGE_X10_ID=0x01 and BATTERY_IS_VCC build
+  // flags (from native_main_oregon) ensure runCycle reaches the RFXmeter
+  // call path.  Any successful x10rf::RFXmeter invocation emits at least one
+  // DelayX10PreambleHigh token ('Q') in TestHal.Orders.
+  TestHal.ClearOrders();
+
+  // When
+  runCycle(&TestHal);
+
+  // Then
+  int preambleCount = countToken(TestHal.Orders, TOK_X10_PREAMBLE_HIGH);
+  TEST_ASSERT_GREATER_THAN_INT_MESSAGE(
+      0, preambleCount,
+      "runCycle must emit at least one X10 preamble-high token ('Q') when "
+      "battery is not low, indicating RFXmeter was called");
+}
+
+// @req FUNC-X10-006
+void runCycle_suppresses_battery_x10_when_low_battery() {
+  // Given
+  // Raise rawInternal11ref so ComputeVccMv returns < LOW_BATTERY_VOLTAGE.
+  // With INTERNAL_1v1=1100 and raw=2253:
+  //   VCC = 1100 * 1024 / 2253 ≈ 499 mV < LOW_BATTERY_VOLTAGE (500 mV).
+  // setUp already restored the default; override it now.
+  TestHal.rawInternal11ref = LOW_BAT_RAW_INTERNAL_11REF;
+  TestHal.ClearOrders();
+
+  // When
+  runCycle(&TestHal);
+
+  // Then
+  // The X10 RFXmeter call for the battery voltage must be suppressed: no
+  // preamble-high ('Q') token should appear in Orders.
+  int preambleCount = countToken(TestHal.Orders, TOK_X10_PREAMBLE_HIGH);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(
+      0, preambleCount,
+      "runCycle must NOT emit any X10 preamble-high token ('Q') when "
+      "lowBattery is true (battery RFXmeter call must be suppressed)");
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(runCycle_does_not_crash);
   RUN_TEST(runCycle_produces_radio_orders);
   RUN_TEST(runCycle_calls_hal_via_pointer);
+  RUN_TEST(runCycle_transmits_battery_voltage_via_x10_rfxmeter);
+  RUN_TEST(runCycle_suppresses_battery_x10_when_low_battery);
   return UNITY_END();
 }
