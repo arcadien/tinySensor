@@ -1,20 +1,21 @@
 # Architecture
 
-_Last updated: 2026-06-30 — requirements: TECH-SERIAL-003, TECH-SERIAL-004_
+_Last updated: 2026-06-30 — requirements: TECH-MAIN-001_
 
 ## Component Diagram
 
 ```mermaid
 graph TD
-  main["main.cpp (loop)"] -->|Hal*| HAL
-  main -->|Hal*| OregonV3
-  main -->|Hal*| LacrosseWS7000
-  main -->|Hal*| x10rf
-  main -->|Hal*| BMx280
-  main -->|Hal*| SoftSerial
-  main -->|Hal*| Ds18b20["Ds18b20 (1-Wire wrapper)"]
+  mainFn["main() (src/main.cpp)"] -->|"&hal"| runCycle["runCycle(Hal*) (include/main.h / src/main.cpp)"]
+  runCycle -->|Hal*| HAL
+  runCycle -->|Hal*| OregonV3
+  runCycle -->|Hal*| LacrosseWS7000
+  runCycle -->|Hal*| x10rf
+  runCycle -->|Hal*| BMx280
+  runCycle -->|Hal*| SoftSerial
+  runCycle -->|Hal*| Ds18b20["Ds18b20 (1-Wire wrapper)"]
   Ds18b20 -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire driver library)"]
-  main -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
+  runCycle -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
 
   HAL["Hal (interface)"] --> Attiny84aHal["Attiny84aHal (AVR)"]
   HAL --> TestHal["TestHal_ (host/test)"]
@@ -42,7 +43,8 @@ graph TD
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`); routes all timing through `Hal::DelaySerialBitPeriod()` | TECH-SERIAL-003, TECH-SERIAL-004 |
 | `ds18b20` | 1-Wire driver library on PA3; called only through `Ds18b20` wrapper | FUNC-SENSOR-002 |
 | `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux | FUNC-SENSOR-003 |
-| `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
+| `main.cpp` | `main()`: calls `hal.Init()` then loops `runCycle(&hal)` forever | TECH-MAIN-001 |
+| `runCycle(Hal*)` | Free function (declared `include/main.h`, defined `src/main.cpp`) encapsulating the full measurement-and-transmit cycle: power on sensors → read → encode → transmit → power off → hibernate. Callable standalone from native tests as `runCycle(&TestHal)` | TECH-MAIN-001 |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
@@ -50,6 +52,7 @@ graph TD
 
 | Component | Receives | Via |
 |-----------|----------|-----|
+| `runCycle(Hal*)` | `Hal*` | function parameter (passed by `main()` as `&hal`, or by tests as `&TestHal`) |
 | `OregonV3` | `Hal*` | constructor |
 | `LacrosseWS7000` | `Hal*` | constructor |
 | `x10rf` | `Hal*` | constructor |
@@ -57,7 +60,7 @@ graph TD
 | `Ds18b20` | `Hal*` | constructor |
 | `SoftSerial` | `Hal*` | constructor |
 
-All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly.
+All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly. `runCycle(Hal*)` is the single entry point through which `main()` injects `Hal*` into every encoder/wrapper it constructs.
 
 ## Build-time Configuration
 
@@ -95,8 +98,8 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-X10-003 | `x10rf` | x10Switch 4-byte frame: house-code nibble lookup, bit-scattered unit code, full-byte complements |
 | FUNC-X10-004 | `x10rf` | x10Security 6-byte frame: address, swapped-nibble complement, command + complement, id, XOR-fold parity |
 | FUNC-X10-005 | `x10rf` | Transmission repeated rf_repeats times with 40 ms inter-repeat cooldown via DelayX10Gap (see TECH-X10-001) |
-| FUNC-X10-006 | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
-| FUNC-X10-007 | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
+| FUNC-X10-006 | `runCycle(Hal*)` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
+| FUNC-X10-007 | `runCycle(Hal*)` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Encoders and wrappers take Hal* at construction; no direct AVR register access |
 | TECH-HAL-002 | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W, B (see TECH-SERIAL-003) |
 | TECH-HAL-003 | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
@@ -108,32 +111,33 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; bit period = (1 000 000 / 9600) − 25 µs; driven by SerialGoHigh/Low |
-| TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
+| TECH-SERIAL-002 | `runCycle(Hal*)` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
 | TECH-SERIAL-003 | `Hal` / `Attiny84aHal` / `TestHal_` | New pure-virtual DelaySerialBitPeriod(): _delay_us(104 µs) on AVR; appends 'B' token in TestHal_ |
 | TECH-SERIAL-004 | `SoftSerial` | All four _delay_us(BIT_PERIOD) calls replaced with _hal->DelaySerialBitPeriod(); <util/delay.h> and BIT_PERIOD macro removed from SoftSerial.cpp |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
-| FUNC-BATTERY-001 | `Hal` / `main.cpp` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
-| FUNC-BATTERY-002 | `Hal` / `main.cpp` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) |
-| FUNC-BATTERY-003 | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
+| FUNC-BATTERY-001 | `Hal` / `runCycle(Hal*)` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
+| FUNC-BATTERY-002 | `Hal` / `runCycle(Hal*)` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) |
+| FUNC-BATTERY-003 | `runCycle(Hal*)` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
 | FUNC-SENSOR-001 | `BMx280` | Wraps BMP280/BME280 at I2C 0x76; Begin/GetTemperature/GetPressure/GetHumidity/Shutdown interface |
 | FUNC-SENSOR-002 | `Ds18b20` | ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
 | TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
-| FUNC-SENSOR-003 | `main.cpp` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
-| FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
-| CONF-BUILD-001 | `main.cpp` / `platformio.ini` | Exactly one of USE_OREGON or USE_LACROSSE per environment; violated at compile time otherwise |
-| CONF-BUILD-002 | `main.cpp` / `include/config.h` | Sensor type flag (USE_BMP280/BME280/DS18B20/BH1750) selects included driver; USE_I2C auto-derived |
-| CONF-BUILD-003 | `main.cpp` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 in main() |
-| CONF-BUILD-004 | `main.cpp` / `platformio.ini` | LACROSSE_ID enum value applied to LacrosseWS7000 in main() |
+| FUNC-SENSOR-003 | `runCycle(Hal*)` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
+| FUNC-ANALOG-001 | `Hal` / `runCycle(Hal*)` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
+| CONF-BUILD-001 | `runCycle(Hal*)` / `platformio.ini` | Exactly one of USE_OREGON or USE_LACROSSE per environment; violated at compile time otherwise |
+| CONF-BUILD-002 | `runCycle(Hal*)` / `include/config.h` | Sensor type flag (USE_BMP280/BME280/DS18B20/BH1750) selects included driver; USE_I2C auto-derived |
+| CONF-BUILD-003 | `runCycle(Hal*)` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 in runCycle() |
+| CONF-BUILD-004 | `runCycle(Hal*)` / `platformio.ini` | LACROSSE_ID enum value applied to LacrosseWS7000 in runCycle() |
 | CONF-BUILD-005 | `Hal` / `platformio.ini` | INTERNAL_1v1 (mV) chip-calibrated constant consumed by Hal::ComputeVccMv() |
-| CONF-BUILD-006 | `main.cpp` / `include/config.h` | SLEEP_TIME_IN_SECONDS passed to Hal::Hibernate(); default 32 s from config.h |
-| CONF-BUILD-007 | `main.cpp` / `include/config.h` | LOW_BATTERY_VOLTAGE compared against batteryVoltageInMv; default 2000 mV from config.h |
-| CONF-BUILD-008 | `main.cpp` / `platformio.ini` | BATTERY_VOLTAGE_X10_ID passed as address to x10rf::RFXmeter() for battery reporting |
-| CONF-BUILD-009 | `main.cpp` / `platformio.ini` | ANALOG1_X10_ID optionally enables PA0 analog transmission via x10rf::RFXmeter() |
-| CONF-BUILD-010 | `main.cpp` / `platformio.ini` | BATTERY_IS_VCC skips GetRawBattery(); batteryVoltageInMv = vccMv directly |
+| CONF-BUILD-006 | `runCycle(Hal*)` / `include/config.h` | SLEEP_TIME_IN_SECONDS passed to Hal::Hibernate(); default 32 s from config.h |
+| CONF-BUILD-007 | `runCycle(Hal*)` / `include/config.h` | LOW_BATTERY_VOLTAGE compared against batteryVoltageInMv; default 2000 mV from config.h |
+| CONF-BUILD-008 | `runCycle(Hal*)` / `platformio.ini` | BATTERY_VOLTAGE_X10_ID passed as address to x10rf::RFXmeter() for battery reporting |
+| CONF-BUILD-009 | `runCycle(Hal*)` / `platformio.ini` | ANALOG1_X10_ID optionally enables PA0 analog transmission via x10rf::RFXmeter() |
+| CONF-BUILD-010 | `runCycle(Hal*)` / `platformio.ini` | BATTERY_IS_VCC skips GetRawBattery(); batteryVoltageInMv = vccMv directly |
 | CONF-BUILD-011 | `platformio.ini` | USE_CHARGE_PUMP is an informational flag only; no firmware branch depends on it |
 | PLAT-POWER-001 | `Attiny84aHal` | Hibernate loops SLEEP_MODE_PWR_DOWN for ceil(s/8) WDT periods; minimum 1 period |
-| PLAT-POWER-002 | `Attiny84aHal` / `main.cpp` | PA2 (SENSOR_VCC) driven high before first sensor read; driven low after last transmission |
+| PLAT-POWER-002 | `Attiny84aHal` / `runCycle(Hal*)` | PA2 (SENSOR_VCC) driven high before first sensor read; driven low after last transmission |
 | PLAT-POWER-003 | `Attiny84aHal` | PRR bits for USI/Timer0/Timer1/ADC set in sleep(); GPIO reconfigured as inputs with pull-ups; all restored on wake |
-| PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
+| PLAT-POWER-004 | `runCycle(Hal*)` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
+| TECH-MAIN-001 | `main.cpp` / `runCycle(Hal*)` / `include/main.h` | Loop body extracted into `runCycle(Hal*)`; `main()` reduced to `hal.Init()` + `while(1){ runCycle(&hal); }`; enables `runCycle(&TestHal)` from native tests |
