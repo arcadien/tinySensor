@@ -136,3 +136,11 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-001, FUNC-SENSOR-002
 **Description:** A `Ds18b20` wrapper class (header `include/Ds18b20.h`) must encapsulate all 1-Wire DS18B20 interactions following the same pattern as `BMx280`. On AVR, `Ds18b20` must accept a `Hal*` at construction and expose `Begin()`, `Convert()`, `Read()` (returning `int16_t` temperature in °C as integer), and use `hal->Delay1s()` between `ds18b20convert` and `ds18b20read` internally. On non-AVR targets all methods must be stubs returning 0. `main.cpp` must not call `ds18b20convert()`, `ds18b20read()`, or reference `PORTA`, `DDRA`, or `PINA` in any `USE_DS18B20` code path; all such calls are delegated exclusively to `Ds18b20`.
+
+---
+
+### TECH-MAIN-001
+**Title:** Extract the measurement-and-transmit cycle into a standalone runCycle(Hal*) function
+**Status:** validated
+**Dependencies:** TECH-HAL-001
+**Description:** The body of `main()`'s `while(1)` loop, together with the `environmentEncoder` construction and configuration (`SetChannel`/`SetRollingCode` for `USE_OREGON`, `SetAddress` for `USE_LACROSSE`) that currently precedes the loop, must be extracted into a free function `void runCycle(Hal* hal)`. `runCycle` is declared in a new header `include/main.h` and defined in `src/main.cpp`. `main()` retains only `hal.Init()` followed by `while (1) { runCycle(&hal); }`. `runCycle` must retain all existing `#ifdef` chains unchanged (`USE_OREGON`/`USE_LACROSSE`, `USE_BME280`/`USE_BMP280`/`USE_DS18B20`/`USE_BH1750`, `BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID`, `USE_SERIAL_LOG`) and must produce behavior identical to the current loop body on every build target. This makes the cycle callable from native test environments as `runCycle(&TestHal)`, unblocking native tests for FUNC-X10-006, FUNC-X10-007, FUNC-BATTERY-003, and FUNC-SENSOR-003.
