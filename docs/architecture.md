@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: TECH-SENSOR-001_
+_Last updated: 2026-06-30 — requirements: TECH-SERIAL-003, TECH-SERIAL-004_
 
 ## Component Diagram
 
@@ -22,7 +22,7 @@ graph TD
   OregonV3 -->|RadioGoHigh/Low\nDelay512Us/1024Us| HAL
   LacrosseWS7000 -->|RadioGoHigh/Low\nDelay400Us| HAL
   x10rf -->|"RadioGoHigh/Low\nDelayX10PreambleHigh/Low\nDelayX10BitShort/Long\nDelayX10Gap"| HAL
-  SoftSerial -->|SerialGoHigh/Low| HAL
+  SoftSerial -->|"SerialGoHigh/Low\nDelaySerialBitPeriod"| HAL
   BMx280 -->|I2C via TinyI2C| HAL
   Ds18b20 -->|Delay1s| HAL
 ```
@@ -39,7 +39,7 @@ graph TD
 | `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors); routes all timing through Hal X10 delay methods | TECH-X10-001, TECH-X10-002 |
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
 | `Ds18b20` | Wrapper class encapsulating DS18B20 1-Wire access; accepts `Hal*` at construction; exposes `Begin()`, `Convert()`, `Read()`; uses `hal->Delay1s()` between convert and read on AVR; stubs on non-AVR | TECH-SENSOR-001 |
-| `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
+| `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`); routes all timing through `Hal::DelaySerialBitPeriod()` | TECH-SERIAL-003, TECH-SERIAL-004 |
 | `ds18b20` | 1-Wire driver library on PA3; called only through `Ds18b20` wrapper | FUNC-SENSOR-002 |
 | `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux | FUNC-SENSOR-003 |
 | `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
@@ -98,7 +98,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-X10-006 | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | FUNC-X10-007 | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Encoders and wrappers take Hal* at construction; no direct AVR register access |
-| TECH-HAL-002 | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W |
+| TECH-HAL-002 | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W, B (see TECH-SERIAL-003) |
 | TECH-HAL-003 | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
 | TECH-HAL-004 | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; pull-ups unused pins; BOD-sleep disable |
 | TECH-HAL-005 | `Attiny84aHal` / `TestHal_` | LedOn/LedOff toggle PORTB PB1 on AVR; toggle IsLedOn in TestHal_ |
@@ -109,6 +109,8 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; bit period = (1 000 000 / 9600) − 25 µs; driven by SerialGoHigh/Low |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
+| TECH-SERIAL-003 | `Hal` / `Attiny84aHal` / `TestHal_` | New pure-virtual DelaySerialBitPeriod(): _delay_us(104 µs) on AVR; appends 'B' token in TestHal_ |
+| TECH-SERIAL-004 | `SoftSerial` | All four _delay_us(BIT_PERIOD) calls replaced with _hal->DelaySerialBitPeriod(); <util/delay.h> and BIT_PERIOD macro removed from SoftSerial.cpp |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
 | FUNC-BATTERY-001 | `Hal` / `main.cpp` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
