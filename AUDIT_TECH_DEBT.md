@@ -79,6 +79,10 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **C2 (30) — Macro `OREGON_DELAY_US` morte supprimée**. La macro n'était jamais appelée (Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement) et référençait une méthode inexistante. Supprimée de `TestHal.h`. → **Résolu**.
 - **C15 (15) — `override` ajouté sur les stubs de délai de `TestHal`**. `Delay400Us`, `Delay1024Us`, `Delay512Us` n'avaient pas `override` ; dérive de signature désormais détectable à la compilation. → **Résolu**.
 
+### 2026-10-25 — Abandon de Coveralls
+
+- **T2 (12) — Abandonné**. Décision : pas de rapport de couverture via Coveralls. `.coveralls.yml` était déjà retiré et aucune étape CI n'y faisait appel. Reste à supprimer manuellement le secret GitHub Actions `COVERALLS_REPO_TOKEN` (Settings → Secrets and variables → Actions). → **Clos sans action**.
+
 - **C3 (20) — `Init()` orphelin supprimé**. Fonction libre `void Init(void)` en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée — shadow silencieux de `Attiny84aHal::Init`. Supprimée. → **Résolu**.
 - **C11 (15) — Branche morte `SetPressure` supprimée**. `if (pressure < 200) pressure = 200;` était immédiatement écrasé par le clamp à 850 ; supprimé. → **Résolu**.
 - **D5 (20) — `avrdude.conf` sorti du repo**. Le fichier (534 KB) provient du toolchain PlatformIO (`~/.platformio/packages/tool-avrdude/`) ; supprimé avec `git rm`. → **Résolu**.
@@ -202,7 +206,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~T1~~ | ~~**La CI ne compile aucune cible AVR**. Le workflow ne lance que `pio test -e native_debug`. Un refactor peut casser `S_02`..`SOLAR_TEST` sans alerte. Le projet "prod" n'est jamais vérifié.~~ — ✅ **Résolu 2026-04-19** (workflow à deux jobs, matrice AVR) | 5 | 4 | 2 | ~~36~~ |
-| T2 | Pas de rapport de couverture actif. `.coveralls.yml` existe (et est compromis, cf. C1), mais aucune étape CI ne génère/upload la couverture. | 2 | 1 | 2 | 12 |
+| ~~T2~~ | ~~Pas de rapport de couverture actif. `.coveralls.yml` existe (et est compromis, cf. C1), mais aucune étape CI ne génère/upload la couverture.~~ — ⛔ **Abandonné 2026-10-25** (Coveralls retiré du projet) | 2 | 1 | 2 | ~~12~~ |
 | T3 | Pas de test pour le wrapper `BMx280` (le fichier d'en-tête expose `GetTemperature/GetHumidity/GetPressure`, aucun test ne vérifie les passerelles). | 3 | 2 | 3 | 15 |
 | T4 | Pas de test pour `SoftSerial` — blocage lié à C6 (dépendance à `_delay_us`). | 2 | 2 | 2 | **16** |
 | T5 | Pas de test HW-in-the-loop ni Simavr-based exécuté en CI, malgré la présence de `[env:SOLAR_TEST]` configuré pour simavr. Infrastructure prête mais non exploitée. | 3 | 3 | 4 | 12 |
