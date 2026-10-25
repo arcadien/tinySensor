@@ -79,6 +79,10 @@ Impact cumulé toutes dates : **307 points** (131 + 176).
 - **C2 (30) — Macro `OREGON_DELAY_US` morte supprimée**. La macro n'était jamais appelée (Oregon utilise `_hal->Delay512Us()/Delay1024Us()` directement) et référençait une méthode inexistante. Supprimée de `TestHal.h`. → **Résolu**.
 - **C15 (15) — `override` ajouté sur les stubs de délai de `TestHal`**. `Delay400Us`, `Delay1024Us`, `Delay512Us` n'avaient pas `override` ; dérive de signature désormais détectable à la compilation. → **Résolu**.
 
+### 2026-10-25 — Suppression de l'arbre legacy Atmel Studio
+
+- **A1 (20) + D7 (16) — `TinySensor/` supprimé**. Décision : le debug pas-à-pas passe par PlatformIO + AVaRICE + AVR Dragon (debugWIRE), documenté dans `docs/debugging.md` (à valider sur banc ; carte de debug dédiée à prévoir). Les copies tierces vendored disparaissent avec le dossier. → **Résolu**.
+
 - **C3 (20) — `Init()` orphelin supprimé**. Fonction libre `void Init(void)` en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée — shadow silencieux de `Attiny84aHal::Init`. Supprimée. → **Résolu**.
 - **C11 (15) — Branche morte `SetPressure` supprimée**. `if (pressure < 200) pressure = 200;` était immédiatement écrasé par le clamp à 850 ; supprimé. → **Résolu**.
 - **D5 (20) — `avrdude.conf` sorti du repo**. Le fichier (534 KB) provient du toolchain PlatformIO (`~/.platformio/packages/tool-avrdude/`) ; supprimé avec `git rm`. → **Résolu**.
@@ -190,7 +194,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
-| A1 | **Arbre source dupliqué — risque accepté** : `TinySensor/` (projet Atmel Studio) est conservé intentionnellement pour le workflow de debug pas-à-pas et de flashage via debugWIRE/JTAG, que PlatformIO ne remplace pas complètement. Contient `main.cpp`, `bh1750.cpp/h`, `TinyI2CMaster.cpp/h` + `third_party/`. Risque résiduel : divergence silencieuse si un fix appliqué dans `src/` n'est pas reporté dans `TinySensor/main.cpp`. Mitigations recommandées : (1) commentaire croisé dans les deux `main.cpp` pointant l'un vers l'autre, (2) step CI `diff -u src/main.cpp TinySensor/main.cpp` en mode warn-only pour rendre la divergence visible. | 2 | 3 | 2 | **20** |
+| ~~A1~~ | ~~Arbre source dupliqué `TinySensor/` (projet Atmel Studio)~~ — ✅ **Résolu 2026-10-25** (dossier supprimé, debug migré vers PlatformIO + AVaRICE, cf. `docs/debugging.md`) | 2 | 3 | 2 | ~~20~~ |
 | A2 | Pas d'interface commune `EnvironmentEncoder` : `main.cpp` dispatche Oregon vs Lacrosse avec des `#if defined(USE_OREGON)/USE_LACROSSE` répétés 4× dans la même fonction. Ajouter un 3e protocole coûtera un passage dans toute la `main()`. | 3 | 2 | 3 | 15 |
 | A3 | Le bloc BH1750 dans `main.cpp:155-168` instancie en ligne un `LacrosseWS7000 lightEncoder(&hal)` — logique capteur mélangée avec logique de transmission. | 3 | 2 | 2 | **20** |
 | ~~A4~~ | ~~Web firmware builder (`web/build.php`) : `shell_exec` sans sanitisation des inputs.~~ — ✅ **Résolu 2026-06-18** (décision : supprimer `web/` ; builder jamais finalisé, jamais utilisé en production — `web/build.php` + `web/index.html` supprimés) | 2 | 3 | 3 | ~~15~~ |
@@ -219,7 +223,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~D4~~ | ~~`bh1750` épinglé sur la branche `feat/attiny_support` au lieu d'un SHA.~~ — ✅ **Résolu 2026-06-18** (subsumed par D3 — épinglé sur `6d06b87`) | 3 | 3 | 2 | ~~24~~ |
 | ~~D5~~ | ~~`avrdude.conf` (534 KB) commité dans le repo.~~ — ✅ **Résolu 2026-06-18** (`git rm avrdude.conf` ; vient du toolchain PlatformIO, pas de la source) | 2 | 2 | 1 | ~~20~~ |
 | ~~D6~~ | ~~`web/build.php` charge jQuery 1.12.4 depuis CDN (sortie 2016, EOL).~~ — ✅ **Résolu 2026-06-18** (supprimé avec `web/`) | 1 | 2 | 2 | ~~12~~ |
-| D7 | Copies tierces vendored dans `TinySensor/third_party/` (BMX, I2C, X10) figées, risque de divergence vs. upstream. | 2 | 2 | 2 | 16 |
+| ~~D7~~ | ~~Copies tierces vendored dans `TinySensor/third_party/` (BMX, I2C, X10) figées, risque de divergence vs. upstream.~~ — ✅ **Résolu 2026-10-25** (supprimées avec `TinySensor/`) | 2 | 2 | 2 | ~~16~~ |
 | ~~D8~~ | ~~Badge README pointe vers **Travis CI** (`api.travis-ci.org`) — service fermé aux OSS non payants depuis 2020. Badge cassé = signal négatif pour les contributeurs.~~ — ✅ **Résolu 2026-06-16** (badge GitHub Actions dans `README.md`) | 1 | 1 | 1 | ~~10~~ |
 | ~~D9~~ | ~~Pas de configuration Dependabot/Renovate. Dérive des versions non notifiée.~~ — ✅ **Résolu 2026-06-16** (`.github/dependabot.yml` : hebdomadaire pour `github-actions`, mensuel pour `docker` + `pip`) | 2 | 3 | 1 | ~~25~~ |
 

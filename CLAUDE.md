@@ -57,9 +57,9 @@ Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionT
 
 `main()` is a single `while(1)` loop: power on sensors → read → transmit via environment encoder → power off → hibernate. Protocol and sensor selection are entirely via `#ifdef` chains (`USE_OREGON` / `USE_LACROSSE`, `USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`). The `BMx280` wrapper (`include/BMx280.h`) abstracts BMP280/BME280 behind a common interface.
 
-### Dual source tree
+### Debugging
 
-`TinySensor/` is an Atmel Studio project kept for debugWIRE/JTAG step-debugging. It is intentionally not in sync with `src/` and `lib/` — treat it as a debug tool, not a source of truth.
+Step-debugging uses PlatformIO + AVaRICE + AVR Dragon over debugWIRE (the legacy Atmel Studio tree was removed). Toolchain, DWEN fuse procedure and hardware constraints (dedicated debug board) are in [`docs/debugging.md`](docs/debugging.md).
 
 ### RBD workflow
 
