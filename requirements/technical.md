@@ -71,7 +71,7 @@
 **Title:** dec16ToHex returns the BCD hex representation of a uint16_t with each decimal digit in one nibble
 **Status:** validated
 **Dependencies:** —
-**Description:** `ConversionTools::dec16ToHex(n)` packs each decimal digit of `n` into one nibble of the returned `uint16_t` (e.g. 4200 → `0x4200`). Inputs above 9999 cause the most-significant nibble to overflow silently; no error is raised.
+**Description:** `ConversionTools::dec16ToHex(n)` packs each decimal digit of `n` into one nibble of the returned `uint16_t` (e.g. 4200 → `0x4200`). Inputs above 9999 saturate to `0x9999` (the largest 4-digit BCD value) instead of overflowing.
 
 ---
 

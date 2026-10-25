@@ -6,7 +6,7 @@ namespace ConversionTools {
  *
  * Ex. 4200 -> 0x4200 (16896)
  *
- * Note: max convertable value is 9999
+ * Note: max convertable value is 9999; larger inputs saturate to 0x9999
  */
 uint16_t dec16ToHex(uint16_t input);
 

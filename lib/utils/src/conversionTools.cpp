@@ -3,6 +3,9 @@
 namespace ConversionTools {
 
 uint16_t dec16ToHex(uint16_t input) {
+  if (input > 9999) {
+    return 0x9999;  // 4 BCD digits max: saturate instead of wrapping
+  }
   uint16_t result = 0;
   static const uint8_t FACTOR_COUNT = 3;
   static const uint16_t factors[FACTOR_COUNT] = {10, 100, 1000};
