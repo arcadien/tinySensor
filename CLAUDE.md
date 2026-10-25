@@ -32,7 +32,7 @@ The firmware is entirely build-time configured: every physical sensor unit is a 
 `lib/hal/Hal.h` defines the pure-virtual `Hal` interface (GPIO, delays, ADC, power, hibernate). Two concrete implementations exist:
 
 - `Attiny84aHal` — production, compiled only when `AVR` is defined
-- `TestHal_` (singleton `TestHal`) — host-native stub used in all Unity tests; records HAL calls as single-character tokens in `Orders` vector (`'H'`=RadioHigh, `'L'`=RadioLow, `'D'`=Delay512Us, `'P'`=Delay1024Us, `'A'`=Delay400Us)
+- `TestHal_` (singleton `TestHal`) — host-native stub used in all Unity tests; records HAL calls as single-character tokens in `Orders` vector (`'H'`=RadioHigh, `'L'`=RadioLow, `'D'`=Delay512Us, `'P'`=Delay1024Us, `'A'`=Delay400Us, `'S'`/`'W'`=SerialWriteBit high/low)
 
 Protocol encoders receive a `Hal*` at construction and call only HAL methods — never AVR registers directly. This is the pattern to follow when adding new encoders.
 
@@ -43,7 +43,7 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 | `lib/oregon` | `OregonV3` | Oregon Scientific v3 | 433 MHz OOK via `RadioGoHigh/Low` |
 | `lib/LacrosseWS7000` | `LacrosseWS7000` | Lacrosse WS7000 | same |
 | `lib/x10` | `x10rf` | X10 RF | same — used for battery/analog reporting |
-| `lib/softSerial` | `SoftSerial` | UART (debug only) | via `SerialGoHigh/Low` |
+| `lib/softSerial` | `SoftSerial` | UART (debug only) | via `SerialWriteBit` |
 
 `OregonV3` encodes temperature/humidity/pressure into an 11-byte `message[]` private buffer and selects the emulated device ID (THN132N / THGN123N / BTHR918) based on which fields are set at `Send()` time.
 
@@ -51,7 +51,7 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 Tests run on the host (`-e native_debug`, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`.
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`.
 
 ### `src/main.cpp`
 

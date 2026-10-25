@@ -55,8 +55,10 @@ class TestHal_ : public Hal {
   inline void RadioGoHigh() override { Orders.push_back('H'); }
   inline void RadioGoLow() override { Orders.push_back('L'); }
 
-  inline void SerialGoHigh() override { Orders.push_back('S'); }
-  inline void SerialGoLow() override { Orders.push_back('W'); }
+  // 'S' = high bit, 'W' = low bit (each includes one bit period)
+  inline void SerialWriteBit(uint8_t level) override {
+    Orders.push_back(level ? 'S' : 'W');
+  }
 
   void LedOn() override { IsLedOn = true; }
   void LedOff() override { IsLedOn = false; }

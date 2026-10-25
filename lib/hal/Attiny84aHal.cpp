@@ -153,13 +153,17 @@ void Attiny84aHal::RadioGoHigh() {
   PORTB |= (1 << TX_RADIO_PIN);
 }
 
-inline void Attiny84aHal::SerialGoHigh() {
-  PORTA |= (1 << DIGITAL_OUT);
-};
+// 9600 baud bit period, minus ~25 µs of per-bit call overhead at 1 MHz
+#define SERIAL_BIT_PERIOD_US ((1000000L / 9600) - 25)
 
-inline void Attiny84aHal::SerialGoLow() {
-  PORTA &= ~(1 << DIGITAL_OUT);
-};
+void Attiny84aHal::SerialWriteBit(uint8_t level) {
+  if (level) {
+    PORTA |= (1 << DIGITAL_OUT);
+  } else {
+    PORTA &= ~(1 << DIGITAL_OUT);
+  }
+  _delay_us(SERIAL_BIT_PERIOD_US);
+}
 
 void Attiny84aHal::Delay30ms() {
   _delay_ms(30);
