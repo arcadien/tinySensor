@@ -1,5 +1,6 @@
 #include <Hal.h>
 #include <Oregon_v3.h>
+#include <bitOps.h>
 #include <string.h>
 
 // v3, two nibbles with unknown format
@@ -9,12 +10,9 @@
 #define PREAMBLE_BYTE2 0xFF
 #define PREAMBLE_BYTE3 0xFF
 
-#define HALF_DELAY_US 512
-#define DELAY_US (HALF_DELAY_US * 2)
+// BTHR918 pressure field: 3 nibbles carrying (pressure in hPa - 795), so that
+// receivers decode hPa = field + 795.
 #define PRESSURE_SCALING_VALUE 795
-#define MAX_ROLLING_CODE_VALUE 0xA5
-#define SYNC_NIBBLE 0x0A
-#define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
 
 OregonV3::OregonV3(Hal *hal) : _hal(hal) {
   memset(message, 0, MESSAGE_SIZE_IN_BYTES);
@@ -110,7 +108,8 @@ void OregonV3::SetChannel(uint8_t channel) {
 }
 
 /*
- * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
+ * \param rollingCode 8-bit rolling code (nibbles 4 and 5 of the message).
+ *        Previously documented as "must be less than 0xA5"; not enforced.
  */
 void OregonV3::SetRollingCode(uint8_t rollingCode) {
   message[2] |= (rollingCode & 0xf0) >> 4;  // nibble 4

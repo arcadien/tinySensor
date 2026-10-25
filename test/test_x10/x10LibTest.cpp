@@ -63,10 +63,6 @@ typedef struct X10MeterTestData {
   uint8_t expectedMessage[6];
 } X10MeterTestData;
 
-#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#define bitWrite(value, bit, bitvalue) \
-  (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
-
 // @req FUNC-X10-003
 void Expect_x10_switch_right_encoding() {
   char buffer[256];
@@ -127,15 +123,10 @@ void Expect_x10_meter_right_encoding() {
     {0xFC, 0x00, 0xFFFFFF,  {0xFC,0x0C,0xFF,0xFF,0xFF,0x0E}}, // normal type, simple set value (max, FFFFFF)
     {0xFE, 0x00, 0x1000000, {0xFE,0x0E,0x00,0x00,0x00,0x04}}, // normal type, simple set value (overflow)
 
-    // TODO: tests for other modes
-    // interval set
-    // calibration in microseconds
-    // new address set
-    // counter reset
-    // counter set to value
-    // set interval within 5s
-    // calibration mode within 5s
-    // set address mode
+    // Only the normal packet type (0x00) is used by the firmware
+    // (src/main.cpp). Other RFXmeter packet types (interval set,
+    // calibration, address set, counter reset/set...) are intentionally
+    // not covered.
   };
   // clang-format on
 

@@ -19,27 +19,15 @@ testing support.
 */
 
 #include "x10rf.h"
+#include <bitOps.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
-#define BITWRITE(value, bit, bitvalue) \
-  do {                                 \
-    if (bitvalue)                      \
-      (value) |= (1 << (bit));         \
-    else                               \
-      (value) &= ~(1 << (bit));        \
-  } while (0)
 #define NIBBLE_SUM(b) ((((b)&0xF0) >> 4) + ((b)&0xF))
 
-#define PREAMBLE_LOW 4500   // Start silence (leader) = 4,5 ms
-#define PREAMBLE_HIGH 8960  // Start burst (leader) = 9ms
-
-#define X10_RF_BIT_LONG 1120  // Bit 1 gap length
-#define X10_RF_BIT_SHORT 560  // Bit 0 gap length
-
-#define X10_RF_GAP 40000  // Length between commands
+// X10 RF timings are owned by the HAL (Hal::DelayX10*), see
+// lib/hal/Attiny84aHal.cpp.
 
 void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
   _hal->LedOn();
@@ -52,7 +40,7 @@ void x10rf::SendCommand(uint8_t *data, uint8_t byteCount) {
 
     for (int j = 0; j < byteCount; j++) {
       for (int i = 7; i >= 0; i--) {
-        SendX10RfBit((bitRead(data[j], i) == 1));
+        SendX10RfBit((BITREAD(data[j], i) == 1));
       }
     }
     SendX10RfBit(1);

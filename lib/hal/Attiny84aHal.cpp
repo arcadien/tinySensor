@@ -180,20 +180,30 @@ void Attiny84aHal::Delay1024Us() {
 void Attiny84aHal::Delay1s() {
   _delay_ms(1000);
 }
+// X10 RF timings (values inherited from the original x10rf library):
+// a frame starts with a ~9 ms carrier burst followed by 4.5 ms of silence;
+// each bit is a 560 µs pulse followed by a 560 µs gap (0) or a
+// 560 + 1120 µs gap (1); repeated frames are separated by 40 ms.
+#define X10_PREAMBLE_HIGH_US 8960
+#define X10_PREAMBLE_LOW_US 4500
+#define X10_BIT_SHORT_US 560
+#define X10_BIT_LONG_US 1120
+#define X10_GAP_US 40000
+
 void Attiny84aHal::DelayX10PreambleHigh() {
-  _delay_us(8960);
+  _delay_us(X10_PREAMBLE_HIGH_US);
 }
 void Attiny84aHal::DelayX10PreambleLow() {
-  _delay_us(4500);
+  _delay_us(X10_PREAMBLE_LOW_US);
 }
 void Attiny84aHal::DelayX10BitShort() {
-  _delay_us(560);
+  _delay_us(X10_BIT_SHORT_US);
 }
 void Attiny84aHal::DelayX10BitLong() {
-  _delay_us(1120);
+  _delay_us(X10_BIT_LONG_US);
 }
 void Attiny84aHal::DelayX10Gap() {
-  _delay_us(40000);
+  _delay_us(X10_GAP_US);
 }
 
 static uint16_t AdcRead(Hal &hal, uint8_t admux) {
