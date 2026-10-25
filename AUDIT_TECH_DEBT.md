@@ -141,6 +141,17 @@ Analyse architecturale complète (`docs/analysis-2026-06-18.md`) suivie de 8 vag
 
 Impact 2026-06-19 : **20 points** résolus (C5:20). Score cumulé : **618 points** (598 + 20).
 
+### 2026-10-25 — SoftSerial via HAL, bit macros, saturation BCD, outillage format
+
+- **C6 (20) + T4 (16) — `SoftSerial` passe par le HAL**. `SerialGoHigh/Low` remplacés par `Hal::SerialWriteBit(level)`, qui fixe le niveau et tient une période de bit : un seul appel virtuel par bit comme avant, timing AVR conservé (à 1–2 cycles près, 40 octets de flash en moins). La période (`SERIAL_BIT_PERIOD_US`) vit dans `Attiny84aHal`. Nouvelle suite native `test_softSerial` (6 tests : trame, chaînes, nombres, bases, `println`). TECH-SERIAL-001, `docs/architecture.md` et CLAUDE.md mis à jour. → **Résolu**.
+- **C9 (16) — `dec16ToHex` sature à `0x9999`** au-delà de 9999 au lieu de déborder. TECH-CONVERT-001 et test mis à jour. → **Résolu**.
+- **C12 (12) — Macros de bits centralisées** dans `lib/utils/include/bitOps.h` ; copies supprimées (Oregon, Lacrosse, x10rf, `x10rf.h` public, test X10). Code AVR des encodeurs identique (taille `.text` inchangée). → **Résolu**.
+- **C8 (16) — Constantes** : mortes supprimées (`HALF_DELAY_US`, `DELAY_US`, `MAX_ROLLING_CODE_VALUE`, `SYNC_NIBBLE`, timings X10 de `x10rf.cpp`), `PRESSURE_SCALING_VALUE` documentée, timings X10 nommés et documentés dans le HAL. → **Résolu**.
+- **C14 (12) — TODO X10** remplacé par une note de périmètre (seul le type de paquet normal est utilisé). → **Résolu**.
+- **I6 (12) — Outillage format** : `.editorconfig`, hook pre-commit clang-format **18.1.8**, job CI `lint` à la même version ; reformatage ponctuel (espaces uniquement) de `BMx280.h`, `Ds18b20.h`, `x10rf.cpp`. → **Résolu**.
+
+Impact 2026-10-25 : **104 points** résolus (C6:20 + T4:16 + C9:16 + C8:16 + C12:12 + C14:12 + I6:12). Score cumulé : **722 points** (618 + 104), hors PR #35 (T2) et #36 (A1, D7).
+
 
 ---
 
@@ -176,15 +187,15 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~C3~~ | ~~Fonction libre `void Init(void)` orpheline en bas de `Attiny84aHal.cpp`, hors de la classe, jamais appelée.~~ — ✅ **Résolu 2026-06-18** (fonction supprimée) | `lib/hal/Attiny84aHal.cpp:199-203` | 2 | 2 | 1 | ~~20~~ |
 | ~~C4~~ | ~~Dead-code dans `OregonV3::Sum` : `if (int(count) != count)` est toujours faux pour un `uint8_t`.~~ — ✅ **Résolu 2026-06-16** (branche morte supprimée ; héritage d'une impl. internet avec `float count`) | `lib/oregon/Oregon_v3.cpp:82` | 2 | 2 | 1 | ~~20~~ |
 | ~~C5~~ | ~~`main.cpp` fait des accès registres directs (`ds18b20convert(&PORTA, &DDRA, &PINA, (1 << 3), nullptr)`), contournant le HAL.~~ — ✅ **Résolu 2026-06-19** (classe `Ds18b20` créée dans `include/Ds18b20.h` — même patron que `BMx280` ; `main.cpp` appelle `ds18b20sensor.Convert()` / `ds18b20sensor.Read()`, plus aucune référence à `PORTA`/`DDRA`/`PINA` ; TECH-SENSOR-001 + 4 tests Unity) | `src/main.cpp:116,120` | 3 | 2 | 2 | ~~20~~ |
-| C6 | `SoftSerial` utilise `_delay_us()` directement au lieu du HAL → impossible à tester en natif et rompt le contrat d'abstraction. | `lib/softSerial/SoftSerial.cpp:3-6,16,24,32,36` | 3 | 2 | 2 | **20** |
+| ~~C6~~ | ~~`SoftSerial` utilise `_delay_us()` directement au lieu du HAL → impossible à tester en natif et rompt le contrat d'abstraction.~~ — ✅ **Résolu 2026-10-25** (`SerialWriteBit` HAL, plus de `_delay_us` dans SoftSerial) | `lib/softSerial/SoftSerial.cpp:3-6,16,24,32,36` | 3 | 2 | 2 | ~~20~~ |
 | ~~C7~~ | ~~Config per-env avec duplication massive dans `platformio.ini` : S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST partagent 80 % de leurs `build_flags`.~~ — ✅ **Résolu 2026-06-16** (`[env:avr_base]` + `extends` ; `default_envs` pour exclure la base des builds) | `platformio.ini` | 4 | 2 | 3 | ~~18~~ |
-| C8 | Magic numbers non documentés : `PRESSURE_SCALING_VALUE = 795`, `MAX_ROLLING_CODE_VALUE = 0xA5` (non utilisée), `SYNC_NIBBLE = 0x0A` (non utilisée), timings X10 (`PREAMBLE_LOW = 4500`, etc.) sans référence datasheet. | `lib/oregon/Oregon_v3.cpp`, `lib/x10/x10rf.cpp` | 2 | 2 | 2 | **16** |
-| C9 | `dec16ToHex` déborde silencieusement pour `input > 9999` (le test `conversionToolsTest.cpp` le prouve avec `10000 → 0xA000` marqué en commentaire "overflow"). Pas de `assert` ni de clamp. | `lib/utils/src/conversionTools.cpp:5-22` | 2 | 2 | 2 | **16** |
+| ~~C8~~ | ~~Magic numbers non documentés : `PRESSURE_SCALING_VALUE = 795`, `MAX_ROLLING_CODE_VALUE = 0xA5` (non utilisée), `SYNC_NIBBLE = 0x0A` (non utilisée), timings X10 (`PREAMBLE_LOW = 4500`, etc.) sans référence datasheet.~~ — ✅ **Résolu 2026-10-25** (constantes mortes supprimées, `PRESSURE_SCALING_VALUE` et timings X10 documentés) | `lib/oregon/Oregon_v3.cpp`, `lib/x10/x10rf.cpp` | 2 | 2 | 2 | ~~16~~ |
+| ~~C9~~ | ~~`dec16ToHex` déborde silencieusement pour `input > 9999` (le test `conversionToolsTest.cpp` le prouve avec `10000 → 0xA000` marqué en commentaire "overflow"). Pas de `assert` ni de clamp.~~ — ✅ **Résolu 2026-10-25** (saturation à `0x9999`, TECH-CONVERT-001 mis à jour) | `lib/utils/src/conversionTools.cpp:5-22` | 2 | 2 | 2 | ~~16~~ |
 | ~~C10~~ | ~~`USE_BMP280=1` déclaré **deux fois** dans `env:S_03` (lignes 88 et 90) — copier-coller résiduel.~~ — ✅ **Résolu 2026-06-16** (subsumed par C7 ; la refacto `extends` a éliminé le doublon) | `platformio.ini:88,90` | 2 | 1 | 1 | ~~15~~ |
 | ~~C11~~ | ~~Branche morte dans `LacrosseWS7000::SetPressure` : `if (pressure < 200) pressure = 200;` est immédiatement écrasé par `if (pressure < 850) pressure = 850;`.~~ — ✅ **Résolu 2026-06-18** (branche morte supprimée) | `lib/LacrosseWS7000/LacrosseWS7000.cpp:24-25` | 1 | 2 | 1 | ~~15~~ |
-| C12 | Macro `BITREAD` redéfinie dans 4 fichiers (`Oregon_v3.cpp`, `LacrosseWS7000.cpp`, `x10rf.cpp`, `x10rf.h`) avec des variantes (`bitRead`, `BITREAD`). | (multiple) | 2 | 1 | 2 | **12** |
+| ~~C12~~ | ~~Macro `BITREAD` redéfinie dans 4 fichiers (`Oregon_v3.cpp`, `LacrosseWS7000.cpp`, `x10rf.cpp`, `x10rf.h`) avec des variantes (`bitRead`, `BITREAD`).~~ — ✅ **Résolu 2026-10-25** (`lib/utils/include/bitOps.h`) | (multiple) | 2 | 1 | 2 | ~~12~~ |
 | C13 | HAL "leaky" : méthodes nommées `RadioGoHigh/Low`, `SerialGoHigh/Low` — pilotage sémantique d'IO, pas une vraie abstraction de bus radio. Un port sur un MCU sans GPIO configurable de la même façon obligera à retoucher le HAL. | `lib/hal/Hal.h` | 3 | 2 | 4 | **10** |
-| C14 | TODO isolé : `// TODO: tests for other modes` | `test/test_x10/x10LibTest.cpp:130` | 2 | 2 | 3 | **12** |
+| ~~C14~~ | ~~TODO isolé : `// TODO: tests for other modes`~~ — ✅ **Résolu 2026-10-25** (TODO remplacé par une note de périmètre) | `test/test_x10/x10LibTest.cpp:130` | 2 | 2 | 3 | ~~12~~ |
 | ~~C15~~ | ~~`TestHal::Delay400Us/Delay1024Us/Delay512Us` manquent `override`.~~ — ✅ **Résolu 2026-06-18** (`override` ajouté sur les trois méthodes) | `lib/hal/TestHal.h:41-44` | 2 | 1 | 1 | ~~15~~ |
 | ~~M1~~ | ~~`PRR &= ~_BV(PRTIM1/PRADC)` logique inversée dans `UseLessPowerAsPossible()` : les périphériques restaient actifs (consommation inutile sur batterie).~~ — ✅ **Résolu 2026-06-16** (identifié par revue MAGI, corrigé en `\|=`) | `lib/hal/Attiny84aHal.cpp` | 3 | 3 | 1 | ~~30~~ |
 | ~~M2~~ | ~~`OregonV3::SetChannel()` sans validation de bornes : channel > 3 corrompt silencieusement `message[2]` en écrasant les nibbles ID capteur.~~ — ✅ **Résolu 2026-06-16** (guard `if (channel < 1 \|\| channel > 3) return;` ajouté) | `lib/oregon/Oregon_v3.cpp` | 3 | 3 | 1 | ~~30~~ |
@@ -208,7 +219,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~T1~~ | ~~**La CI ne compile aucune cible AVR**. Le workflow ne lance que `pio test -e native_debug`. Un refactor peut casser `S_02`..`SOLAR_TEST` sans alerte. Le projet "prod" n'est jamais vérifié.~~ — ✅ **Résolu 2026-04-19** (workflow à deux jobs, matrice AVR) | 5 | 4 | 2 | ~~36~~ |
 | ~~T2~~ | ~~Pas de rapport de couverture actif. `.coveralls.yml` existe (et est compromis, cf. C1), mais aucune étape CI ne génère/upload la couverture.~~ — ⛔ **Abandonné 2026-10-25** (Coveralls retiré du projet) | 2 | 1 | 2 | ~~12~~ |
 | T3 | Pas de test pour le wrapper `BMx280` (le fichier d'en-tête expose `GetTemperature/GetHumidity/GetPressure`, aucun test ne vérifie les passerelles). | 3 | 2 | 3 | 15 |
-| T4 | Pas de test pour `SoftSerial` — blocage lié à C6 (dépendance à `_delay_us`). | 2 | 2 | 2 | **16** |
+| ~~T4~~ | ~~Pas de test pour `SoftSerial` — blocage lié à C6 (dépendance à `_delay_us`).~~ — ✅ **Résolu 2026-10-25** (suite `test_softSerial`, 6 tests) | 2 | 2 | 2 | ~~16~~ |
 | T5 | Pas de test HW-in-the-loop ni Simavr-based exécuté en CI, malgré la présence de `[env:SOLAR_TEST]` configuré pour simavr. Infrastructure prête mais non exploitée. | 3 | 3 | 4 | 12 |
 | T6 | Les tests de timings Oregon/Lacrosse valident une *chaîne de caractères d'ordres* (`"LDH PLD"` = 1, `"HDL PHD"` = 0) via `TestHal.Orders`. C'est élégant mais ne vérifie pas les timings réels ni l'interop avec RTL_433/RFLink que le README cite comme référence. | 3 | 3 | 4 | 12 |
 | T7 | `test_busses/bussesTest.cpp` ne teste qu'un booléen `I2CIsConfigured` après `Init()` — valeur de régression nulle. | 2 | 1 | 2 | 12 |
@@ -248,7 +259,7 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ~~I3~~ | ~~Archive de backup KiCAD commitée (`tinySensorv1-2025-05-01_183922.zip`).~~ — ✅ **Résolu 2026-06-18** (audit revisité : le ZIP n'était pas tracké par git — sur disque uniquement ; `*.zip` déjà couvert par `.gitignore`) | 2 | 2 | 1 | ~~20~~ |
 | ~~I4~~ | ~~La CI ne produit aucun artefact (firmware `.hex` téléchargeable).~~ — ✅ **Résolu 2026-06-16** (job `release` ajouté sur `v*` tags : télécharge tous les artefacts et publie une GitHub Release avec notes auto-générées — complète la résolution partielle du 2026-04-19) | 2 | 1 | 2 | ~~12~~ |
 | I5 | CI single-runner, single-python, single-env. Pas de matrice pour tester différentes versions d'outillage. | 3 | 2 | 2 | **20** |
-| I6 | Pas de pre-commit ni de `.editorconfig`. `clang-format` est installé dans le devcontainer mais non appliqué automatiquement (le commit `68cefb8 chore: clang-format` laisse penser à une passe manuelle ponctuelle). | 2 | 1 | 2 | 12 |
+| ~~I6~~ | ~~Pas de pre-commit ni de `.editorconfig`. `clang-format` est installé dans le devcontainer mais non appliqué automatiquement (le commit `68cefb8 chore: clang-format` laisse penser à une passe manuelle ponctuelle).~~ — ✅ **Résolu 2026-10-25** (`.editorconfig`, pre-commit clang-format 18.1.8, job CI `lint`) | 2 | 1 | 2 | ~~12~~ |
 | ~~I7~~ | ~~`.gitignore` minimaliste (12 lignes) : n'exclut pas `Debug/` (d'où I1), pas `*.o`, `*.d`, `*.hex` au root.~~ — ✅ **Résolu 2026-04-19** (ligne 1 buggée supprimée, patrons d'artefacts ajoutés, structure commentée). | 2 | 2 | 1 | ~~20~~ |
 | I8 | Pas de release / tag git visible sur les 30 derniers commits. Versioning absent. | 2 | 1 | 2 | 12 |
 
