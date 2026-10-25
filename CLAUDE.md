@@ -51,11 +51,11 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 Tests run on the host (`-e native_debug`, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`.
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`.
 
 ### `src/main.cpp`
 
-`main()` is a single `while(1)` loop: power on sensors → read → transmit via environment encoder → power off → hibernate. Protocol and sensor selection are entirely via `#ifdef` chains (`USE_OREGON` / `USE_LACROSSE`, `USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`). The `BMx280` wrapper (`include/BMx280.h`) abstracts BMP280/BME280 behind a common interface.
+`main()` is a single `while(1)` loop: power on sensors → `ReadEnvironment()` fills a `Measurements` (`include/Measurements.h`) → X10 meters → luminosity → environment frame → power off → hibernate. The environment protocol is a build-time alias, `EnvironmentEncoder` (`include/EnvironmentEncoder.h`), loaded with `ApplyMeasurements()` — no virtual call. Luminosity (`LightSensor`, BH1750) always goes out through a dedicated Lacrosse encoder. Sensor selection stays via `#ifdef` (`USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`); wrappers (`BMx280`, `Ds18b20`, `LightSensor`) take a `Hal*` and stub out on native builds. Details: `docs/architecture.md`, section *Main loop structure*.
 
 ### Dual source tree
 

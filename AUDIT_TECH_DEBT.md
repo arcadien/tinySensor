@@ -152,6 +152,16 @@ Impact 2026-06-19 : **20 points** résolus (C5:20). Score cumulé : **618 points
 
 Impact 2026-10-25 : **104 points** résolus (C6:20 + T4:16 + C9:16 + C8:16 + C12:12 + C14:12 + I6:12). Score cumulé : **722 points** (618 + 104), hors PR #35 (T2) et #36 (A1, D7).
 
+### 2026-10-25 — Restructuration de `main.cpp`
+
+- **A2 (15) — Interface commune des encodeurs d'environnement**. `include/EnvironmentEncoder.h` : alias `EnvironmentEncoder` choisi à la compilation (Oregon ou Lacrosse), `ConfigureEncoder()` et une surcharge `ApplyMeasurements()` par encodeur. Choix statique plutôt que virtuel (pas de vtable sur 8 Ko de flash). Les `#if USE_OREGON/USE_LACROSSE` répétés disparaissent de la boucle. → **Résolu**.
+- **A3 (20) — BH1750 sorti de la boucle**. Wrapper `include/LightSensor.h` (modèle `BMx280`/`Ds18b20`, stub natif) ; capteur et encodeur Lacrosse lumière créés une seule fois. La luminosité reste émise en Lacrosse (Oregon n'a pas de trame lumière), 2 fois (`LIGHT_FRAME_REPEAT`). → **Résolu**.
+- `include/Measurements.h` remplace les flottants sentinelles `NOT_SET = -1000` par des champs à drapeau de présence.
+- Défauts corrigés au passage : `_delay_ms(150)` direct dans `main.cpp` (passe désormais par `Hal::Delay30ms`) ; `vccMv` utilisé par le bloc `ANALOG1_X10_ID` mais déclaré seulement dans le bloc batterie ; stub natif `BMx280::Shutdown()` manquant.
+- Nouvelle suite `test_environment` (7 tests) : équivalence des ordres HAL entre `ApplyMeasurements()` et les appels directs d'avant. Structure documentée dans `docs/architecture.md` (*Main loop structure*).
+
+Impact 2026-10-25 (b) : **35 points** résolus (A2:15 + A3:20). Score cumulé : **757 points** (722 + 35).
+
 
 ---
 
@@ -206,8 +216,8 @@ Le plus haut score théorique est 50 ((5+5)×(6−1)). Je classe les items en qu
 | ID | Item | Impact | Risque | Effort | Priorité |
 |----|------|:------:|:------:|:------:|:--------:|
 | A1 | **Arbre source dupliqué — risque accepté** : `TinySensor/` (projet Atmel Studio) est conservé intentionnellement pour le workflow de debug pas-à-pas et de flashage via debugWIRE/JTAG, que PlatformIO ne remplace pas complètement. Contient `main.cpp`, `bh1750.cpp/h`, `TinyI2CMaster.cpp/h` + `third_party/`. Risque résiduel : divergence silencieuse si un fix appliqué dans `src/` n'est pas reporté dans `TinySensor/main.cpp`. Mitigations recommandées : (1) commentaire croisé dans les deux `main.cpp` pointant l'un vers l'autre, (2) step CI `diff -u src/main.cpp TinySensor/main.cpp` en mode warn-only pour rendre la divergence visible. | 2 | 3 | 2 | **20** |
-| A2 | Pas d'interface commune `EnvironmentEncoder` : `main.cpp` dispatche Oregon vs Lacrosse avec des `#if defined(USE_OREGON)/USE_LACROSSE` répétés 4× dans la même fonction. Ajouter un 3e protocole coûtera un passage dans toute la `main()`. | 3 | 2 | 3 | 15 |
-| A3 | Le bloc BH1750 dans `main.cpp:155-168` instancie en ligne un `LacrosseWS7000 lightEncoder(&hal)` — logique capteur mélangée avec logique de transmission. | 3 | 2 | 2 | **20** |
+| ~~A2~~ | ~~Pas d'interface commune `EnvironmentEncoder` : `main.cpp` dispatche Oregon vs Lacrosse avec des `#if defined(USE_OREGON)/USE_LACROSSE` répétés 4× dans la même fonction. Ajouter un 3e protocole coûtera un passage dans toute la `main()`.~~ — ✅ **Résolu 2026-10-25** (`EnvironmentEncoder` alias + `ApplyMeasurements()`, sans virtuel) | 3 | 2 | 3 | ~~15~~ |
+| ~~A3~~ | ~~Le bloc BH1750 dans `main.cpp:155-168` instancie en ligne un `LacrosseWS7000 lightEncoder(&hal)` — logique capteur mélangée avec logique de transmission.~~ — ✅ **Résolu 2026-10-25** (`LightSensor` wrapper, encodeur lumière créé une fois) | 3 | 2 | 2 | ~~20~~ |
 | ~~A4~~ | ~~Web firmware builder (`web/build.php`) : `shell_exec` sans sanitisation des inputs.~~ — ✅ **Résolu 2026-06-18** (décision : supprimer `web/` ; builder jamais finalisé, jamais utilisé en production — `web/build.php` + `web/index.html` supprimés) | 2 | 3 | 3 | ~~15~~ |
 | A5 | Configuration 100 % build-time : chaque capteur physique = un env PIO + une recompilation. Pas de config runtime, donc aucune mise à jour terrain sans reflashage manuel. Architecture acceptable pour un hobby / production très petite série ; limitante si on veut scaler. | 3 | 2 | 4 | 10 |
 | A6 | HAL ATmega328p absent malgré mention README. Branche `feat/328p_hal` existe mais non mergée — code parallèle qui va dériver. | 2 | 1 | 4 | 6 |

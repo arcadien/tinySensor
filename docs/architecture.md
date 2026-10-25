@@ -1,20 +1,24 @@
 # Architecture
 
-_Last updated: 2026-10-25 — requirements: TECH-SERIAL-001_
+_Last updated: 2026-10-25 — main loop refactor (audit A2, A3), see [Main loop structure](#main-loop-structure)_
 
 ## Component Diagram
 
 ```mermaid
 graph TD
   main["main.cpp (loop)"] -->|Hal*| HAL
-  main -->|Hal*| OregonV3
-  main -->|Hal*| LacrosseWS7000
+  main -->|"Measurements"| EnvEnc["EnvironmentEncoder (build-time alias)"]
+  EnvEnc -->|"USE_OREGON"| OregonV3
+  EnvEnc -->|"USE_LACROSSE"| LacrosseWS7000
+  main -->|"luminosity (always Lacrosse)"| LacrosseWS7000
   main -->|Hal*| x10rf
   main -->|Hal*| BMx280
   main -->|Hal*| SoftSerial
   main -->|Hal*| Ds18b20["Ds18b20 (1-Wire wrapper)"]
   Ds18b20 -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire driver library)"]
-  main -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
+  main -->|Hal*| LightSensor["LightSensor (BH1750 wrapper)"]
+  LightSensor -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
+  LightSensor -->|Delay30ms| HAL
 
   HAL["Hal (interface)"] --> Attiny84aHal["Attiny84aHal (AVR)"]
   HAL --> TestHal["TestHal_ (host/test)"]
@@ -41,7 +45,10 @@ graph TD
 | `Ds18b20` | Wrapper class encapsulating DS18B20 1-Wire access; accepts `Hal*` at construction; exposes `Begin()`, `Convert()`, `Read()`; uses `hal->Delay1s()` between convert and read on AVR; stubs on non-AVR | TECH-SENSOR-001 |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
 | `ds18b20` | 1-Wire driver library on PA3; called only through `Ds18b20` wrapper | FUNC-SENSOR-002 |
-| `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux | FUNC-SENSOR-003 |
+| `BH1750` | I2C light sensor at 0x23; ONE_TIME_HIGH_RES_MODE; result in lux; called only through `LightSensor` | FUNC-SENSOR-003 |
+| `LightSensor` | Wrapper for BH1750 (`include/LightSensor.h`); `Read()` starts a one-shot measurement, waits 150 ms through the HAL, returns lux; stub on non-AVR | FUNC-SENSOR-003 |
+| `Measurements` | Values of one cycle (`include/Measurements.h`): temperature, humidity, pressure, luminosity, each with a "present" flag | — |
+| `EnvironmentEncoder` | Build-time alias to `OregonV3` or `LacrosseWS7000` (`include/EnvironmentEncoder.h`) + `ConfigureEncoder()` and `ApplyMeasurements()` overloads | FUNC-OREGON-012, FUNC-LACROSSE-002, FUNC-BATTERY-003 |
 | `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
@@ -56,8 +63,28 @@ graph TD
 | `BMx280` | `Hal*` | constructor |
 | `Ds18b20` | `Hal*` | constructor |
 | `SoftSerial` | `Hal*` | constructor |
+| `LightSensor` | `Hal*` | constructor |
 
 All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly.
+
+## Main loop structure
+
+`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers.
+
+1. `hal.PowerOnSensors()`.
+2. `ReadEnvironment()` fills a `Measurements` from the fitted sensors (`BMx280`, `Ds18b20`). A field is flagged present only if its sensor is fitted and read correctly (DS18B20: `0` means read error).
+3. Battery and analog X10 meters (`BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID`), suppressed when the battery is low. VCC is computed once when either is enabled.
+4. Luminosity (`USE_BH1750`, battery not low): `LightSensor::Read()`, then a dedicated Lacrosse encoder sends a type-5 frame `LIGHT_FRAME_REPEAT` (2) times.
+5. Environment frame (`USE_OREGON` / `USE_LACROSSE`): `ApplyMeasurements()` loads the present fields into the encoder and returns whether to send (only when a temperature is present). Oregon also gets the battery-low flag.
+6. `hal.PowerOffSensors()`, `hal.Hibernate(SLEEP_TIME_IN_SECONDS)`.
+
+Design choices:
+
+- **Static interface, no virtual call.** The protocol is fixed at build time, so `EnvironmentEncoder` is a `typedef` and `ApplyMeasurements()` an overload per encoder. On an ATtiny84a (8 KB flash) this avoids a vtable and indirect calls while keeping a single call site in `main.cpp`.
+- **Luminosity always uses Lacrosse.** Oregon v3 has no light frame, and a Lacrosse frame carrying luminosity cannot carry other fields (`LacrosseWS7000::Send()` gives luminosity priority). Targets with `USE_BH1750` therefore need `LACROSSE_ID`, whatever the environment protocol.
+- **Encoders and sensors are created once** (globals or before the loop) and reconfigured each cycle. Fields not present in a cycle keep their previous value in the encoder, as before the refactor.
+- **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
+- Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
 ## Build-time Configuration
 
