@@ -1,10 +1,10 @@
 #include <LacrosseWS7000.h>
+#include <bitOps.h>
 
 #define TEMPERATURE_AVAILABLE 0x01
 #define HUMIDITY_AVAILABLE 0x02
 #define PRESSURE_AVAILABLE 0x04
 #define LUMINOSITY_AVAILABLE 0x08
-#define BITREAD(value, bit) (((value) >> (bit)) & 0x01)
 #define UPDATE_CHECKSUM(nibble) \
   do {                          \
     checkXor ^= (nibble);       \
