@@ -49,6 +49,8 @@ standoff_d = 6;
 gland_d = 12.5;       // PG7
 wall_screw_d = 4.5;   // vis murale Ø4
 ear_l = 12;           // dépassement de la patte au-delà du rebord
+shield_notch = true;  // encoches pour clipser l'abri de sonde sous le boîtier
+shield_notch_y = 8;   // position des encoches depuis le bout de la patte basse
 
 $fn = 48;
 eps = 0.01;
@@ -128,6 +130,9 @@ module ear(s) {
       cylinder(d = wall_screw_d, h = 10);
       translate([0, 0, floor_t + 1.6 - 2.2]) cylinder(d1 = wall_screw_d, d2 = wall_screw_d + 4.4, h = 2.2 + eps);
     }
+    // encoches latérales de la patte basse : accroche du clip de l'abri de sonde (sensor_shield.scad, part="clip")
+    if (s < 0 && shield_notch)
+      for (sx = [-1, 1]) translate([cav_w / 2 + sx * 10, -reach + shield_notch_y, -eps]) cylinder(r = 1, h = 10);
   }
 }
 
