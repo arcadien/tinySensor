@@ -73,7 +73,7 @@ This project uses Requirement-Based Development. **Every code change must origin
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
-**Linter**: `clang-format --dry-run --Werror` on all `*.cpp`/`*.h` under `src/`, `lib/`, `include/`, `test/`. Must pass before every test or implementation commit. Run it with:
+**Linter**: `clang-format` **18.1.8** (`--dry-run --Werror`) on all `*.cpp`/`*.h` under `src/`, `lib/`, `include/`, `test/`. Must pass before every test or implementation commit; enforced by the CI `lint` job and by the pre-commit hook (`pip install pre-commit && pre-commit install`). Other clang-format versions may format macros differently. Run it with:
 
 ```bash
 find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror

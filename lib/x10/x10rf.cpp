@@ -24,7 +24,7 @@ testing support.
 #include <stdlib.h>
 #include <string.h>
 
-#define NIBBLE_SUM(b) ((((b)&0xF0) >> 4) + ((b)&0xF))
+#define NIBBLE_SUM(b) ((((b) & 0xF0) >> 4) + ((b) & 0xF))
 
 // X10 RF timings are owned by the HAL (Hal::DelayX10*), see
 // lib/hal/Attiny84aHal.cpp.
