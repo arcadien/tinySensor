@@ -24,7 +24,7 @@ pcb_holes_kicad = [[89.96, 3.97], [5.01, 4.79], [4.57, 57.40], [90.71, 57.48]];
 clr = 1.0;            // jeu PCB / paroi
 bay = 14;             // baie câble côté bas (presse-étoupe, antenne)
 standoff_h = 5;       // hauteur sous PCB (pattes THT)
-comp_h = 22;          // composant le plus haut au-dessus du PCB (support 18650)
+comp_h = 25;          // composant le plus haut au-dessus du PCB (gros condensateurs)
 top_clr = 2;          // jeu sous le couvercle
 
 /* [Parois] */
