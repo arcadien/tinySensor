@@ -25,6 +25,7 @@ class BMx280 {
   float GetTemperature() { return 0; }
   float GetPressure() { return 0; }
   float GetHumidity() { return 0; }
+  void Shutdown() {}
   BMx280(Hal *hal) : hal(hal) {}
 #endif
 
