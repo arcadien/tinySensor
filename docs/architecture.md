@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-06-19 — requirements: TECH-SENSOR-001_
+_Last updated: 2026-10-25 — requirements: TECH-SERIAL-001_
 
 ## Component Diagram
 
@@ -22,7 +22,7 @@ graph TD
   OregonV3 -->|RadioGoHigh/Low\nDelay512Us/1024Us| HAL
   LacrosseWS7000 -->|RadioGoHigh/Low\nDelay400Us| HAL
   x10rf -->|"RadioGoHigh/Low\nDelayX10PreambleHigh/Low\nDelayX10BitShort/Long\nDelayX10Gap"| HAL
-  SoftSerial -->|SerialGoHigh/Low| HAL
+  SoftSerial -->|SerialWriteBit| HAL
   BMx280 -->|I2C via TinyI2C| HAL
   Ds18b20 -->|Delay1s| HAL
 ```
@@ -107,7 +107,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-FILTER-002 | `AnalogFilter` | Push() after samples count reached is silently ignored; Get() returns mean of first samples values |
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
-| TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; bit period = (1 000 000 / 9600) − 25 µs; driven by SerialGoHigh/Low |
+| TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; one SerialWriteBit call per bit, bit period (1 000 000 / 9600) − 25 µs held by the HAL |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |

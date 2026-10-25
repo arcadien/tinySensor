@@ -84,10 +84,10 @@
 ---
 
 ### TECH-SERIAL-001
-**Title:** SoftSerial transmits output-only UART at 9600 baud using SerialGoHigh/SerialGoLow HAL calls
+**Title:** SoftSerial transmits output-only UART at 9600 baud using the SerialWriteBit HAL call
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** `SoftSerial` accepts a `Hal*` at construction and drives UART output exclusively via `SerialGoHigh()` and `SerialGoLow()`. Each bit period is `(1 000 000 / 9600) − 25` µs, as defined by `BIT_PERIOD` in `lib/softSerial/SoftSerial.cpp:6`. No receive path is implemented.
+**Description:** `SoftSerial` accepts a `Hal*` at construction and drives UART output exclusively via `SerialWriteBit(level)`, one call per bit (start bit low, 8 data bits LSB first, stop bit high; `begin()` sets the idle level high). `SoftSerial` itself performs no delay: `SerialWriteBit` sets the line level and holds it for one bit period, `(1 000 000 / 9600) − 25` µs on AVR (`SERIAL_BIT_PERIOD_US` in `lib/hal/Attiny84aHal.cpp`, the −25 µs compensating the per-bit call overhead at 1 MHz). No receive path is implemented.
 
 ---
 
