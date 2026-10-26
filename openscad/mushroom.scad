@@ -9,7 +9,8 @@
 //   chassis : cadre imprimé debout, vissé sur le disque : BME280 couché (chambre du bas), plancher,
 //             carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
 //   deck    : plancher percé entre le capteur et la carte
-//   stem    : pied creux (support 18650 vertical), anneau, volve, tenon incliné en haut
+//   stem    : pied creux (support 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
+//   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
 //   dot     : pois blancs rapportés, collés dans les logements du dôme
 //
 // Export (toutes les pièces dans leur sens d'impression) :
@@ -18,10 +19,12 @@
 //   openscad -D 'part="chassis"' -o mushroom_chassis.3mf mushroom.scad
 //   openscad -D 'part="deck"'    -o mushroom_deck.3mf    mushroom.scad
 //   openscad -D 'part="stem"'    -o mushroom_stem.3mf    mushroom.scad
+//   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # sol + herbe, en vert ; pied collé dessus
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
-//   openscad --preview -D 'part="assembly"' --camera=0,0,125,72,0,25,640 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,125,75,0,25,700 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,100,112,0,200,520 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,140,90,0,0,480 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
@@ -32,7 +35,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, dot]
+part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -91,8 +94,23 @@ stem_h = 125;      // centre du haut du pied (sous le fourreau)
 holder_w = 21;     // support 1x18650 du commerce (à mesurer)
 holder_d = 19;
 holder_l = 77;
-stem_r = 16.5;     // rayon du fût
-ring_z = 78;       // anneau
+stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
+stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
+stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
+foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
+foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côté
+foot_dir = 200;    // direction du grand évasement (°)
+ring_z = 78;       // anneau (corolle)
+ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
+
+/* [Sol] */
+ground_t = 1;      // disque sous le pied (pièce séparée, à coller)
+ground_R = 58;     // rayon moyen
+ground_amp = 0.15;
+grass_seed = 11;
+grass_tufts = 4;   // touffes de grands brins autour du pied
+grass_single = 30; // brins isolés
+fringe_h = [3, 9]; // frange d'herbe en zigzag autour du pied : hauteur des dents
 
 /* [Visserie] */
 m3_pilot = 2.5;
@@ -307,26 +325,58 @@ module deck() {
 }
 
 // ---------- pied ----------
-volva_h = 34;
-flare_h = 14;
-function stem_rz(z) =
-  z <= volva_h / 2 ? 22 + 5 * sin(180 * z / volva_h)
-  : z <= volva_h ? 27 - 8 * sin(90 * (z - volva_h / 2) / (volva_h / 2))
-  : z <= stem_h - flare_h ? 19 - (19 - stem_r) * (z - volva_h) / (stem_h - flare_h - volva_h)
-  : z <= stem_h ? stem_r + (collar_r - stem_r) * pow((z - stem_h + flare_h) / flare_h, 1.3)
-  : collar_r;
-stem_prof = concat([[0, 0]], [for (z = [0 : 1 : stem_h + 6]) [stem_rz(z), z]], [[0, stem_h + 6]]);
+// générateur générique (même principe que le contour du chapeau) : harmoniques 2..7 à phases aléatoires
+function hterms(seed, n) = [for (k = [2 : 7]) let(q = rands(0, 1, 2, seed * 17 + k)) [k, (0.5 + 0.5 * q[0]) * exp(-pow((k - n) / 1.5, 2)), 360 * q[1]]];
+function hval(T, phi) = vsum([for (h = T) h[1] * sin(h[0] * phi + h[2])]);
+function hpeak(T) = max([for (i = [0 : 179]) abs(hval(T, 2 * i))]);
+function hnorm(T, P, phi) = hval(T, phi) / P;   // dans [-1, 1]
+stem_T = hterms(lobe_seed + 101, 3);  stem_P = hpeak(stem_T);
+ring_T = hterms(lobe_seed + 202, 4);  ring_P = hpeak(ring_T);
+ring_T2 = hterms(lobe_seed + 303, 5); ring_P2 = hpeak(ring_T2);
+ground_T = hterms(grass_seed, 4);     ground_P = hpeak(ground_T);
+
+flare_h = 14;      // évasement du haut, sous le fourreau
+function base_r(z) = z <= stem_h - flare_h ? 19 - (19 - stem_r) * z / (stem_h - flare_h)
+  : z <= stem_h ? stem_r + (collar_r - stem_r) * pow((z - stem_h + flare_h) / flare_h, 1.3) : collar_r;
+// rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + évasement dissymétrique de la base
+// (concave, pente à 45° au plus au pied, rayon décroissant en montant : imprimable)
+function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 côté grand évasement, 0 à l'opposé
+function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[1] - foot_flare[0]) * w,
+  Hf = foot_flare_h[0] + (foot_flare_h[1] - foot_flare_h[0]) * w, fl = z < Hf ? F * pow(1 - z / Hf, 2) : 0,
+  fade = max(0, min(1, (stem_h - flare_h - z) / 15)))
+  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
+
+ns = 72;
+stem_zs = [for (z = [0 : 1.5 : stem_h + 6]) z];
+module stem_body() {
+  J = len(stem_zs);
+  function v(i, j) = j * ns + (i % ns);
+  polyhedron(convexity = 4,
+    points = [for (z = stem_zs, i = [0 : ns - 1]) let(a = i * 360 / ns, r = stem_rr(a, z)) [r * cos(a), r * sin(a), z]],
+    faces = concat([for (j = [0 : J - 2], i = [0 : ns - 1]) [v(i, j), v(i, j + 1), v(i + 1, j + 1), v(i + 1, j)]],
+                   [[for (i = [0 : ns - 1]) v(i, 0)]], [[for (i = [ns - 1 : -1 : 0]) v(i, J - 1)]]));
+}
+
+// corolle : jupe balayée autour du fût, débord et retombée ondulés, dessous à ~45° au moins
+module ring_skirt() {
+  function prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = 10 * (1 + ring_amp * hnorm(ring_T, ring_P, a)),
+    drop = 16 * (1 + 0.6 * ring_amp * hnorm(ring_T2, ring_P2, a)))
+    [[ri, ring_z + 1.4], [ri + ext, ring_z - drop + 1.2], [ri + ext, ring_z - drop], [ri, ring_z - 1.2]];
+  function v(i, k) = (i % ns) * 4 + (k % 4);
+  polyhedron(convexity = 4,
+    points = [for (i = [0 : ns - 1], p = prof(i * 360 / ns)) let(a = i * 360 / ns) [p[0] * cos(a), p[0] * sin(a), p[1]]],
+    faces = [for (i = [0 : ns - 1], k = [0 : 3]) [v(i, k + 1), v(i, k), v(i + 1, k), v(i + 1, k + 1)]]);
+}
+
 module stem() {
   difference() {
     union() {
       // fût, coupé sous le fourreau (plan perpendiculaire à l'axe du chapeau)
       intersection() {
-        rotate_extrude($fn = 96) polygon(stem_prof);
+        stem_body();
         cap_xf() translate([-100, -100, -collar_h - 200]) cube([200, 200, 200]);
       }
-      // anneau : jupe conique (dessous à ~50°, imprimable)
-      rotate_extrude($fn = 96) polygon([[stem_rz(ring_z) - 0.5, ring_z + 1.4], [stem_rz(ring_z) + 11, ring_z - 14],
-                                        [stem_rz(ring_z) + 11, ring_z - 15.2], [stem_rz(ring_z) - 0.5, ring_z - 1.2]]);
+      ring_skirt();
       // tenon incliné, emboîté dans le fourreau
       cap_xf() translate([0, 0, -collar_h - 1]) cylinder(r = tenon_r, h = 17);
     }
@@ -335,6 +385,45 @@ module stem() {
     // vis radiale du fourreau
     cap_xf() translate([-tenon_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_pilot, h = 6);
   }
+}
+
+// ---------- sol : disque de 1 mm et végétation ----------
+function ground_r(a) = ground_R * (1 + ground_amp * hnorm(ground_T, ground_P, a));
+// brin : lame effilée (0.9 mm d'épaisseur, pointe 0.6 mm), courbée dans son plan, pente <= ~40° (imprimable)
+module blade(h, w, lean) {
+  for (k = [0 : 3]) hull() for (q = [k, k + 1])
+    translate([lean * pow(q / 4, 2), 0, h * q / 4]) cube([max(0.6, w * pow(1 - q / 4, 1.3)), 0.9, 0.01], center = true);
+}
+grass = let(R = rands(0, 1, 6 * (grass_tufts * 9 + grass_single), grass_seed))
+  concat(
+    // touffes : 6 à 9 grands brins en éventail, collés au pied
+    [for (t = [0 : grass_tufts - 1], b = [0 : 8]) let(o = 6 * (t * 9 + b), t0 = 6 * t * 9,
+       ta = t * 360 / grass_tufts + 40 * R[t0], tr = stem_rr(ta, 0) + 2 + 4 * R[t0 + 1],
+       fan = -70 + 140 * b / 8 + 15 * (R[o + 2] - 0.5), h = 10 + 9 * R[o + 3])
+       if (b < 6 + 3 * R[t0 + 2])
+         [[tr * cos(ta) + 4 * (R[o + 4] - 0.5), tr * sin(ta) + 4 * (R[o + 5] - 0.5)], ta + fan, h, 3 + 1.5 * R[o + 1], h * 0.55 * (R[o] - 0.2)]],
+    // brins isolés
+    [for (i = [0 : grass_single - 1]) let(o = 6 * (grass_tufts * 9 + i), a = 360 * R[o],
+       rr = stem_rr(a, 0) + 4 + (ground_r(a) - 8 - stem_rr(a, 0) - 4) * pow(R[o + 1], 1.5), h = 4 + 6 * R[o + 2])
+       [[rr * cos(a), rr * sin(a)], a + 90 * (R[o + 3] - 0.5), h, 2.5 + R[o + 4], h * 0.5 * (R[o + 5] - 0.5)]]);
+// frange : dents triangulaires le long d'une courbe ondulée autour du pied (paroi continue de 0.9 mm)
+fringe_n = 64;
+fringe = let(R = rands(0, 1, 3 * fringe_n, grass_seed + 7))
+  [for (i = [0 : fringe_n - 1]) let(a = i * 360 / fringe_n, rr = stem_rr(a, 0) + 2.5 + 2 * R[3 * i])
+    [rr * cos(a), rr * sin(a), fringe_h[0] + (fringe_h[1] - fringe_h[0]) * R[3 * i + 1], 2 * (R[3 * i + 2] - 0.5)]];
+module fringe_wall() {
+  for (i = [0 : fringe_n - 1]) let(p = fringe[i], q = fringe[(i + 1) % fringe_n], m = (p + q) / 2,
+                                   t = unit([q[0] - p[0], q[1] - p[1], 0]))
+    hull() {
+      translate([p[0], p[1], 0]) cylinder(d = 0.9, h = 0.01, $fn = 8);
+      translate([q[0], q[1], 0]) cylinder(d = 0.9, h = 0.01, $fn = 8);
+      translate([m[0] + t[0] * p[3] * 1.5, m[1] + t[1] * p[3] * 1.5, p[2]]) cylinder(d = 0.6, h = 0.01, $fn = 8);
+    }
+}
+module ground() {
+  linear_extrude(ground_t) polygon([for (i = [0 : 89]) let(a = i * 4) ground_r(a) * [cos(a), sin(a)]]);
+  for (g = grass) translate([g[0][0], g[0][1], ground_t - 0.01]) rotate([0, 0, g[1]]) blade(g[2], g[3], g[4]);
+  translate([0, 0, ground_t - 0.01]) fringe_wall();
 }
 
 // ---------- maquettes ----------
@@ -350,6 +439,7 @@ module bme() { color("Purple") translate([-bme_w / 2, -iy, 0]) cube([bme_w, bme_
 
 module assembled() {
   color("Ivory") stem();
+  color("#4a8f3c") translate([0, 0, -ground_t]) ground();
   translate([0, 0, 3]) holder_cell();
   cap_xf() {
     color("Ivory") gills();
@@ -374,9 +464,10 @@ else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();  
 else if (part == "chassis") translate([0, 0, -ch_z]) chassis();
 else if (part == "deck") deck();
 else if (part == "stem") stem();
+else if (part == "ground") ground();
 else if (part == "dot") dot(dot_d);
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {
   assembled();
-  translate([45, -5, 0]) euro2();
+  translate([75, -25, 0]) euro2();
 }

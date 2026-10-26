@@ -95,9 +95,9 @@ Pour poser l'ensemble boîtier + abri debout sur une table, sans mur.
 
 Variante décorative, type amanite, qui ne remplace pas le boîtier mural. Le chapeau est un tout (dôme + lamelles) posé sur le pied avec une légère inclinaison ; toute l'électronique est dans le chapeau, le pied ne porte que l'accu.
 
-| Vue d'ensemble | Dessous | Coupe |
-|---|---|---|
-| ![Champignon](rendu_champignon.png) | ![Champignon, dessous](rendu_champignon_dessous.png) | ![Champignon, coupe](rendu_champignon_coupe.png) |
+| Vue d'ensemble | Pied | Dessous | Coupe |
+|---|---|---|---|
+| ![Champignon](rendu_champignon.png) | ![Champignon, pied](rendu_champignon_pied.png) | ![Champignon, dessous](rendu_champignon_dessous.png) | ![Champignon, coupe](rendu_champignon_coupe.png) |
 
 Pièces :
 
@@ -108,7 +108,12 @@ Pièces :
   - **plancher percé** (`deck`) sur des appuis ;
   - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø33, creux (Ø29,3) jusqu'en haut : support 1×18650 du commerce vertical, inséré par le haut. Anneau, volve (Ø54). En haut, un tenon incliné de 10° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
+- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,3) jusqu'en haut : support 1×18650 du commerce vertical, inséré par le haut. Même esprit que le chapeau :
+  - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
+  - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
+  - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
+  - En haut, un tenon incliné de 10° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
+- **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~115, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
 - **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (pointe comprise, écart mini `dot_gap`) : ~110, l'écho OpenSCAD donne le nombre par taille.
 
 Hauteur totale ~250 mm.
@@ -124,10 +129,12 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 ### Impression
 
 - Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (102 mm de haut) s'imprime bord sur le plateau et demande des **supports à l'intérieur** (plafond et pointe), invisibles une fois monté. Les autres pièces s'impriment sans support (pied : 145 mm de haut).
-- Dôme en rouge (ou brun : panthère), pois en blanc, le reste en blanc / ivoire.
+- Dôme en rouge (ou brun : panthère), pois en blanc, sol en vert, le reste en blanc / ivoire.
+- Sol : brins et frange de 0,9 mm d'épaisseur, pointes à 0,6 mm (buse 0,4) ; le slicer peut tronquer les pointes les plus fines.
 
 ### Montage, accu
 
+0. Pied collé sur le sol.
 1. Châssis sur le disque à lamelles (4 vis par en dessous), BME glissé dans ses rainures, plancher, carte, module de charge dans sa glissière.
 2. Écrous M3 dans les logements du disque, dôme posé, 3 vis par en dessous.
 3. Support 18650 dans le pied par le haut, fils dans le fourreau, chapeau emboîté sur le tenon, vis radiale.
@@ -138,7 +145,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 - Cotes à mesurer : support 18650 (`holder_w/d/l`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`).
 - Antenne 433 MHz (17 cm) : en cercle à l'intérieur du dôme, ou le long de l'accu dans le pied.
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : base Ø44 au sol (volve Ø54) pour ~210 mm et un chapeau Ø136 ; lester la volve ou ajouter un piquet pour le jardin si besoin.
+- Stabilité : le sol (Ø~115, 1 mm) élargit l'appui mais pèse peu ; pour ~250 mm et un chapeau de 148 mm, lester la base du pied (plomb dans le fond du logement) si besoin.
 
 ## Visserie
 
