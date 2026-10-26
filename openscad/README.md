@@ -17,6 +17,7 @@ Pièce de 2 € (Ø25,75 mm) dans les rendus pour l'échelle.
 | `stand.scad` | Pied de table : mât + semelle, pour poser boîtier + abri debout |
 | `pcb.scad` | Représentation simplifiée de la carte v2.2 et de l'accu 18650 (rendus uniquement) |
 | `euro2.scad` | Pièce de 2 € pour l'échelle des rendus |
+| `mushroom.scad` | Boîtier « champignon » décoratif (en plus du boîtier mural) |
 | `assembly.scad` | Vue d'ensemble (boîtier + abri clipsé, au mur ou sur pied), sert à générer `rendu.png` et `rendu_pied.png` |
 
 > Statut : **non imprimé, non validé**. Jeux et serrages à confirmer au premier tirage.
@@ -90,6 +91,47 @@ Pour poser l'ensemble boîtier + abri debout sur une table, sans mur.
 - Liaison I2C < 1 m : pull-ups 4,7 kΩ, câble torsadé (SDA/GND, SCL/GND).
 - Le câble sort du presse-étoupe et remonte dans l'abri par le fond.
 
+## Champignon (`mushroom.scad`)
+
+Variante décorative, type amanite au chapeau penché, qui ne remplace pas le boîtier mural. Le chapeau fait parapluie ; tout ce qui doit respirer ou se brancher est dessous, à l'abri.
+
+| Vue d'ensemble | Dessous | Coupe |
+|---|---|---|
+| ![Champignon](rendu_champignon.png) | ![Champignon, dessous](rendu_champignon_dessous.png) | ![Champignon, coupe](rendu_champignon_coupe.png) |
+
+De haut en bas :
+
+- **Chapeau** (`cap`) ~Ø140 × 54 mm, super-ellipse (`cap_n`) **inclinée de 16°** (`cap_tilt`), sommet déporté (`cap_lean`), bord ondulé (`cap_wave`). Pièce séparée, vissée par en dessous (3 vis M3 dans des tubes qui traversent la jupe, invisibles de l'extérieur). Lame d'air de ≥ 5 mm au-dessus du toit.
+- **Toit** (`roof`) : ferme le compartiment carte, 3 vis M3 fraisées.
+- **Carte v2.2 découpée** le long des pointillés de sérigraphie (x = 147, y = 87 dans KiCad) : 60 × 39 mm, sans les supports 18650 et CR2032. Seules des pistes `+BATT`/`GND` vers ces supports sont coupées ; l'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`). Il ne reste que 2 trous (MH5, MH1 du haut) : 2 entretoises vissées + 2 appuis à lèvre sur le bord opposé (glisser le bord sous les lèvres, puis visser).
+- **Plancher percé** (`deck`) posé sur une feuillure.
+- **Corps** (`core`) Ø92 : chambre capteur de 28 mm, BME280 vertical en glissière, module de charge TP4056 vertical en glissière avec la prise **micro-USB débouchant vers le bas** dans le fond. Autour, une **jupe à lamelles** (le dessous du chapeau) coupée selon le plan incliné du bord : ses fentes ventilent la chambre (par 10 fenêtres) et la lame d'air du chapeau.
+- **Pied** (`stem`) Ø33, creux (logement Ø29,3) : support 1×18650 du commerce vertical. Anneau en jupe, volve en bulbe (Ø54). Vissé sous le corps par 3 vis M3 × 12 à tête cylindrique (6 pans creux) logées dans l'évasement.
+- **Pois** (`dot`) rapportés et collés dans des logements de 0,8 mm : 71 au total, l'écho OpenSCAD donne le nombre par taille (Ø6 ×28, Ø8 ×24, Ø10 ×19).
+
+Hauteur totale ~220 mm. Les cotes du chapeau (Ø, hauteur, inclinaison, hauteur du bord) ont été choisies pour garder la lame d'air et couvrir le corps tout autour : si on les change, vérifier sur la coupe que le chapeau ne touche ni le toit ni le haut du corps.
+
+### Impression
+
+- Toutes les pièces sortent dans leur sens d'impression. Le **chapeau** s'imprime bord sur le plateau et demande des **supports à l'intérieur** (plafond du dôme), invisibles une fois monté. Les autres pièces s'impriment sans support.
+- Chapeau en rouge (ou brun : panthère), pois en blanc, le reste en blanc / ivoire.
+
+### Montage, accu
+
+1. Support 18650 dans le pied, fils (et antenne 433 MHz si on la fait descendre dans le pied) par le haut.
+2. Pied sous le corps : 3 vis par en dessous. L'anneau gêne un tournevis droit : utiliser une clé 6 pans coudée.
+3. Module de charge et BME dans leurs glissières, plancher, carte, toit.
+4. Chapeau : 3 vis M3 par en dessous, à travers les tubes de la jupe (tournevis long).
+5. Changer l'accu : dévisser le pied (3 vis), ressortir le support par le haut du pied. Prévoir un connecteur sur les fils de l'accu.
+
+### Points ouverts
+
+- Cotes à mesurer : support 18650 (`holder_w/d/l`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`).
+- Antenne 433 MHz (17 cm) : le long de l'accu dans le pied, ou en cercle dans la lame d'air du chapeau.
+- Côté relevé du chapeau, les lamelles hautes sont moins abritées de la pluie oblique.
+- Lame d'air du chapeau sans sortie en haut : efficacité contre l'échauffement à vérifier par mesure.
+- Stabilité : base Ø44 au sol (volve Ø54) pour ~220 mm et un chapeau Ø140 déporté ; lester la volve ou ajouter un piquet pour le jardin si besoin.
+
 ## Visserie
 
 | Usage | Qté | Référence |
@@ -104,6 +146,10 @@ Pour poser l'ensemble boîtier + abri debout sur une table, sans mur.
 | Clip → abri (option 2) | 2 | M4 × 8 tête fraisée + écrous |
 | Boîtier → mât (pied) | 2 | M4 × 10 tête fraisée + écrous |
 | Mât → semelle (pied) | 1 | M4 × 20 + écrou |
+| Champignon : PCB → plancher | 2 | M2.5 × 6 auto-taraudeuse |
+| Champignon : chapeau → corps | 3 | M3 × 8 auto-taraudeuse |
+| Champignon : toit → corps | 3 | M3 × 8 tête fraisée auto-taraudeuse |
+| Champignon : pied → corps | 3 | M3 × 12 tête cylindrique 6 pans creux |
 
 ## Alimentation (à trancher)
 

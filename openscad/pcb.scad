@@ -11,6 +11,13 @@ k_origin = [113.04016, 48.02632];   // coin haut-gauche du contour Edge.Cuts
 k_holes = [[203.75016, 105.51032], [118.04904, 52.81676], [117.61216, 105.43032], [203, 52], [150.88616, 51.83632]];
 
 show_battery = true;
+// découpe le long des pointillés de sérigraphie (x = 147, y = 87 en KiCad) : on ne garde que
+// la partie sans support 18650 ni support CR2032 ; l'accu arrive alors sur J13 « RAW IN »
+k_crop = [[147, 48.02632], [207.02016, 87]];
+crop_w = k_crop[1][0] - k_crop[0][0];
+crop_h = k_crop[1][1] - k_crop[0][1];
+// trous restants sur la carte découpée (MH5 et MH1 du haut), coordonnées KiCad
+k_crop_holes = [[150.88616, 51.83632], [203, 52]];
 
 $fn = 32;
 
@@ -43,13 +50,24 @@ module holder_18650() {
   }
 }
 
-module pcb_v22() {
+// carte découpée, centrée sur l'origine (dessous du PCB en Z = 0)
+module pcb_v22_cropped() {
+  translate([-(k_crop[0][0] - k_origin[0]) - crop_w / 2, -(pcb_h - (k_crop[1][1] - k_origin[1])) - crop_h / 2, 0])
+    intersection() {
+      pcb_v22(holder = false);
+      translate([k_crop[0][0] - k_origin[0], pcb_h - (k_crop[1][1] - k_origin[1]), -1]) cube([crop_w, crop_h, 60]);
+    }
+}
+// trous de la carte découpée dans le repère de pcb_v22_cropped()
+function crop_holes() = [for (h = k_crop_holes) [h[0] - (k_crop[0][0] + k_crop[1][0]) / 2, (k_crop[0][1] + k_crop[1][1]) / 2 - h[1]]];
+
+module pcb_v22(holder = true) {   // holder = false : support 18650 non peuplé
   color("#1f7a3a") difference() {
     cube([pcb_w, pcb_h, pcb_t]);
     for (h = k_holes) translate([h[0] - k_origin[0], pcb_h - (h[1] - k_origin[1]), -1]) cylinder(d = 2.7, h = pcb_t + 2);
   }
   // alimentation : support 18650 et convertisseur DC/DC
-  kfp(124.72416, 99.08032) holder_18650();
+  if (holder) kfp(124.72416, 99.08032) holder_18650();
   kfp(147.56966, 58.78882) {
     pins([[1.96, 1.54], [4.5, 1.54], [7.04, 1.54]], 6);
     color("#1a4fa0") translate([0, 0, 5]) cube([19, 9, 1.2]);
