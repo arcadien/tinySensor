@@ -24,26 +24,20 @@ Pièce de 2 € (Ø25,75 mm) dans les rendus pour l'échelle.
 
 ## Export
 
-OpenSCAD exporte directement en 3MF (ou STL) :
+Les pièces prêtes à trancher (3MF, ouverts directement par OrcaSlicer) sont dans `print/`. Le suffixe `_xN` donne le nombre d'exemplaires. Pour les régénérer après une modification (environ 2 min 30) :
 
 ```bash
-# Boîtier
-openscad -D 'part="base"' -D 'usage="ext"' -o out/base_ext.3mf tinysensor_box.scad
-openscad -D 'part="base"' -D 'usage="int"' -o out/base_int.3mf tinysensor_box.scad
-openscad -D 'part="lid"'                   -o out/lid.3mf      tinysensor_box.scad
-# Abri de sonde
-openscad -D 'part="cap"'   -o out/shield_cap.3mf   sensor_shield.scad
-openscad -D 'part="plate"' -o out/shield_plate.3mf sensor_shield.scad   # x4
-openscad -D 'part="base"'  -o out/shield_base.3mf  sensor_shield.scad
-openscad -D 'part="clip"'  -o out/shield_clip.3mf  sensor_shield.scad   # option
-# Pied de table (option)
-openscad -D 'part="mast"' -o out/stand_mast.3mf stand.scad
-openscad -D 'part="foot"' -o out/stand_foot.3mf stand.scad
+./export.sh        # 3MF dans print/
+./export.sh stl    # ou des STL
 ```
+
+Le boîtier existe en deux variantes, `box_base_ext` (presse-étoupe, extérieur) et `box_base_int` (aérations, intérieur) : n'en imprimer qu'une. Le pied de table (`stand_*`) et le clip d'abri sont optionnels. Les nombres de pois du champignon suivent l'écho « Pois » de `mushroom.scad` : si la graine ou `dot_gap` changent, ajuster les noms dans `export.sh`.
+
+Export d'une seule pièce : `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_box.scad` (voir l'en-tête de chaque `.scad`).
 
 Rendu boîtier ouvert : `openscad --preview -D 'part="open"' --camera=110,-230,420,110,30,0 --imgsize=1400,1000 -o rendu_ouvert.png tinysensor_box.scad`.
 
-Toutes les pièces sont exportées dans leur orientation d'impression et s'impriment **sans support**. `out/` est ignoré par git.
+Toutes les pièces sont exportées dans leur orientation d'impression et s'impriment **sans support** (sauf l'intérieur du dôme du champignon). `out/` est ignoré par git, pas `print/`.
 
 ## Boîtier principal (`tinysensor_box.scad`)
 
