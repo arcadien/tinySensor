@@ -22,15 +22,15 @@ part = "assembly"; // [cap, plate, base, clip, assembly]
 
 /* [Assiettes] */
 n_plates = 4;      // assiettes ajourées entre chapeau et fond
-plate_d = 80;      // diamètre extérieur
-hole_d = 40;       // diamètre de la colonne centrale
+plate_d = 56;      // diamètre extérieur
+hole_d = 26;       // diamètre de la colonne centrale (glissière capteur ~19.4 de large)
 plate_t = 1.6;
-skirt_h = 8;       // jupe : arrête la pluie oblique et le rayonnement
+skirt_h = 5;       // jupe : arrête la pluie oblique et le rayonnement
 skirt_t = 1.6;
-gap = 14;          // pas vertical entre deux assiettes (hauteur des entretoises)
+gap = 10;          // pas vertical entre deux assiettes (hauteur des entretoises)
 
 /* [Assemblage] */
-post_r = 30;       // rayon du cercle des entretoises
+post_r = 20;       // rayon du cercle des entretoises
 post_d = 7;
 rod_d = 3.4;       // passage M3
 

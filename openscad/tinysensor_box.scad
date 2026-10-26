@@ -4,14 +4,17 @@
 // Export :
 //   openscad -D 'part="base"' -o base.3mf tinysensor_box.scad
 //   openscad -D 'part="lid"'  -o lid.3mf  tinysensor_box.scad
+// Rendu boîtier ouvert (carte + accu, couvercle retourné à côté) :
+//   openscad --preview -D 'part="open"' --camera=110,-230,420,110,30,0 --imgsize=1400,1000 -o rendu_ouvert.png tinysensor_box.scad
 //
 // Repère : origine = coin "haut-gauche" du PCB vu de dessus (comme KiCad),
 // X vers la droite, Y vers le bas (KiCad) converti en Y vers le haut ici.
 // En pose murale, le côté "bas" (Y=0, côté support 18650) est orienté vers le sol.
 
 /* [Rendu] */
-part = "assembly"; // [base, lid, assembly]
+part = "assembly"; // [base, lid, assembly, open]
 usage = "ext";     // [int, ext]
+gland_side = "left"; // [left, right, bottom] paroi du presse-étoupe (usage ext)
 
 /* [PCB — tiré de hardware/tinysensor/tinySensorv1.kicad_pcb] */
 pcb_w = 93.98;
@@ -52,10 +55,17 @@ ear_l = 12;           // dépassement de la patte au-delà du rebord
 shield_notch = true;  // encoches pour clipser l'abri de sonde sous le boîtier
 shield_notch_y = 8;   // position des encoches depuis le bout de la patte basse
 
+use <pcb.scad>
+use <euro2.scad>
+
 $fn = 48;
 eps = 0.01;
-gland_z = 11.5;      // axe du presse-étoupe (sous le chanfrein du rebord)
-gland_x = 22;        // décalé de la patte murale centrale
+// Presse-étoupe latéral : dans la baie (sous le PCB en Y), assez haut pour que
+// l'écrou intérieur (PG7, 15 sur plats) passe au-dessus du bord du PCB, et
+// sous le chanfrein du rebord qui le protège de la pluie.
+gland_z = gland_side == "bottom" ? 11.5 : 15;
+gland_x = 22;        // position en paroi basse : décalé de la patte murale centrale
+gland_y = 8;         // position en paroi latérale : milieu de la baie
 
 // ---------- dimensions dérivées ----------
 cav_w = pcb_w + 2 * clr;
@@ -106,9 +116,13 @@ module base() {
     translate([0, 0, base_h - groove_d]) linear_extrude(groove_d + eps) groove_path(groove_off, groove_w);
     // trous de vis du couvercle (borgnes)
     for (p = lid_screws()) translate([p[0], p[1], base_h - flange_t + 0.8]) cylinder(d = lid_screw_d_pilot, h = flange_t);
-    // presse-étoupe dans la paroi basse
-    if (usage == "ext")
-      translate([gland_x, -wall - flange - eps, gland_z]) rotate([-90, 0, 0]) cylinder(d = gland_d, h = wall + flange + 2 * eps);
+    // presse-étoupe : paroi latérale (défaut) ou paroi basse
+    if (usage == "ext") {
+      if (gland_side == "bottom")
+        translate([gland_x, -wall - flange - eps, gland_z]) rotate([-90, 0, 0]) cylinder(d = gland_d, h = wall + flange + 2 * eps);
+      else
+        translate([gland_side == "left" ? -wall - eps : cav_w - eps, gland_y, gland_z]) rotate([0, 90, 0]) cylinder(d = gland_d, h = wall + 2 * eps);
+    }
     // aérations intérieures (fentes en paroi basse et haute)
     if (usage == "int") vents();
   }
@@ -154,6 +168,13 @@ module lid() {
 
 if (part == "base") base();
 else if (part == "lid") translate([0, 0, lid_t]) mirror([0, 0, 1]) lid();  // face plate sur le plateau, nervure vers le haut
+else if (part == "open") {
+  color("DimGray") base();
+  translate([pcb_x0, pcb_y0, floor_t + standoff_h]) pcb_v22();
+  // couvercle retourné à côté, face intérieure (nervure) visible
+  color("Gray") translate([cav_w + 2 * (wall + flange) + 15, 0, lid_t]) mirror([0, 0, 1]) lid();
+  translate([cav_w / 2, -wall - flange - 25, 0]) euro2();
+}
 else {
   color("SteelBlue", 0.9) base();
   color("Orange", 0.6) translate([0, 0, base_h + 8]) lid();
