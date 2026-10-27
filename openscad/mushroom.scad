@@ -63,6 +63,7 @@ cap_skirt = 4;     // le bord du dôme descend sous le disque (pattes de vissage
 tab_base = [90, 210, 330];  // vis du dôme : chacune glisse (±40°) vers le lobe le plus proche
 dot_sizes = [6, 8, 10];
 dot_pocket = 0.8;
+dot_gap = 6;       // espace mini entre deux pois
 
 /* [Contour du chapeau : générateur de lobes] */
 lobe_seed = 6;     // graine : changer pour une autre forme
@@ -70,6 +71,7 @@ lobe_n = 4.5;      // nombre de lobes dominant
 lobe_amp = 0.22;   // écart maxi au rayon moyen, au bord (0.22 = ±22 %)
 lobe_top = 0.3;    // part de la déformation qui reste au sommet (1 = bosselé jusqu'en haut)
 lobe_rot = 165;    // orientation du contour en degrés ; -1 = automatique (meilleur jeu autour de l'électronique)
+clear_m = 3;       // jeu mini visé entre l'électronique et le dôme (indice de jeu)
 
 /* [Lamelles] */
 disc_t = 3;
@@ -103,6 +105,7 @@ fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
 plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
 stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
+flare_h = 14;      // évasement du haut, sous le fourreau
 stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
 stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
 foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
@@ -133,6 +136,12 @@ grass_seed = 11;
 grass_tufts = 4;   // touffes de grands brins autour du pied
 grass_single = 30; // brins isolés
 fringe_h = [3, 9]; // frange d'herbe en zigzag autour du pied : hauteur des dents
+fringe_n = 64;     // nombre de dents de la frange
+
+/* [Résolution des maillages] */
+na = 90;           // dôme : pas angulaire
+nt = 120;          // dôme : pas en hauteur (0.75° : flanc raide de la pointe sans escaliers)
+ns = 72;           // pied, corolle : pas angulaire
 
 /* [Visserie] */
 m3_pilot = 2.5;
@@ -172,7 +181,6 @@ clear_pts = concat(
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + 31]],                                // composants
   [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + 26]]);                                       // chargeur
 // v <= 1 : le point est sous le dôme réduit de clear_m dans toutes les directions
-clear_m = 3;
 function v_in(p, rot) = let(zz = p[2] + cap_skirt, x = p[0] - cap_lean * pow(zz / cap_H, 2), phi = atan2(p[1], x),
   hi = cap_H - cap_t - clear_m, s = min(1, zz / (cap_H - cap_t)))
   pow(norm([x, p[1]]) / (cap_R * wav_r(phi, s, rot) - cap_t - clear_m), cap_n) + pow(zz / hi, cap_n);
@@ -193,8 +201,6 @@ function tip_bump(x, y, s, off) = let(k = off > 0 ? 3 : 0, dx = x - tip_c[0],
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
 function lean_at(zz) = cap_lean * pow(zz / cap_H, 2);
 
-na = 90;
-nt = 120;   // pas de 0.75° : flanc raide de la pointe sans escaliers
 function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
 function o(i, j) = j * na + (i % na);
@@ -207,7 +213,6 @@ module dome_solid(off = 0) {   // volume plein sous la surface, fermé par le pl
 
 // pois : tirage « disque de Poisson » sur la surface réelle (pointe comprise) : candidats sur une grille
 // (phi, t) dense et bruitée, parcourus dans un ordre pseudo-aléatoire, gardés s'ils sont assez loin des autres
-dot_gap = 6;       // espace mini entre deux pois
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
   let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] - tip_bump(p[0], p[1], 0, 0) > 9 || p[2] > 20)
   [pp, tt, dot_sizes[floor(q[2] * 2.99)], p]];
@@ -358,7 +363,6 @@ ring_T = hterms(lobe_seed + 202, 4);  ring_P = hpeak(ring_T);
 ring_T2 = hterms(lobe_seed + 303, 5); ring_P2 = hpeak(ring_T2);
 ground_T = hterms(grass_seed, 4);     ground_P = hpeak(ground_T);
 
-flare_h = 14;      // évasement du haut, sous le fourreau
 function base_r(z) = z <= stem_h - flare_h ? 19 - (19 - stem_r) * z / (stem_h - flare_h)
   : z <= stem_h ? stem_r + (collar_r - stem_r) * pow((z - stem_h + flare_h) / flare_h, 1.3) : collar_r;
 // rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + évasement dissymétrique de la base
@@ -373,7 +377,6 @@ function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[
 ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
   let(r = max(0, min(stem_rr(i * 360 / na, z) - ballast_wall, ballast_top - z))) 0.5 * r * r * (2 * PI / na) * dz])]) / 1000;
 
-ns = 72;
 stem_zs = [for (z = [0 : 1.5 : stem_h + 6]) z];
 module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (intérieur de la chambre à lest)
   J = len(zs);
@@ -481,7 +484,6 @@ grass = let(R = rands(0, 1, 6 * (grass_tufts * 9 + grass_single), grass_seed))
        rr = stem_rr(a, 0) + 4 + (ground_r(a) - 8 - stem_rr(a, 0) - 4) * pow(R[o + 1], 1.5), h = 4 + 6 * R[o + 2])
        [[rr * cos(a), rr * sin(a)], a + 90 * (R[o + 3] - 0.5), h, 2.5 + R[o + 4], h * 0.5 * (R[o + 5] - 0.5)]]);
 // frange : dents triangulaires le long d'une courbe ondulée autour du pied (paroi continue de 0.9 mm)
-fringe_n = 64;
 fringe = let(R = rands(0, 1, 3 * fringe_n, grass_seed + 7))
   [for (i = [0 : fringe_n - 1]) let(a = i * 360 / fringe_n, rr = stem_rr(a, 0) + 2.5 + 2 * R[3 * i])
     [rr * cos(a), rr * sin(a), fringe_h[0] + (fringe_h[1] - fringe_h[0]) * R[3 * i + 1], 2 * (R[3 * i + 2] - 0.5)]];
