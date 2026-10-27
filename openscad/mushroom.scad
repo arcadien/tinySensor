@@ -9,8 +9,9 @@
 //   chassis : cadre imprimé debout, vissé sur le disque : BME280 couché (chambre du bas), plancher,
 //             carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
 //   deck    : plancher percé entre le capteur et la carte
-//   stem    : pied creux (support 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
+//   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
 //   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
+//   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
 //   dot     : pois blancs rapportés, collés dans les logements du dôme
 //
 // Export (toutes les pièces dans leur sens d'impression) :
@@ -20,6 +21,7 @@
 //   openscad -D 'part="deck"'    -o mushroom_deck.3mf    mushroom.scad
 //   openscad -D 'part="stem"'    -o mushroom_stem.3mf    mushroom.scad
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # sol + herbe, en vert ; pied collé dessus
+//   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # à plat, méplat sur le plateau
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
 //   openscad --preview -D 'part="assembly"' --camera=0,0,125,75,0,25,700 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
@@ -35,7 +37,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, dot]
+part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, cradle, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -91,9 +93,7 @@ usb_cut = [8.5, 12];
 
 /* [Pied] */
 stem_h = 125;      // centre du haut du pied (sous le fourreau)
-holder_w = 21;     // support 1x18650 du commerce (à mesurer)
-holder_d = 19;
-holder_l = 77;
+bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
 stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
 stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
 stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
@@ -102,6 +102,20 @@ foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côt�
 foot_dir = 200;    // direction du grand évasement (°)
 ring_z = 78;       // anneau (corolle)
 ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
+
+/* [Berceau de l'accu] */
+cell_d = 18.6;     // 18650 nue, téton plat (protégée / à bouton : jusqu'à ~70)
+cell_l = 65;
+cr_fit = 0.4;      // jeu berceau / logement (au rayon)
+cell_up = 2;       // déport de l'accu vers le dessus ouvert (épaisseur du fond sous l'accu)
+bt_w = 13;         // butées à languette : plaque 13 x 11, languette 3 x 7 (percée)
+bt_h = 11;
+bt_t = 0.4;        // épaisseur de la tôle (à mesurer)
+bt_tab = [3, 7];
+bt_dimple = 1.8;   // bossage de la butée « + »
+spring_c = 4;      // ressort de la butée « − » comprimé (10.7 libre)
+bt_slot = 0.8;     // rainure de la plaque
+bt_win = 10.5;     // fenêtre devant la plaque (passage du ressort / du bossage)
 
 /* [Sol] */
 ground_t = 1;      // disque sous le pied (pièce séparée, à coller)
@@ -122,7 +136,6 @@ $fn = 64;
 eps = 0.01;
 
 // ---------- dérivées ----------
-bore_r = sqrt(holder_w * holder_w + holder_d * holder_d) / 2 + 0.5;
 ix = crop_w / 2 + 0.4;              // demi-dimensions intérieures du châssis
 iy = crop_h / 2 + 0.4;
 ch_z = disc_t;                      // bas du châssis
@@ -387,6 +400,45 @@ module stem() {
   }
 }
 
+// ---------- berceau de l'accu ----------
+// Gouttière imprimée à plat (méplat sur le plateau, ouverte vers le haut), glissée dans le pied par le haut.
+// Une butée à languette par bout, glissée dans une rainure ; la languette traverse le fond et ressort
+// dans le méplat, où passent aussi les fils (jusqu'au fourreau). Ressort « − » en bas, bossage « + » en haut.
+// Repère d'impression : X = axe de l'accu (X = 0 en bas), méplat en Z = 0.
+cr_r = bore_r - cr_fit;
+cr_flat = cr_r * cos(45);           // méplat : flancs à 45° au plus
+cr_ax = cr_flat;                    // axe du logement au-dessus du plateau
+cl_z = cr_ax + cell_up;             // axe de l'accu
+cr_end = 1.6 + bt_slot + 1;         // bout : paroi ext. + rainure + paroi int.
+cell_x0 = 1.6 + bt_t + spring_c;    // bas de l'accu (ressort comprimé)
+cr_len = cell_x0 + cell_l + bt_dimple + bt_t + 1.6;
+module cradle() {
+  difference() {
+    intersection() {
+      rotate([0, 90, 0]) translate([-cr_ax, 0, 0]) cylinder(r = cr_r, h = cr_len, $fn = 96);
+      translate([0, -cr_r, 0]) cube([cr_len, 2 * cr_r, 2 * cr_r]);
+    }
+    // logement de l'accu, fente d'insertion au-dessus de son axe (+1 mm)
+    translate([cr_end, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d + 0.6, h = cr_len - 2 * cr_end);
+    translate([cr_end, -cell_d / 2 - 0.3, cl_z + 1]) cube([cr_len - 2 * cr_end, cell_d + 0.6, 2 * cr_r]);
+    for (s = [0, 1]) {
+      xs = s == 0 ? 1.6 : cr_len - 1.6 - bt_slot;   // rainure
+      // rainure de la plaque, ouverte en haut ; prolongée par la fente de la languette à travers le fond
+      translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
+      translate([xs, -(bt_tab[0] + 0.6) / 2, -1]) cube([bt_slot, bt_tab[0] + 0.6, cl_z]);
+      // fenêtre devant la plaque
+      translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
+    }
+    // trou de tirage dans le bout du haut (ficelle, nœud à l'intérieur)
+    translate([cr_len - cr_end - 1, 0, cl_z + cell_d / 2 + 0.8]) rotate([0, 90, 0]) cylinder(d = 2.5, h = cr_end + 2, $fn = 24);
+    // polarité, gravée sur les faces des bouts
+    for (m = [[0, "-"], [1, "+"]]) translate([m[0] * cr_len, 0, cl_z]) mirror([m[0], 0, 0]) rotate([90, 0, -90])
+      translate([0, 0, -0.6]) linear_extrude(1) text(m[1], size = 8, halign = "center", valign = "center");
+  }
+}
+// berceau monté : bas du berceau sur le fond du logement, méplat vers -X (côté ouvert vers +X)
+module cradle_placed() { translate([0, 0, 3]) rotate([0, -90, 0]) translate([0, 0, -cr_ax]) children(); }
+
 // ---------- sol : disque de 1 mm et végétation ----------
 function ground_r(a) = ground_R * (1 + ground_amp * hnorm(ground_T, ground_P, a));
 // brin : lame effilée (0.9 mm d'épaisseur, pointe 0.6 mm), courbée dans son plan, pente <= ~40° (imprimable)
@@ -427,12 +479,13 @@ module ground() {
 }
 
 // ---------- maquettes ----------
-module holder_cell() {
-  color("#202020") difference() {
-    translate([-holder_w / 2, -holder_d / 2, 0]) cube([holder_w, holder_d, holder_l]);
-    translate([-holder_w / 2 + 1.5, -holder_d / 2 + 1.5, 4]) cube([holder_w - 3, holder_d, holder_l - 8]);
+module cradle_cell() {   // berceau, accu, butées (repère d'impression)
+  color("#303030") cradle();
+  color("#2e6fd8") translate([cell_x0, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d, h = cell_l);
+  color("Silver") for (x = [1.6, cr_len - 1.6 - bt_t]) translate([x, -bt_w / 2, cl_z - bt_h / 2]) {
+    cube([bt_t, bt_w, bt_h]);
+    translate([0, (bt_w - bt_tab[0]) / 2, -bt_tab[1]]) cube([bt_t, bt_tab[0], bt_tab[1]]);
   }
-  color("#2e6fd8") translate([0, 0, 6]) cylinder(d = 18.6, h = 65);
 }
 module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
 module bme() { color("Purple") translate([-bme_w / 2, -iy, 0]) cube([bme_w, bme_d, 1.6]); }
@@ -440,7 +493,7 @@ module bme() { color("Purple") translate([-bme_w / 2, -iy, 0]) cube([bme_w, bme_
 module assembled() {
   color("Ivory") stem();
   color("#4a8f3c") translate([0, 0, -ground_t]) ground();
-  translate([0, 0, 3]) holder_cell();
+  cradle_placed() cradle_cell();
   cap_xf() {
     color("Ivory") gills();
     color("Beige") chassis();
@@ -457,7 +510,7 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
-echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r));
+echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm)"));
 
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
@@ -465,6 +518,7 @@ else if (part == "chassis") translate([0, 0, -ch_z]) chassis();
 else if (part == "deck") deck();
 else if (part == "stem") stem();
 else if (part == "ground") ground();
+else if (part == "cradle") cradle();
 else if (part == "dot") dot(dot_d);
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {

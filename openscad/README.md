@@ -102,11 +102,12 @@ Pièces :
   - **plancher percé** (`deck`) sur des appuis ;
   - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,3) jusqu'en haut : support 1×18650 du commerce vertical, inséré par le haut. Même esprit que le chapeau :
+- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut. Même esprit que le chapeau :
   - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
   - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
   - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
   - En haut, un tenon incliné de 10° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
+- **Berceau** (`cradle`) 74,8 × Ø28,6 mm : gouttière amovible pour une **18650 nue** (65 mm, téton plat ; `cell_l` pour une autre longueur), sans soudure sur l'accu. Deux **butées à languette** (plaque 13 × 11 mm, languette 3 × 7 percée) glissées dans des rainures : ressort côté « − » en bas, bossage côté « + » en haut (polarité gravée sur les bouts). Les languettes traversent le fond et sortent dans le méplat, où passent les fils jusqu'au fourreau ; on soude ou on sertit les fils sur les languettes, pas sur l'accu. L'accu entre par la fente du dessus en comprimant le ressort (≈ 4 mm, `spring_c`). Trou de tirage Ø2,5 en haut (ficelle, nœud à l'intérieur). Imprimé à plat, méplat sur le plateau, sans support. ![Berceau : monté et nu](rendu_champignon_berceau.png)
 - **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~115, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
 - **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (pointe comprise, écart mini `dot_gap`) : ~110, l'écho OpenSCAD donne le nombre par taille.
 
@@ -131,12 +132,12 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 0. Pied collé sur le sol.
 1. Châssis sur le disque à lamelles (4 vis par en dessous), BME glissé dans ses rainures, plancher, carte, module de charge dans sa glissière.
 2. Écrous M3 dans les logements du disque, dôme posé, 3 vis par en dessous.
-3. Support 18650 dans le pied par le haut, fils dans le fourreau, chapeau emboîté sur le tenon, vis radiale.
-4. Changer l'accu : retirer la vis radiale, soulever le chapeau, sortir le support par le haut. Prévoir un connecteur sur les fils de l'accu.
+3. Butées dans le berceau, fils sur les languettes, accu clipsé ; berceau dans le pied par le haut (ressort en bas), fils dans le fourreau jusqu'à J13, chapeau emboîté sur le tenon, vis radiale.
+4. Changer l'accu : retirer la vis radiale, soulever le chapeau, sortir le berceau par la ficelle. Prévoir un connecteur sur les fils de l'accu.
 
 ### Points ouverts
 
-- Cotes à mesurer : support 18650 (`holder_w/d/l`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`).
+- Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`).
 - Antenne 433 MHz (17 cm) : en cercle à l'intérieur du dôme, ou le long de l'accu dans le pied.
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
 - Stabilité : le sol (Ø~115, 1 mm) élargit l'appui mais pèse peu ; pour ~250 mm et un chapeau de 148 mm, lester la base du pied (plomb dans le fond du logement) si besoin.
