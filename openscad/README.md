@@ -124,6 +124,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 ### Impression
 
 - Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (102 mm de haut) s'imprime bord sur le plateau et demande des **supports à l'intérieur** (plafond et pointe), invisibles une fois monté. Les autres pièces s'impriment sans support (pied : 145 mm de haut).
+- Pied : **6 parois** (buse 0,4) : la paroi de la chambre à lest fait 2,4 mm (`ballast_wall`), elle est ainsi pleine sans remplissage d'interstices. 4 parois suffisent pour les autres pièces.
 - Dôme en rouge (ou brun : panthère), pois en blanc, sol en vert, le reste en blanc / ivoire.
 - Sol : brins et frange de 0,9 mm d'épaisseur, pointes à 0,6 mm (buse 0,4) ; le slicer peut tronquer les pointes les plus fines.
 
