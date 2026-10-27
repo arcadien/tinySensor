@@ -93,3 +93,17 @@ find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 | `USE_CHARGE_PUMP` | Board uses a charge pump for sensor power |
 | `SLEEP_TIME_IN_SECONDS` | Hibernate duration between measurements |
 | `BATTERY_VOLTAGE_X10_ID` / `ANALOG1_X10_ID` | X10 meter IDs for reporting |
+
+## Hardware Conventions
+
+- Use standard wire colors: red = 5V/VBAT, white = 3V3, black = GND. Do not use yellow for 3V3. Signal colors follow the shared code in `~/.claude/skills/hardware-change/SKILL.md` (yellow clocks, green data, blue select, …).
+- Every wiring diagram must label each wire end as solder, Dupont or JST-XH, and give the wire length.
+- Hardware commits (`openscad/`, `hardware/`) use the `hw:` prefix; doc-only commits use `docs:`.
+
+## Modeling
+
+### OpenSCAD / Printing
+- Define all parameters at the top of the file, before any formula that uses them. Expose dimensions as named parameters.
+- After editing, render with `openscad -o` and check for errors before saying it's done.
+- Don't claim parts fit an Ender 3 (220x220) or CR-10 plate unless you've checked the bounding boxes. Flag any overhang over 45° that a design change introduces.
+- Regenerating 3MF files wipes the Orca plate layout, so warn me before doing it.
