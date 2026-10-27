@@ -96,7 +96,7 @@ find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 
 ## Hardware Conventions
 
-- Power wires go in pairs: red / black for battery and 5V, white / blue for regulated or stepped voltages (3V3, buck/boost outputs). Do not use yellow for 3V3. Signal colors follow the shared code in `~/.claude/skills/hardware-change/SKILL.md` (yellow clocks, green data, blue select, …).
+- Power wires go in pairs: red / black for battery and 5V, white / blue for regulated or stepped voltages (3V3, buck/boost outputs). Blue is for power only, never a signal. Do not use yellow for 3V3. Signal colors follow the shared code in `~/.claude/skills/hardware-change/SKILL.md` (yellow clocks, green data, purple select, …).
 - Every wiring diagram must label each wire end as solder, Dupont or JST-XH, and give the wire length.
 - Hardware commits (`openscad/`, `hardware/`) use the `hw:` prefix; doc-only commits use `docs:`.
 
