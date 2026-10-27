@@ -97,7 +97,8 @@ usb_cut = [8.5, 12];
 stem_h = 125;      // centre du haut du pied (sous le fourreau)
 bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
 foot_t = 3;        // fond du pied
-ballast_h = 40;    // chambre à lest sous le berceau (partie cylindrique, + plafond conique à 45°)
+ballast_h = 40;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
+ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
 fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
 plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
@@ -144,7 +145,7 @@ eps = 0.01;
 
 // ---------- dérivées ----------
 bore_z = foot_t + ballast_h + bore_r + 2;   // fond du logement du berceau, au-dessus du cône
-ballast_v = PI * bore_r * bore_r * (ballast_h + bore_r / 3) / 1000;   // cm³
+ballast_top = foot_t + ballast_h + bore_r;  // sommet du plafond
 ix = crop_w / 2 + 0.4;              // demi-dimensions intérieures du châssis
 iy = crop_h / 2 + 0.4;
 ch_z = disc_t;                      // bas du châssis
@@ -368,13 +369,17 @@ function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[
   fade = max(0, min(1, (stem_h - flare_h - z) / 15)))
   base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
 
+// volume de la chambre à lest (cm³), intégré en tranches
+ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
+  let(r = max(0, min(stem_rr(i * 360 / na, z) - ballast_wall, ballast_top - z))) 0.5 * r * r * (2 * PI / na) * dz])]) / 1000;
+
 ns = 72;
 stem_zs = [for (z = [0 : 1.5 : stem_h + 6]) z];
-module stem_body() {
-  J = len(stem_zs);
+module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (intérieur de la chambre à lest)
+  J = len(zs);
   function v(i, j) = j * ns + (i % ns);
   polyhedron(convexity = 4,
-    points = [for (z = stem_zs, i = [0 : ns - 1]) let(a = i * 360 / ns, r = stem_rr(a, z)) [r * cos(a), r * sin(a), z]],
+    points = [for (z = zs, i = [0 : ns - 1]) let(a = i * 360 / ns, r = stem_rr(a, z) - off) [r * cos(a), r * sin(a), z]],
     faces = concat([for (j = [0 : J - 2], i = [0 : ns - 1]) [v(i, j), v(i, j + 1), v(i + 1, j + 1), v(i + 1, j)]],
                    [[for (i = [0 : ns - 1]) v(i, 0)]], [[for (i = [ns - 1 : -1 : 0]) v(i, J - 1)]]));
 }
@@ -404,10 +409,11 @@ module stem() {
     }
     // logement de l'accu, vertical jusqu'en haut (le support passe par le tenon)
     translate([0, 0, bore_z]) cylinder(r = bore_r, h = stem_h + 40);
-    // chambre à lest, plafond conique (sans support), remplie par le trou du fond puis bouchée
-    translate([0, 0, foot_t]) {
-      cylinder(r = bore_r, h = ballast_h);
-      translate([0, 0, ballast_h - eps]) cylinder(r1 = bore_r, r2 = 0, h = bore_r);
+    // chambre à lest : suit la peau du pied (paroi ballast_wall, pentes <= 45° comme l'évasement),
+    // plafond conique à 45° (sans support) ; remplie par le trou du fond puis bouchée
+    intersection() {
+      stem_body(ballast_wall, [for (z = [foot_t : 1.5 : ballast_top]) z]);
+      translate([0, 0, foot_t - eps]) cylinder(r1 = ballast_top - foot_t, r2 = 0, h = ballast_top - foot_t);
     }
     translate([0, 0, -1]) cylinder(d = fill_d, h = foot_t + 2);
     translate([0, 0, -1]) cylinder(d = plug_d + 0.3, h = plug_t + 1);
