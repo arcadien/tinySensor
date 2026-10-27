@@ -12,6 +12,7 @@
 //   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
 //   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
 //   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
+//   plug    : bouchon de la chambre à lest (sous le berceau), collé dans le lamage du fond
 //   dot     : pois blancs rapportés, collés dans les logements du dôme
 //
 // Export (toutes les pièces dans leur sens d'impression) :
@@ -22,6 +23,7 @@
 //   openscad -D 'part="stem"'    -o mushroom_stem.3mf    mushroom.scad
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # sol + herbe, en vert ; pied collé dessus
 //   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # à plat, méplat sur le plateau
+//   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
 //   openscad --preview -D 'part="assembly"' --camera=0,0,125,75,0,25,700 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
@@ -37,7 +39,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, cradle, dot]
+part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -94,6 +96,11 @@ usb_cut = [8.5, 12];
 /* [Pied] */
 stem_h = 125;      // centre du haut du pied (sous le fourreau)
 bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
+foot_t = 3;        // fond du pied
+ballast_h = 40;    // chambre à lest sous le berceau (partie cylindrique, + plafond conique à 45°)
+fill_d = 15;       // trou de remplissage dans le fond
+plug_d = 21;       // lamage du bouchon collé
+plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
 stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
 stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
 stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
@@ -136,6 +143,8 @@ $fn = 64;
 eps = 0.01;
 
 // ---------- dérivées ----------
+bore_z = foot_t + ballast_h + bore_r + 2;   // fond du logement du berceau, au-dessus du cône
+ballast_v = PI * bore_r * bore_r * (ballast_h + bore_r / 3) / 1000;   // cm³
 ix = crop_w / 2 + 0.4;              // demi-dimensions intérieures du châssis
 iy = crop_h / 2 + 0.4;
 ch_z = disc_t;                      // bas du châssis
@@ -394,7 +403,14 @@ module stem() {
       cap_xf() translate([0, 0, -collar_h - 1]) cylinder(r = tenon_r, h = 17);
     }
     // logement de l'accu, vertical jusqu'en haut (le support passe par le tenon)
-    translate([0, 0, 3]) cylinder(r = bore_r, h = stem_h + 40);
+    translate([0, 0, bore_z]) cylinder(r = bore_r, h = stem_h + 40);
+    // chambre à lest, plafond conique (sans support), remplie par le trou du fond puis bouchée
+    translate([0, 0, foot_t]) {
+      cylinder(r = bore_r, h = ballast_h);
+      translate([0, 0, ballast_h - eps]) cylinder(r1 = bore_r, r2 = 0, h = bore_r);
+    }
+    translate([0, 0, -1]) cylinder(d = fill_d, h = foot_t + 2);
+    translate([0, 0, -1]) cylinder(d = plug_d + 0.3, h = plug_t + 1);
     // vis radiale du fourreau
     cap_xf() translate([-tenon_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_pilot, h = 6);
   }
@@ -437,7 +453,7 @@ module cradle() {
   }
 }
 // berceau monté : bas du berceau sur le fond du logement, méplat vers -X (côté ouvert vers +X)
-module cradle_placed() { translate([0, 0, 3]) rotate([0, -90, 0]) translate([0, 0, -cr_ax]) children(); }
+module cradle_placed() { translate([0, 0, bore_z]) rotate([0, -90, 0]) translate([0, 0, -cr_ax]) children(); }
 
 // ---------- sol : disque de 1 mm et végétation ----------
 function ground_r(a) = ground_R * (1 + ground_amp * hnorm(ground_T, ground_P, a));
@@ -510,7 +526,7 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
-echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm)"));
+echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
@@ -519,6 +535,7 @@ else if (part == "deck") deck();
 else if (part == "stem") stem();
 else if (part == "ground") ground();
 else if (part == "cradle") cradle();
+else if (part == "plug") cylinder(d = plug_d, h = plug_t);
 else if (part == "dot") dot(dot_d);
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {

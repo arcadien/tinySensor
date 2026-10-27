@@ -102,7 +102,7 @@ Pièces :
   - **plancher percé** (`deck`) sur des appuis ;
   - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut. Même esprit que le chapeau :
+- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 60 mm du sol. Dessous, une **chambre à lest** fermée (Ø29,4 × 40 mm + plafond conique à 45°, `ballast_h`) : ~30 cm³, soit ~140 g de grenaille d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
   - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
   - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
   - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
@@ -129,7 +129,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 ### Montage, accu
 
-0. Pied collé sur le sol.
+0. Pied à l'envers : grenaille par le trou du fond (quelques gouttes de colle pour la figer et éviter qu'elle sonne), bouchon collé dans son lamage (époxy), puis pied collé sur le sol.
 1. Châssis sur le disque à lamelles (4 vis par en dessous), BME glissé dans ses rainures, plancher, carte, module de charge dans sa glissière.
 2. Écrous M3 dans les logements du disque, dôme posé, 3 vis par en dessous.
 3. Butées dans le berceau, fils sur les languettes, accu clipsé ; berceau dans le pied par le haut (ressort en bas), fils dans le fourreau jusqu'à J13, chapeau emboîté sur le tenon, vis radiale.
@@ -140,7 +140,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`).
 - Antenne 433 MHz (17 cm) : en cercle à l'intérieur du dôme, ou le long de l'accu dans le pied.
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : le sol (Ø~115, 1 mm) élargit l'appui mais pèse peu ; pour ~250 mm et un chapeau de 148 mm, lester la base du pied (plomb dans le fond du logement) si besoin.
+- Stabilité : le sol (Ø~115, 1 mm) élargit l'appui ; le lest (~140 g dans les 60 mm du bas) abaisse le centre de gravité. Stabilité réelle à vérifier une fois imprimé.
 
 ## Visserie
 
