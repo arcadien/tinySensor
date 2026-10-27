@@ -96,9 +96,37 @@ find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 
 ## Hardware Conventions
 
-- Power wires go in pairs: red / black for battery and 5V, white / blue for regulated or stepped voltages (3V3, buck/boost outputs). Blue is for power only, never a signal. Do not use yellow for 3V3. Signal colors follow the shared code in `~/.claude/skills/hardware-change/SKILL.md` (yellow clocks, green data, purple select, …).
-- Every wiring diagram must label each wire end as solder, Dupont or JST-XH, and give the wire length.
-- Hardware commits (`openscad/`, `hardware/`) use the `hw:` prefix; doc-only commits use `docs:`.
+### Wire colors
+Power goes in pairs (thick wire):
+| Pair (+ / −)  | Use |
+|---------------|-----|
+| red / black   | battery and 5V: B+/B−, VBAT, switched battery rail, VUSB |
+| white / blue  | regulated or stepped voltages: 3V3, buck/boost outputs (never yellow) |
+| grey          | speaker |
+
+Signals (thin wire), by role:
+| Color  | Use |
+|--------|-----|
+| yellow | clocks: SCK, BCLK, SCL, SD_CLK |
+| green  | data: MOSI, DIN, SDA, SD_D0 |
+| purple | select / frame: CS, LRC/WS, SD_CMD |
+| red    | status: DC, interrupts, PIR out |
+| orange | reset, detect (RST, USB_DET) |
+| brown  | enables / analog: BL_EN, VBAT/2, *_SD, *_EN |
+
+The kit has 10 colors: red, black, white, blue, yellow, green, purple, orange, brown, grey. **Blue is reserved for power** (regulated GND) and never carries a signal. When several buses share colors, tell them apart with 1 / 2 / 3 heat-shrink rings at each end.
+
+### Wire ends
+Label every wire end as **soldered**, **Dupont** or **JST-XH** (with F/M contact), on both ends, and give each wire's length, in every doc and diagram.
+
+### Resistors
+Current-limiting and pull resistors sit **at the board end**, never at the LED or the sensor.
+
+### Images
+Strip EXIF/GPS from every image before committing: `python3 ~/.claude/skills/hardware-change/scripts/strip_exif.py <paths>` (`--check` to verify).
+
+### Commits
+No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`openscad/`, `hardware/`) and `docs:` for doc-only commits. Make granular commits, one per area, and push after each.
 
 ## Modeling
 
