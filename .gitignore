@@ -26,6 +26,9 @@ flash.log
 
 # --- KiCAD cache ---
 hardware/kicad/fp-info-cache
+# sauvegardes locales et verrous de KiCad
+.history/
+*.lck
 
 # --- RBD ephemeral push validation cache ---
 .rbd/.push-validated
