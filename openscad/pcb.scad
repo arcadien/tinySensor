@@ -51,17 +51,17 @@ module holder_18650() {
 }
 
 // carte découpée, centrée sur l'origine (dessous du PCB en Z = 0)
-module pcb_v22_cropped() {
+module pcb_v22_cropped(jst_eh = true) {   // jst_eh = false : JST « I2C » et « I2C_SPI » non posés (champignon)
   translate([-(k_crop[0][0] - k_origin[0]) - crop_w / 2, -(pcb_h - (k_crop[1][1] - k_origin[1])) - crop_h / 2, 0])
     intersection() {
-      pcb_v22(holder = false);
+      pcb_v22(holder = false, jst_eh = jst_eh);
       translate([k_crop[0][0] - k_origin[0], pcb_h - (k_crop[1][1] - k_origin[1]), -1]) cube([crop_w, crop_h, 60]);
     }
 }
 // trous de la carte découpée dans le repère de pcb_v22_cropped()
 function crop_holes() = [for (h = k_crop_holes) [h[0] - (k_crop[0][0] + k_crop[1][0]) / 2, (k_crop[0][1] + k_crop[1][1]) / 2 - h[1]]];
 
-module pcb_v22(holder = true) {   // holder = false : support 18650 non peuplé
+module pcb_v22(holder = true, jst_eh = true) {   // holder = false : support 18650 non peuplé
   color("#1f7a3a") difference() {
     cube([pcb_w, pcb_h, pcb_t]);
     for (h = k_holes) translate([h[0] - k_origin[0], pcb_h - (h[1] - k_origin[1]), -1]) cylinder(d = 2.7, h = pcb_t + 2);
@@ -92,7 +92,7 @@ module pcb_v22(holder = true) {   // holder = false : support 18650 non peuplé
   for (d = [[182.58028, 58.07456, 90], [180.01996, 50.49012, -90]]) kfp(d[0], d[1], d[2]) axial(3.8, 1.9, 7.62, "#8a1c1c");
   kfp(157.99816, 81.55932, 90) color("Red") translate([1.27, 0, 0]) cylinder(d = 1.8, h = 3);
   // connecteurs
-  for (y = [83.91032, 77.11032]) kfp(199.35016, y, 180) {
+  if (jst_eh) for (y = [83.91032, 77.11032]) kfp(199.35016, y, 180) {
     color("WhiteSmoke") translate([-2.5, -2.3, 0]) cube([17.5, 4.0, 6]);
     pins([for (i = [0 : 5]) [i * 2.5, 0]], 3);
   }

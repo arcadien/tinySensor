@@ -6,9 +6,9 @@
 //
 //   cap     : dôme, bord ondulé ; vissé par en dessous (3 vis M3, écrous logés dans le disque)
 //   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, prise USB, fourreau sur le pied
-//   chassis : cadre imprimé debout, vissé sur le disque : BME280 couché (chambre du bas), plancher,
-//             carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
-//   deck    : plancher percé entre le capteur et la carte
+//   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
+//             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
+//   deck    : plancher percé entre la chambre et la carte, fenêtre du connecteur I2C (barrette femelle traversante)
 //   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
 //   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
 //   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
@@ -30,6 +30,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,100,112,0,200,520 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,140,90,0,0,480 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=18,-5,156,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
 // Chapeau (cap_xf) : Z = 0 sous le disque à lamelles, axe incliné de cap_tilt vers +X.
@@ -39,7 +40,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+part = "assembly"; // [assembly, section, sensor, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -48,6 +49,8 @@ crop_w = 60.02;
 crop_h = 38.974;
 pcb_t = 1.6;
 pcb_holes = [[-26.1243, 15.6770], [25.9902, 15.5130]];   // MH5, MH1 du haut
+k_crop_c = [177.01008, 67.51316];  // centre de la découpe (KiCad) : local = [x - cx, cy - y]
+i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), broche 1 ; broches vers -X
 
 /* [Chapeau] */
 cap_tilt = 10;     // inclinaison du chapeau sur le pied
@@ -83,12 +86,21 @@ gill_t = 1.2;
 gill_depth = [17, 3];  // profondeur des lamelles près du pied / au bord
 
 /* [Châssis] */
-chamber_h = 8;     // BME280 couché
+chamber_h = 8;     // chambre du bas (BME280 suspendu sous la carte)
 deck_t = 1.6;
 pcb_gap = 5;       // plancher -> dessous de la carte (broches traversantes)
 ch_wall = 2;
-bme_w = 15;        // breakout BMx280 15 x 11
+bme_w = 15;        // breakout BMx280 15 x 11, 6 broches VIN GND SCL SDA CSB SDO centrées sur la largeur
 bme_d = 11;
+bme_t = 1.6;
+bme_pins = 6;
+bme_edge = 1.3;    // rangée de broches -> bord du breakout (corps vers +Y)
+hdr_p = 2.54;      // barrettes au pas de 2.54
+fh_n = 6;          // barrette femelle sous la carte : 1 SENSOR_VCC, 2 GND, 3 SCL, 4 SDA, 5 NC (CSB), 6 GND (SDO -> 0x76)
+fh_h = 8.5;        // hauteur de la femelle sous la carte
+mh_h = 2.5;        // plastique de la barrette mâle du breakout
+mh_pin = 6;        // broches mâles au-dessus du plastique (dessinées si fh_n < bme_pins)
+fh_clr = 1;        // jeu de la fenêtre du plancher autour des barrettes
 chg_w = 17;        // module de charge TP4056 micro-USB (à mesurer)
 chg_l = 26;
 chg_t = 1.6;
@@ -161,6 +173,8 @@ ch_z = disc_t;                      // bas du châssis
 deck_z = ch_z + chamber_h;          // dessus des appuis du plancher
 pcb_z = deck_z + deck_t + pcb_gap;  // dessous de la carte
 ch_h = pcb_z - ch_z;
+i2c_p1 = [i2c_k[0] - k_crop_c[0], k_crop_c[1] - i2c_k[1]];   // broche 1 dans le repère du chapeau
+bme_z = pcb_z - fh_h - mh_h;        // dessus du breakout
 
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
 
@@ -288,8 +302,9 @@ module gills() {
     translate([0, 0, -1]) cylinder(r = 14, h = disc_t + 2);   // fils de l'accu
     // vis radiale du fourreau (côté -X)
     translate([-collar_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_clear, h = collar_r - tenon_r + 2);
-    // fentes de ventilation sous la chambre du capteur, entre les lamelles
-    for (i = [0 : n_gills - 1]) let(a = i * 360 / n_gills) if (adiff(a, 0) > 14)
+    // fentes de ventilation sous la chambre du capteur, entre les lamelles ; côté +X aussi (au ras du bord
+    // du BME280, le reste du breakout est au-dessus du fourreau)
+    for (i = [0 : n_gills - 1]) let(a = i * 360 / n_gills)
       rotate([0, 0, a]) translate([collar_r + 1, -0.8, -1]) cube([min(ix / max(abs(cos(a)), 0.01), iy / max(abs(sin(a)), 0.01), 31) - collar_r - 1, 1.6, disc_t + 2]);
     // prise micro-USB
     translate([chg_x + chg_t + 1.5 - usb_cut[0] / 2, -usb_cut[1] / 2, -1]) cube([usb_cut[0], usb_cut[1], disc_t + 2]);
@@ -320,11 +335,6 @@ module chassis() {
       // coins : bossages des vis du châssis (bas) ; coins hauts pleins jusqu'à la carte (vis M2.5 de la carte)
       for (p = ch_screws) translate([p[0] > 0 ? ix - 7 : -ix, p[1] > 0 ? iy - 7 : -iy, 0])
         cube([7, 7, p[1] > 0 ? ch_h : chamber_h - 1]);
-      // glissière du BME280 couché (capteur vers le bas), contre la paroi -Y : les bords entrent de 0.8 dans les rainures
-      for (s = [-1, 1]) translate([s * (bme_w / 2 - 0.8) + (s > 0 ? 0 : -2), -iy - eps, 0]) difference() {
-        cube([2, bme_d + 1, chamber_h - 1]);
-        translate([s > 0 ? -eps : 1, -eps, 2]) cube([1 + eps, bme_d + 2, 1.9]);
-      }
       // glissière du module de charge, tenue par deux bras sur la paroi +X
       translate([chg_x, 0, 0]) rails(chg_w, chg_t, 20);
       for (s = [-1, 1]) translate([ix + ch_wall - eps, s > 0 ? chg_w / 2 - 1 : -chg_w / 2 - 2, 0]) cube([chg_x - 1.5 - ix - ch_wall + 2 * eps, 3, 20]);
@@ -349,6 +359,9 @@ module deck() {
     translate([-ix + 0.3, -iy + 0.3, 0]) cube([2 * ix - 0.6, 2 * iy - 0.6, deck_t]);
     for (p = ch_screws) translate([p[0] - 4.6, p[1] - 4.6, -1]) cube([9.2, 9.2, deck_t + 2]);
     for (x = [-24 : 6 : 24], y = [-15 : 6 : 15]) translate([x + (round(y / 6) % 2) * 3, y, -1]) cylinder(d = 4, h = deck_t + 2, $fn = 6);
+    // fenêtre de la barrette femelle I2C
+    translate([i2c_p1[0] - (bme_pins - 0.5) * hdr_p - fh_clr, i2c_p1[1] - hdr_p / 2 - fh_clr, -1])
+      cube([bme_pins * hdr_p + 2 * fh_clr, hdr_p + 2 * fh_clr, deck_t + 2]);
   }
 }
 
@@ -512,7 +525,14 @@ module cradle_cell() {   // berceau, accu, butées (repère d'impression)
   }
 }
 module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
-module bme() { color("Purple") translate([-bme_w / 2, -iy, 0]) cube([bme_w, bme_d, 1.6]); }
+// BME280 enfiché sous la carte (repère : broche 1 de l'empreinte I2C, dessous de la carte) :
+// femelle fh_n positions, plastique de la barrette mâle, breakout parallèle à la carte
+module bme() {
+  color("#222") translate([-(fh_n - 0.5) * hdr_p, -hdr_p / 2, -fh_h]) cube([fh_n * hdr_p, hdr_p, fh_h]);
+  color("#222") translate([-(bme_pins - 0.5) * hdr_p, -hdr_p / 2, -fh_h - mh_h]) cube([bme_pins * hdr_p, hdr_p, mh_h]);
+  if (fh_n < bme_pins) color("Gold") for (i = [fh_n : bme_pins - 1]) translate([-i * hdr_p - 0.32, -0.32, -fh_h]) cube([0.64, 0.64, mh_pin]);
+  color("Purple") translate([-(bme_pins - 1) * hdr_p / 2 - bme_w / 2, -bme_edge, -fh_h - mh_h - bme_t]) cube([bme_w, bme_d, bme_t]);
+}
 
 module assembled() {
   color("Ivory") stem();
@@ -521,10 +541,10 @@ module assembled() {
   cap_xf() {
     color("Ivory") gills();
     color("Beige") chassis();
-    translate([0, 0, ch_z + 2.1]) bme();
+    translate([i2c_p1[0], i2c_p1[1], pcb_z]) bme();
     translate([chg_x + 0.15, 0, ch_z]) charger();
     color("WhiteSmoke") translate([0, 0, deck_z]) deck();
-    translate([0, 0, pcb_z]) pcb_v22_cropped();
+    translate([0, 0, pcb_z]) pcb_v22_cropped(jst_eh = false);
     translate([0, 0, -cap_skirt]) {
       color(cap_color) cap();
       for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
@@ -534,6 +554,7 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
+echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
 echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
@@ -545,6 +566,11 @@ else if (part == "ground") ground();
 else if (part == "cradle") cradle();
 else if (part == "plug") cylinder(d = plug_d, h = plug_t);
 else if (part == "dot") dot(dot_d);
+else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous la carte
+  assembled();
+  translate([-100, 0.5, 100]) cube([200, 90, 120]);   // la caméra doit rester hors du volume retiré
+  translate([-100, -100, 100]) cube([200, 200, 30]);
+}
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {
   assembled();
