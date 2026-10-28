@@ -1,0 +1,623 @@
+// TinySensor « champignon » — boîtier décoratif (amanite), en plus du boîtier mural.
+// Unités : mm. Matière : PETG.
+//
+// Le chapeau est un tout (dôme + lamelles) posé sur le pied avec une légère inclinaison ;
+// toute l'électronique est dans le chapeau, le pied ne porte que l'accu.
+//
+//   cap     : dôme, bord ondulé ; 3 consoles intérieures au-dessus du disque, vis M3 par en dessous (autotaraudées)
+//   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, prise USB, fourreau sur le pied
+//   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
+//             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
+//   deck    : plancher percé entre la chambre et la carte, fenêtre du connecteur I2C (barrette femelle traversante)
+//   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
+//   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
+//   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
+//   plug    : bouchon de la chambre à lest (sous le berceau), collé dans le lamage du fond
+//   dot     : pois blancs rapportés, collés dans les logements du dôme
+//
+// Export (toutes les pièces dans leur sens d'impression) :
+//   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # bord sur le plateau, supports internes
+//   openscad -D 'part="gills"'   -o mushroom_gills.3mf   mushroom.scad   # lamelles vers le haut
+//   openscad -D 'part="chassis"' -o mushroom_chassis.3mf mushroom.scad
+//   openscad -D 'part="deck"'    -o mushroom_deck.3mf    mushroom.scad
+//   openscad -D 'part="stem"'    -o mushroom_stem.3mf    mushroom.scad
+//   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # sol + herbe, en vert ; pied collé dessus
+//   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # à plat, méplat sur le plateau
+//   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
+//   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
+// Rendus :
+//   openscad --preview -D 'part="assembly"' --camera=10,0,122,75,0,25,780 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,104,112,0,200,640 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
+//   openscad --preview -D 'part="section"'  --camera=0,0,148,90,0,0,510 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=18,-5,156,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="console"'  --camera=71,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
+//
+// Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
+// Chapeau (cap_xf) : Z = 0 sous le disque à lamelles, axe incliné de cap_tilt vers +X.
+// Dôme : Z = 0 à son bord, cap_skirt sous le disque.
+
+use <pcb.scad>
+use <euro2.scad>
+
+/* [Rendu] */
+part = "assembly"; // [assembly, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+dot_d = 8;         // diamètre du pois exporté (part = "dot")
+cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
+
+/* [Carte v2.2 découpée — voir pcb.scad] */
+crop_w = 60.02;
+crop_h = 38.974;
+pcb_t = 1.6;
+pcb_holes = [[-26.1243, 15.6770], [25.9902, 15.5130]];   // MH5, MH1 du haut
+k_crop_c = [177.01008, 67.51316];  // centre de la découpe (KiCad) : local = [x - cx, cy - y]
+i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), broche 1 ; broches vers -X
+radio_k = [192.99936, 56.86044];   // J1 « RADIO » (1x3, module 433 MHz debout) : le sommet du dôme est à son aplomb
+
+/* [Chapeau] */
+cap_tilt = 10;     // inclinaison du chapeau sur le pied
+cap_R = 72;        // rayon moyen du bord du dôme
+cap_H = 52;        // hauteur du dôme au-dessus de son bord
+cap_n = 2.2;       // exposant de la super-ellipse (2 = ellipse)
+cap_t = 2.4;
+cap_lean = 0;      // déport du sommet (vers +X, côté penché)
+tip_h = 50;        // pointe : hauteur ajoutée au sommet (0 = dôme simple)
+tip_w = [70, 32, 40];  // demi-largeurs de la pointe : vers -X (flanc doux), vers +X (flanc raide), en Y
+tip_fit_n = 2;     // centre de la pointe : recalages pour que le sommet réel (dôme + pointe) tombe sur J1, selon l'axe du chapeau
+apex_step = [3, 0.5];  // recherche du sommet : pas (phi, t) en degrés, puis affinage au 1/10 autour du meilleur point
+cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
+disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
+corbel_w = 12;     // consoles du dôme, au-dessus du disque : largeur (autour de la vis)
+corbel_h = 10;     // hauteur de la face droite, chanfrein à 45° au-dessus jusqu'à la paroi
+corbel_in = 5;     // débord de la console au-delà de l'axe de la vis, vers l'intérieur
+corbel_pilot = 8;  // profondeur du trou pilote (M3x10 autotaraudeuse : 3 de disque + 7 en prise)
+tab_base = [90, 210, 330];  // vis du dôme (consoles) : chacune glisse (±40°) vers le lobe le plus proche
+dot_sizes = [6, 8, 10];
+dot_pocket = 0.8;
+dot_gap = 6;       // espace mini entre deux pois
+
+/* [Contour du chapeau : générateur de lobes] */
+lobe_seed = 6;     // graine : changer pour une autre forme
+lobe_n = 4.5;      // nombre de lobes dominant
+lobe_amp = 0.22;   // écart maxi au rayon moyen, au bord (0.22 = ±22 %)
+lobe_top = 0.3;    // part de la déformation qui reste au sommet (1 = bosselé jusqu'en haut)
+lobe_rot = 165;    // orientation du contour en degrés ; -1 = automatique (meilleur jeu autour de l'électronique)
+clear_m = 3;       // jeu mini visé entre l'électronique et le dôme (indice de jeu)
+
+/* [Lamelles] */
+disc_t = 3;
+collar_h = 20;     // fourreau sous le disque, reçoit le tenon du pied
+collar_r = 22.5;   // rayon extérieur du fourreau (= haut du pied)
+tenon_r = 19.5;
+n_gills = 48;
+gill_t = 1.2;
+gill_depth = [17, 3];  // profondeur des lamelles près du pied / au bord
+
+/* [Châssis] */
+chamber_h = 8;     // chambre du bas (BME280 suspendu sous la carte)
+deck_t = 1.6;
+pcb_gap = 5;       // plancher -> dessous de la carte (broches traversantes)
+ch_wall = 2;
+bme_w = 15;        // breakout BMx280 15 x 11, 6 broches VIN GND SCL SDA CSB SDO centrées sur la largeur
+bme_d = 11;
+bme_t = 1.6;
+bme_pins = 6;
+bme_edge = 1.3;    // rangée de broches -> bord du breakout (corps vers +Y)
+hdr_p = 2.54;      // barrettes au pas de 2.54
+fh_n = 6;          // barrette femelle sous la carte : 1 SENSOR_VCC, 2 GND, 3 SCL, 4 SDA, 5 NC (CSB), 6 GND (SDO -> 0x76)
+fh_h = 8.5;        // hauteur de la femelle sous la carte
+mh_h = 2.5;        // plastique de la barrette mâle du breakout
+mh_pin = 6;        // broches mâles au-dessus du plastique (dessinées si fh_n < bme_pins)
+fh_clr = 1;        // jeu de la fenêtre du plancher autour des barrettes
+chg_w = 17;        // module de charge TP4056 micro-USB (à mesurer)
+chg_l = 26;
+chg_t = 1.6;
+chg_x = 40;        // plan de la carte du module
+usb_cut = [8.5, 12];
+
+/* [Pied] */
+stem_h = 125;      // centre du haut du pied (sous le fourreau)
+bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
+foot_t = 3;        // fond du pied
+ballast_h = 40;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
+ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
+fill_d = 15;       // trou de remplissage dans le fond
+plug_d = 21;       // lamage du bouchon collé
+plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
+stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
+flare_h = 14;      // évasement du haut, sous le fourreau
+stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
+stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
+foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
+foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côté
+foot_dir = 200;    // direction du grand évasement (°)
+ring_z = 78;       // anneau (corolle)
+ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
+
+/* [Berceau de l'accu] */
+cell_d = 18.6;     // 18650 nue, téton plat (protégée / à bouton : jusqu'à ~70)
+cell_l = 65;
+cr_fit = 0.4;      // jeu berceau / logement (au rayon)
+cell_up = 2;       // déport de l'accu vers le dessus ouvert (épaisseur du fond sous l'accu)
+bt_w = 13;         // butées à languette : plaque 13 x 11, languette 3 x 7 (percée)
+bt_h = 11;
+bt_t = 0.4;        // épaisseur de la tôle (à mesurer)
+bt_tab = [3, 7];
+bt_dimple = 1.8;   // bossage de la butée « + »
+spring_c = 4;      // ressort de la butée « − » comprimé (10.7 libre)
+bt_slot = 0.8;     // rainure de la plaque
+bt_win = 10.5;     // fenêtre devant la plaque (passage du ressort / du bossage)
+
+/* [Sol] */
+ground_t = 1;      // disque sous le pied (pièce séparée, à coller)
+ground_R = 58;     // rayon moyen
+ground_amp = 0.15;
+grass_seed = 11;
+grass_tufts = 4;   // touffes de grands brins autour du pied
+grass_single = 30; // brins isolés
+fringe_h = [3, 9]; // frange d'herbe en zigzag autour du pied : hauteur des dents
+fringe_n = 64;     // nombre de dents de la frange
+
+/* [Résolution des maillages] */
+na = 90;           // dôme : pas angulaire
+nt = 120;          // dôme : pas en hauteur (0.75° : flanc raide de la pointe sans escaliers)
+ns = 72;           // pied, corolle : pas angulaire
+
+/* [Visserie] */
+m3_pilot = 2.5;
+m3_clear = 3.4;
+m25_pilot = 2.1;
+
+$fn = 64;
+eps = 0.01;
+
+// ---------- dérivées ----------
+bore_z = foot_t + ballast_h + bore_r + 2;   // fond du logement du berceau, au-dessus du cône
+ballast_top = foot_t + ballast_h + bore_r;  // sommet du plafond
+ix = crop_w / 2 + 0.4;              // demi-dimensions intérieures du châssis
+iy = crop_h / 2 + 0.4;
+ch_z = disc_t;                      // bas du châssis
+deck_z = ch_z + chamber_h;          // dessus des appuis du plancher
+pcb_z = deck_z + deck_t + pcb_gap;  // dessous de la carte
+ch_h = pcb_z - ch_z;
+i2c_p1 = [i2c_k[0] - k_crop_c[0], k_crop_c[1] - i2c_k[1]];   // broche 1 dans le repère du chapeau
+radio_p = [radio_k[0] - k_crop_c[0], k_crop_c[1] - radio_k[1]];   // J1, idem (= repère du dôme en XY)
+bme_z = pcb_z - fh_h - mh_h;        // dessus du breakout
+
+module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
+
+// ---------- dôme ----------
+// contour : harmoniques 2 à 7 à phases aléatoires, pondérées autour de lobe_n, normalisées à lobe_amp
+function vsum(v, i = 0) = i < len(v) ? v[i] + vsum(v, i + 1) : 0;
+lobe_terms = [for (k = [2 : 7]) let(q = rands(0, 1, 2, lobe_seed * 17 + k)) [k, (0.5 + 0.5 * q[0]) * exp(-pow((k - lobe_n) / 1.5, 2)), 360 * q[1]]];
+function lobe_raw(phi) = vsum([for (h = lobe_terms) h[1] * sin(h[0] * phi + h[2])]);
+lobe_peak = max([for (i = [0 : 179]) abs(lobe_raw(2 * i))]);
+function lobe_at(phi, rot) = lobe_amp * lobe_raw(phi - rot) / lobe_peak;
+// déformation pleine au bord (s = 0), réduite à lobe_top au sommet (s = 1)
+function wav_r(phi, s, rot) = 1 + lobe_at(phi, rot) * (lobe_top + (1 - lobe_top) * (1 - s));
+function inner_rr(phi, zz, rot) = let(hi = cap_H - cap_t, s = min(1, zz / hi))
+  (cap_R * wav_r(phi, s, rot) - cap_t) * pow(1 - pow(s, cap_n), 1 / cap_n);
+// jeu : points de l'électronique (repère du chapeau) qui doivent rester à >= 3 mm sous le dôme
+clear_pts = concat(
+  [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + 17]],   // châssis
+  [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + 31]],                                // composants
+  [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + 26]]);                                       // chargeur
+// v <= 1 : le point est sous le dôme réduit de clear_m dans toutes les directions
+function v_in(p, rot) = let(zz = p[2] + cap_skirt, x = p[0] - cap_lean * pow(zz / cap_H, 2), phi = atan2(p[1], x),
+  hi = cap_H - cap_t - clear_m, s = min(1, zz / (cap_H - cap_t)))
+  pow(norm([x, p[1]]) / (cap_R * wav_r(phi, s, rot) - cap_t - clear_m), cap_n) + pow(zz / hi, cap_n);
+function worst(rot) = max([for (p = clear_pts) v_in(p, rot)]);
+rots = [for (a = [0 : 5 : 355]) worst(a)];
+best_rot = search(min(rots), rots)[0] * 5;
+rot = lobe_rot >= 0 ? lobe_rot : best_rot;
+function wav(phi, s = 0) = wav_r(phi, s, rot);
+function cap_pt(phi, t, off = 0) = cap_ptc(phi, t, off, tip_c);
+function cap_ptc(phi, t, off, c) =   // pointe centrée en c
+  let(s = pow(sin(t), 2 / cap_n), r = (cap_R * wav(phi, s) - off) * pow(cos(t), 2 / cap_n), z = (cap_H - off) * s)
+  let(x = r * cos(phi) + cap_lean * pow(z / cap_H, 2), y = r * sin(phi)) [x, y, z + tip_bump(x, y, s, off, c)];
+// pointe : bosse (1 - d²)³, pentes progressives (largeurs différentes de chaque côté), nulle au bord (s = 0) pour garder le bord plat ;
+// côté intérieur (off > 0), pointe un peu plus étroite et plus basse pour garder l'épaisseur sur le flanc raide
+function tip_bump(x, y, s, off, c) = let(k = off > 0 ? 3 : 0, dx = x - c[0],
+  d = norm([dx / ((dx > 0 ? tip_w[1] : tip_w[0]) - k), (y - c[1]) / (tip_w[2] - k)]))
+  tip_h <= 0 || d >= 1 ? 0 : (tip_h - k) * pow(1 - d * d, 3) * (1 - pow(1 - s, 3));
+// rayon intérieur du dôme à la hauteur zz (repère du dôme), et décalage du sommet à cette hauteur
+function inner_r(phi, zz) = inner_rr(phi, zz, rot);
+function lean_at(zz) = cap_lean * pow(zz / cap_H, 2);
+// sommet réel de la surface extérieure (dôme + pointe centrée en c) : balayage (phi, t) puis affinage autour du meilleur point
+function apex_scan(c, ps, ts) = let(P = [for (t = ts, phi = ps) [phi, t, cap_ptc(phi, t, 0, c)]], zs = [for (q = P) q[2][2]])
+  P[search(max(zs), zs)[0]];
+function apex_of(c) = let(a = apex_scan(c, [0 : apex_step[0] : 360 - apex_step[0]], [45 : apex_step[1] : 90]),
+  da = apex_step[0], dt = apex_step[1]) apex_scan(c, [a[0] - da : da / 10 : a[0] + da], [a[1] - dt : dt / 10 : min(90, a[1] + dt)])[2];
+// le sommet glisse du centre de la pointe vers le haut du dôme : on décale le centre de l'écart restant, tip_fit_n fois
+function tip_fit(c, n) = n <= 0 ? c : let(a = apex_of(c)) tip_fit(c + radio_p - [a[0], a[1]], n - 1);
+tip_c = tip_fit(radio_p, tip_fit_n);
+apex = apex_of(tip_c);   // repère du dôme
+
+function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
+function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
+function o(i, j) = j * na + (i % na);
+module dome_solid(off = 0) {   // volume plein sous la surface, fermé par le plan du bord
+  polyhedron(convexity = 6, points = surf(off), faces = concat(
+    [for (j = [0 : nt - 2], i = [0 : na - 1]) [o(i, j), o(i, j + 1), o(i + 1, j + 1), o(i + 1, j)]],
+    [for (i = [0 : na - 1]) [o(i, nt - 1), nt * na, o(i + 1, nt - 1)]],
+    [[for (i = [0 : na - 1]) o(i, 0)]]));
+}
+
+// pois : tirage « disque de Poisson » sur la surface réelle (pointe comprise) : candidats sur une grille
+// (phi, t) dense et bruitée, parcourus dans un ordre pseudo-aléatoire, gardés s'ils sont assez loin des autres
+dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
+  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] - tip_bump(p[0], p[1], 0, 0, tip_c) > 9 || p[2] > 20)
+  [pp, tt, dot_sizes[floor(q[2] * 2.99)], p]];
+function dot_far(c, acc, i = 0) = i >= len(acc) ? true
+  : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
+function dot_pick(i, acc) = i >= len(dot_cand) ? acc
+  : let(c = dot_cand[(i * 7919) % len(dot_cand)]) dot_pick(i + 1, dot_far(c, acc) ? concat(acc, [c]) : acc);
+dots = dot_pick(0, []);
+function unit(v) = v / norm(v);
+function cap_normal(phi, t) = unit(cross(cap_pt(phi + 0.5, t) - cap_pt(phi - 0.5, t), cap_pt(phi, t + 0.5) - cap_pt(phi, t - 0.5)));
+module at_dot(d) {
+  n = cap_normal(d[0], d[1]);
+  translate(cap_pt(d[0], d[1])) rotate([0, acos(n[2]), atan2(n[1], n[0])]) children();
+}
+
+// vis du dôme : axe à 5 mm de la paroi au ras du bord (loin de l'électronique), dans les consoles
+function tab_r(a) = inner_r(a, 2) - 5;
+corbel_z = cap_skirt + disc_t;   // face d'appui des consoles = dessus du disque (repère du dôme)
+function argmax_a(a0) = let(c = [for (d = [-40 : 2 : 40]) lobe_at(a0 + d, rot)]) a0 - 40 + 2 * search(max(c), c)[0];
+tab_a = [for (a = tab_base) argmax_a(a)];
+// consoles sur la paroi, juste au-dessus du disque : le disque monte dans le dôme et y est tiré par les vis ;
+// face droite côté intérieur, chanfrein à 45° jusqu'à la paroi au-dessus ; seule face vers le plateau :
+// l'appui (corbel_z, ~7 mm au-dessus du plateau), sur supports comme le reste de l'intérieur
+module corbels() {
+  intersection() {
+    for (a = tab_a) let(x0 = tab_r(a) - corbel_in, x1 = inner_r(a, 0) + cap_t + 1)
+      rotate([0, 0, a]) translate([0, corbel_w / 2, 0]) rotate([90, 0, 0]) linear_extrude(corbel_w)
+        polygon([[x0, corbel_z], [x1, corbel_z], [x1, corbel_z + corbel_h + x1 - x0], [x0, corbel_z + corbel_h]]);
+    dome_solid();
+  }
+}
+module cap() {
+  difference() {
+    union() {
+      difference() {
+        dome_solid();
+        translate([0, 0, -eps]) dome_solid(cap_t);
+      }
+      corbels();
+    }
+    for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) cylinder(d = d[2] + 0.3, h = dot_pocket + 1, $fn = 32);
+    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, corbel_z - eps]) cylinder(d = m3_pilot, h = corbel_pilot + eps);
+  }
+}
+
+module dot(d) {
+  cylinder(d = d, h = dot_pocket + eps, $fn = 32);   // recouvrement : un seul solide avec la lentille
+  translate([0, 0, dot_pocket]) intersection() {
+    scale([1, 1, 0.45]) sphere(d = d, $fn = 32);
+    translate([-d, -d, 0]) cube([2 * d, 2 * d, d]);
+  }
+}
+
+// ---------- disque à lamelles (repère du chapeau) ----------
+// rayon du disque : le plus étroit de la paroi entre le bord et le dessus du disque (aux creux des lobes,
+// la paroi rentre en descendant), pour qu'il monte dans le dôme fermé jusqu'aux consoles
+function inner_min(a) = min([for (z = [0 : 0.5 : cap_skirt + disc_t]) inner_r(a, z)]);
+function disc_pts() = [for (i = [0 : na - 1]) let(a = i * 360 / na, r = inner_min(a) - disc_fit)
+                         [r * cos(a) + lean_at(cap_skirt + disc_t), r * sin(a)]];
+disc_rmax = cap_R - cap_t;   // normalisation de la profondeur des lamelles (au-delà : profondeur mini)
+function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0, (disc_rmax - r) / (disc_rmax - collar_r)), 1.3);
+function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
+// angles où une lamelle gênerait : vis du dôme, prise USB, vis du châssis, vis du fourreau
+ch_screws = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (ix - 2.5), sy * (iy - 2.5)]];
+gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [180, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
+function gill_ok(a) = min([for (s = gill_skip) adiff(a, s[0]) - s[1]]) > 0;
+
+module gills() {
+  difference() {
+    union() {
+      linear_extrude(disc_t) polygon(disc_pts());
+      // fourreau
+      translate([0, 0, -collar_h]) cylinder(r = collar_r, h = collar_h + eps);
+      // lamelles : lames radiales, plus profondes près du pied
+      intersection() {
+        for (i = [0 : n_gills - 1]) let(a = (i + 0.5) * 360 / n_gills) if (gill_ok(a))
+          rotate([0, 0, a]) rotate([90, 0, 0]) linear_extrude(gill_t, center = true)
+            polygon(concat([[collar_r - 1, 0]], [for (r = [collar_r - 1 : 2 : cap_R * 1.5]) [r, -gill_d(r)]], [[cap_R * 1.5, 0]]));
+        translate([0, 0, -50]) linear_extrude(50 + eps) offset(delta = -1) polygon(disc_pts());
+      }
+    }
+    // fourreau
+    translate([0, 0, -collar_h - eps]) cylinder(r = tenon_r + 0.25, h = collar_h);
+    translate([0, 0, -1]) cylinder(r = 14, h = disc_t + 2);   // fils de l'accu
+    // vis radiale du fourreau (côté -X)
+    translate([-collar_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_clear, h = collar_r - tenon_r + 2);
+    // fentes de ventilation sous la chambre du capteur, entre les lamelles ; côté +X aussi (au ras du bord
+    // du BME280, le reste du breakout est au-dessus du fourreau)
+    for (i = [0 : n_gills - 1]) let(a = i * 360 / n_gills)
+      rotate([0, 0, a]) translate([collar_r + 1, -0.8, -1]) cube([min(ix / max(abs(cos(a)), 0.01), iy / max(abs(sin(a)), 0.01), 31) - collar_r - 1, 1.6, disc_t + 2]);
+    // prise micro-USB
+    translate([chg_x + chg_t + 1.5 - usb_cut[0] / 2, -usb_cut[1] / 2, -1]) cube([usb_cut[0], usb_cut[1], disc_t + 2]);
+    // vis du dôme : passage, têtes sous le disque entre les lamelles
+    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, -1]) cylinder(d = m3_clear, h = disc_t + 2);
+    // vis du châssis, têtes sous le disque
+    for (p = ch_screws) translate([p[0], p[1], -1]) cylinder(d = m3_clear, h = disc_t + 2);
+  }
+}
+
+// ---------- châssis (repère du chapeau, posé sur le disque) ----------
+module chassis() {
+  translate([0, 0, ch_z]) difference() {
+    union() {
+      difference() {
+        translate([-ix - ch_wall, -iy - ch_wall, 0]) cube([2 * (ix + ch_wall), 2 * (iy + ch_wall), ch_h]);
+        translate([-ix, -iy, -1]) cube([2 * ix, 2 * iy, ch_h + 2]);
+        // fenêtres de la chambre
+        for (x = [-20, -6, 8, 22]) translate([x - 4, -iy - ch_wall - 1, 2]) cube([8, 2 * (iy + ch_wall) + 2, chamber_h - 3]);
+        for (y = [-8, 8]) translate([-ix - ch_wall - 1, y - 4, 2]) cube([ch_wall + 2, 8, chamber_h - 3]);
+      }
+      // appuis du plancher et de la carte le long des grands côtés (chanfrein 45° dessous)
+      for (s = [-1, 1], z = [chamber_h, ch_h]) mirror([0, s < 0 ? 1 : 0, 0]) translate([-ix, iy, z])
+        rotate([0, 90, 0]) linear_extrude(2 * ix) polygon([[0, 0], [1.5, 0], [0, -1.5]]);
+      // coins : bossages des vis du châssis (bas) ; coins hauts pleins jusqu'à la carte (vis M2.5 de la carte)
+      for (p = ch_screws) translate([p[0] > 0 ? ix - 7 : -ix, p[1] > 0 ? iy - 7 : -iy, 0])
+        cube([7, 7, p[1] > 0 ? ch_h : chamber_h - 1]);
+      // glissière du module de charge, tenue par deux bras sur la paroi +X
+      translate([chg_x, 0, 0]) rails(chg_w, chg_t, 20);
+      for (s = [-1, 1]) translate([ix + ch_wall - eps, s > 0 ? chg_w / 2 - 1 : -chg_w / 2 - 2, 0]) cube([chg_x - 1.5 - ix - ch_wall + 2 * eps, 3, 20]);
+    }
+    // vis du châssis (par en dessous) et de la carte (par le dessus)
+    for (p = ch_screws) translate([p[0], p[1], -eps]) cylinder(d = m3_pilot, h = 7);
+    for (h = pcb_holes) translate([h[0], h[1], ch_h - 6]) cylinder(d = m25_pilot, h = 6 + eps);
+  }
+}
+
+// deux rails en U face à face, carte dans le plan YZ (épaisseur selon X)
+module rails(w, t, h) {
+  for (s = [-1, 1]) translate([-1.5, s > 0 ? w / 2 - 1 : -w / 2 - 2, 0]) difference() {
+    cube([t + 3, 3, h]);
+    translate([1.5 - 0.15, s > 0 ? -eps : 2 - eps, -eps]) cube([t + 0.3, 1 + eps, h + 2 * eps]);
+  }
+}
+
+// ---------- plancher percé ----------
+module deck() {
+  difference() {
+    translate([-ix + 0.3, -iy + 0.3, 0]) cube([2 * ix - 0.6, 2 * iy - 0.6, deck_t]);
+    for (p = ch_screws) translate([p[0] - 4.6, p[1] - 4.6, -1]) cube([9.2, 9.2, deck_t + 2]);
+    for (x = [-24 : 6 : 24], y = [-15 : 6 : 15]) translate([x + (round(y / 6) % 2) * 3, y, -1]) cylinder(d = 4, h = deck_t + 2, $fn = 6);
+    // fenêtre de la barrette femelle I2C
+    translate([i2c_p1[0] - (bme_pins - 0.5) * hdr_p - fh_clr, i2c_p1[1] - hdr_p / 2 - fh_clr, -1])
+      cube([bme_pins * hdr_p + 2 * fh_clr, hdr_p + 2 * fh_clr, deck_t + 2]);
+  }
+}
+
+// ---------- pied ----------
+// générateur générique (même principe que le contour du chapeau) : harmoniques 2..7 à phases aléatoires
+function hterms(seed, n) = [for (k = [2 : 7]) let(q = rands(0, 1, 2, seed * 17 + k)) [k, (0.5 + 0.5 * q[0]) * exp(-pow((k - n) / 1.5, 2)), 360 * q[1]]];
+function hval(T, phi) = vsum([for (h = T) h[1] * sin(h[0] * phi + h[2])]);
+function hpeak(T) = max([for (i = [0 : 179]) abs(hval(T, 2 * i))]);
+function hnorm(T, P, phi) = hval(T, phi) / P;   // dans [-1, 1]
+stem_T = hterms(lobe_seed + 101, 3);  stem_P = hpeak(stem_T);
+ring_T = hterms(lobe_seed + 202, 4);  ring_P = hpeak(ring_T);
+ring_T2 = hterms(lobe_seed + 303, 5); ring_P2 = hpeak(ring_T2);
+ground_T = hterms(grass_seed, 4);     ground_P = hpeak(ground_T);
+
+function base_r(z) = z <= stem_h - flare_h ? 19 - (19 - stem_r) * z / (stem_h - flare_h)
+  : z <= stem_h ? stem_r + (collar_r - stem_r) * pow((z - stem_h + flare_h) / flare_h, 1.3) : collar_r;
+// rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + évasement dissymétrique de la base
+// (concave, pente à 45° au plus au pied, rayon décroissant en montant : imprimable)
+function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 côté grand évasement, 0 à l'opposé
+function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[1] - foot_flare[0]) * w,
+  Hf = foot_flare_h[0] + (foot_flare_h[1] - foot_flare_h[0]) * w, fl = z < Hf ? F * pow(1 - z / Hf, 2) : 0,
+  fade = max(0, min(1, (stem_h - flare_h - z) / 15)))
+  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
+
+// volume de la chambre à lest (cm³), intégré en tranches
+ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
+  let(r = max(0, min(stem_rr(i * 360 / na, z) - ballast_wall, ballast_top - z))) 0.5 * r * r * (2 * PI / na) * dz])]) / 1000;
+
+stem_zs = [for (z = [0 : 1.5 : stem_h + 6]) z];
+module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (intérieur de la chambre à lest)
+  J = len(zs);
+  function v(i, j) = j * ns + (i % ns);
+  polyhedron(convexity = 4,
+    points = [for (z = zs, i = [0 : ns - 1]) let(a = i * 360 / ns, r = stem_rr(a, z) - off) [r * cos(a), r * sin(a), z]],
+    faces = concat([for (j = [0 : J - 2], i = [0 : ns - 1]) [v(i, j), v(i, j + 1), v(i + 1, j + 1), v(i + 1, j)]],
+                   [[for (i = [0 : ns - 1]) v(i, 0)]], [[for (i = [ns - 1 : -1 : 0]) v(i, J - 1)]]));
+}
+
+// corolle : jupe balayée autour du fût, débord et retombée ondulés, dessous à ~45° au moins
+module ring_skirt() {
+  function prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = 10 * (1 + ring_amp * hnorm(ring_T, ring_P, a)),
+    drop = 16 * (1 + 0.6 * ring_amp * hnorm(ring_T2, ring_P2, a)))
+    [[ri, ring_z + 1.4], [ri + ext, ring_z - drop + 1.2], [ri + ext, ring_z - drop], [ri, ring_z - 1.2]];
+  function v(i, k) = (i % ns) * 4 + (k % 4);
+  polyhedron(convexity = 4,
+    points = [for (i = [0 : ns - 1], p = prof(i * 360 / ns)) let(a = i * 360 / ns) [p[0] * cos(a), p[0] * sin(a), p[1]]],
+    faces = [for (i = [0 : ns - 1], k = [0 : 3]) [v(i, k + 1), v(i, k), v(i + 1, k), v(i + 1, k + 1)]]);
+}
+
+module stem() {
+  difference() {
+    union() {
+      // fût, coupé sous le fourreau (plan perpendiculaire à l'axe du chapeau)
+      intersection() {
+        stem_body();
+        cap_xf() translate([-100, -100, -collar_h - 200]) cube([200, 200, 200]);
+      }
+      ring_skirt();
+      // tenon incliné, emboîté dans le fourreau
+      cap_xf() translate([0, 0, -collar_h - 1]) cylinder(r = tenon_r, h = 17);
+    }
+    // logement de l'accu, vertical jusqu'en haut (le support passe par le tenon)
+    translate([0, 0, bore_z]) cylinder(r = bore_r, h = stem_h + 40);
+    // chambre à lest : suit la peau du pied (paroi ballast_wall, pentes <= 45° comme l'évasement),
+    // plafond conique à 45° (sans support) ; remplie par le trou du fond puis bouchée
+    intersection() {
+      stem_body(ballast_wall, [for (z = [foot_t : 1.5 : ballast_top]) z]);
+      translate([0, 0, foot_t - eps]) cylinder(r1 = ballast_top - foot_t, r2 = 0, h = ballast_top - foot_t);
+    }
+    translate([0, 0, -1]) cylinder(d = fill_d, h = foot_t + 2);
+    translate([0, 0, -1]) cylinder(d = plug_d + 0.3, h = plug_t + 1);
+    // vis radiale du fourreau
+    cap_xf() translate([-tenon_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_pilot, h = 6);
+  }
+}
+
+// ---------- berceau de l'accu ----------
+// Gouttière imprimée à plat (méplat sur le plateau, ouverte vers le haut), glissée dans le pied par le haut.
+// Une butée à languette par bout, glissée dans une rainure ; la languette traverse le fond et ressort
+// dans le méplat, où passent aussi les fils (jusqu'au fourreau). Ressort « − » en bas, bossage « + » en haut.
+// Repère d'impression : X = axe de l'accu (X = 0 en bas), méplat en Z = 0.
+cr_r = bore_r - cr_fit;
+cr_flat = cr_r * cos(45);           // méplat : flancs à 45° au plus
+cr_ax = cr_flat;                    // axe du logement au-dessus du plateau
+cl_z = cr_ax + cell_up;             // axe de l'accu
+cr_end = 1.6 + bt_slot + 1;         // bout : paroi ext. + rainure + paroi int.
+cell_x0 = 1.6 + bt_t + spring_c;    // bas de l'accu (ressort comprimé)
+cr_len = cell_x0 + cell_l + bt_dimple + bt_t + 1.6;
+module cradle() {
+  difference() {
+    intersection() {
+      rotate([0, 90, 0]) translate([-cr_ax, 0, 0]) cylinder(r = cr_r, h = cr_len, $fn = 96);
+      translate([0, -cr_r, 0]) cube([cr_len, 2 * cr_r, 2 * cr_r]);
+    }
+    // logement de l'accu, fente d'insertion au-dessus de son axe (+1 mm)
+    translate([cr_end, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d + 0.6, h = cr_len - 2 * cr_end);
+    translate([cr_end, -cell_d / 2 - 0.3, cl_z + 1]) cube([cr_len - 2 * cr_end, cell_d + 0.6, 2 * cr_r]);
+    for (s = [0, 1]) {
+      xs = s == 0 ? 1.6 : cr_len - 1.6 - bt_slot;   // rainure
+      // rainure de la plaque, ouverte en haut ; prolongée par la fente de la languette à travers le fond
+      translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
+      translate([xs, -(bt_tab[0] + 0.6) / 2, -1]) cube([bt_slot, bt_tab[0] + 0.6, cl_z]);
+      // fenêtre devant la plaque
+      translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
+    }
+    // trou de tirage dans le bout du haut (ficelle, nœud à l'intérieur)
+    translate([cr_len - cr_end - 1, 0, cl_z + cell_d / 2 + 0.8]) rotate([0, 90, 0]) cylinder(d = 2.5, h = cr_end + 2, $fn = 24);
+    // polarité, gravée sur les faces des bouts
+    for (m = [[0, "-"], [1, "+"]]) translate([m[0] * cr_len, 0, cl_z]) mirror([m[0], 0, 0]) rotate([90, 0, -90])
+      translate([0, 0, -0.6]) linear_extrude(1) text(m[1], size = 8, halign = "center", valign = "center");
+  }
+}
+// berceau monté : bas du berceau sur le fond du logement, méplat vers -X (côté ouvert vers +X)
+module cradle_placed() { translate([0, 0, bore_z]) rotate([0, -90, 0]) translate([0, 0, -cr_ax]) children(); }
+
+// ---------- sol : disque de 1 mm et végétation ----------
+function ground_r(a) = ground_R * (1 + ground_amp * hnorm(ground_T, ground_P, a));
+// brin : lame effilée (0.9 mm d'épaisseur, pointe 0.6 mm), courbée dans son plan, pente <= ~40° (imprimable)
+module blade(h, w, lean) {
+  for (k = [0 : 3]) hull() for (q = [k, k + 1])
+    translate([lean * pow(q / 4, 2), 0, h * q / 4]) cube([max(0.6, w * pow(1 - q / 4, 1.3)), 0.9, 0.01], center = true);
+}
+grass = let(R = rands(0, 1, 6 * (grass_tufts * 9 + grass_single), grass_seed))
+  concat(
+    // touffes : 6 à 9 grands brins en éventail, collés au pied
+    [for (t = [0 : grass_tufts - 1], b = [0 : 8]) let(o = 6 * (t * 9 + b), t0 = 6 * t * 9,
+       ta = t * 360 / grass_tufts + 40 * R[t0], tr = stem_rr(ta, 0) + 2 + 4 * R[t0 + 1],
+       fan = -70 + 140 * b / 8 + 15 * (R[o + 2] - 0.5), h = 10 + 9 * R[o + 3])
+       if (b < 6 + 3 * R[t0 + 2])
+         [[tr * cos(ta) + 4 * (R[o + 4] - 0.5), tr * sin(ta) + 4 * (R[o + 5] - 0.5)], ta + fan, h, 3 + 1.5 * R[o + 1], h * 0.55 * (R[o] - 0.2)]],
+    // brins isolés
+    [for (i = [0 : grass_single - 1]) let(o = 6 * (grass_tufts * 9 + i), a = 360 * R[o],
+       rr = stem_rr(a, 0) + 4 + (ground_r(a) - 8 - stem_rr(a, 0) - 4) * pow(R[o + 1], 1.5), h = 4 + 6 * R[o + 2])
+       [[rr * cos(a), rr * sin(a)], a + 90 * (R[o + 3] - 0.5), h, 2.5 + R[o + 4], h * 0.5 * (R[o + 5] - 0.5)]]);
+// frange : dents triangulaires le long d'une courbe ondulée autour du pied (paroi continue de 0.9 mm)
+fringe = let(R = rands(0, 1, 3 * fringe_n, grass_seed + 7))
+  [for (i = [0 : fringe_n - 1]) let(a = i * 360 / fringe_n, rr = stem_rr(a, 0) + 2.5 + 2 * R[3 * i])
+    [rr * cos(a), rr * sin(a), fringe_h[0] + (fringe_h[1] - fringe_h[0]) * R[3 * i + 1], 2 * (R[3 * i + 2] - 0.5)]];
+module fringe_wall() {
+  for (i = [0 : fringe_n - 1]) let(p = fringe[i], q = fringe[(i + 1) % fringe_n], m = (p + q) / 2,
+                                   t = unit([q[0] - p[0], q[1] - p[1], 0]))
+    hull() {
+      translate([p[0], p[1], 0]) cylinder(d = 0.9, h = 0.01, $fn = 8);
+      translate([q[0], q[1], 0]) cylinder(d = 0.9, h = 0.01, $fn = 8);
+      translate([m[0] + t[0] * p[3] * 1.5, m[1] + t[1] * p[3] * 1.5, p[2]]) cylinder(d = 0.6, h = 0.01, $fn = 8);
+    }
+}
+module ground() {
+  linear_extrude(ground_t) polygon([for (i = [0 : 89]) let(a = i * 4) ground_r(a) * [cos(a), sin(a)]]);
+  for (g = grass) translate([g[0][0], g[0][1], ground_t - 0.01]) rotate([0, 0, g[1]]) blade(g[2], g[3], g[4]);
+  translate([0, 0, ground_t - 0.01]) fringe_wall();
+}
+
+// ---------- maquettes ----------
+module cradle_cell() {   // berceau, accu, butées (repère d'impression)
+  color("#303030") cradle();
+  color("#2e6fd8") translate([cell_x0, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d, h = cell_l);
+  color("Silver") for (x = [1.6, cr_len - 1.6 - bt_t]) translate([x, -bt_w / 2, cl_z - bt_h / 2]) {
+    cube([bt_t, bt_w, bt_h]);
+    translate([0, (bt_w - bt_tab[0]) / 2, -bt_tab[1]]) cube([bt_t, bt_tab[0], bt_tab[1]]);
+  }
+}
+module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
+// BME280 enfiché sous la carte (repère : broche 1 de l'empreinte I2C, dessous de la carte) :
+// femelle fh_n positions, plastique de la barrette mâle, breakout parallèle à la carte
+module bme() {
+  color("#222") translate([-(fh_n - 0.5) * hdr_p, -hdr_p / 2, -fh_h]) cube([fh_n * hdr_p, hdr_p, fh_h]);
+  color("#222") translate([-(bme_pins - 0.5) * hdr_p, -hdr_p / 2, -fh_h - mh_h]) cube([bme_pins * hdr_p, hdr_p, mh_h]);
+  if (fh_n < bme_pins) color("Gold") for (i = [fh_n : bme_pins - 1]) translate([-i * hdr_p - 0.32, -0.32, -fh_h]) cube([0.64, 0.64, mh_pin]);
+  color("Purple") translate([-(bme_pins - 1) * hdr_p / 2 - bme_w / 2, -bme_edge, -fh_h - mh_h - bme_t]) cube([bme_w, bme_d, bme_t]);
+}
+
+// coupe radiale par la console d'angle a : console, trou pilote, vis M3 x 10, disque à lamelles
+// (render() : faces de coupe propres, sinon z-fighting en aperçu ; ~4 min)
+module console_cut(a) {
+  r = tab_r(a);
+  module cut() rotate([0, 0, a]) translate([r - 24, 0, -12]) cube([40, 30, 34]);
+  rotate([0, 0, -a]) {
+    color("Ivory") render() intersection() { gills(); cut(); }
+    color(cap_color) render() intersection() { translate([0, 0, -cap_skirt]) cap(); cut(); }
+    color("Silver") rotate([0, 0, a]) translate([r, 0, 0]) render() intersection() {   // autotaraudeuse, tête sous le disque
+      union() { translate([0, 0, -2]) cylinder(d = 5.5, h = 2, $fn = 32); cylinder(d = 2.9, h = 10, $fn = 32); }
+      translate([-5, 0, -5]) cube([10, 5, 20]);
+    }
+  }
+}
+
+module assembled() {
+  color("Ivory") stem();
+  color("#4a8f3c") translate([0, 0, -ground_t]) ground();
+  cradle_placed() cradle_cell();
+  cap_xf() {
+    color("Ivory") gills();
+    color("Beige") chassis();
+    translate([i2c_p1[0], i2c_p1[1], pcb_z]) bme();
+    translate([chg_x + 0.15, 0, ch_z]) charger();
+    color("WhiteSmoke") translate([0, 0, deck_z]) deck();
+    translate([0, 0, pcb_z]) pcb_v22_cropped(jst_eh = false);
+    translate([0, 0, -cap_skirt]) {
+      color(cap_color) cap();
+      for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
+    }
+  }
+}
+
+echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
+echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
+echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 100) / 100], " pour J1 « RADIO » en ", [for (v = radio_p) round(v * 100) / 100],
+  " (écart ", round(norm([apex[0], apex[1]] - radio_p) * 100) / 100, " mm selon l'axe du chapeau), centre de la pointe ", [for (v = tip_c) round(v * 100) / 100],
+  " ; ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte"));
+echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
+echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
+
+if (part == "cap") cap();
+else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
+else if (part == "chassis") translate([0, 0, -ch_z]) chassis();
+else if (part == "deck") deck();
+else if (part == "stem") stem();
+else if (part == "ground") ground();
+else if (part == "cradle") cradle();
+else if (part == "plug") cylinder(d = plug_d, h = plug_t);
+else if (part == "dot") dot(dot_d);
+else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous la carte
+  assembled();
+  translate([-100, 0.5, 100]) cube([200, 90, 120]);   // la caméra doit rester hors du volume retiré
+  translate([-100, -100, 100]) cube([200, 200, 30]);
+}
+else if (part == "console") console_cut(tab_a[0]);
+else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
+else {
+  assembled();
+  translate([75, -25, 0]) euro2();
+}
