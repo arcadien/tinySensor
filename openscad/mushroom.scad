@@ -4,7 +4,7 @@
 // Le chapeau est un tout (dôme + lamelles) posé sur le pied avec une légère inclinaison ;
 // toute l'électronique est dans le chapeau, le pied ne porte que l'accu.
 //
-//   cap     : dôme, bord ondulé ; vissé par en dessous (3 vis M3, écrous logés dans le disque)
+//   cap     : dôme, bord ondulé ; 3 consoles intérieures au-dessus du disque, vis M3 par en dessous (autotaraudées)
 //   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, prise USB, fourreau sur le pied
 //   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
 //             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
@@ -26,11 +26,12 @@
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
-//   openscad --preview -D 'part="assembly"' --camera=0,0,125,75,0,25,700 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
-//   openscad --preview -D 'part="assembly"' --camera=0,0,100,112,0,200,520 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=10,0,122,75,0,25,780 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,104,112,0,200,640 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
-//   openscad --preview -D 'part="section"'  --camera=0,0,140,90,0,0,480 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
+//   openscad --preview -D 'part="section"'  --camera=0,0,148,90,0,0,510 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=18,-5,156,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="console"'  --camera=71,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
 // Chapeau (cap_xf) : Z = 0 sous le disque à lamelles, axe incliné de cap_tilt vers +X.
@@ -40,7 +41,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, sensor, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+part = "assembly"; // [assembly, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -51,6 +52,7 @@ pcb_t = 1.6;
 pcb_holes = [[-26.1243, 15.6770], [25.9902, 15.5130]];   // MH5, MH1 du haut
 k_crop_c = [177.01008, 67.51316];  // centre de la découpe (KiCad) : local = [x - cx, cy - y]
 i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), broche 1 ; broches vers -X
+radio_k = [192.99936, 56.86044];   // J1 « RADIO » (1x3, module 433 MHz debout) : le sommet du dôme est à son aplomb
 
 /* [Chapeau] */
 cap_tilt = 10;     // inclinaison du chapeau sur le pied
@@ -61,9 +63,15 @@ cap_t = 2.4;
 cap_lean = 0;      // déport du sommet (vers +X, côté penché)
 tip_h = 50;        // pointe : hauteur ajoutée au sommet (0 = dôme simple)
 tip_w = [70, 32, 40];  // demi-largeurs de la pointe : vers -X (flanc doux), vers +X (flanc raide), en Y
-tip_c = [0, 0];    // centre de la pointe (repère du dôme)
-cap_skirt = 4;     // le bord du dôme descend sous le disque (pattes de vissage au ras du bord)
-tab_base = [90, 210, 330];  // vis du dôme : chacune glisse (±40°) vers le lobe le plus proche
+tip_fit_n = 2;     // centre de la pointe : recalages pour que le sommet réel (dôme + pointe) tombe sur J1, selon l'axe du chapeau
+apex_step = [3, 0.5];  // recherche du sommet : pas (phi, t) en degrés, puis affinage au 1/10 autour du meilleur point
+cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
+disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
+corbel_w = 12;     // consoles du dôme, au-dessus du disque : largeur (autour de la vis)
+corbel_h = 10;     // hauteur de la face droite, chanfrein à 45° au-dessus jusqu'à la paroi
+corbel_in = 5;     // débord de la console au-delà de l'axe de la vis, vers l'intérieur
+corbel_pilot = 8;  // profondeur du trou pilote (M3x10 autotaraudeuse : 3 de disque + 7 en prise)
+tab_base = [90, 210, 330];  // vis du dôme (consoles) : chacune glisse (±40°) vers le lobe le plus proche
 dot_sizes = [6, 8, 10];
 dot_pocket = 0.8;
 dot_gap = 6;       // espace mini entre deux pois
@@ -158,7 +166,6 @@ ns = 72;           // pied, corolle : pas angulaire
 /* [Visserie] */
 m3_pilot = 2.5;
 m3_clear = 3.4;
-m3_nut = 6.4;      // M3 sur plats + jeu
 m25_pilot = 2.1;
 
 $fn = 64;
@@ -174,6 +181,7 @@ deck_z = ch_z + chamber_h;          // dessus des appuis du plancher
 pcb_z = deck_z + deck_t + pcb_gap;  // dessous de la carte
 ch_h = pcb_z - ch_z;
 i2c_p1 = [i2c_k[0] - k_crop_c[0], k_crop_c[1] - i2c_k[1]];   // broche 1 dans le repère du chapeau
+radio_p = [radio_k[0] - k_crop_c[0], k_crop_c[1] - radio_k[1]];   // J1, idem (= repère du dôme en XY)
 bme_z = pcb_z - fh_h - mh_h;        // dessus du breakout
 
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
@@ -203,17 +211,27 @@ rots = [for (a = [0 : 5 : 355]) worst(a)];
 best_rot = search(min(rots), rots)[0] * 5;
 rot = lobe_rot >= 0 ? lobe_rot : best_rot;
 function wav(phi, s = 0) = wav_r(phi, s, rot);
-function cap_pt(phi, t, off = 0) =
+function cap_pt(phi, t, off = 0) = cap_ptc(phi, t, off, tip_c);
+function cap_ptc(phi, t, off, c) =   // pointe centrée en c
   let(s = pow(sin(t), 2 / cap_n), r = (cap_R * wav(phi, s) - off) * pow(cos(t), 2 / cap_n), z = (cap_H - off) * s)
-  let(x = r * cos(phi) + cap_lean * pow(z / cap_H, 2), y = r * sin(phi)) [x, y, z + tip_bump(x, y, s, off)];
+  let(x = r * cos(phi) + cap_lean * pow(z / cap_H, 2), y = r * sin(phi)) [x, y, z + tip_bump(x, y, s, off, c)];
 // pointe : bosse (1 - d²)³, pentes progressives (largeurs différentes de chaque côté), nulle au bord (s = 0) pour garder le bord plat ;
 // côté intérieur (off > 0), pointe un peu plus étroite et plus basse pour garder l'épaisseur sur le flanc raide
-function tip_bump(x, y, s, off) = let(k = off > 0 ? 3 : 0, dx = x - tip_c[0],
-  d = norm([dx / ((dx > 0 ? tip_w[1] : tip_w[0]) - k), (y - tip_c[1]) / (tip_w[2] - k)]))
+function tip_bump(x, y, s, off, c) = let(k = off > 0 ? 3 : 0, dx = x - c[0],
+  d = norm([dx / ((dx > 0 ? tip_w[1] : tip_w[0]) - k), (y - c[1]) / (tip_w[2] - k)]))
   tip_h <= 0 || d >= 1 ? 0 : (tip_h - k) * pow(1 - d * d, 3) * (1 - pow(1 - s, 3));
 // rayon intérieur du dôme à la hauteur zz (repère du dôme), et décalage du sommet à cette hauteur
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
 function lean_at(zz) = cap_lean * pow(zz / cap_H, 2);
+// sommet réel de la surface extérieure (dôme + pointe centrée en c) : balayage (phi, t) puis affinage autour du meilleur point
+function apex_scan(c, ps, ts) = let(P = [for (t = ts, phi = ps) [phi, t, cap_ptc(phi, t, 0, c)]], zs = [for (q = P) q[2][2]])
+  P[search(max(zs), zs)[0]];
+function apex_of(c) = let(a = apex_scan(c, [0 : apex_step[0] : 360 - apex_step[0]], [45 : apex_step[1] : 90]),
+  da = apex_step[0], dt = apex_step[1]) apex_scan(c, [a[0] - da : da / 10 : a[0] + da], [a[1] - dt : dt / 10 : min(90, a[1] + dt)])[2];
+// le sommet glisse du centre de la pointe vers le haut du dôme : on décale le centre de l'écart restant, tip_fit_n fois
+function tip_fit(c, n) = n <= 0 ? c : let(a = apex_of(c)) tip_fit(c + radio_p - [a[0], a[1]], n - 1);
+tip_c = tip_fit(radio_p, tip_fit_n);
+apex = apex_of(tip_c);   // repère du dôme
 
 function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
@@ -228,7 +246,7 @@ module dome_solid(off = 0) {   // volume plein sous la surface, fermé par le pl
 // pois : tirage « disque de Poisson » sur la surface réelle (pointe comprise) : candidats sur une grille
 // (phi, t) dense et bruitée, parcourus dans un ordre pseudo-aléatoire, gardés s'ils sont assez loin des autres
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
-  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] - tip_bump(p[0], p[1], 0, 0) > 9 || p[2] > 20)
+  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] - tip_bump(p[0], p[1], 0, 0, tip_c) > 9 || p[2] > 20)
   [pp, tt, dot_sizes[floor(q[2] * 2.99)], p]];
 function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
@@ -242,10 +260,22 @@ module at_dot(d) {
   translate(cap_pt(d[0], d[1])) rotate([0, acos(n[2]), atan2(n[1], n[0])]) children();
 }
 
-// vis du dôme : à mi-largeur des pattes
+// vis du dôme : axe à 5 mm de la paroi au ras du bord (loin de l'électronique), dans les consoles
 function tab_r(a) = inner_r(a, 2) - 5;
+corbel_z = cap_skirt + disc_t;   // face d'appui des consoles = dessus du disque (repère du dôme)
 function argmax_a(a0) = let(c = [for (d = [-40 : 2 : 40]) lobe_at(a0 + d, rot)]) a0 - 40 + 2 * search(max(c), c)[0];
 tab_a = [for (a = tab_base) argmax_a(a)];
+// consoles sur la paroi, juste au-dessus du disque : le disque monte dans le dôme et y est tiré par les vis ;
+// face droite côté intérieur, chanfrein à 45° jusqu'à la paroi au-dessus ; seule face vers le plateau :
+// l'appui (corbel_z, ~7 mm au-dessus du plateau), sur supports comme le reste de l'intérieur
+module corbels() {
+  intersection() {
+    for (a = tab_a) let(x0 = tab_r(a) - corbel_in, x1 = inner_r(a, 0) + cap_t + 1)
+      rotate([0, 0, a]) translate([0, corbel_w / 2, 0]) rotate([90, 0, 0]) linear_extrude(corbel_w)
+        polygon([[x0, corbel_z], [x1, corbel_z], [x1, corbel_z + corbel_h + x1 - x0], [x0, corbel_z + corbel_h]]);
+    dome_solid();
+  }
+}
 module cap() {
   difference() {
     union() {
@@ -253,19 +283,15 @@ module cap() {
         dome_solid();
         translate([0, 0, -eps]) dome_solid(cap_t);
       }
-      // pattes au ras du bord (sur le plateau), le disque à lamelles repose dessus
-      intersection() {
-        for (a = tab_a) rotate([0, 0, a]) translate([inner_r(a, 2) - 10, -6, 0]) cube([14, 12, cap_skirt]);
-        dome_solid();
-      }
+      corbels();
     }
     for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) cylinder(d = d[2] + 0.3, h = dot_pocket + 1, $fn = 32);
-    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, -eps]) cylinder(d = m3_clear, h = cap_skirt + 2 * eps);
+    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, corbel_z - eps]) cylinder(d = m3_pilot, h = corbel_pilot + eps);
   }
 }
 
 module dot(d) {
-  cylinder(d = d, h = dot_pocket, $fn = 32);
+  cylinder(d = d, h = dot_pocket + eps, $fn = 32);   // recouvrement : un seul solide avec la lentille
   translate([0, 0, dot_pocket]) intersection() {
     scale([1, 1, 0.45]) sphere(d = d, $fn = 32);
     translate([-d, -d, 0]) cube([2 * d, 2 * d, d]);
@@ -273,7 +299,10 @@ module dot(d) {
 }
 
 // ---------- disque à lamelles (repère du chapeau) ----------
-function disc_pts() = [for (i = [0 : na - 1]) let(a = i * 360 / na, r = inner_r(a, cap_skirt + disc_t) - 0.4)
+// rayon du disque : le plus étroit de la paroi entre le bord et le dessus du disque (aux creux des lobes,
+// la paroi rentre en descendant), pour qu'il monte dans le dôme fermé jusqu'aux consoles
+function inner_min(a) = min([for (z = [0 : 0.5 : cap_skirt + disc_t]) inner_r(a, z)]);
+function disc_pts() = [for (i = [0 : na - 1]) let(a = i * 360 / na, r = inner_min(a) - disc_fit)
                          [r * cos(a) + lean_at(cap_skirt + disc_t), r * sin(a)]];
 disc_rmax = cap_R - cap_t;   // normalisation de la profondeur des lamelles (au-delà : profondeur mini)
 function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0, (disc_rmax - r) / (disc_rmax - collar_r)), 1.3);
@@ -308,11 +337,8 @@ module gills() {
       rotate([0, 0, a]) translate([collar_r + 1, -0.8, -1]) cube([min(ix / max(abs(cos(a)), 0.01), iy / max(abs(sin(a)), 0.01), 31) - collar_r - 1, 1.6, disc_t + 2]);
     // prise micro-USB
     translate([chg_x + chg_t + 1.5 - usb_cut[0] / 2, -usb_cut[1] / 2, -1]) cube([usb_cut[0], usb_cut[1], disc_t + 2]);
-    // vis du dôme : passage + écrou logé côté intérieur
-    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, 0]) {
-      translate([0, 0, -1]) cylinder(d = m3_clear, h = disc_t + 2);
-      translate([0, 0, disc_t - 2.4]) cylinder(d = m3_nut / cos(30), h = 3, $fn = 6);
-    }
+    // vis du dôme : passage, têtes sous le disque entre les lamelles
+    for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, -1]) cylinder(d = m3_clear, h = disc_t + 2);
     // vis du châssis, têtes sous le disque
     for (p = ch_screws) translate([p[0], p[1], -1]) cylinder(d = m3_clear, h = disc_t + 2);
   }
@@ -534,6 +560,21 @@ module bme() {
   color("Purple") translate([-(bme_pins - 1) * hdr_p / 2 - bme_w / 2, -bme_edge, -fh_h - mh_h - bme_t]) cube([bme_w, bme_d, bme_t]);
 }
 
+// coupe radiale par la console d'angle a : console, trou pilote, vis M3 x 10, disque à lamelles
+// (render() : faces de coupe propres, sinon z-fighting en aperçu ; ~4 min)
+module console_cut(a) {
+  r = tab_r(a);
+  module cut() rotate([0, 0, a]) translate([r - 24, 0, -12]) cube([40, 30, 34]);
+  rotate([0, 0, -a]) {
+    color("Ivory") render() intersection() { gills(); cut(); }
+    color(cap_color) render() intersection() { translate([0, 0, -cap_skirt]) cap(); cut(); }
+    color("Silver") rotate([0, 0, a]) translate([r, 0, 0]) render() intersection() {   // autotaraudeuse, tête sous le disque
+      union() { translate([0, 0, -2]) cylinder(d = 5.5, h = 2, $fn = 32); cylinder(d = 2.9, h = 10, $fn = 32); }
+      translate([-5, 0, -5]) cube([10, 5, 20]);
+    }
+  }
+}
+
 module assembled() {
   color("Ivory") stem();
   color("#4a8f3c") translate([0, 0, -ground_t]) ground();
@@ -554,8 +595,11 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
+echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 100) / 100], " pour J1 « RADIO » en ", [for (v = radio_p) round(v * 100) / 100],
+  " (écart ", round(norm([apex[0], apex[1]] - radio_p) * 100) / 100, " mm selon l'axe du chapeau), centre de la pointe ", [for (v = tip_c) round(v * 100) / 100],
+  " ; ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte"));
 echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
-echo(str("Hauteur ~", round(stem_h + (collar_h + cap_H + tip_h - cap_skirt) * cos(cap_tilt) + 10), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
+echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
@@ -571,6 +615,7 @@ else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous 
   translate([-100, 0.5, 100]) cube([200, 90, 120]);   // la caméra doit rester hors du volume retiré
   translate([-100, -100, 100]) cube([200, 200, 30]);
 }
+else if (part == "console") console_cut(tab_a[0]);
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {
   assembled();
