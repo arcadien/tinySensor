@@ -43,7 +43,7 @@ NOTES = [
     "W3/W4 montent par le trou central du disque (moitié +Y, pour éviter le BME280), sortent de la "
     "chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (debout dans "
     "sa glissière à x = 40, micro-USB vers le bas, pastilles en haut). W5/W6 passent au-dessus de la carte jusqu'à J13.",
-    "L'antenne monte droit depuis le module radio (J1 « RADIO ») dans le haut de la gourde.",
+    "L'antenne part du module radio (J1 « RADIO ») et suit le col jusqu'au haut de la gourde.",
     "Longueurs : environ 30 mm de mou compris pour soulever le chapeau ; à ajuster au montage.",
 ]
 
