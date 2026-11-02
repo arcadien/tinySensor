@@ -30,7 +30,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
-//   openscad --preview -D 'part="sensor"'   --camera=18,-5,126,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=18,-5,146,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=59,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
@@ -90,12 +90,13 @@ disc_t = 3;
 collar_h = 20;     // fourreau sous le disque, reçoit le tenon du pied
 collar_r = 22.5;   // rayon extérieur du fourreau (= haut du pied)
 tenon_r = 19.5;
+disc_bore = 18.5;   // trou central du disque : le haut du berceau y passe, en biais de cap_tilt
 n_gills = 48;
 gill_t = 1.2;
 gill_depth = [17, 3];  // profondeur des lamelles près du pied / au bord
 
 /* [Châssis] */
-chamber_h = 8;     // chambre du bas (BME280 suspendu sous la carte)
+chamber_h = 28;    // chambre du bas : BME280 suspendu sous la carte, haut du berceau et paire JST-XH
 deck_t = 1.6;
 pcb_gap = 5;       // plancher -> dessous de la carte (broches traversantes)
 ch_wall = 2;
@@ -120,7 +121,7 @@ usb_cut = [8.5, 12];
 stem_h = 95;       // centre du haut du pied (sous le fourreau)
 bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
 foot_t = 3;        // fond du pied
-ballast_h = 12;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
+ballast_h = 32;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
 ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
 fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
@@ -217,8 +218,8 @@ function wav_r(phi, s, rot) = 1 + lobe_at(phi, rot) * (lobe_top + (1 - lobe_top)
 function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / cap_H), rot) - cap_t;
 // jeu : points de l'électronique (repère du chapeau) qui doivent rester à >= 3 mm sous le dôme
 clear_pts = concat(
-  [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + 17]],   // châssis
-  [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + 31]],                                // composants
+  [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + chamber_h + 9]],   // châssis
+  [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + chamber_h + 23]],                                // composants
   [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + 26]]);                                       // chargeur
 // v <= 1 : le point est sous le dôme réduit de clear_m
 function v_in(p, rot) = let(zz = p[2] + cap_skirt, d = [p[0], p[1]] - cap_shift(zz))
@@ -335,7 +336,7 @@ module gills() {
     }
     // fourreau
     translate([0, 0, -collar_h - eps]) cylinder(r = tenon_r + 0.25, h = collar_h);
-    translate([0, 0, -1]) cylinder(r = 14, h = disc_t + 2);   // fils de l'accu
+    translate([0, 0, -1]) cylinder(r = disc_bore, h = disc_t + 2);
     // vis radiale du fourreau (côté -X)
     translate([-collar_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_clear, h = collar_r - tenon_r + 2);
     // fentes de ventilation sous la chambre du capteur, entre les lamelles ; côté +X aussi (au ras du bord
@@ -482,9 +483,10 @@ cl_z = cr_ax + cell_up;             // axe de l'accu
 cr_end = 1.6 + bt_slot + 1;         // bout : paroi ext. + rainure + paroi int.
 cell_x0 = 1.6 + bt_t + spring_c;    // bas de l'accu (ressort comprimé)
 cr_len = cell_x0 + cell_l + bt_dimple + bt_t + 1.6;
-cradle_top = bore_z + cr_len;       // haut du berceau monté
-wire_gap = stem_h + collar_h / cos(cap_tilt) - cr_r * tan(cap_tilt) - cradle_top;   // sous le disque, côté bas
-assert(wire_gap >= 5, str("Berceau trop haut pour les fils : ", wire_gap, " mm sous le disque"));
+// haut du berceau côté bas du breakout, dans le repère du chapeau (Z = 0 sous le disque)
+cradle_top = (bore_z + cr_len - stem_h) * cos(cap_tilt) + cr_r * sin(cap_tilt) - collar_h;
+wire_gap = bme_z - bme_t - cradle_top;   // place de la paire JST-XH
+assert(wire_gap >= 8, str("Pas de place pour la paire JST-XH : ", wire_gap, " mm sous le BME280"));
 module cradle() {
   difference() {
     intersection() {
@@ -606,7 +608,7 @@ echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de j
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
 echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 10) / 10], " (J1 « RADIO » en ", [for (v = radio_p) round(v * 10) / 10], "), ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte ; ", round(collar_h * sin(cap_tilt) + apex[0] * cos(cap_tilt) + (apex[2] - cap_skirt) * sin(cap_tilt)), " mm de l'axe du pied en X"));
 echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
-echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; fils ", round(wire_gap), " mm au-dessus du berceau ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
+echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; berceau ", round(cradle_top), " mm au-dessus du dessous du disque, ", round(wire_gap), " mm sous le BME280 ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
