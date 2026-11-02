@@ -61,7 +61,8 @@ cap_H = 190;       // hauteur du dôme au-dessus de son bord
 // méridien de la gourde, d'après le croquis : [rayon / cap_R, hauteur / cap_H], du bord au sommet (hauteurs croissantes)
 cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.45, 0.5], [0.38, 0.58],
              [0.43, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
-cap_neck = [0.2, 0.55];  // col : le haut se déporte de l'axe du bas jusqu'à J1 entre ces deux hauteurs (/ cap_H)
+cap_top = [4, 3];       // déport du haut par rapport à l'axe du disque (repère du chapeau), vers le côté penché
+cap_neck = [0.2, 0.55];  // col : ce déport s'installe entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
@@ -197,8 +198,8 @@ function prof(u) = let(x = u * prof_n, i = min(prof_n - 1, floor(x)), v = x - i,
   [b + (k1 + (k2 + k3 * v) * v) * v / 2, (k1 + (2 * k2 + 3 * k3 * v) * v) / 2];
 prof_zr = [for (i = [0 : 240]) let(p = prof(i / 240)[0]) [p[1], p[0]]];   // table hauteur -> rayon
 assert(min([for (i = [1 : 240]) prof_zr[i][0] - prof_zr[i - 1][0]]) > 0, "cap_shape : hauteurs non croissantes");
-// axe du dôme à la hauteur z : part de l'axe du disque, finit sur J1
-function cap_shift(z) = let(k = max(0, min(1, (z / cap_H - cap_neck[0]) / (cap_neck[1] - cap_neck[0])))) radio_p * k * k * (3 - 2 * k);
+// axe du dôme à la hauteur z : part de l'axe du disque, finit en cap_top
+function cap_shift(z) = let(k = max(0, min(1, (z / cap_H - cap_neck[0]) / (cap_neck[1] - cap_neck[0])))) cap_top * k * k * (3 - 2 * k);
 
 // contour : harmoniques 2 à 7 à phases aléatoires, pondérées autour de lobe_n, normalisées à lobe_amp
 function vsum(v, i = 0) = i < len(v) ? v[i] + vsum(v, i + 1) : 0;
@@ -228,7 +229,7 @@ function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]]
   [r * cos(phi) + c[0], r * sin(phi) + c[1], z];
 // rayon intérieur du dôme à la hauteur zz (repère du dôme)
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
-apex = cap_pt(0, 90);   // repère du dôme, à l'aplomb de J1
+apex = cap_pt(0, 90);   // repère du dôme
 
 function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
@@ -598,7 +599,7 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
-echo(str("Sommet du dôme à l'aplomb de J1 « RADIO » en ", [for (v = radio_p) round(v * 100) / 100], ", ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte"));
+echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 10) / 10], " (J1 « RADIO » en ", [for (v = radio_p) round(v * 10) / 10], "), ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte ; ", round(collar_h * sin(cap_tilt) + apex[0] * cos(cap_tilt) + (apex[2] - cap_skirt) * sin(cap_tilt)), " mm de l'axe du pied en X"));
 echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
 echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; fils ", round(wire_gap), " mm au-dessus du berceau ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
