@@ -105,7 +105,7 @@ def diagram(doc):
     xs = 1080
     d.rectangle([M, y0, xs - 20, y0 + 1000], outline=(120, 120, 120), width=3)
     d.rectangle([xs + 20, y0, W - M, y0 + 1000], outline=(120, 120, 120), width=3)
-    d.text((M + 20, y0 + 15), "PIED (fourreau de l'accu)", font=F_BOLD, fill=(90, 90, 90))
+    d.text((M + 20, y0 + 15), "PIED ET CHAMBRE (berceau de l'accu)", font=F_BOLD, fill=(90, 90, 90))
     d.text((xs + 40, y0 + 15), "CHAPEAU (au-dessus du disque à lamelles)", font=F_BOLD, fill=(90, 90, 90))
 
     pts = {}
