@@ -114,9 +114,9 @@ fh_h = 8.5;        // hauteur de la femelle sous la carte
 mh_h = 2.5;        // plastique de la barrette mâle du breakout
 mh_pin = 6;        // broches mâles au-dessus du plastique (dessinées si fh_n < bme_pins)
 fh_clr = 1;        // jeu de la fenêtre du plancher autour des barrettes
-chg_w = 17;        // module de charge TP4056 micro-USB (à mesurer)
-chg_l = 26;
-chg_t = 1.6;
+chg_w = 17.15;     // module de charge TP4056 protégé, mesuré (Tars) : 28.7 prise et ergots de découpe compris
+chg_l = 28.7;
+chg_t = 0.9;
 chg_x = 40;        // plan de la carte du module
 usb_cut = [8.5, 12];
 
@@ -225,7 +225,7 @@ function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / c
 clear_pts = concat(
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + chamber_h + 9]],   // châssis
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + chamber_h + 23]],                                // composants
-  [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + 26]]);                                       // chargeur
+  [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + chg_l]]);                                       // chargeur
 // v <= 1 : le point est sous le dôme réduit de clear_m
 function v_in(p, rot) = let(zz = p[2] + cap_skirt, d = [p[0], p[1]] - cap_shift(zz))
   norm(d) / (inner_rr(atan2(d[1], d[0]), zz, rot) - clear_m);
