@@ -103,13 +103,13 @@ Pièces :
   - **plancher percé** (`deck`) sur des appuis, avec une fenêtre de 17,2 × 4,5 mm pour la barrette femelle ;
   - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : tournée de 180° (J1 côté −X), 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø38 en bas à Ø45 sous le fourreau, sans resserrement, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 72 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, évasement compris), plafond conique à 45° jusqu'à 70 mm (`ballast_h`) : ~73 cm³, soit ~343 g de billes d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
+- **Pied** (`stem`) en **poire d'amanite** d'après croquis : base bulbeuse (~106 × 96 mm au ventre, Ø70 à Ø85 sur la table), col Ø~42, Ø45 sous le fourreau, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 72 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, bulbe compris), plafond conique à 45° jusqu'à 70 mm (`ballast_h`) : ~220 cm³, soit ~1 kg de billes d'acier de 1 mm si on la remplit. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
   - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
-  - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
-  - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
+  - base bulbeuse dissymétrique (`bulb_r`, `bulb_z`, `bulb_up`, `bulb_dn`, `foot_dir`) : épaule plus marquée d'un côté, dessous arrondi à 44° au plus ;
+  - anneau en **coupelle** sous le chapeau (`ring_z`, `ring_ext`, `ring_rise`), bord relevé et ondulé (`ring_amp`), 45° au plus : sans support.
   - En haut, un tenon incliné de 6° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
 - **Berceau** (`cradle`) 74,8 × Ø28,6 mm : gouttière amovible pour une **18650 nue** (65 mm, téton plat ; `cell_l` pour une autre longueur), sans soudure sur l'accu. Deux **butées à languette** (plaque 13 × 11 mm, languette 3 × 7 percée) glissées dans des rainures : ressort côté « − » en bas, bossage côté « + » en haut (polarité gravée sur les bouts). Les languettes traversent le fond et sortent dans le méplat, où passent les fils jusqu'au fourreau (W1 rouge 40 mm, W2 noir 110 mm, soudé → JST-XH F, voir *Câblage*) ; on soude les fils sur les languettes, pas sur l'accu. L'accu entre par la fente du dessus en comprimant le ressort (≈ 4 mm, `spring_c`). Trou de tirage Ø2,5 en haut (ficelle, nœud à l'intérieur). Imprimé à plat, méplat sur le plateau, sans support. ![Berceau : monté et nu](rendu_champignon_berceau.png)
-- **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~115, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
+- **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~145, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
 - **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (écart mini `dot_gap`) : 99 (Ø6 × 45, Ø8 × 26, Ø10 × 28), l'écho OpenSCAD donne le nombre par taille.
 
 Hauteur totale ~300 mm.
@@ -176,7 +176,7 @@ Cheminement :
 
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), position de la prise du module de charge (`usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~910 g au total) : centre de gravité à ~108 mm de haut et ~3 mm vers +X, avec ~343 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~23° si l'appui va jusqu'au bord du sol (r ~49 mm), moins s'il est plus étroit ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
+- Stabilité : réglée par le lest, à vérifier une fois imprimé. Estimation (coque PETG pleine, appui r ~38 mm) : basculement vers ~15° sans lest, ~21° avec 350 g, ~28° avec la chambre pleine (~1 kg, ~1,7 kg au total, centre de gravité à ~69 mm). Un remplissage partiel suffit : à figer à la colle, pied à l'endroit.
 
 ## Visserie
 
