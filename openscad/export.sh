@@ -37,8 +37,8 @@ run mushroom.scad mushroom_stem    -D 'part="stem"'
 run mushroom.scad mushroom_ground  -D 'part="ground"'
 run mushroom.scad mushroom_cradle  -D 'part="cradle"'
 run mushroom.scad mushroom_plug    -D 'part="plug"'
-run mushroom.scad mushroom_dot6_x47  -D 'part="dot"' -D 'dot_d=6'
-run mushroom.scad mushroom_dot8_x29  -D 'part="dot"' -D 'dot_d=8'
+run mushroom.scad mushroom_dot6_x46  -D 'part="dot"' -D 'dot_d=6'
+run mushroom.scad mushroom_dot8_x28  -D 'part="dot"' -D 'dot_d=8'
 run mushroom.scad mushroom_dot10_x28 -D 'part="dot"' -D 'dot_d=10'
 
 fail=0

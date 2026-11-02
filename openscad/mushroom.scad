@@ -62,7 +62,8 @@ cap_H = 190;       // hauteur du dôme au-dessus de son bord
 cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.45, 0.5], [0.38, 0.58],
              [0.43, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
 cap_top = [4, 3];       // déport du haut par rapport à l'axe du disque (repère du chapeau), vers le côté penché
-cap_neck = [0.2, 0.55];  // col : ce déport s'installe entre ces deux hauteurs (/ cap_H)
+cap_lean = 8;      // le haut penche vers -X (contre cap_tilt), en pivotant là où le chapeau se resserre
+cap_neck = [0.4, 0.62];  // col : déport et penchement s'installent entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
@@ -199,7 +200,11 @@ function prof(u) = let(x = u * prof_n, i = min(prof_n - 1, floor(x)), v = x - i,
 prof_zr = [for (i = [0 : 240]) let(p = prof(i / 240)[0]) [p[1], p[0]]];   // table hauteur -> rayon
 assert(min([for (i = [1 : 240]) prof_zr[i][0] - prof_zr[i - 1][0]]) > 0, "cap_shape : hauteurs non croissantes");
 // axe du dôme à la hauteur z : part de l'axe du disque, finit en cap_top
-function cap_shift(z) = let(k = max(0, min(1, (z / cap_H - cap_neck[0]) / (cap_neck[1] - cap_neck[0])))) cap_top * k * k * (3 - 2 * k);
+function neck_k(z) = let(k = max(0, min(1, (z / cap_H - cap_neck[0]) / (cap_neck[1] - cap_neck[0])))) k * k * (3 - 2 * k);
+function cap_shift(z) = cap_top * neck_k(z);
+// penchement : rotation autour de la base du col, nulle sous le col (électronique, consoles et disque non concernés)
+function lean_pt(p) = let(a = cap_lean * neck_k(p[2]), dz = p[2] - cap_neck[0] * cap_H)
+  [p[0] * cos(a) - dz * sin(a), p[1], cap_neck[0] * cap_H + p[0] * sin(a) + dz * cos(a)];
 
 // contour : harmoniques 2 à 7 à phases aléatoires, pondérées autour de lobe_n, normalisées à lobe_amp
 function vsum(v, i = 0) = i < len(v) ? v[i] + vsum(v, i + 1) : 0;
@@ -226,7 +231,7 @@ function wav(phi, s = 0) = wav_r(phi, s, rot);
 // point de la surface : t de 0 (bord) à 90 (sommet) le long du méridien, off = retrait selon la normale
 function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]] / norm(m[1]), s = m[0][1] / cap_H,
   r = max(0, m[0][0] * wav(phi, s) - off * n[0]), z = m[0][1] - off * n[1], c = cap_shift(z))
-  [r * cos(phi) + c[0], r * sin(phi) + c[1], z];
+  lean_pt([r * cos(phi) + c[0], r * sin(phi) + c[1], z]);
 // rayon intérieur du dôme à la hauteur zz (repère du dôme)
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
 apex = cap_pt(0, 90);   // repère du dôme
@@ -282,7 +287,7 @@ module cap() {
         // plafond conique à 45° au sommet : le col étroit empêcherait de retirer des supports
         intersection() {
           translate([0, 0, -eps]) dome_solid(cap_t);
-          translate([apex[0], apex[1], 0]) cylinder(r1 = cap_H - cap_t, r2 = 0, h = cap_H - cap_t);
+          translate([apex[0], apex[1], 0]) cylinder(r1 = apex[2] - cap_t, r2 = 0, h = apex[2] - cap_t);
         }
       }
       corbels();
