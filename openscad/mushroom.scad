@@ -31,7 +31,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
-//   openscad --preview -D 'part="console"'  --camera=59,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
+//   openscad --preview -D 'part="console"'  --camera=56,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
 // Chapeau (cap_xf) : Z = 0 sous le disque à lamelles, axe incliné de cap_tilt vers +X.
@@ -68,6 +68,7 @@ vent_d = 5;        // évent : du haut du plafond vers le flanc, en descendant (
 vent_at = [90, 72]; // sortie de l'évent sur la surface : (phi, t) de cap_pt, côté arrière
 vent_clear = 14;   // pas de pois à moins de cette distance de la sortie
 win_h = 22;        // fenêtres du châssis, en haut de la chambre : l'air passe devant le BME280
+rim_w = 6;         // largeur du bord sur le plateau : le bas de la paroi s'épaissit vers l'intérieur (accroche, chapeau très haut)
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
 corbel_w = 12;     // consoles du dôme, au-dessus du disque : largeur (autour de la vis)
@@ -224,7 +225,9 @@ lobe_peak = max([for (i = [0 : 179]) abs(lobe_raw(2 * i))]);
 function lobe_at(phi, rot) = lobe_amp * lobe_raw(phi - rot) / lobe_peak;
 // déformation pleine au bord (s = 0), réduite à lobe_top au sommet (s = 1)
 function wav_r(phi, s, rot) = 1 + lobe_at(phi, rot) * (lobe_top + (1 - lobe_top) * (1 - s));
-function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / cap_H), rot) - cap_t;
+// surépaisseur du bord : pleine sous le disque, puis raccord à 45° (sans support)
+function rim_extra(z) = let(e = rim_w - cap_t) max(0, min(e, e - (z - cap_skirt)));
+function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / cap_H), rot) - cap_t - rim_extra(zz);
 // jeu : points de l'électronique (repère du chapeau) qui doivent rester à >= 3 mm sous le dôme
 clear_pts = concat(
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + chamber_h + 9]],   // châssis
@@ -240,7 +243,7 @@ rot = lobe_rot >= 0 ? lobe_rot : best_rot;
 function wav(phi, s = 0) = wav_r(phi, s, rot);
 // point de la surface : t de 0 (bord) à 90 (sommet) le long du méridien, off = retrait selon la normale
 function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]] / norm(m[1]), s = m[0][1] / cap_H,
-  r = max(0, m[0][0] * wav(phi, s) - off * n[0]), z = m[0][1] - off * n[1], c = cap_shift(z))
+  e = off > 0 ? rim_extra(m[0][1]) : 0, r = max(0, m[0][0] * wav(phi, s) - off * n[0] - e), z = m[0][1] - off * n[1], c = cap_shift(z))
   lean_pt([r * cos(phi) + c[0], r * sin(phi) + c[1], z]);
 // rayon intérieur du dôme à la hauteur zz (repère du dôme)
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
@@ -331,6 +334,7 @@ function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
 // angles où une lamelle gênerait : vis du dôme, prise USB, vis du châssis, vis du fourreau
 ch_screws = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (ix - 2.5), sy * (iy - 2.5)]];
 gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [180, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
+assert(min([for (a = [-12 : 2 : 12]) inner_min(a) - disc_fit]) >= chg_x + chg_t + 1.5 + usb_cut[0] / 2 + 2, "Disque trop petit autour de la prise USB");
 function gill_ok(a) = min([for (s = gill_skip) adiff(a, s[0]) - s[1]]) > 0;
 
 module gills() {
