@@ -96,7 +96,7 @@ Variante décorative, type amanite, qui ne remplace pas le boîtier mural. Le ch
 
 Pièces :
 
-- **Dôme** (`cap`) ~147 × 147 × 190 mm (rayon maxi moyen 72) : **gourde** d'après croquis, méridien `cap_shape` (bas large, taille Ø~55, haut Ø~72), **contour lobé** issu d'un générateur (voir ci-dessous). Le haut se déporte de l'axe du disque (`cap_neck`) pour que le sommet tombe à l'aplomb de **J1 « RADIO »** (module 433 MHz), selon l'axe de la carte et non la verticale (`radio_k`) : 167 mm au-dessus de la carte, côté penché (+X) ; le gros du bas part à l'opposé, côté évasement du pied. Plafond intérieur conique à 45°, sans support : le haut est plein sous le sommet. Son bord descend de 4 mm sous le disque à lamelles (cache sa tranche). Fixation : 3 **consoles** sur la paroi intérieure, juste au-dessus du disque (`corbel_*` : 12 mm de large, face droite de 10 mm puis chanfrein à 45° jusqu'à la paroi, trou pilote Ø2,5 × 8) ; le disque monte dans le dôme et y est plaqué par 3 vis M3 × 10 auto-taraudeuses par en dessous, têtes sous le disque entre les lamelles. ![Coupe par une console](rendu_champignon_console.png)
+- **Dôme** (`cap`) ~147 × 147 × 190 mm (rayon maxi moyen 72) : **gourde** d'après croquis, méridien `cap_shape` (bas large, taille Ø~55, haut Ø~72), **contour lobé** issu d'un générateur (voir ci-dessous). Le haut ne se déporte que légèrement de l'axe du disque (`cap_top`, `cap_neck`), pour ramener la masse vers l'axe du pied : sommet à 167 mm au-dessus de la carte, à ~26 mm de l'axe du pied côté penché (+X) ; **J1 « RADIO »** (module 433 MHz) reste dans le col, à ~14 mm de l'axe du haut. Le gros du bas part à l'opposé, côté évasement du pied. Plafond intérieur conique à 45°, sans support : le haut est plein sous le sommet. Son bord descend de 4 mm sous le disque à lamelles (cache sa tranche). Fixation : 3 **consoles** sur la paroi intérieure, juste au-dessus du disque (`corbel_*` : 12 mm de large, face droite de 10 mm puis chanfrein à 45° jusqu'à la paroi, trou pilote Ø2,5 × 8) ; le disque monte dans le dôme et y est plaqué par 3 vis M3 × 10 auto-taraudeuses par en dessous, têtes sous le disque entre les lamelles. ![Coupe par une console](rendu_champignon_console.png)
 - **Lamelles** (`gills`) : disque qui ferme le dessous du chapeau, au contour du plus étroit de la jupe du dôme moins 0,4 mm (`disc_fit`) pour passer les creux des lobes, 48 lames radiales plus profondes près du pied (`gill_depth`), fentes de ventilation entre les lames sous la chambre du capteur (y compris côté +X, à 0° et ±7,5°, au ras du bord +X du BME280), ouverture de la prise USB, fourreau central qui reçoit le tenon du pied. S'imprime lames vers le haut.
 - **Châssis** (`chassis`) vissé sur le disque (4 vis M3 par en dessous), imprimé debout :
   - chambre du bas (8 mm), ventilée : **BME280 enfiché sous la carte**, sans fil ni glissière (voir *Câblage*) ; le breakout pend parallèle à la carte, capteur vers le disque, à 2 mm au-dessus du disque ;
@@ -110,7 +110,7 @@ Pièces :
   - En haut, un tenon incliné de 6° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
 - **Berceau** (`cradle`) 74,8 × Ø28,6 mm : gouttière amovible pour une **18650 nue** (65 mm, téton plat ; `cell_l` pour une autre longueur), sans soudure sur l'accu. Deux **butées à languette** (plaque 13 × 11 mm, languette 3 × 7 percée) glissées dans des rainures : ressort côté « − » en bas, bossage côté « + » en haut (polarité gravée sur les bouts). Les languettes traversent le fond et sortent dans le méplat, où passent les fils jusqu'au fourreau (W1 rouge 40 mm, W2 noir 110 mm, soudé → JST-XH F, voir *Câblage*) ; on soude les fils sur les languettes, pas sur l'accu. L'accu entre par la fente du dessus en comprimant le ressort (≈ 4 mm, `spring_c`). Trou de tirage Ø2,5 en haut (ficelle, nœud à l'intérieur). Imprimé à plat, méplat sur le plateau, sans support. ![Berceau : monté et nu](rendu_champignon_berceau.png)
 - **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~115, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
-- **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (écart mini `dot_gap`) : 102 (Ø6 × 45, Ø8 × 29, Ø10 × 28), l'écho OpenSCAD donne le nombre par taille.
+- **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (écart mini `dot_gap`) : 104 (Ø6 × 47, Ø8 × 29, Ø10 × 28), l'écho OpenSCAD donne le nombre par taille.
 
 Hauteur totale ~300 mm.
 
@@ -170,13 +170,13 @@ Cheminement :
 - Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 120 mm, JST-XH M → TP4056 soudé) dans le fourreau du pied, juste au-dessus du berceau : soulever le chapeau (~20 mm) suffit pour la débrancher.
 - W3 / W4 (rouge / noir, 120 mm, JST-XH M → TP4056 soudé) montent par le trou central du disque, moitié +Y (évite le BME), sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
 - W5 / W6 (rouge / noir, 100 mm, soudé → bornier à vis) passent au-dessus de la carte jusqu'à J13.
-- Antenne 433 MHz : droite, de J1 « RADIO » dans le haut de la gourde (sommet à l'aplomb de J1).
+- Antenne 433 MHz : droite, de J1 « RADIO » dans le haut de la gourde (J1 à ~14 mm de l'axe du haut, garder l'antenne dégagée de la paroi).
 
 ### Points ouverts
 
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~620 g au total) : centre de gravité à ~126 mm de haut et ~10 mm vers +X, seulement ~90 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~13–20° selon la largeur d'appui réelle ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
+- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~680 g au total) : centre de gravité à ~122 mm de haut et ~6 mm vers +X, seulement ~90 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~19° si l'appui va jusqu'au bord du sol (r ~49 mm), moins s'il est plus étroit ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
 
 ## Visserie
 
