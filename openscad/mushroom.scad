@@ -30,7 +30,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
-//   openscad --preview -D 'part="sensor"'   --camera=18,-5,146,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=-18,5,146,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=59,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
@@ -49,9 +49,9 @@ cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 crop_w = 60.02;
 crop_h = 38.974;
 pcb_t = 1.6;
-pcb_holes = [[-26.1243, 15.6770], [25.9902, 15.5130]];   // MH5, MH1 du haut
+pcb_holes = [[26.1243, -15.6770], [-25.9902, -15.5130]];   // MH5, MH1 du haut, carte tournée de 180°
 k_crop_c = [177.01008, 67.51316];  // centre de la découpe (KiCad) : local = [x - cx, cy - y]
-i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), broche 1 ; broches vers -X
+i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), broche 1 ; broches vers +X une fois la carte tournée
 radio_k = [192.99936, 56.86044];   // J1 « RADIO » (1x3, module 433 MHz debout) : le sommet du dôme est à son aplomb
 
 /* [Chapeau] */
@@ -61,9 +61,8 @@ cap_H = 190;       // hauteur du dôme au-dessus de son bord
 // méridien de la gourde, d'après le croquis : [rayon / cap_R, hauteur / cap_H], du bord au sommet (hauteurs croissantes)
 cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.45, 0.5], [0.38, 0.58],
              [0.43, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
-cap_top = [4, 3];       // déport du haut par rapport à l'axe du disque (repère du chapeau), vers le côté penché
 cap_lean = 8;      // le haut penche vers -X (contre cap_tilt), en pivotant là où le chapeau se resserre
-cap_neck = [0.4, 0.62];  // col : déport et penchement s'installent entre ces deux hauteurs (/ cap_H)
+cap_neck = [0.4, 0.62];  // col : déport (calculé pour le sommet sur J1) et penchement s'installent entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
@@ -181,8 +180,10 @@ ch_z = disc_t;                      // bas du châssis
 deck_z = ch_z + chamber_h;          // dessus des appuis du plancher
 pcb_z = deck_z + deck_t + pcb_gap;  // dessous de la carte
 ch_h = pcb_z - ch_z;
-i2c_p1 = [i2c_k[0] - k_crop_c[0], k_crop_c[1] - i2c_k[1]];   // broche 1 dans le repère du chapeau
-radio_p = [radio_k[0] - k_crop_c[0], k_crop_c[1] - radio_k[1]];   // J1, idem (= repère du dôme en XY)
+// carte tournée de 180° dans le châssis : J1 passe du côté -X, sous le haut penché du chapeau
+i2c_p1 = [k_crop_c[0] - i2c_k[0], i2c_k[1] - k_crop_c[1]];   // broche 1 dans le repère du chapeau
+radio_p = [k_crop_c[0] - radio_k[0], radio_k[1] - k_crop_c[1]];   // J1, idem (= repère du dôme en XY)
+cap_top = [(radio_p[0] + (1 - cap_neck[0]) * cap_H * sin(cap_lean)) / cos(cap_lean), radio_p[1]];   // déport qui met le sommet penché sur J1
 bme_z = pcb_z - fh_h - mh_h;        // dessus du breakout
 
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
@@ -368,7 +369,7 @@ module chassis() {
         rotate([0, 90, 0]) linear_extrude(2 * ix) polygon([[0, 0], [1.5, 0], [0, -1.5]]);
       // coins : bossages des vis du châssis (bas) ; coins hauts pleins jusqu'à la carte (vis M2.5 de la carte)
       for (p = ch_screws) translate([p[0] > 0 ? ix - 7 : -ix, p[1] > 0 ? iy - 7 : -iy, 0])
-        cube([7, 7, p[1] > 0 ? ch_h : chamber_h - 1]);
+        cube([7, 7, p[1] < 0 ? ch_h : chamber_h - 1]);
       // glissière du module de charge, tenue par deux bras sur la paroi +X
       translate([chg_x, 0, 0]) rails(chg_w, chg_t, 20);
       for (s = [-1, 1]) translate([ix + ch_wall - eps, s > 0 ? chg_w / 2 - 1 : -chg_w / 2 - 2, 0]) cube([chg_x - 1.5 - ix - ch_wall + 2 * eps, 3, 20]);
@@ -394,7 +395,7 @@ module deck() {
     for (p = ch_screws) translate([p[0] - 4.6, p[1] - 4.6, -1]) cube([9.2, 9.2, deck_t + 2]);
     for (x = [-24 : 6 : 24], y = [-15 : 6 : 15]) translate([x + (round(y / 6) % 2) * 3, y, -1]) cylinder(d = 4, h = deck_t + 2, $fn = 6);
     // fenêtre de la barrette femelle I2C
-    translate([i2c_p1[0] - (bme_pins - 0.5) * hdr_p - fh_clr, i2c_p1[1] - hdr_p / 2 - fh_clr, -1])
+    translate([i2c_p1[0], i2c_p1[1], -1]) rotate(180) translate([-(bme_pins - 0.5) * hdr_p - fh_clr, -hdr_p / 2 - fh_clr, 0])
       cube([bme_pins * hdr_p + 2 * fh_clr, hdr_p + 2 * fh_clr, deck_t + 2]);
   }
 }
@@ -593,10 +594,10 @@ module assembled() {
   cap_xf() {
     color("Ivory") gills();
     color("Beige") chassis();
-    translate([i2c_p1[0], i2c_p1[1], pcb_z]) bme();
+    translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
     translate([chg_x + 0.15, 0, ch_z]) charger();
     color("WhiteSmoke") translate([0, 0, deck_z]) deck();
-    translate([0, 0, pcb_z]) pcb_v22_cropped(jst_eh = false);
+    translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
     translate([0, 0, -cap_skirt]) {
       color(cap_color) cap();
       for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
@@ -621,7 +622,7 @@ else if (part == "plug") cylinder(d = plug_d, h = plug_t);
 else if (part == "dot") dot(dot_d);
 else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous la carte
   assembled();
-  translate([-100, 0.5, 70]) cube([200, 90, 150]);   // la caméra doit rester hors du volume retiré
+  translate([-100, -90.5, 70]) cube([200, 90, 150]);   // la caméra doit rester hors du volume retiré
   translate([-100, -100, 70]) cube([200, 200, 30]);
 }
 else if (part == "console") console_cut(tab_a[0]);
