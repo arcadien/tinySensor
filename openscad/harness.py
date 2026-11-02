@@ -150,7 +150,6 @@ def diagram(doc):
     d.rounded_rectangle([cx0, P3 - 90, cx1, P4 + 90], radius=20, outline="black", width=5, fill=(30, 80, 160))
     d.text(((cx0 + cx1) / 2, (P3 + P4) / 2 - 30), "micro", font=F_BOLD, fill="white", anchor="mm")
     d.text(((cx0 + cx1) / 2, (P3 + P4) / 2 + 30), "USB", font=F_BOLD, fill="white", anchor="mm")
-    d.text(((cx0 + cx1) / 2, P3 - 105), "breakout", font=F_SMALL, fill="black", anchor="mb")
     pts["usb+"], pts["usb-"] = (cx1, P3), (cx1, P4)
     d.rectangle([jx - 70, P3 - 50, jx, P4 + 50], outline="black", width=4, fill=(250, 250, 250))
     d.rectangle([jx, P3 - 50, jx + 70, P4 + 50], outline="black", width=4, fill=(220, 220, 220))
