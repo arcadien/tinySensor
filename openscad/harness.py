@@ -28,6 +28,14 @@ WIRES = [
      "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "≥ 24 AWG"),
     ("W6", "noir",  "GND",   "tpO-",  "TP4056 OUT−", "soudé",
      "j13-2", "J13 borne 2 (GND)", "bornier à vis", 70, "≥ 24 AWG"),
+    ("W7", "rouge", "VUSB", "usb+", "breakout micro-USB VBUS", "soudé",
+     "jsuF1", "2e JST-XH 2p, broche 1", "JST-XH F (côté berceau)", 160, "≥ 24 AWG, 1 bague"),
+    ("W8", "noir",  "GND USB", "usb-", "breakout micro-USB GND", "soudé",
+     "jsuF2", "2e JST-XH 2p, broche 2", "JST-XH F (côté berceau)", 160, "≥ 24 AWG, 1 bague"),
+    ("W9", "rouge", "VUSB", "jsuM1", "2e JST-XH 2p, broche 1", "JST-XH M (côté chapeau)",
+     "tpI+", "TP4056 IN+", "soudé", 110, "≥ 24 AWG, 1 bague"),
+    ("W10", "noir", "GND USB", "jsuM2", "2e JST-XH 2p, broche 2", "JST-XH M (côté chapeau)",
+     "tpI-", "TP4056 IN−", "soudé", 110, "≥ 24 AWG, 1 bague"),
 ]
 COLORS = {"rouge": (200, 20, 20), "noir": (0, 0, 0)}
 
@@ -38,11 +46,14 @@ NOTES = [
     "CSB tombe sur la broche 5 (non connectée : le tirage du breakout garde le mode I2C), SDO sur la 6 "
     "(GND : adresse 0x76, celle du firmware).",
     "Pas de résistance dans le faisceau : les tirages I2C R2/R3 (4,7 kΩ) sont sur la carte.",
-    "La paire JST-XH se loge dans la chambre, juste au-dessus du berceau : on soulève "
-    "le chapeau (≈ 50 mm) pour la débrancher par le trou central du disque.",
+    "Les deux paires JST-XH se logent dans la chambre, juste au-dessus du berceau : on soulève "
+    "le chapeau (≈ 50 mm) pour les débrancher par le trou central du disque. La paire VUSB porte "
+    "1 bague de gaine à chaque extrémité, pour ne pas la croiser avec la paire accu.",
+    "W7/W8 sortent du breakout, montent par le conduit du lest (Ø4), puis le long du méplat du berceau avec W2. "
+    "Prise micro-USB du TP4056 dessoudée : W9/W10 sur ses pastilles IN.",
     "W3/W4 sortent de la "
     "chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (debout dans "
-    "sa glissière à x = 40, micro-USB vers le bas, pastilles en haut). W5/W6 passent par-dessus la paroi +X du châssis jusqu'à J13.",
+    "sa glissière à x = 40, pastilles IN en bas, B+/B−/OUT en haut). W5/W6 passent par-dessus la paroi +X du châssis jusqu'à J13.",
     "L'antenne monte droit depuis le module radio (J1 « RADIO ») dans le haut de la gourde, dont le sommet est dans l'axe de J1.",
     "Longueurs : calculées sur le modèle, chapeau soulevé de 50 mm, avec 15 à 25 mm de marge ; à ajuster au montage.",
 ]
@@ -101,11 +112,13 @@ def diagram(doc):
     d = doc.d
     y0 = doc.y
     P1, P2 = y0 + 360, y0 + 650           # lignes des fils + et −
+    P3, P4 = P2 + 560, P2 + 850           # lignes VUSB
+    FRAME = 1650
     # zones pied / chapeau
     xs = 1080
-    d.rectangle([M, y0, xs - 20, y0 + 1000], outline=(120, 120, 120), width=3)
-    d.rectangle([xs + 20, y0, W - M, y0 + 1000], outline=(120, 120, 120), width=3)
-    d.text((M + 20, y0 + 15), "PIED ET CHAMBRE (berceau de l'accu)", font=F_BOLD, fill=(90, 90, 90))
+    d.rectangle([M, y0, xs - 20, y0 + FRAME], outline=(120, 120, 120), width=3)
+    d.rectangle([xs + 20, y0, W - M, y0 + FRAME], outline=(120, 120, 120), width=3)
+    d.text((M + 20, y0 + 15), "PIED ET CHAMBRE (berceau, prise USB)", font=F_BOLD, fill=(90, 90, 90))
     d.text((xs + 40, y0 + 15), "CHAPEAU (au-dessus du disque à lamelles)", font=F_BOLD, fill=(90, 90, 90))
 
     pts = {}
@@ -133,14 +146,30 @@ def diagram(doc):
     pts["jstF1"], pts["jstF2"] = (jx - 70, P1), (jx - 70, P2)
     pts["jstM1"], pts["jstM2"] = (jx + 70, P1), (jx + 70, P2)
 
+    # breakout micro-USB et 2e paire JST-XH
+    d.rounded_rectangle([cx0, P3 - 90, cx1, P4 + 90], radius=20, outline="black", width=5, fill=(30, 80, 160))
+    d.text(((cx0 + cx1) / 2, (P3 + P4) / 2 - 30), "micro", font=F_BOLD, fill="white", anchor="mm")
+    d.text(((cx0 + cx1) / 2, (P3 + P4) / 2 + 30), "USB", font=F_BOLD, fill="white", anchor="mm")
+    d.text(((cx0 + cx1) / 2, P3 - 105), "breakout", font=F_SMALL, fill="black", anchor="mb")
+    pts["usb+"], pts["usb-"] = (cx1, P3), (cx1, P4)
+    d.rectangle([jx - 70, P3 - 50, jx, P4 + 50], outline="black", width=4, fill=(250, 250, 250))
+    d.rectangle([jx, P3 - 50, jx + 70, P4 + 50], outline="black", width=4, fill=(220, 220, 220))
+    for i, y in enumerate((P3, P4), 1):
+        d.text((jx, y), str(i), font=F_BOLD, fill="black", anchor="mm")
+    d.text((jx, (P3 + P4) / 2 - 22), "2e JST-XH", font=F_SMALL, fill="black", anchor="mm")
+    d.text((jx, (P3 + P4) / 2 + 22), "2p", font=F_SMALL, fill="black", anchor="mm")
+    pts["jsuF1"], pts["jsuF2"] = (jx - 70, P3), (jx - 70, P4)
+    pts["jsuM1"], pts["jsuM2"] = (jx + 70, P3), (jx + 70, P4)
+
     # TP4056
     tx0, tx1 = 1380, 1620
-    d.rectangle([tx0, P1 - 100, tx1, P2 + 100], outline="black", width=5, fill=(30, 80, 160))
+    d.rectangle([tx0, P1 - 100, tx1, P4 + 100], outline="black", width=5, fill=(30, 80, 160))
     d.text(((tx0 + tx1) / 2, (P1 + P2) / 2 - 40), "TP4056", font=F_BOLD, fill="white", anchor="mm")
-    d.text(((tx0 + tx1) / 2, (P1 + P2) / 2 + 15), "micro-USB", font=F_SMALL, fill="white", anchor="mm")
-    d.text(((tx0 + tx1) / 2, (P1 + P2) / 2 + 55), "vers le bas", font=F_SMALL, fill="white", anchor="mm")
+    d.text(((tx0 + tx1) / 2, (P1 + P2) / 2 + 15), "prise USB", font=F_SMALL, fill="white", anchor="mm")
+    d.text(((tx0 + tx1) / 2, (P1 + P2) / 2 + 55), "dessoudée", font=F_SMALL, fill="white", anchor="mm")
     for x, y, name, key, anc in ((tx0, P1, "B+", "tpB+", "lm"), (tx0, P2, "B−", "tpB-", "lm"),
-                                 (tx1, P1, "OUT+", "tpO+", "rm"), (tx1, P2, "OUT−", "tpO-", "rm")):
+                                 (tx1, P1, "OUT+", "tpO+", "rm"), (tx1, P2, "OUT−", "tpO-", "rm"),
+                                 (tx0, P3, "IN+", "tpI+", "lm"), (tx0, P4, "IN−", "tpI-", "lm")):
         d.rectangle([x - 14, y - 14, x + 14, y + 14], fill=(210, 170, 60), outline="black", width=2)
         d.text((x + (22 if anc == "lm" else -22), y), name, font=F_SMALL, fill="white", anchor=anc)
         pts[key] = (x, y)
@@ -170,7 +199,7 @@ def diagram(doc):
             xk = xb - 60
             d.line([(xa, ya), (xk, ya), (xk, yb), (xb, yb)], fill=rgb, width=10, joint="curve")
             xm, ym = (xa + xk) / 2, ya
-        below = sig in ("B−", "GND")
+        below = sig in ("B−", "GND", "GND USB")
         lines = ["%s  %s %s" % (wid, col, sig), "%d mm · %s" % (length, awg), a_end + " →", b_end]
         fl = [F_BOLD, F_SMALL, F_SMALL, F_SMALL]
         tw = max(d.textlength(t, font=f) for t, f in zip(lines, fl))
@@ -180,7 +209,7 @@ def diagram(doc):
         for t, f in zip(lines, fl):
             d.text((xm, ty), t, font=f, fill=rgb if f is F_BOLD else "black", anchor="mt")
             ty += lh(f)
-    doc.y = y0 + 1000 + 60
+    doc.y = y0 + FRAME + 60
 
 
 def table(doc):
