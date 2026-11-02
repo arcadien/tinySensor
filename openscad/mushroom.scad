@@ -123,8 +123,7 @@ ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
 fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
 plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
-stem_r = 16.5;     // rayon du fût sous l'évasement du haut (19 en bas)
-flare_h = 14;      // évasement du haut, sous le fourreau
+stem_r = 19;       // rayon du fût en bas, il s'élargit régulièrement jusqu'au fourreau (collar_r)
 stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
 stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
 foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
@@ -404,14 +403,13 @@ ring_T = hterms(lobe_seed + 202, 4);  ring_P = hpeak(ring_T);
 ring_T2 = hterms(lobe_seed + 303, 5); ring_P2 = hpeak(ring_T2);
 ground_T = hterms(grass_seed, 4);     ground_P = hpeak(ground_T);
 
-function base_r(z) = z <= stem_h - flare_h ? 19 - (19 - stem_r) * z / (stem_h - flare_h)
-  : z <= stem_h ? stem_r + (collar_r - stem_r) * pow((z - stem_h + flare_h) / flare_h, 1.3) : collar_r;
+function base_r(z) = stem_r + (collar_r - stem_r) * min(1, z / stem_h);
 // rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + évasement dissymétrique de la base
 // (concave, pente à 45° au plus au pied, rayon décroissant en montant : imprimable)
 function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 côté grand évasement, 0 à l'opposé
 function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[1] - foot_flare[0]) * w,
   Hf = foot_flare_h[0] + (foot_flare_h[1] - foot_flare_h[0]) * w, fl = z < Hf ? F * pow(1 - z / Hf, 2) : 0,
-  fade = max(0, min(1, (stem_h - flare_h - z) / 15)))
+  fade = max(0, min(1, (stem_h - z) / 15)))
   base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
 
 // volume de la chambre à lest (cm³), intégré en tranches
