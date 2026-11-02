@@ -5,14 +5,15 @@
 // toute l'électronique est dans le chapeau, le pied ne porte que l'accu.
 //
 //   cap     : dôme en gourde (croquis), bord ondulé ; 3 consoles intérieures au-dessus du disque, vis M3 par en dessous (autotaraudées)
-//   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, prise USB, fourreau sur le pied
+//   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, fourreau sur le pied
 //   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
-//             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
+//             plancher, carte v2.2 découpée, glissière du module de charge
 //   deck    : plancher percé entre la chambre et la carte, fenêtre du connecteur I2C (barrette femelle traversante)
-//   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
+//   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, renflement avec prise USB, corolle ondulée, tenon incliné en haut
 //   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
 //   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
 //   plug    : bouchon de la chambre à lest (sous le berceau), collé dans le lamage du fond
+//   usb_cover : plaque collée sur la face du renflement, tient le breakout micro-USB dans sa niche
 //   dot     : pois blancs rapportés, collés dans les logements du dôme
 //
 // Export (toutes les pièces dans leur sens d'impression) :
@@ -24,11 +25,13 @@
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # sol + herbe, en vert ; pied collé dessus
 //   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # à plat, méplat sur le plateau
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
+//   openscad -D 'part="usb_cover"' -o mushroom_usb_cover.3mf mushroom.scad
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
 //   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=-20,-7,30,75,0,290,260 --imgsize=1000,800 -o rendu_champignon_usb.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=59,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
@@ -41,7 +44,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+part = "assembly"; // [assembly, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, usb_cover, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
@@ -114,11 +117,10 @@ fh_h = 8.5;        // hauteur de la femelle sous la carte
 mh_h = 2.5;        // plastique de la barrette mâle du breakout
 mh_pin = 6;        // broches mâles au-dessus du plastique (dessinées si fh_n < bme_pins)
 fh_clr = 1;        // jeu de la fenêtre du plancher autour des barrettes
-chg_w = 17;        // module de charge TP4056 micro-USB (à mesurer)
-chg_l = 26;
+chg_w = 17.15;     // module de charge TP4056, prise micro-USB dessoudée (mesures Tars)
+chg_l = 26.3;
 chg_t = 1.6;
 chg_x = 40;        // plan de la carte du module
-usb_cut = [8.5, 12];
 
 /* [Pied] */
 stem_h = 95;       // centre du haut du pied (sous le fourreau)
@@ -135,6 +137,16 @@ stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
 foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
 foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côté
 foot_dir = 200;    // direction du grand évasement (°)
+bump = [13, 36, 16];   // renflement du pied, côté évasement : saillie, demi-largeur (°), demi-hauteur
+usb_face = 33;     // face plate du renflement : distance à l'axe du pied
+usb_z = 17;        // hauteur du centre de la prise (au-dessus de la frange d'herbe)
+usb_b = [14.3, 16, 1.5];  // breakout micro-USB mesuré (Tars) : largeur, longueur, épaisseur
+usb_rec = [7.85, 2.47];   // prise : largeur, hauteur au-dessus de la carte
+usb_tails = 1.2;   // soudures sous la carte
+usb_plate = [20, 13, 1.6];  // plaque collée sur la face : tient le breakout dans sa niche
+usb_wall = 1.6;    // paroi entre la niche et le lest
+duct_d = 4;        // conduit des fils, de la niche au logement de l'accu
+duct_top_r = 12.5; // débouché du conduit, dans le méplat du berceau
 ring_z = 60;       // anneau (corolle)
 ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
 
@@ -326,7 +338,7 @@ function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0
 function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
 // angles où une lamelle gênerait : vis du dôme, prise USB, vis du châssis, vis du fourreau
 ch_screws = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (ix - 2.5), sy * (iy - 2.5)]];
-gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [180, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
+gill_skip = concat([for (a = tab_a) [a, 7]], [[180, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
 function gill_ok(a) = min([for (s = gill_skip) adiff(a, s[0]) - s[1]]) > 0;
 
 module gills() {
@@ -352,8 +364,6 @@ module gills() {
     // du BME280, le reste du breakout est au-dessus du fourreau)
     for (i = [0 : n_gills - 1]) let(a = i * 360 / n_gills)
       rotate([0, 0, a]) translate([collar_r + 1, -0.8, -1]) cube([min(ix / max(abs(cos(a)), 0.01), iy / max(abs(sin(a)), 0.01), 31) - collar_r - 1, 1.6, disc_t + 2]);
-    // prise micro-USB
-    translate([chg_x + chg_t + 1.5 - usb_cut[0] / 2, -usb_cut[1] / 2, -1]) cube([usb_cut[0], usb_cut[1], disc_t + 2]);
     // vis du dôme : passage, têtes sous le disque entre les lamelles
     for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, -1]) cylinder(d = m3_clear, h = disc_t + 2);
     // vis du châssis, têtes sous le disque
@@ -426,11 +436,47 @@ function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 côté gran
 function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[1] - foot_flare[0]) * w,
   Hf = foot_flare_h[0] + (foot_flare_h[1] - foot_flare_h[0]) * w, fl = z < Hf ? F * pow(1 - z / Hf, 2) : 0,
   fade = max(0, min(1, (stem_h - z) / 15)))
-  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
+  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl
+  + bump[0] * exp(-pow(adiff(phi, foot_dir) / bump[1], 2) - pow((z - usb_z) / bump[2], 2));
+
+// niche du breakout (repère usb_xf : X vers l'extérieur) : il entre par la face, carte contre la plaque
+usb_u0 = usb_face - usb_plate[2] - usb_b[1];
+usb_v = usb_b[0] / 2 + 0.3;
+usb_z0 = usb_z - usb_rec[1] / 2 - usb_b[2] - usb_tails;
+usb_z1 = usb_z + usb_rec[1] / 2 + 0.3;
+usb_mid = (usb_z0 + usb_z1) / 2;
+usb_min = min([for (s = [-1, 1], t = [-1, 1]) stem_rr(foot_dir + s * atan(usb_plate[0] / 2 / usb_face), usb_mid + t * usb_plate[1] / 2)]);
+assert(usb_min >= usb_face, str("Renflement trop petit pour la plaque USB : ", usb_min, " < ", usb_face));
+module usb_xf() { rotate([0, 0, foot_dir]) children(); }
+module usb_duct(d) { usb_xf() hull() {
+  translate([usb_u0 + 2, 0, usb_z1 - 1]) cylinder(d = d, h = 1, $fn = 24);
+  translate([duct_top_r, 0, bore_z]) cylinder(d = d, h = 1, $fn = 24);
+} }
+// matière gardée dans la chambre : jusqu'au fond, un dessous plat dans la chambre fermée ne s'imprimerait pas
+module usb_keep() {
+  usb_xf() translate([usb_u0 - usb_wall, -usb_v - usb_wall, 0]) cube([60, 2 * (usb_v + usb_wall), usb_z1 + usb_wall]);
+  usb_duct(duct_d + 2 * usb_wall);
+}
+module usb_cuts() {
+  usb_xf() {
+    translate([usb_face, -usb_plate[0] / 2 - 3, usb_mid - usb_plate[1] / 2 - 3]) cube([30, usb_plate[0] + 6, usb_plate[1] + 6]);   // face plate
+    translate([usb_face - usb_plate[2] - 0.1, -usb_plate[0] / 2 - 0.2, usb_mid - usb_plate[1] / 2 - 0.2]) cube([5, usb_plate[0] + 0.4, usb_plate[1] + 0.4]);   // lamage
+    translate([usb_u0, -usb_v, usb_z0]) cube([usb_face - usb_u0, 2 * usb_v, usb_z1 - usb_z0]);
+  }
+  usb_duct(duct_d);
+}
+module usb_cover() {   // à plat ; fenêtre de la prise, surmoulage de fiche 7,9 x 5,5 devant
+  difference() {
+    translate([-usb_plate[0] / 2, -usb_plate[1] / 2, 0]) cube([usb_plate[0], usb_plate[1], usb_plate[2]]);
+    translate([-usb_rec[0] / 2 - 0.3, usb_z - usb_mid - usb_rec[1] / 2 - 0.3, -1]) cube([usb_rec[0] + 0.6, usb_rec[1] + 0.6, usb_plate[2] + 2]);
+  }
+}
 
 // volume de la chambre à lest (cm³), intégré en tranches
 ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
-  let(r = max(0, min(stem_rr(i * 360 / na, z) - ballast_wall, ballast_top - z))) 0.5 * r * r * (2 * PI / na) * dz])]) / 1000;
+  let(r = max(0, min(stem_rr(i * 360 / na, z) - ballast_wall, ballast_top - z))) 0.5 * r * r * (2 * PI / na) * dz])]) / 1000
+  - vsum([for (z = [foot_t : 0.5 : usb_z1 + usb_wall]) 2 * (usb_v + usb_wall) * max(0, stem_rr(foot_dir, z) - ballast_wall - usb_u0 + usb_wall) * 0.5]) / 1000
+  - PI * pow(duct_d / 2 + usb_wall, 2) * (ballast_top - duct_top_r - usb_z1) / 1000;
 
 stem_zs = [for (z = [0 : 1.5 : stem_h + 6]) z];
 module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (intérieur de la chambre à lest)
@@ -469,10 +515,14 @@ module stem() {
     translate([0, 0, bore_z]) cylinder(r = bore_r, h = stem_h + 40);
     // chambre à lest : suit la peau du pied (paroi ballast_wall, pentes <= 45° comme l'évasement),
     // plafond conique à 45° (sans support) ; remplie par le trou du fond puis bouchée
-    intersection() {
-      stem_body(ballast_wall, [for (z = [foot_t : 1.5 : ballast_top]) z]);
-      translate([0, 0, foot_t - eps]) cylinder(r1 = ballast_top - foot_t, r2 = 0, h = ballast_top - foot_t);
+    difference() {
+      intersection() {
+        stem_body(ballast_wall, [for (z = [foot_t : 1.5 : ballast_top]) z]);
+        translate([0, 0, foot_t - eps]) cylinder(r1 = ballast_top - foot_t, r2 = 0, h = ballast_top - foot_t);
+      }
+      usb_keep();
     }
+    usb_cuts();
     translate([0, 0, -1]) cylinder(d = fill_d, h = foot_t + 2);
     translate([0, 0, -1]) cylinder(d = plug_d + 0.3, h = plug_t + 1);
     // vis radiale du fourreau
@@ -557,7 +607,8 @@ module fringe_wall() {
 }
 module ground() {
   linear_extrude(ground_t) polygon([for (i = [0 : 89]) let(a = i * 4) ground_r(a) * [cos(a), sin(a)]]);
-  for (g = grass) translate([g[0][0], g[0][1], ground_t - 0.01]) rotate([0, 0, g[1]]) blade(g[2], g[3], g[4]);
+  for (g = grass) if (adiff(atan2(g[0][1], g[0][0]), foot_dir) > 25) translate([g[0][0], g[0][1], ground_t - 0.01])   // rien devant la prise USB
+    rotate([0, 0, g[1]]) blade(g[2], g[3], g[4]);
   translate([0, 0, ground_t - 0.01]) fringe_wall();
 }
 
@@ -570,7 +621,7 @@ module cradle_cell() {   // berceau, accu, butées (repère d'impression)
     translate([0, (bt_w - bt_tab[0]) / 2, -bt_tab[1]]) cube([bt_t, bt_tab[0], bt_tab[1]]);
   }
 }
-module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
+module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); }
 // BME280 enfiché sous la carte (repère : broche 1 de l'empreinte I2C, dessous de la carte) :
 // femelle fh_n positions, plastique de la barrette mâle, breakout parallèle à la carte
 module bme() {
@@ -597,6 +648,11 @@ module console_cut(a) {
 
 module assembled() {
   color("Ivory") stem();
+  usb_xf() {
+    color("#1a4fa0") translate([usb_u0, -usb_b[0] / 2, usb_z0 + usb_tails]) cube([usb_b[1], usb_b[0], usb_b[2]]);
+    color("Silver") translate([usb_face - 7, -usb_rec[0] / 2, usb_z - usb_rec[1] / 2]) cube([6.5, usb_rec[0], usb_rec[1]]);
+    color("Beige") translate([usb_face - usb_plate[2], 0, usb_mid]) rotate([90, 0, 90]) usb_cover();
+  }
   color("#4a8f3c") translate([0, 0, -ground_t]) ground();
   cradle_placed() cradle_cell();
   cap_xf() {
@@ -627,6 +683,7 @@ else if (part == "stem") stem();
 else if (part == "ground") ground();
 else if (part == "cradle") cradle();
 else if (part == "plug") cylinder(d = plug_d, h = plug_t);
+else if (part == "usb_cover") usb_cover();
 else if (part == "dot") dot(dot_d);
 else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous la carte
   assembled();
