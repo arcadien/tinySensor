@@ -103,7 +103,7 @@ Pièces :
   - **plancher percé** (`deck`) sur des appuis, avec une fenêtre de 17,2 × 4,5 mm pour la barrette femelle ;
   - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø33 à Ø38, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 32 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, évasement compris), plafond conique à 45° jusqu'à 30 mm (`ballast_h`) : ~19 cm³, soit ~88 g de billes d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
+- **Pied** (`stem`) Ø38 en bas à Ø45 sous le fourreau, sans resserrement, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 32 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, évasement compris), plafond conique à 45° jusqu'à 30 mm (`ballast_h`) : ~19 cm³, soit ~90 g de billes d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
   - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
   - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
   - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
@@ -176,7 +176,7 @@ Cheminement :
 
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~620 g au total) : centre de gravité à ~126 mm de haut et ~10 mm vers +X, seulement ~88 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~13–20° selon la largeur d'appui réelle ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
+- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~620 g au total) : centre de gravité à ~126 mm de haut et ~10 mm vers +X, seulement ~90 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~13–20° selon la largeur d'appui réelle ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
 
 ## Visserie
 
