@@ -4,6 +4,7 @@
 # Le suffixe _xN indique le nombre d'exemplaires à imprimer.
 set -euo pipefail
 cd "$(dirname "$0")"
+OPENSCAD=$(ls ~/bin/OpenSCAD-*.AppImage | tail -1)
 ext=${1:-3mf}
 out=print
 mkdir -p "$out"
@@ -11,7 +12,7 @@ mkdir -p "$out"
 jobs=()
 run() { # run <fichier.scad> <sortie> [-D ...]
   local src=$1 dst=$2; shift 2
-  openscad "$@" -o "$out/$dst.$ext" "$src" >"$out/$dst.log" 2>&1 && rm "$out/$dst.log" &
+  "$OPENSCAD" "$@" -o "$out/$dst.$ext" "$src" >"$out/$dst.log" 2>&1 && rm "$out/$dst.log" &
   jobs+=($!)
 }
 
@@ -36,9 +37,9 @@ run mushroom.scad mushroom_stem    -D 'part="stem"'
 run mushroom.scad mushroom_ground  -D 'part="ground"'
 run mushroom.scad mushroom_cradle  -D 'part="cradle"'
 run mushroom.scad mushroom_plug    -D 'part="plug"'
-run mushroom.scad mushroom_dot6_x53  -D 'part="dot"' -D 'dot_d=6'
-run mushroom.scad mushroom_dot8_x37  -D 'part="dot"' -D 'dot_d=8'
-run mushroom.scad mushroom_dot10_x19 -D 'part="dot"' -D 'dot_d=10'
+run mushroom.scad mushroom_dot6_x95  -D 'part="dot"' -D 'dot_d=6'
+run mushroom.scad mushroom_dot8_x67  -D 'part="dot"' -D 'dot_d=8'
+run mushroom.scad mushroom_dot10_x44 -D 'part="dot"' -D 'dot_d=10'
 
 fail=0
 for j in "${jobs[@]}"; do wait "$j" || fail=1; done

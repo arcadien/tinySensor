@@ -4,7 +4,7 @@
 // Le chapeau est un tout (dôme + lamelles) posé sur le pied avec une légère inclinaison ;
 // toute l'électronique est dans le chapeau, le pied ne porte que l'accu.
 //
-//   cap     : dôme, bord ondulé ; 3 consoles intérieures au-dessus du disque, vis M3 par en dessous (autotaraudées)
+//   cap     : dôme en gourde (croquis), bord ondulé ; 3 consoles intérieures au-dessus du disque, vis M3 par en dessous (autotaraudées)
 //   gills   : disque à lamelles = dessous du chapeau ; fentes de ventilation, prise USB, fourreau sur le pied
 //   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
 //             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
@@ -35,7 +35,7 @@
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
 // Chapeau (cap_xf) : Z = 0 sous le disque à lamelles, axe incliné de cap_tilt vers +X.
-// Dôme : Z = 0 à son bord, cap_skirt sous le disque.
+// Dôme : Z = 0 à son bord, cap_skirt sous le disque. Le haut de la gourde est centré sur J1.
 
 use <pcb.scad>
 use <euro2.scad>
@@ -55,16 +55,14 @@ i2c_k = [199.35016, 77.11032];     // empreinte « I2C » (JST-EH 6, pas 2.50), 
 radio_k = [192.99936, 56.86044];   // J1 « RADIO » (1x3, module 433 MHz debout) : le sommet du dôme est à son aplomb
 
 /* [Chapeau] */
-cap_tilt = 10;     // inclinaison du chapeau sur le pied
-cap_R = 72;        // rayon moyen du bord du dôme
-cap_H = 52;        // hauteur du dôme au-dessus de son bord
-cap_n = 2.2;       // exposant de la super-ellipse (2 = ellipse)
+cap_tilt = 6;      // inclinaison du chapeau sur le pied
+cap_R = 72;        // rayon maxi moyen du chapeau (bas de la gourde)
+cap_H = 190;       // hauteur du dôme au-dessus de son bord
+// méridien de la gourde, d'après le croquis : [rayon / cap_R, hauteur / cap_H], du bord au sommet (hauteurs croissantes)
+cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.66, 0.41], [0.36, 0.5], [0.27, 0.58],
+             [0.39, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
+cap_neck = [0.2, 0.55];  // col : le haut se déporte de l'axe du bas jusqu'à J1 entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
-cap_lean = 0;      // déport du sommet (vers +X, côté penché)
-tip_h = 50;        // pointe : hauteur ajoutée au sommet (0 = dôme simple)
-tip_w = [70, 32, 40];  // demi-largeurs de la pointe : vers -X (flanc doux), vers +X (flanc raide), en Y
-tip_fit_n = 2;     // centre de la pointe : recalages pour que le sommet réel (dôme + pointe) tombe sur J1, selon l'axe du chapeau
-apex_step = [3, 0.5];  // recherche du sommet : pas (phi, t) en degrés, puis affinage au 1/10 autour du meilleur point
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
 corbel_w = 12;     // consoles du dôme, au-dessus du disque : largeur (autour de la vis)
@@ -116,10 +114,10 @@ chg_x = 40;        // plan de la carte du module
 usb_cut = [8.5, 12];
 
 /* [Pied] */
-stem_h = 125;      // centre du haut du pied (sous le fourreau)
+stem_h = 95;       // centre du haut du pied (sous le fourreau)
 bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
 foot_t = 3;        // fond du pied
-ballast_h = 40;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
+ballast_h = 12;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
 ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
 fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
@@ -131,7 +129,7 @@ stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
 foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
 foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côté
 foot_dir = 200;    // direction du grand évasement (°)
-ring_z = 78;       // anneau (corolle)
+ring_z = 60;       // anneau (corolle)
 ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
 
 /* [Berceau de l'accu] */
@@ -160,7 +158,7 @@ fringe_n = 64;     // nombre de dents de la frange
 
 /* [Résolution des maillages] */
 na = 90;           // dôme : pas angulaire
-nt = 120;          // dôme : pas en hauteur (0.75° : flanc raide de la pointe sans escaliers)
+nt = 120;          // dôme : pas le long du méridien
 ns = 72;           // pied, corolle : pas angulaire
 
 /* [Visserie] */
@@ -187,6 +185,21 @@ bme_z = pcb_z - fh_h - mh_h;        // dessus du breakout
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
 
 // ---------- dôme ----------
+// méridien : Catmull-Rom par cap_shape ; points fantômes miroirs = tangente verticale au bord, horizontale au sommet
+cap_prof = [for (p = cap_shape) [p[0] * cap_R, p[1] * cap_H]];
+prof_n = len(cap_prof) - 1;
+function ctrl(i) = i < 0 ? [cap_prof[1][0], -cap_prof[1][1]]
+  : i > prof_n ? [-cap_prof[prof_n - 1][0], cap_prof[prof_n - 1][1]] : cap_prof[i];
+// [point, dérivée] du méridien en u, de 0 (bord) à 1 (sommet)
+function prof(u) = let(x = u * prof_n, i = min(prof_n - 1, floor(x)), v = x - i,
+  a = ctrl(i - 1), b = ctrl(i), c = ctrl(i + 1), d = ctrl(i + 2),
+  k1 = c - a, k2 = 2 * a - 5 * b + 4 * c - d, k3 = 3 * b - a - 3 * c + d)
+  [b + (k1 + (k2 + k3 * v) * v) * v / 2, (k1 + (2 * k2 + 3 * k3 * v) * v) / 2];
+prof_zr = [for (i = [0 : 240]) let(p = prof(i / 240)[0]) [p[1], p[0]]];   // table hauteur -> rayon
+assert(min([for (i = [1 : 240]) prof_zr[i][0] - prof_zr[i - 1][0]]) > 0, "cap_shape : hauteurs non croissantes");
+// axe du dôme à la hauteur z : part de l'axe du disque, finit sur J1
+function cap_shift(z) = let(k = max(0, min(1, (z / cap_H - cap_neck[0]) / (cap_neck[1] - cap_neck[0])))) radio_p * k * k * (3 - 2 * k);
+
 // contour : harmoniques 2 à 7 à phases aléatoires, pondérées autour de lobe_n, normalisées à lobe_amp
 function vsum(v, i = 0) = i < len(v) ? v[i] + vsum(v, i + 1) : 0;
 lobe_terms = [for (k = [2 : 7]) let(q = rands(0, 1, 2, lobe_seed * 17 + k)) [k, (0.5 + 0.5 * q[0]) * exp(-pow((k - lobe_n) / 1.5, 2)), 360 * q[1]]];
@@ -195,43 +208,27 @@ lobe_peak = max([for (i = [0 : 179]) abs(lobe_raw(2 * i))]);
 function lobe_at(phi, rot) = lobe_amp * lobe_raw(phi - rot) / lobe_peak;
 // déformation pleine au bord (s = 0), réduite à lobe_top au sommet (s = 1)
 function wav_r(phi, s, rot) = 1 + lobe_at(phi, rot) * (lobe_top + (1 - lobe_top) * (1 - s));
-function inner_rr(phi, zz, rot) = let(hi = cap_H - cap_t, s = min(1, zz / hi))
-  (cap_R * wav_r(phi, s, rot) - cap_t) * pow(1 - pow(s, cap_n), 1 / cap_n);
+function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / cap_H), rot) - cap_t;
 // jeu : points de l'électronique (repère du chapeau) qui doivent rester à >= 3 mm sous le dôme
 clear_pts = concat(
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * (crop_w / 2 + 2.4), sy * (crop_h / 2 + 2.4), disc_t + 17]],   // châssis
   [for (sx = [-1, 1], sy = [-1, 1]) [sx * 30.5, sy * 20, disc_t + 31]],                                // composants
   [for (x = [38, 45], sy = [-1, 1]) [x, sy * 10.5, disc_t + 26]]);                                       // chargeur
-// v <= 1 : le point est sous le dôme réduit de clear_m dans toutes les directions
-function v_in(p, rot) = let(zz = p[2] + cap_skirt, x = p[0] - cap_lean * pow(zz / cap_H, 2), phi = atan2(p[1], x),
-  hi = cap_H - cap_t - clear_m, s = min(1, zz / (cap_H - cap_t)))
-  pow(norm([x, p[1]]) / (cap_R * wav_r(phi, s, rot) - cap_t - clear_m), cap_n) + pow(zz / hi, cap_n);
+// v <= 1 : le point est sous le dôme réduit de clear_m
+function v_in(p, rot) = let(zz = p[2] + cap_skirt, d = [p[0], p[1]] - cap_shift(zz))
+  norm(d) / (inner_rr(atan2(d[1], d[0]), zz, rot) - clear_m);
 function worst(rot) = max([for (p = clear_pts) v_in(p, rot)]);
 rots = [for (a = [0 : 5 : 355]) worst(a)];
 best_rot = search(min(rots), rots)[0] * 5;
 rot = lobe_rot >= 0 ? lobe_rot : best_rot;
 function wav(phi, s = 0) = wav_r(phi, s, rot);
-function cap_pt(phi, t, off = 0) = cap_ptc(phi, t, off, tip_c);
-function cap_ptc(phi, t, off, c) =   // pointe centrée en c
-  let(s = pow(sin(t), 2 / cap_n), r = (cap_R * wav(phi, s) - off) * pow(cos(t), 2 / cap_n), z = (cap_H - off) * s)
-  let(x = r * cos(phi) + cap_lean * pow(z / cap_H, 2), y = r * sin(phi)) [x, y, z + tip_bump(x, y, s, off, c)];
-// pointe : bosse (1 - d²)³, pentes progressives (largeurs différentes de chaque côté), nulle au bord (s = 0) pour garder le bord plat ;
-// côté intérieur (off > 0), pointe un peu plus étroite et plus basse pour garder l'épaisseur sur le flanc raide
-function tip_bump(x, y, s, off, c) = let(k = off > 0 ? 3 : 0, dx = x - c[0],
-  d = norm([dx / ((dx > 0 ? tip_w[1] : tip_w[0]) - k), (y - c[1]) / (tip_w[2] - k)]))
-  tip_h <= 0 || d >= 1 ? 0 : (tip_h - k) * pow(1 - d * d, 3) * (1 - pow(1 - s, 3));
-// rayon intérieur du dôme à la hauteur zz (repère du dôme), et décalage du sommet à cette hauteur
+// point de la surface : t de 0 (bord) à 90 (sommet) le long du méridien, off = retrait selon la normale
+function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]] / norm(m[1]), s = m[0][1] / cap_H,
+  r = max(0, m[0][0] * wav(phi, s) - off * n[0]), z = m[0][1] - off * n[1], c = cap_shift(z))
+  [r * cos(phi) + c[0], r * sin(phi) + c[1], z];
+// rayon intérieur du dôme à la hauteur zz (repère du dôme)
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
-function lean_at(zz) = cap_lean * pow(zz / cap_H, 2);
-// sommet réel de la surface extérieure (dôme + pointe centrée en c) : balayage (phi, t) puis affinage autour du meilleur point
-function apex_scan(c, ps, ts) = let(P = [for (t = ts, phi = ps) [phi, t, cap_ptc(phi, t, 0, c)]], zs = [for (q = P) q[2][2]])
-  P[search(max(zs), zs)[0]];
-function apex_of(c) = let(a = apex_scan(c, [0 : apex_step[0] : 360 - apex_step[0]], [45 : apex_step[1] : 90]),
-  da = apex_step[0], dt = apex_step[1]) apex_scan(c, [a[0] - da : da / 10 : a[0] + da], [a[1] - dt : dt / 10 : min(90, a[1] + dt)])[2];
-// le sommet glisse du centre de la pointe vers le haut du dôme : on décale le centre de l'écart restant, tip_fit_n fois
-function tip_fit(c, n) = n <= 0 ? c : let(a = apex_of(c)) tip_fit(c + radio_p - [a[0], a[1]], n - 1);
-tip_c = tip_fit(radio_p, tip_fit_n);
-apex = apex_of(tip_c);   // repère du dôme
+apex = cap_pt(0, 90);   // repère du dôme, à l'aplomb de J1
 
 function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
@@ -243,10 +240,10 @@ module dome_solid(off = 0) {   // volume plein sous la surface, fermé par le pl
     [[for (i = [0 : na - 1]) o(i, 0)]]));
 }
 
-// pois : tirage « disque de Poisson » sur la surface réelle (pointe comprise) : candidats sur une grille
+// pois : tirage « disque de Poisson » sur la surface réelle : candidats sur une grille
 // (phi, t) dense et bruitée, parcourus dans un ordre pseudo-aléatoire, gardés s'ils sont assez loin des autres
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
-  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] - tip_bump(p[0], p[1], 0, 0, tip_c) > 9 || p[2] > 20)
+  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] > 9)
   [pp, tt, dot_sizes[floor(q[2] * 2.99)], p]];
 function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
@@ -270,7 +267,7 @@ tab_a = [for (a = tab_base) argmax_a(a)];
 // l'appui (corbel_z, ~7 mm au-dessus du plateau), sur supports comme le reste de l'intérieur
 module corbels() {
   intersection() {
-    for (a = tab_a) let(x0 = tab_r(a) - corbel_in, x1 = inner_r(a, 0) + cap_t + 1)
+    for (a = tab_a) let(x0 = tab_r(a) - corbel_in, x1 = 1.5 * cap_R)   // coupée par la paroi
       rotate([0, 0, a]) translate([0, corbel_w / 2, 0]) rotate([90, 0, 0]) linear_extrude(corbel_w)
         polygon([[x0, corbel_z], [x1, corbel_z], [x1, corbel_z + corbel_h + x1 - x0], [x0, corbel_z + corbel_h]]);
     dome_solid();
@@ -281,7 +278,11 @@ module cap() {
     union() {
       difference() {
         dome_solid();
-        translate([0, 0, -eps]) dome_solid(cap_t);
+        // plafond conique à 45° au sommet : le col étroit empêcherait de retirer des supports
+        intersection() {
+          translate([0, 0, -eps]) dome_solid(cap_t);
+          translate([apex[0], apex[1], 0]) cylinder(r1 = cap_H - cap_t, r2 = 0, h = cap_H - cap_t);
+        }
       }
       corbels();
     }
@@ -303,7 +304,7 @@ module dot(d) {
 // la paroi rentre en descendant), pour qu'il monte dans le dôme fermé jusqu'aux consoles
 function inner_min(a) = min([for (z = [0 : 0.5 : cap_skirt + disc_t]) inner_r(a, z)]);
 function disc_pts() = [for (i = [0 : na - 1]) let(a = i * 360 / na, r = inner_min(a) - disc_fit)
-                         [r * cos(a) + lean_at(cap_skirt + disc_t), r * sin(a)]];
+                         r * [cos(a), sin(a)]];
 disc_rmax = cap_R - cap_t;   // normalisation de la profondeur des lamelles (au-delà : profondeur mini)
 function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0, (disc_rmax - r) / (disc_rmax - collar_r)), 1.3);
 function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
@@ -476,6 +477,9 @@ cl_z = cr_ax + cell_up;             // axe de l'accu
 cr_end = 1.6 + bt_slot + 1;         // bout : paroi ext. + rainure + paroi int.
 cell_x0 = 1.6 + bt_t + spring_c;    // bas de l'accu (ressort comprimé)
 cr_len = cell_x0 + cell_l + bt_dimple + bt_t + 1.6;
+cradle_top = bore_z + cr_len;       // haut du berceau monté
+wire_gap = stem_h + collar_h / cos(cap_tilt) - cr_r * tan(cap_tilt) - cradle_top;   // sous le disque, côté bas
+assert(wire_gap >= 5, str("Berceau trop haut pour les fils : ", wire_gap, " mm sous le disque"));
 module cradle() {
   difference() {
     intersection() {
@@ -595,11 +599,9 @@ module assembled() {
 
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
-echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 100) / 100], " pour J1 « RADIO » en ", [for (v = radio_p) round(v * 100) / 100],
-  " (écart ", round(norm([apex[0], apex[1]] - radio_p) * 100) / 100, " mm selon l'axe du chapeau), centre de la pointe ", [for (v = tip_c) round(v * 100) / 100],
-  " ; ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte"));
+echo(str("Sommet du dôme à l'aplomb de J1 « RADIO » en ", [for (v = radio_p) round(v * 100) / 100], ", ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte"));
 echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", dessous du breakout à ", bme_z - bme_t - disc_t, " mm au-dessus du disque"));
-echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
+echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; fils ", round(wire_gap), " mm au-dessus du berceau ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
