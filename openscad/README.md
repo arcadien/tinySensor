@@ -96,21 +96,21 @@ Variante décorative, type amanite, qui ne remplace pas le boîtier mural. Le ch
 
 Pièces :
 
-- **Dôme** (`cap`) ~147 × 147 × 191 mm (rayon maxi moyen 72) : **gourde** d'après croquis, méridien `cap_shape` (bas large, taille Ø~55, haut Ø~72), **contour lobé** issu d'un générateur (voir ci-dessous). À partir de la zone qui se resserre (`cap_neck`), le haut penche de 8° vers −X (`cap_lean`, contre l'inclinaison du chapeau) avec un léger déport (`cap_top`), pour ramener la masse vers l'axe du pied : sommet à 166 mm au-dessus de la carte, à ~10 mm de l'axe du pied côté +X. **J1 « RADIO »** (module 433 MHz) n'est plus sous le sommet, à ~29 mm de l'axe du haut. Le gros du bas part à l'opposé, côté évasement du pied. Plafond intérieur conique à 45°, sans support : le haut est plein sous le sommet. Son bord descend de 4 mm sous le disque à lamelles (cache sa tranche). Fixation : 3 **consoles** sur la paroi intérieure, juste au-dessus du disque (`corbel_*` : 12 mm de large, face droite de 10 mm puis chanfrein à 45° jusqu'à la paroi, trou pilote Ø2,5 × 8) ; le disque monte dans le dôme et y est plaqué par 3 vis M3 × 10 auto-taraudeuses par en dessous, têtes sous le disque entre les lamelles. ![Coupe par une console](rendu_champignon_console.png)
+- **Dôme** (`cap`) ~147 × 147 × 190 mm (rayon maxi moyen 72) : **gourde** d'après croquis, méridien `cap_shape` (bas large, taille Ø~55, haut Ø~72), **contour lobé** issu d'un générateur (voir ci-dessous). À partir de la zone qui se resserre (`cap_neck`), le haut penche de 8° vers −X (`cap_lean`, contre l'inclinaison du chapeau), pour ramener la masse vers l'axe du pied : sommet à ~6 mm de l'axe du pied côté +X. La carte est tournée de 180° dans le châssis pour que le sommet reste à l'aplomb de **J1 « RADIO »** (module 433 MHz), selon l'axe de la carte (`cap_top` est calculé), à 146 mm au-dessus de la carte. Le gros du bas part à l'opposé, côté évasement du pied. Plafond intérieur conique à 45°, sans support : le haut est plein sous le sommet. Son bord descend de 4 mm sous le disque à lamelles (cache sa tranche). Fixation : 3 **consoles** sur la paroi intérieure, juste au-dessus du disque (`corbel_*` : 12 mm de large, face droite de 10 mm puis chanfrein à 45° jusqu'à la paroi, trou pilote Ø2,5 × 8) ; le disque monte dans le dôme et y est plaqué par 3 vis M3 × 10 auto-taraudeuses par en dessous, têtes sous le disque entre les lamelles. ![Coupe par une console](rendu_champignon_console.png)
 - **Lamelles** (`gills`) : disque qui ferme le dessous du chapeau, au contour du plus étroit de la jupe du dôme moins 0,4 mm (`disc_fit`) pour passer les creux des lobes, 48 lames radiales plus profondes près du pied (`gill_depth`), fentes de ventilation entre les lames sous la chambre du capteur (y compris côté +X, à 0° et ±7,5°, au ras du bord +X du BME280), ouverture de la prise USB, fourreau central qui reçoit le tenon du pied. S'imprime lames vers le haut.
 - **Châssis** (`chassis`) vissé sur le disque (4 vis M3 par en dessous), imprimé debout :
-  - chambre du bas (8 mm), ventilée : **BME280 enfiché sous la carte**, sans fil ni glissière (voir *Câblage*) ; le breakout pend parallèle à la carte, capteur vers le disque, à 2 mm au-dessus du disque ;
+  - chambre du bas (28 mm, `chamber_h`), ventilée : **BME280 enfiché sous la carte**, sans fil ni glissière (voir *Câblage*) ; le breakout pend parallèle à la carte, capteur vers le disque, à 22 mm au-dessus du disque. Le haut du berceau traverse le disque (trou Ø37, `disc_bore`) et finit 12 mm sous le breakout, avec la paire JST-XH ;
   - **plancher percé** (`deck`) sur des appuis, avec une fenêtre de 17,2 × 4,5 mm pour la barrette femelle ;
-  - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
+  - **carte v2.2 découpée** (60 × 39 mm, le long des pointillés de sérigraphie x = 147 / y = 87, sans les supports 18650 et CR2032) : tournée de 180° (J1 côté −X), 2 vis M2.5 (MH5, MH1 du haut), le bord bas repose sur un appui. L'accu arrive sur **J13 « RAW IN »** (`+BATT`/`GND`) ;
   - glissière du **module de charge** TP4056, vertical sur le côté, prise **micro-USB vers le bas** entre deux lamelles.
-- **Pied** (`stem`) Ø38 en bas à Ø45 sous le fourreau, sans resserrement, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 32 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, évasement compris), plafond conique à 45° jusqu'à 30 mm (`ballast_h`) : ~19 cm³, soit ~90 g de billes d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
+- **Pied** (`stem`) Ø38 en bas à Ø45 sous le fourreau, sans resserrement, creux (Ø29,4) jusqu'en haut : reçoit le berceau de l'accu, inséré par le haut, posé à 52 mm du sol. Dessous, une **chambre à lest** fermée qui épouse la forme du pied (paroi de 2,4 mm, `ballast_wall`, évasement compris), plafond conique à 45° jusqu'à 50 mm (`ballast_h`) : ~49 cm³, soit ~229 g de billes d'acier de 1 mm. Remplissage par un trou de Ø15 dans le fond, fermé par un **bouchon** (`plug`, Ø21 × 1,2 mm) collé dans un lamage, à fleur du dessous. Même esprit que le chapeau :
   - fût lobé (`stem_amp`, lobes qui tournent le long du fût, `stem_twist`) ; la déformation n'ajoute que de la matière, la paroi autour de l'accu ne s'amincit pas, et s'annule sous le fourreau ;
   - base évasée dissymétrique, concave (`foot_flare`, `foot_flare_h`, `foot_dir`) : grand évasement d'un côté, petit de l'autre ;
   - corolle (anneau) au débord et à la retombée ondulés (`ring_amp`), dessous à ~45°.
   - En haut, un tenon incliné de 6° (`cap_tilt`) s'emboîte dans le fourreau, 1 vis M3 radiale.
 - **Berceau** (`cradle`) 74,8 × Ø28,6 mm : gouttière amovible pour une **18650 nue** (65 mm, téton plat ; `cell_l` pour une autre longueur), sans soudure sur l'accu. Deux **butées à languette** (plaque 13 × 11 mm, languette 3 × 7 percée) glissées dans des rainures : ressort côté « − » en bas, bossage côté « + » en haut (polarité gravée sur les bouts). Les languettes traversent le fond et sortent dans le méplat, où passent les fils jusqu'au fourreau (W1 rouge 40 mm, W2 noir 110 mm, soudé → JST-XH F, voir *Câblage*) ; on soude les fils sur les languettes, pas sur l'accu. L'accu entre par la fente du dessus en comprimant le ressort (≈ 4 mm, `spring_c`). Trou de tirage Ø2,5 en haut (ficelle, nœud à l'intérieur). Imprimé à plat, méplat sur le plateau, sans support. ![Berceau : monté et nu](rendu_champignon_berceau.png)
 - **Sol** (`ground`) : disque de 1 mm au contour lobé (Ø~115, `ground_R`), frange d'herbe en zigzag autour du pied, touffes de grands brins et brins isolés (`grass_*`, `fringe_h`). Pièce séparée à imprimer en vert ; le pied se colle dessus. Élargit l'appui au sol.
-- **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (écart mini `dot_gap`) : 102 (Ø6 × 46, Ø8 × 28, Ø10 × 28), l'écho OpenSCAD donne le nombre par taille.
+- **Pois** (`dot`) rapportés, collés dans des logements de 0,8 mm, répartis par tirage sur la surface réelle (écart mini `dot_gap`) : 100 (Ø6 × 45, Ø8 × 27, Ø10 × 28), l'écho OpenSCAD donne le nombre par taille.
 
 Hauteur totale ~300 mm.
 
@@ -124,7 +124,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 ### Impression
 
-- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (191 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, avec des **supports** uniquement sous les faces d'appui des consoles, à 7 mm du plateau. Remplissage faible (~15 %) : le haut est plein, il doit rester léger. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
+- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (190 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, avec des **supports** uniquement sous les faces d'appui des consoles, à 7 mm du plateau. Remplissage faible (~15 %) : le haut est plein, il doit rester léger. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
 - Pied : **6 parois** (buse 0,4) : la paroi de la chambre à lest fait 2,4 mm (`ballast_wall`), elle est ainsi pleine sans remplissage d'interstices. 4 parois suffisent pour les autres pièces.
 - Dôme en rouge (ou brun : panthère), pois en blanc, sol en vert, le reste en blanc / ivoire.
 - Sol : brins et frange de 0,9 mm d'épaisseur, pointes à 0,6 mm (buse 0,4) ; le slicer peut tronquer les pointes les plus fines.
@@ -133,11 +133,11 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 0. Pied à l'envers : grenaille par le trou du fond (quelques gouttes de colle pour la figer et éviter qu'elle sonne), bouchon collé dans son lamage (époxy), puis pied collé sur le sol.
 1. Carte : souder une **barrette femelle 2,54 1×6** sur le **dessous** de la carte, dans l'empreinte « I2C » ; les JST « I2C » et « I2C_SPI » ne sont pas posés (voir *Câblage*). Côté breakout, souder sa barrette mâle de façon que la puce regarde le disque une fois enfiché (corps du breakout vers l'intérieur du châssis, à vérifier selon le modèle de breakout).
-2. Module de charge : souder W5 / W6 (rouge / noir, 100 mm, OUT+ / OUT− soudé → bornier à vis J13). W3 / W4 se soudent à l'étape 3 : le boîtier JST-XH (~7,4 × 5,8 mm) ne passe pas la fenêtre de la paroi +Y (~5,4 × 5 mm utiles).
-3. Plancher posé dans le châssis, carte vissée par-dessus (la barrette femelle traverse la fenêtre du plancher) ; châssis retourné, BME280 enfiché par le dessous ouvert du châssis. Module de charge dans sa glissière ; W5 / W6 (rouge / noir, 100 mm, TP4056 soudé → bornier à vis) vissés sur J13 ; W3 / W4 (rouge / noir, 120 mm, TP4056 soudé → JST-XH M) : JST-XH M déjà serti, côté chambre ; pousser l'autre extrémité, nue, de l'intérieur de la chambre vers l'extérieur par la fenêtre de la paroi +Y (x = 22), puis la souder sur B+ / B− du TP4056 ; le côté JST passera dans le trou central du disque (moitié +Y). Enfin châssis sur le disque à lamelles (4 vis par en dessous).
-4. Disque à lamelles poussé dans le dôme jusqu'aux 3 consoles, 3 vis M3 × 10 auto-taraudeuses par en dessous (têtes entre les lamelles). L'antenne du module 433 MHz monte de J1 en suivant le col, jusqu'au haut de la gourde.
+2. Module de charge : souder W5 / W6 (rouge / noir, 60 mm, OUT+ / OUT− soudé → bornier à vis J13). W3 / W4 se soudent à l'étape 3 : le boîtier JST-XH (~7,4 × 5,8 mm) ne passe pas la fenêtre de la paroi +Y (~5,4 × 5 mm utiles).
+3. Plancher posé dans le châssis, carte vissée par-dessus (la barrette femelle traverse la fenêtre du plancher) ; châssis retourné, BME280 enfiché par le dessous ouvert du châssis. Module de charge dans sa glissière ; W5 / W6 (rouge / noir, 60 mm, TP4056 soudé → bornier à vis) vissés sur J13 ; W3 / W4 (rouge / noir, 120 mm, TP4056 soudé → JST-XH M) : JST-XH M déjà serti, côté chambre ; pousser l'autre extrémité, nue, de l'intérieur de la chambre vers l'extérieur par la fenêtre de la paroi +Y (x = 22), puis la souder sur B+ / B− du TP4056 ; le côté JST reste dans la chambre, au-dessus du berceau. Enfin châssis sur le disque à lamelles (4 vis par en dessous).
+4. Disque à lamelles poussé dans le dôme jusqu'aux 3 consoles, 3 vis M3 × 10 auto-taraudeuses par en dessous (têtes entre les lamelles). L'antenne du module 433 MHz monte droit de J1 dans le haut de la gourde.
 5. Berceau : butées dans les rainures, W1 rouge 40 mm / W2 noir 110 mm soudés sur les languettes (W2 dans le méplat) → JST-XH F ; accu clipsé ; berceau dans le pied par le haut (ressort en bas).
-6. Brancher la paire JST-XH, la loger dans le fourreau juste au-dessus du berceau, chapeau emboîté sur le tenon, vis radiale.
+6. Chapeau tenu ~30 mm au-dessus du pied, brancher la paire JST-XH, la loger dans la chambre juste au-dessus du berceau (trou central du disque), chapeau emboîté sur le tenon, vis radiale.
 7. Changer l'accu : retirer la vis radiale, soulever le chapeau (~20 mm) : la paire JST-XH apparaît, la débrancher, sortir le berceau par la ficelle.
 
 ### Câblage (champignon)
@@ -150,7 +150,7 @@ Plan imprimable A4 : [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (gén�
 - Position 5 non connectée = CSB : le tirage du breakout garde le mode I2C.
 - Position 6 = GND = SDO : adresse **0x76**, celle qu'attend le firmware.
 - Pull-ups I2C R2 / R3 4,7 kΩ sur la carte (côté carte) ; le breakout porte aussi les siennes.
-- Hauteur : femelle 8,5 mm + plastique mâle 2,5 mm ; le breakout est surtout au-dessus du fourreau, l'air passe par la lame de 2 mm au-dessus du disque, à travers la chambre.
+- Hauteur : femelle 8,5 mm + plastique mâle 2,5 mm ; le breakout est au-dessus du berceau, à 22 mm du disque ; l'air monte par les fentes du disque à travers la chambre.
 
 ![BME280 enfiché sous la carte](rendu_champignon_capteur.png)
 
@@ -162,21 +162,21 @@ Plan imprimable A4 : [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (gén�
 | W2 | noir | B− | languette « − » du berceau (bas, passe dans le méplat) — soudé | JST-XH 2p, broche 2 — JST-XH F | 110 mm | ≥ 24 AWG |
 | W3 | rouge | B+ | JST-XH 2p broche 1 — JST-XH M (côté chapeau) | TP4056 B+ — soudé | 120 mm | ≥ 24 AWG |
 | W4 | noir | B− | JST-XH 2p broche 2 — JST-XH M | TP4056 B− — soudé | 120 mm | ≥ 24 AWG |
-| W5 | rouge | +BATT | TP4056 OUT+ — soudé | J13 « RAW IN » borne 1 (+BATT) — bornier à vis | 100 mm | ≥ 24 AWG |
-| W6 | noir | GND | TP4056 OUT− — soudé | J13 borne 2 (GND) — bornier à vis | 100 mm | ≥ 24 AWG |
+| W5 | rouge | +BATT | TP4056 OUT+ — soudé | J13 « RAW IN » borne 1 (+BATT) — bornier à vis | 60 mm | ≥ 24 AWG |
+| W6 | noir | GND | TP4056 OUT− — soudé | J13 borne 2 (GND) — bornier à vis | 60 mm | ≥ 24 AWG |
 
 Cheminement :
 
-- Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 120 mm, JST-XH M → TP4056 soudé) dans le fourreau du pied, juste au-dessus du berceau : soulever le chapeau (~20 mm) suffit pour la débrancher.
-- W3 / W4 (rouge / noir, 120 mm, JST-XH M → TP4056 soudé) montent par le trou central du disque, moitié +Y (évite le BME), sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
-- W5 / W6 (rouge / noir, 100 mm, soudé → bornier à vis) passent au-dessus de la carte jusqu'à J13.
-- Antenne 433 MHz : droite, de J1 « RADIO » en suivant le col jusqu'au haut de la gourde, dégagée de la paroi.
+- Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 120 mm, JST-XH M → TP4056 soudé) dans la chambre, juste au-dessus du berceau : soulever le chapeau d'environ 30 mm suffit pour la débrancher par le trou central du disque.
+- W3 / W4 (rouge / noir, 120 mm, JST-XH M → TP4056 soudé) sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
+- W5 / W6 (rouge / noir, 60 mm, soudé → bornier à vis) passent par-dessus la paroi +X du châssis jusqu'à J13, tout proche.
+- Antenne 433 MHz : droite, de J1 « RADIO » dans le haut de la gourde (sommet à l'aplomb de J1).
 
 ### Points ouverts
 
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
-- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~680 g au total) : centre de gravité à ~123 mm de haut et ~5 mm vers +X, seulement ~90 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~20° si l'appui va jusqu'au bord du sol (r ~49 mm), moins s'il est plus étroit ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
+- Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~810 g au total) : centre de gravité à ~112 mm de haut et ~4 mm vers +X, avec ~229 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~22° si l'appui va jusqu'au bord du sol (r ~49 mm), moins s'il est plus étroit ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
 
 ## Visserie
 
@@ -205,7 +205,7 @@ Cheminement :
 | Accu ↔ chapeau | 1 | paire JST-XH 2 broches mâle / femelle (fils pré-sertis ou à sertir) |
 | Charge | 1 | module TP4056 micro-USB avec protection (DW01), 26 × 17 mm |
 | Berceau | 1 jeu | butées à languette (ressort « − » + bossage « + », plaque 13 × 11 mm) |
-| Faisceau W1-W6 | ~0,6 m | fil ≥ 24 AWG rouge et noir (section à noter) |
+| Faisceau W1-W6 | ~0,5 m | fil ≥ 24 AWG rouge et noir (section à noter) |
 | Soudures | — | gaine thermo |
 | Accu | 1 | 18650 nu, téton plat, 65 mm |
 | Capteur | 1 | breakout BME280 6 broches (adresse 0x76) |
