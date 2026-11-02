@@ -26,11 +26,11 @@
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
 //   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, voir l'écho
 // Rendus :
-//   openscad --preview -D 'part="assembly"' --camera=10,0,122,75,0,25,780 --imgsize=1000,1200 -o rendu_champignon.png mushroom.scad
-//   openscad --preview -D 'part="assembly"' --camera=0,0,104,112,0,200,640 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
-//   openscad --preview -D 'part="section"'  --camera=0,0,148,90,0,0,510 --imgsize=1000,1000 -o rendu_champignon_coupe.png mushroom.scad
-//   openscad --preview -D 'part="sensor"'   --camera=18,-5,156,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=18,-5,126,96,0,180,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=71,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
@@ -614,8 +614,8 @@ else if (part == "plug") cylinder(d = plug_d, h = plug_t);
 else if (part == "dot") dot(dot_d);
 else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous la carte
   assembled();
-  translate([-100, 0.5, 100]) cube([200, 90, 120]);   // la caméra doit rester hors du volume retiré
-  translate([-100, -100, 100]) cube([200, 200, 30]);
+  translate([-100, 0.5, 70]) cube([200, 90, 150]);   // la caméra doit rester hors du volume retiré
+  translate([-100, -100, 70]) cube([200, 200, 30]);
 }
 else if (part == "console") console_cut(tab_a[0]);
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
