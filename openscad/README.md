@@ -133,8 +133,8 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 0. Pied à l'envers : grenaille par le trou du fond (quelques gouttes de colle pour la figer et éviter qu'elle sonne), bouchon collé dans son lamage (époxy), puis pied collé sur le sol.
 1. Carte : souder une **barrette femelle 2,54 1×6** sur le **dessous** de la carte, dans l'empreinte « I2C » ; les JST « I2C » et « I2C_SPI » ne sont pas posés (voir *Câblage*). Côté breakout, souder sa barrette mâle de façon que la puce regarde le disque une fois enfiché (corps du breakout vers l'intérieur du châssis, à vérifier selon le modèle de breakout).
-2. Module de charge : souder W5 / W6 (rouge / noir, 70 mm, OUT+ / OUT− soudé → bornier à vis J13). W3 / W4 se soudent à l'étape 3 : le boîtier JST-XH (~7,4 × 5,8 mm) ne passe pas la fenêtre de la paroi +Y (~5,4 × 5 mm utiles).
-3. Plancher posé dans le châssis, carte vissée par-dessus (la barrette femelle traverse la fenêtre du plancher) ; châssis retourné, BME280 enfiché par le dessous ouvert du châssis. Module de charge dans sa glissière ; W5 / W6 (rouge / noir, 70 mm, TP4056 soudé → bornier à vis) vissés sur J13 ; W3 / W4 (rouge / noir, 120 mm, TP4056 soudé → JST-XH M) : JST-XH M déjà serti, côté chambre ; pousser l'autre extrémité, nue, de l'intérieur de la chambre vers l'extérieur par la fenêtre de la paroi +Y (x = 22), puis la souder sur B+ / B− du TP4056 ; le côté JST reste dans la chambre, au-dessus du berceau. Enfin châssis sur le disque à lamelles (4 vis par en dessous).
+2. Module de charge : souder W5 / W6 (rouge / noir, 70 mm, OUT+ / OUT− soudé → bornier à vis J13). W3 / W4 se soudent à l'étape 3 : le boîtier JST-XH (~7,4 × 5,8 mm) passe de justesse dans la fenêtre de la paroi +Y (8 mm de large), on passe donc l'extrémité nue.
+3. Plancher posé dans le châssis, carte vissée par-dessus (la barrette femelle traverse la fenêtre du plancher) ; châssis retourné, BME280 enfiché par le dessous ouvert du châssis. Module de charge dans sa glissière ; W5 / W6 (rouge / noir, 70 mm, TP4056 soudé → bornier à vis) vissés sur J13 ; W3 / W4 (rouge / noir, 100 mm, TP4056 soudé → JST-XH M) : JST-XH M déjà serti, côté chambre ; pousser l'autre extrémité, nue, de l'intérieur de la chambre vers l'extérieur par la fenêtre de la paroi +Y (x = 22), puis la souder sur B+ / B− du TP4056 ; le côté JST reste dans la chambre, au-dessus du berceau. Enfin châssis sur le disque à lamelles (4 vis par en dessous).
 4. Disque à lamelles poussé dans le dôme jusqu'aux 3 consoles, 3 vis M3 × 10 auto-taraudeuses par en dessous (têtes entre les lamelles). L'antenne du module 433 MHz monte droit de J1 dans le haut de la gourde.
 5. Berceau : butées dans les rainures, W1 rouge 40 mm / W2 noir 110 mm soudés sur les languettes (W2 dans le méplat) → JST-XH F ; accu clipsé ; berceau dans le pied par le haut (ressort en bas).
 6. Chapeau tenu ~50 mm au-dessus du pied, brancher la paire JST-XH, la loger dans la chambre juste au-dessus du berceau (trou central du disque), chapeau emboîté sur le tenon, vis radiale.
@@ -160,15 +160,15 @@ Plan imprimable A4 : [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (gén�
 |---|---|---|---|---|---|---|
 | W1 | rouge | B+ | languette « + » du berceau (haut) — soudé | JST-XH 2p, broche 1 — JST-XH F (côté berceau) | 40 mm | ≥ 24 AWG |
 | W2 | noir | B− | languette « − » du berceau (bas, passe dans le méplat) — soudé | JST-XH 2p, broche 2 — JST-XH F | 110 mm | ≥ 24 AWG |
-| W3 | rouge | B+ | JST-XH 2p broche 1 — JST-XH M (côté chapeau) | TP4056 B+ — soudé | 120 mm | ≥ 24 AWG |
-| W4 | noir | B− | JST-XH 2p broche 2 — JST-XH M | TP4056 B− — soudé | 120 mm | ≥ 24 AWG |
+| W3 | rouge | B+ | JST-XH 2p broche 1 — JST-XH M (côté chapeau) | TP4056 B+ — soudé | 100 mm | ≥ 24 AWG |
+| W4 | noir | B− | JST-XH 2p broche 2 — JST-XH M | TP4056 B− — soudé | 100 mm | ≥ 24 AWG |
 | W5 | rouge | +BATT | TP4056 OUT+ — soudé | J13 « RAW IN » borne 1 (+BATT) — bornier à vis | 70 mm | ≥ 24 AWG |
 | W6 | noir | GND | TP4056 OUT− — soudé | J13 borne 2 (GND) — bornier à vis | 70 mm | ≥ 24 AWG |
 
 Cheminement :
 
-- Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 120 mm, JST-XH M → TP4056 soudé) dans la chambre, juste au-dessus du berceau : soulever le chapeau d'environ 50 mm suffit pour la débrancher par le trou central du disque.
-- W3 / W4 (rouge / noir, 120 mm, JST-XH M → TP4056 soudé) sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
+- Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 100 mm, JST-XH M → TP4056 soudé) dans la chambre, juste au-dessus du berceau : soulever le chapeau d'environ 50 mm suffit pour la débrancher par le trou central du disque.
+- W3 / W4 (rouge / noir, 100 mm, JST-XH M → TP4056 soudé) sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
 - W5 / W6 (rouge / noir, 70 mm, soudé → bornier à vis) passent par-dessus la paroi +X du châssis jusqu'à J13, tout proche.
 - Antenne 433 MHz : droite, de J1 « RADIO » dans le haut de la gourde (sommet à l'aplomb de J1).
 
@@ -205,7 +205,7 @@ Cheminement :
 | Accu ↔ chapeau | 1 | paire JST-XH 2 broches mâle / femelle (fils pré-sertis ou à sertir) |
 | Charge | 1 | module TP4056 micro-USB avec protection (DW01), 26 × 17 mm |
 | Berceau | 1 jeu | butées à languette (ressort « − » + bossage « + », plaque 13 × 11 mm) |
-| Faisceau W1-W6 | ~0,55 m | fil ≥ 24 AWG rouge et noir (section à noter) |
+| Faisceau W1-W6 | ~0,5 m | fil ≥ 24 AWG rouge et noir (section à noter) |
 | Soudures | — | gaine thermo |
 | Accu | 1 | 18650 nu, téton plat, 65 mm |
 | Capteur | 1 | breakout BME280 6 broches (adresse 0x76) |

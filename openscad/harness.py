@@ -21,9 +21,9 @@ WIRES = [
     ("W2", "noir",  "B−",    "bat-",  "languette « − » du berceau (bas, passe dans le méplat)", "soudé",
      "jstF2", "JST-XH 2p, broche 2", "JST-XH F (côté berceau)", 110, "≥ 24 AWG"),
     ("W3", "rouge", "B+",    "jstM1", "JST-XH 2p, broche 1", "JST-XH M (côté chapeau)",
-     "tpB+",  "TP4056 B+", "soudé", 120, "≥ 24 AWG"),
+     "tpB+",  "TP4056 B+", "soudé", 100, "≥ 24 AWG"),
     ("W4", "noir",  "B−",    "jstM2", "JST-XH 2p, broche 2", "JST-XH M (côté chapeau)",
-     "tpB-",  "TP4056 B−", "soudé", 120, "≥ 24 AWG"),
+     "tpB-",  "TP4056 B−", "soudé", 100, "≥ 24 AWG"),
     ("W5", "rouge", "+BATT", "tpO+",  "TP4056 OUT+", "soudé",
      "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "≥ 24 AWG"),
     ("W6", "noir",  "GND",   "tpO-",  "TP4056 OUT−", "soudé",
@@ -44,7 +44,7 @@ NOTES = [
     "chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (debout dans "
     "sa glissière à x = 40, micro-USB vers le bas, pastilles en haut). W5/W6 passent par-dessus la paroi +X du châssis jusqu'à J13.",
     "L'antenne monte droit depuis le module radio (J1 « RADIO ») dans le haut de la gourde, dont le sommet est dans l'axe de J1.",
-    "Longueurs : environ 30 mm de mou compris pour soulever le chapeau ; à ajuster au montage.",
+    "Longueurs : calculées sur le modèle, chapeau soulevé de 50 mm, avec 15 à 25 mm de marge ; à ajuster au montage.",
 ]
 
 # --- Mise en page ------------------------------------------------------------------------
