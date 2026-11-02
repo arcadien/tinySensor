@@ -124,7 +124,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 ### Impression
 
-- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (190 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, avec des **supports** uniquement sous les faces d'appui des consoles, à 7 mm du plateau. Remplissage faible (~15 %) : le haut est plein, il doit rester léger. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
+- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (190 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, avec des **supports** uniquement sous les faces d'appui des consoles, à 7 mm du plateau. Remplissage faible (~10 %) : le haut est plein dans le modèle (~60 cm³, 76 g à 100 %, ~8 g à 10 %), juste pour se passer de supports derrière le col, et il pèse au mauvais endroit. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
 - Pied : **6 parois** (buse 0,4) : la paroi de la chambre à lest fait 2,4 mm (`ballast_wall`), elle est ainsi pleine sans remplissage d'interstices. 4 parois suffisent pour les autres pièces.
 - Dôme en rouge (ou brun : panthère), pois en blanc, sol en vert, le reste en blanc / ivoire.
 - Sol : brins et frange de 0,9 mm d'épaisseur, pointes à 0,6 mm (buse 0,4) ; le slicer peut tronquer les pointes les plus fines.
