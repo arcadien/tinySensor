@@ -30,7 +30,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
-//   openscad --preview -D 'part="sensor"'   --camera=-18,5,146,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=59,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Repères : monde = Z vers le haut, axe du pied en X = Y = 0, Z = 0 sur la table.
@@ -64,6 +64,10 @@ cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.
 cap_lean = 8;      // le haut penche vers -X (contre cap_tilt), en pivotant là où le chapeau se resserre
 cap_neck = [0.4, 0.62];  // col : déport (calculé pour le sommet sur J1) et penchement s'installent entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
+vent_d = 5;        // évent : du haut du plafond vers le flanc, en descendant (la pluie n'entre pas, l'air chaud sort)
+vent_at = [90, 72]; // sortie de l'évent sur la surface : (phi, t) de cap_pt, côté arrière
+vent_clear = 14;   // pas de pois à moins de cette distance de la sortie
+win_h = 22;        // fenêtres du châssis, en haut de la chambre : l'air passe devant le BME280
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
 disc_fit = 0.4;    // jeu au rayon entre le disque et le plus étroit de la jupe du dôme
 corbel_w = 12;     // consoles du dôme, au-dessus du disque : largeur (autour de la vis)
@@ -95,7 +99,7 @@ gill_t = 1.2;
 gill_depth = [17, 3];  // profondeur des lamelles près du pied / au bord
 
 /* [Châssis] */
-chamber_h = 28;    // chambre du bas : BME280 suspendu sous la carte, haut du berceau et paire JST-XH
+chamber_h = 48;    // chambre du bas : BME280 suspendu sous la carte, haut du berceau et paire JST-XH
 deck_t = 1.6;
 pcb_gap = 5;       // plancher -> dessous de la carte (broches traversantes)
 ch_wall = 2;
@@ -120,7 +124,7 @@ usb_cut = [8.5, 12];
 stem_h = 95;       // centre du haut du pied (sous le fourreau)
 bore_r = 14.7;     // logement de l'accu (Ø29.4, reçoit le berceau)
 foot_t = 3;        // fond du pied
-ballast_h = 32;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
+ballast_h = 52;    // chambre à lest sous le berceau : hauteur au rayon du logement, plafond conique à 45°
 ballast_wall = 2.4; // paroi entre la chambre et l'extérieur du pied
 fill_d = 15;       // trou de remplissage dans le fond
 plug_d = 21;       // lamage du bouchon collé
@@ -237,6 +241,9 @@ function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]]
 // rayon intérieur du dôme à la hauteur zz (repère du dôme)
 function inner_r(phi, zz) = inner_rr(phi, zz, rot);
 apex = cap_pt(0, 90);   // repère du dôme
+vent_in = apex - [0, 0, cap_t + 3];   // sous la pointe du plafond conique
+vent_out = cap_pt(vent_at[0], vent_at[1]);
+assert(vent_out[2] < vent_in[2], "L'évent doit descendre vers l'extérieur");
 
 function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
@@ -257,7 +264,7 @@ function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
 function dot_pick(i, acc) = i >= len(dot_cand) ? acc
   : let(c = dot_cand[(i * 7919) % len(dot_cand)]) dot_pick(i + 1, dot_far(c, acc) ? concat(acc, [c]) : acc);
-dots = dot_pick(0, []);
+dots = [for (d = dot_pick(0, [])) if (norm(d[3] - vent_out) > vent_clear) d];   // filtrés après le tirage : la répartition des tailles ne bouge pas
 function unit(v) = v / norm(v);
 function cap_normal(phi, t) = unit(cross(cap_pt(phi + 0.5, t) - cap_pt(phi - 0.5, t), cap_pt(phi, t + 0.5) - cap_pt(phi, t - 0.5)));
 module at_dot(d) {
@@ -296,6 +303,7 @@ module cap() {
     }
     for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) cylinder(d = d[2] + 0.3, h = dot_pocket + 1, $fn = 32);
     for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, corbel_z - eps]) cylinder(d = m3_pilot, h = corbel_pilot + eps);
+    let(v = vent_out - vent_in) translate(vent_in) rotate([0, acos(v[2] / norm(v)), atan2(v[1], v[0])]) cylinder(d = vent_d, h = norm(v) + 5, $fn = 32);
   }
 }
 
@@ -361,8 +369,8 @@ module chassis() {
         translate([-ix - ch_wall, -iy - ch_wall, 0]) cube([2 * (ix + ch_wall), 2 * (iy + ch_wall), ch_h]);
         translate([-ix, -iy, -1]) cube([2 * ix, 2 * iy, ch_h + 2]);
         // fenêtres de la chambre
-        for (x = [-20, -6, 8, 22]) translate([x - 4, -iy - ch_wall - 1, 2]) cube([8, 2 * (iy + ch_wall) + 2, chamber_h - 3]);
-        for (y = [-8, 8]) translate([-ix - ch_wall - 1, y - 4, 2]) cube([ch_wall + 2, 8, chamber_h - 3]);
+        for (x = [-20, -6, 8, 22]) translate([x - 4, -iy - ch_wall - 1, chamber_h - 1 - win_h]) cube([8, 2 * (iy + ch_wall) + 2, win_h]);
+        for (y = [-8, 8]) translate([-ix - ch_wall - 1, y - 4, chamber_h - 1 - win_h]) cube([ch_wall + 2, 8, win_h]);
       }
       // appuis du plancher et de la carte le long des grands côtés (chanfrein 45° dessous)
       for (s = [-1, 1], z = [chamber_h, ch_h]) mirror([0, s < 0 ? 1 : 0, 0]) translate([-ix, iy, z])
