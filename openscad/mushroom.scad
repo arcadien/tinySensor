@@ -59,8 +59,8 @@ cap_tilt = 6;      // inclinaison du chapeau sur le pied
 cap_R = 72;        // rayon maxi moyen du chapeau (bas de la gourde)
 cap_H = 190;       // hauteur du dôme au-dessus de son bord
 // méridien de la gourde, d'après le croquis : [rayon / cap_R, hauteur / cap_H], du bord au sommet (hauteurs croissantes)
-cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.66, 0.41], [0.36, 0.5], [0.27, 0.58],
-             [0.39, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
+cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.45, 0.5], [0.38, 0.58],
+             [0.43, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
 cap_neck = [0.2, 0.55];  // col : le haut se déporte de l'axe du bas jusqu'à J1 entre ces deux hauteurs (/ cap_H)
 cap_t = 2.4;
 cap_skirt = 4;     // le bord du dôme descend sous le disque (cache sa tranche ; le disque doit y passer)
@@ -71,8 +71,9 @@ corbel_in = 5;     // débord de la console au-delà de l'axe de la vis, vers l'
 corbel_pilot = 8;  // profondeur du trou pilote (M3x10 autotaraudeuse : 3 de disque + 7 en prise)
 tab_base = [90, 210, 330];  // vis du dôme (consoles) : chacune glisse (±40°) vers le lobe le plus proche
 dot_sizes = [6, 8, 10];
+dot_bag = [6, 6, 6, 8, 8, 8, 10, 10, 10, 10, 10];  // tirage de la taille des pois : gros favorisés
 dot_pocket = 0.8;
-dot_gap = 6;       // espace mini entre deux pois
+dot_gap = 12;      // espace mini entre deux pois
 
 /* [Contour du chapeau : générateur de lobes] */
 lobe_seed = 6;     // graine : changer pour une autre forme
@@ -244,7 +245,7 @@ module dome_solid(off = 0) {   // volume plein sous la surface, fermé par le pl
 // (phi, t) dense et bruitée, parcourus dans un ordre pseudo-aléatoire, gardés s'ils sont assez loin des autres
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
   let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] > 9)
-  [pp, tt, dot_sizes[floor(q[2] * 2.99)], p]];
+  [pp, tt, dot_bag[floor(q[2] * len(dot_bag) * 0.999)], p]];
 function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
 function dot_pick(i, acc) = i >= len(dot_cand) ? acc
