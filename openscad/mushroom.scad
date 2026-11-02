@@ -9,7 +9,7 @@
 //   chassis : cadre imprimé debout, vissé sur le disque : chambre du bas ventilée (BME280 enfiché sous la carte),
 //             plancher, carte v2.2 découpée, glissière du module de charge (prise vers le bas, entre deux lamelles)
 //   deck    : plancher percé entre la chambre et la carte, fenêtre du connecteur I2C (barrette femelle traversante)
-//   stem    : pied creux (berceau 18650 vertical), lobé, base évasée, corolle ondulée, tenon incliné en haut
+//   stem    : pied creux (berceau 18650 vertical), lobé, base bulbeuse, anneau en coupelle, tenon incliné en haut
 //   ground  : disque de 1 mm sous le pied, avec des touffes d'herbe (stabilité + décor)
 //   cradle  : berceau de l'accu, amovible, glissé dans le pied ; deux butées à languette (accu non soudé)
 //   plug    : bouchon de la chambre à lest (sous le berceau), collé dans le lamage du fond
@@ -132,11 +132,15 @@ plug_t = 1.2;      // = profondeur du lamage (6 couches de 0.2)
 stem_r = 19;       // rayon du fût en bas, il s'élargit régulièrement jusqu'au fourreau (collar_r)
 stem_amp = 0.15;   // lobes du fût (n'ajoutent que de la matière : la paroi autour de l'accu ne s'amincit pas)
 stem_twist = 1.2;  // rotation des lobes le long du fût (°/mm)
-foot_flare = [5, 20];     // évasement de la base (mm) : petit côté, grand côté
-foot_flare_h = [16, 40];  // hauteur de l'évasement : petit côté, grand côté
-foot_dir = 200;    // direction du grand évasement (°)
-ring_z = 60;       // anneau (corolle)
-ring_amp = 0.35;   // ondulation de la corolle (débord et retombée)
+bulb_r = [22, 34];   // base bulbeuse (croquis) : saillie, petit côté puis grand côté
+bulb_z = 22;         // hauteur du ventre
+bulb_up = [28, 34];  // étalement du bulbe vers le haut : petit côté, grand côté (épaule)
+bulb_dn = 34;        // étalement vers le bas : base arrondie, pente < 45° pour l'impression
+foot_dir = 200;    // direction du grand côté (°)
+ring_z = 72;       // anneau en coupelle : attache sur le col, bord relevé sous le chapeau
+ring_ext = 20;     // débord moyen de la coupelle
+ring_rise = 0.75;  // montée du bord / débord (< 1 : 45° au plus, imprimable sans support)
+ring_amp = 0.35;   // ondulation de la coupelle (débord et montée)
 
 /* [Berceau de l'accu] */
 cell_d = 18.6;     // 18650 nue, téton plat (protégée / à bouton : jusqu'à ~70)
@@ -154,7 +158,7 @@ bt_win = 10.5;     // fenêtre devant la plaque (passage du ressort / du bossage
 
 /* [Sol] */
 ground_t = 1;      // disque sous le pied (pièce séparée, à coller)
-ground_R = 58;     // rayon moyen
+ground_R = 72;     // rayon moyen
 ground_amp = 0.15;
 grass_seed = 11;
 grass_tufts = 4;   // touffes de grands brins autour du pied
@@ -420,13 +424,12 @@ ring_T2 = hterms(lobe_seed + 303, 5); ring_P2 = hpeak(ring_T2);
 ground_T = hterms(grass_seed, 4);     ground_P = hpeak(ground_T);
 
 function base_r(z) = stem_r + (collar_r - stem_r) * min(1, z / stem_h);
-// rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + évasement dissymétrique de la base
-// (concave, pente à 45° au plus au pied, rayon décroissant en montant : imprimable)
+// rayon extérieur du pied : fût conique + lobes tournants (nuls sous le fourreau) + bulbe dissymétrique
 function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 côté grand évasement, 0 à l'opposé
-function stem_rr(phi, z) = let(w = foot_w(phi), F = foot_flare[0] + (foot_flare[1] - foot_flare[0]) * w,
-  Hf = foot_flare_h[0] + (foot_flare_h[1] - foot_flare_h[0]) * w, fl = z < Hf ? F * pow(1 - z / Hf, 2) : 0,
+function stem_rr(phi, z) = let(w = foot_w(phi), B = bulb_r[0] + (bulb_r[1] - bulb_r[0]) * w,
+  S = z < bulb_z ? bulb_dn : bulb_up[0] + (bulb_up[1] - bulb_up[0]) * w,
   fade = max(0, min(1, (stem_h - z) / 15)))
-  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + fl;
+  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + B * exp(-pow((z - bulb_z) / S, 2));
 
 // volume de la chambre à lest (cm³), intégré en tranches
 ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
@@ -442,11 +445,11 @@ module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (int�
                    [[for (i = [0 : ns - 1]) v(i, 0)]], [[for (i = [ns - 1 : -1 : 0]) v(i, J - 1)]]));
 }
 
-// corolle : jupe balayée autour du fût, débord et retombée ondulés, dessous à ~45° au moins
+// anneau en coupelle : part du col et remonte en s'évasant, bord ondulé ; 45° au plus, sans support
 module ring_skirt() {
-  function prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = 10 * (1 + ring_amp * hnorm(ring_T, ring_P, a)),
-    drop = 16 * (1 + 0.6 * ring_amp * hnorm(ring_T2, ring_P2, a)))
-    [[ri, ring_z + 1.4], [ri + ext, ring_z - drop + 1.2], [ri + ext, ring_z - drop], [ri, ring_z - 1.2]];
+  function prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = ring_ext * (1 + ring_amp * hnorm(ring_T, ring_P, a)),
+    rise = ext * ring_rise * (1 + 0.3 * ring_amp * hnorm(ring_T2, ring_P2, a)))
+    [[ri, ring_z + 2.4], [ri + ext, ring_z + rise + 1.2], [ri + ext, ring_z + rise], [ri, ring_z - 1.2]];
   function v(i, k) = (i % ns) * 4 + (k % 4);
   polyhedron(convexity = 4,
     points = [for (i = [0 : ns - 1], p = prof(i * 360 / ns)) let(a = i * 360 / ns) [p[0] * cos(a), p[0] * sin(a), p[1]]],
@@ -467,7 +470,7 @@ module stem() {
     }
     // logement de l'accu, vertical jusqu'en haut (le support passe par le tenon)
     translate([0, 0, bore_z]) cylinder(r = bore_r, h = stem_h + 40);
-    // chambre à lest : suit la peau du pied (paroi ballast_wall, pentes <= 45° comme l'évasement),
+    // chambre à lest : suit la peau du pied (paroi ballast_wall, pentes <= 45° comme le bulbe),
     // plafond conique à 45° (sans support) ; remplie par le trou du fond puis bouchée
     intersection() {
       stem_body(ballast_wall, [for (z = [foot_t : 1.5 : ballast_top]) z]);
