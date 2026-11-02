@@ -138,7 +138,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 4. Disque à lamelles poussé dans le dôme jusqu'aux 3 consoles, 3 vis M3 × 10 auto-taraudeuses par en dessous (têtes entre les lamelles). L'antenne du module 433 MHz monte droit de J1 dans le haut de la gourde.
 5. Berceau : butées dans les rainures, W1 rouge 40 mm / W2 noir 110 mm soudés sur les languettes (W2 dans le méplat) → JST-XH F ; accu clipsé ; berceau dans le pied par le haut (ressort en bas).
 6. Chapeau tenu ~50 mm au-dessus du pied, brancher la paire JST-XH, la loger dans la chambre juste au-dessus du berceau (trou central du disque), chapeau emboîté sur le tenon, vis radiale.
-7. Changer l'accu : retirer la vis radiale, soulever le chapeau (~20 mm) : la paire JST-XH apparaît, la débrancher, sortir le berceau par la ficelle.
+7. Changer l'accu : retirer la vis radiale, soulever le chapeau (~50 mm) : la paire JST-XH apparaît, la débrancher, sortir le berceau par la ficelle.
 
 ### Câblage (champignon)
 
@@ -174,7 +174,7 @@ Cheminement :
 
 ### Points ouverts
 
-- Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), module de charge (`chg_w/l/t`, position de la prise `usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
+- Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), position de la prise du module de charge (`usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
 - Stabilité : point faible de cette forme. Estimation (coque PETG pleine, ~910 g au total) : centre de gravité à ~108 mm de haut et ~3 mm vers +X, avec ~343 g de lest ; le sol (Ø~115, 1 mm) élargit l'appui mais ne pèse rien. Basculement vers ~23° si l'appui va jusqu'au bord du sol (r ~49 mm), moins s'il est plus étroit ; à vérifier une fois imprimé, poser sur un socle lourd si besoin.
 
@@ -203,7 +203,7 @@ Cheminement :
 |---|---|---|
 | Capteur → carte (dessous du PCB, empreinte I2C) | 1 | barrette femelle 2,54 1×6 |
 | Accu ↔ chapeau | 1 | paire JST-XH 2 broches mâle / femelle (fils pré-sertis ou à sertir) |
-| Charge | 1 | module TP4056 micro-USB avec protection (DW01), 26 × 17 mm |
+| Charge | 1 | module TP4056 micro-USB avec protection (DW01), 28,7 × 17,15 × 0,9 mm |
 | Berceau | 1 jeu | butées à languette (ressort « − » + bossage « + », plaque 13 × 11 mm) |
 | Faisceau W1-W6 | ~0,5 m | fil ≥ 24 AWG rouge et noir (section à noter) |
 | Soudures | — | gaine thermo |
