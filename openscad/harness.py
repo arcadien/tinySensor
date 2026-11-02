@@ -25,21 +25,21 @@ WIRES = [
     ("W4", "noir",  "B−",    "jstM2", "JST-XH 2p, broche 2", "JST-XH M (côté chapeau)",
      "tpB-",  "TP4056 B−", "soudé", 120, "≥ 24 AWG"),
     ("W5", "rouge", "+BATT", "tpO+",  "TP4056 OUT+", "soudé",
-     "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 60, "≥ 24 AWG"),
+     "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "≥ 24 AWG"),
     ("W6", "noir",  "GND",   "tpO-",  "TP4056 OUT−", "soudé",
-     "j13-2", "J13 borne 2 (GND)", "bornier à vis", 60, "≥ 24 AWG"),
+     "j13-2", "J13 borne 2 (GND)", "bornier à vis", 70, "≥ 24 AWG"),
 ]
 COLORS = {"rouge": (200, 20, 20), "noir": (0, 0, 0)}
 
 NOTES = [
     "Capteur BME280 : aucun fil. Sa barrette mâle 6 broches s'enfiche directement dans une barrette "
     "femelle 2,54 mm de 6 positions soudée sous la carte, dans l'empreinte « I2C » (1 SENSOR_VCC, "
-    "2 GND, 3 SCL, 4 SDA, 5 non connectée, 6 GND). Le breakout pend parallèle à la carte, 22 mm au-dessus du disque à lamelles.",
+    "2 GND, 3 SCL, 4 SDA, 5 non connectée, 6 GND). Le breakout pend parallèle à la carte, 42 mm au-dessus du disque à lamelles.",
     "CSB tombe sur la broche 5 (non connectée : le tirage du breakout garde le mode I2C), SDO sur la 6 "
     "(GND : adresse 0x76, celle du firmware).",
     "Pas de résistance dans le faisceau : les tirages I2C R2/R3 (4,7 kΩ) sont sur la carte.",
     "La paire JST-XH se loge dans la chambre, juste au-dessus du berceau : on soulève "
-    "le chapeau (≈ 30 mm) pour la débrancher par le trou central du disque.",
+    "le chapeau (≈ 50 mm) pour la débrancher par le trou central du disque.",
     "W3/W4 sortent de la "
     "chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (debout dans "
     "sa glissière à x = 40, micro-USB vers le bas, pastilles en haut). W5/W6 passent par-dessus la paroi +X du châssis jusqu'à J13.",
