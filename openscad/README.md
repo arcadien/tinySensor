@@ -154,22 +154,24 @@ Plan imprimable A4 : [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (gén�
 
 ![BME280 enfiché sous la carte](rendu_champignon_capteur.png)
 
-**Accu** (fils ≥ 24 AWG, section exacte à noter, longueurs avec ~30 mm de mou, à ajuster au montage) :
+**Accu** (fils 22–24 AWG : plus petit numéro = plus gros fil, W1-W4 portent le courant de charge de 1 A ; longueurs avec 15 à 25 mm de marge, à ajuster au montage) :
 
 | # | Couleur | Signal | De (extrémité) | Vers (extrémité) | Longueur | Section |
 |---|---|---|---|---|---|---|
-| W1 | rouge | B+ | languette « + » du berceau (haut) — soudé | JST-XH 2p, broche 1 — JST-XH F (côté berceau) | 40 mm | ≥ 24 AWG |
-| W2 | noir | B− | languette « − » du berceau (bas, passe dans le méplat) — soudé | JST-XH 2p, broche 2 — JST-XH F | 110 mm | ≥ 24 AWG |
-| W3 | rouge | B+ | JST-XH 2p broche 1 — JST-XH M (côté chapeau) | TP4056 B+ — soudé | 100 mm | ≥ 24 AWG |
-| W4 | noir | B− | JST-XH 2p broche 2 — JST-XH M | TP4056 B− — soudé | 100 mm | ≥ 24 AWG |
-| W5 | rouge | +BATT | TP4056 OUT+ — soudé | J13 « RAW IN » borne 1 (+BATT) — bornier à vis | 70 mm | ≥ 24 AWG |
-| W6 | noir | GND | TP4056 OUT− — soudé | J13 borne 2 (GND) — bornier à vis | 70 mm | ≥ 24 AWG |
+| W1 | rouge | B+ | languette « + » du berceau (haut) — soudé | JST-XH 2p, broche 1 — JST-XH F (côté berceau) | 40 mm | 22–24 AWG |
+| W2 | noir | B− | languette « − » du berceau (bas, passe dans le méplat) — soudé | JST-XH 2p, broche 2 — JST-XH F | 110 mm | 22–24 AWG |
+| W3 | rouge | B+ | JST-XH 2p broche 1 — JST-XH M (côté chapeau) | TP4056 B+ — soudé | 100 mm | 22–24 AWG |
+| W4 | noir | B− | JST-XH 2p broche 2 — JST-XH M | TP4056 B− — soudé | 100 mm | 22–24 AWG |
+| W5 | rouge | +BATT | TP4056 OUT+ — soudé | J13 « RAW IN » borne 1 (+BATT) — bornier à vis | 70 mm | 22–24 AWG |
+| W6 | noir | GND | TP4056 OUT− — soudé | J13 borne 2 (GND) — bornier à vis | 70 mm | 22–24 AWG |
 
 Cheminement :
 
 - Paire JST-XH (W1 rouge 40 mm / W2 noir 110 mm, languettes soudé → JST-XH F ; W3 / W4 rouge / noir 100 mm, JST-XH M → TP4056 soudé) dans la chambre, juste au-dessus du berceau : soulever le chapeau d'environ 50 mm suffit pour la débrancher par le trou central du disque.
 - W3 / W4 (rouge / noir, 100 mm, JST-XH M → TP4056 soudé) sortent de la chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (module **avec protection** : pastilles B+ / B− / OUT+ / OUT−, micro-USB vers le bas).
 - W5 / W6 (rouge / noir, 70 mm, soudé → bornier à vis) passent par-dessus la paroi +X du châssis jusqu'à J13, tout proche.
+- Repérage : W3 / W4 et W5 / W6 sont deux paires rouge / noir soudées côte à côte sur le TP4056. **1 bague** de gaine thermo à chaque bout de W3 / W4, **2 bagues** sur W5 / W6 : une inversion B± / OUT± contourne la protection DW01.
+- JST-XH pré-sertis : vérifier rouge = broche 1 des deux côtés (M et F) avant de souder.
 - Antenne 433 MHz : droite, de J1 « RADIO » dans le haut de la gourde (sommet à l'aplomb de J1).
 
 ### Points ouverts
@@ -205,7 +207,7 @@ Cheminement :
 | Accu ↔ chapeau | 1 | paire JST-XH 2 broches mâle / femelle (fils pré-sertis ou à sertir) |
 | Charge | 1 | module TP4056 micro-USB avec protection (DW01), 28,7 × 17,15 × 0,9 mm |
 | Berceau | 1 jeu | butées à languette (ressort « − » + bossage « + », plaque 13 × 11 mm) |
-| Faisceau W1-W6 | ~0,5 m | fil ≥ 24 AWG rouge et noir (section à noter) |
+| Faisceau W1-W6 | ~0,5 m | fil 22–24 AWG rouge et noir |
 | Soudures | — | gaine thermo |
 | Accu | 1 | 18650 nu, téton plat, 65 mm |
 | Capteur | 1 | breakout BME280 6 broches (adresse 0x76) |

@@ -17,17 +17,17 @@ OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "faisceau_champignon.pd
 # extrémité d'arrivée, longueur (mm), section
 WIRES = [
     ("W1", "rouge", "B+",    "bat+",  "languette « + » du berceau (haut)", "soudé",
-     "jstF1", "JST-XH 2p, broche 1", "JST-XH F (côté berceau)", 40, "≥ 24 AWG"),
+     "jstF1", "JST-XH 2p, broche 1", "JST-XH F (côté berceau)", 40, "22–24 AWG"),
     ("W2", "noir",  "B−",    "bat-",  "languette « − » du berceau (bas, passe dans le méplat)", "soudé",
-     "jstF2", "JST-XH 2p, broche 2", "JST-XH F (côté berceau)", 110, "≥ 24 AWG"),
+     "jstF2", "JST-XH 2p, broche 2", "JST-XH F (côté berceau)", 110, "22–24 AWG"),
     ("W3", "rouge", "B+",    "jstM1", "JST-XH 2p, broche 1", "JST-XH M (côté chapeau)",
-     "tpB+",  "TP4056 B+", "soudé", 100, "≥ 24 AWG"),
+     "tpB+",  "TP4056 B+", "soudé", 100, "22–24 AWG"),
     ("W4", "noir",  "B−",    "jstM2", "JST-XH 2p, broche 2", "JST-XH M (côté chapeau)",
-     "tpB-",  "TP4056 B−", "soudé", 100, "≥ 24 AWG"),
+     "tpB-",  "TP4056 B−", "soudé", 100, "22–24 AWG"),
     ("W5", "rouge", "+BATT", "tpO+",  "TP4056 OUT+", "soudé",
-     "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "≥ 24 AWG"),
+     "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "22–24 AWG"),
     ("W6", "noir",  "GND",   "tpO-",  "TP4056 OUT−", "soudé",
-     "j13-2", "J13 borne 2 (GND)", "bornier à vis", 70, "≥ 24 AWG"),
+     "j13-2", "J13 borne 2 (GND)", "bornier à vis", 70, "22–24 AWG"),
 ]
 COLORS = {"rouge": (200, 20, 20), "noir": (0, 0, 0)}
 
@@ -44,6 +44,10 @@ NOTES = [
     "chambre du capteur par la fenêtre de la paroi +Y (x = 22) et rejoignent le TP4056 (debout dans "
     "sa glissière à x = 40, micro-USB vers le bas, pastilles en haut). W5/W6 passent par-dessus la paroi +X du châssis jusqu'à J13.",
     "L'antenne monte droit depuis le module radio (J1 « RADIO ») dans le haut de la gourde, dont le sommet est dans l'axe de J1.",
+    "Repérage au TP4056 : W3/W4 (B+/B−) et W5/W6 (OUT+/OUT−) sont deux paires rouge/noir soudées côte à côte. "
+    "1 bague de gaine thermo à chaque bout de W3/W4, 2 bagues sur W5/W6 : une inversion contourne la protection DW01.",
+    "JST-XH pré-sertis : vérifier que le rouge est sur la broche 1 des deux côtés (M et F) avant de souder.",
+    "Section 22–24 AWG (plus petit numéro = plus gros fil ; le JST-XH accepte 22 à 28 AWG) : W1-W4 portent le courant de charge (1 A par défaut).",
     "Longueurs : calculées sur le modèle, chapeau soulevé de 50 mm, avec 15 à 25 mm de marge ; à ajuster au montage.",
 ]
 
@@ -51,7 +55,8 @@ NOTES = [
 DPI = 300
 W, H = 2480, 3508          # A4 à 300 dpi
 M = 150                    # marge
-FONT_DIR = Path("/usr/share/fonts/truetype/dejavu")
+FONT_DIR = next((d for d in (Path("/usr/share/fonts/truetype/dejavu"), Path("C:/Windows/Fonts"))
+                 if (d / "DejaVuSans.ttf").exists()), Path("/usr/share/fonts/truetype/dejavu"))
 
 
 def font(size, bold=False):
