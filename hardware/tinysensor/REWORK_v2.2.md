@@ -38,20 +38,31 @@ Les traits x = 147 et y = 87 coupent le plan de masse (B.Cu) et deux pistes +BAT
 - Contrôle : J13 borne 1 et J13 borne 2 ne doivent **pas** biper ensemble.
 - Passer un vernis sur les bords (vernis à ongles ou vernis de tropicalisation) : la carte vit dehors.
 
-### 5. Tension VCC avec accu plein : à mesurer avant de brancher le BME280
+### 5. Alimentation 3,3 V : un TPS63020 à la place du module J2
 
-Le module DC-DC J2 (« 0,9–3,3 V vers 3,3 V ») est un élévateur. Avec 4,2 V en entrée, beaucoup de modules de ce type laissent passer la tension d'entrée, moins une diode (≈ 3,9 V).
-Le rail capteurs suit VCC, alors que le BME280 est donné pour 3,6 V maximum (4,25 V en absolu).
+Le module prévu pour J2 (« 0,9–3,3 V vers 3,3 V ») est un élévateur. Avec une 18650 à 4,2 V, ces modules laissent en général passer la tension d'entrée (≈ 3,9 V), alors que le BME280 est donné pour 3,6 V maximum.
+On le remplace par le module **TPS63020** abaisseur-élévateur 3,3 V disponible du projet Tars (26,7 × 17,7 × 1,6 mm, trop grand pour l'emplacement J2). Il est relié par fils :
 
-- Mesurer VCC (C2 pad 2) avec un accu chargé à 4,2 V, sans le BME280.
-- **VCC ≤ 3,6 V :** rien à faire.
-- **VCC > 3,6 V :** utiliser un breakout BME280 avec régulateur 3,3 V intégré, ou remplacer J2 par un module abaisseur-élévateur (buck-boost) 3,3 V.
+| Fil | Couleur | Module TPS63020 | Carte | Longueur |
+|---|---|---|---|---|
+| W7 | rouge | VIN | J2 pad 1, +BATT (149,53 ; 57,25) | ~40 mm |
+| W8 | noir | GND | J2 pad 2, GND (152,07 ; 57,25) | ~40 mm |
+| W9 | blanc | VOUT 3,3 V | J2 pad 3, VCC (154,61 ; 57,25) | ~40 mm |
+
+- Sur le module : **EN relié à VIN**, et **PS/SYNC relié à GND** (mode économie). Sinon il reste en PWM et consomme quelques mA.
+- Le module est posé à plat sur le dessus de la carte, sur de l'adhésif mousse double face, en vérifiant qu'aucune soudure ne passe dessous. Le volume sous le chapeau est largement suffisant. Le modèle du champignon ne prévoit pas encore son emplacement : c'est à ajouter.
+- Avantage : la vis de MH5 n'est plus masquée (P7).
+- Contrôle, sans BME280 ni ATtiny, en alimentant J13 par une alim de labo limitée à 100 mA :
+  - à 3,7 V et à 4,2 V, VCC (C2 pad 2) doit être entre **3,20 et 3,40 V** ;
+  - le courant à vide doit être **inférieur à 0,1 mA**.
+  Noter le résultat aussi dans le banc de test Tars `tests/bench/PLAT-POWER-REG-001.md`, qui n'a pas encore été passé.
+- Consommation : l'ATtiny en sommeil consomme quelques µA ; le module en ajoute environ 25–50 µA à vide. Cela reste plusieurs années sur une 18650 de 2500 mAh.
 
 ## Montage adapté
 
-- **J2 (DC-DC) au-dessus de MH5 (P7) :** monter le module sur une barrette femelle 1×3 (carte) et des broches mâles (module), pour pouvoir l'enlever et accéder à la vis de MH5. La place ne manque pas au-dessus de la carte.
+- **J2 (P7) :** ne rien monter dans l'empreinte, seulement les fils W7–W9 (voir point 5).
 - **C6 (P8) :** ne pas le monter. Il ne sert qu'au capteur analogique (J7 / JP4), absent du champignon.
-- **JP2 « DIRECT Vcc » (R9) :** le laisser ouvert, puisque le DC-DC est monté.
+- **JP2 « DIRECT Vcc » (R9) :** le laisser ouvert : sinon il court-circuite l'entrée et la sortie du TPS63020.
 - **CSB du BME280 (R11) :** la position 5 n'est pas connectée. Vérifier au multimètre que le breakout tire bien CSB vers VIN (≈ 10 kΩ) : sinon le capteur passe en SPI.
 - **Polarité de J13 (R2, P9) :** pas de protection contre l'inversion. Respecter le code couleur W5 rouge = borne 1 (+, pastille carrée) et W6 noir = borne 2. Marquer « + » au feutre à côté de J13.
 
