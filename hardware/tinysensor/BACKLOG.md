@@ -31,8 +31,43 @@ La parité schéma ↔ PCB remonte 39 écarts (voir R6).
 
 Points non vérifiés : les pull-ups internes aux breakouts, le courant de repos réel du DC-DC, les valeurs des fusibles.
 
-Ordre suggéré : R3, R4 et R5 d'abord (firmware et LED, peu coûteux), puis R1 et R2 (sécurité), puis R6 avant toute autre modification du schéma.
-
 ## PCB
 
-_Revue en cours._
+Le circuit fait 2 couches, 1,6 mm, 93,98 × 63,75 mm, avec un plan GND en B.Cu. Tous les composants sont traversants, sauf JP2–JP6 (CMS en B.Cu).
+La DRC, avec parité et re-remplissage des zones, remonte 42 violations, 2 non-connexions et 39 écarts de parité. Environ 70 de ces messages viennent des bibliothèques ou des champs.
+La variante découpée pour le champignon a été vérifiée sur une copie découpée en x 147 / y 87 : la masse reste continue, et MH1, MH5, J1, I2C et J13 tombent exactement aux cotes de `pcb.scad`.
+Le TP4056 est un module externe relié à J13 : le courant de charge ne passe pas par la carte.
+
+| ID | Sév. | Zone | Constat | Correctif | Effort |
+|---|---|---|---|---|---|
+| P1 | Critique | Masse | Les pastilles GND du connecteur « I2C » (pads 2 et 6) et de l'ISP J6 (pad 6) sont sur un îlot de cuivre B.Cu isolé, entouré par les pistes VCC, SENSOR_VCC et MISO et par le texte cuivre. DRC : `unconnected_items` I2C.6 ↔ zone GND, `starved_thermal` I2C.2. Le BME280 du champignon se branche justement là : **il n'a pas de masse**. | Piste GND en F.Cu de I2C.6 à J6.6 puis vers le plan, ou un via GND dans l'îlot. Relancer la DRC jusqu'à 0 non-connexion. | S |
+| P2 | Critique | Alim | Le pôle − du support 18650 (`REF**` BH-18650, pad 2) n'a pas de net, et le support n'existe pas au schéma. La carte entière ne peut pas fonctionner sur 18650. | L'ajouter au schéma (BT1, − sur GND), mettre le PCB à jour, sérigraphier +/−. | S |
+| P3 | Majeur | Synchro | Mêmes écarts que R6. MH1 est en double, en (203 ; 52) et en (203,75 ; 105,51), ce qui rend ambiguë la désignation des trous utilisée par le boîtier. | Traité avec R6, en ré-annotant aussi les trous de fixation. | M |
+| P4 | Majeur | Netlist | JP6 relie MISO à MISO, et JP5 GND à GND : ces cavaliers ne servent à rien. La pastille 5 de I2C n'a pas de net. I2C_SPI met MISO en broche 5, alors que le brochage d'un breakout BMx280 est VCC/GND/SCL/SDA/CSB/SDO. | Définir l'intention (choix CSB/SDO ?), donner un net distinct à chaque côté de cavalier, et fixer la broche 5 des deux connecteurs. Lié à R11. | S |
+| P5 | Majeur | Découpe | Les lignes de découpe traversent du cuivre : le plan GND, et deux pistes +BATT en F.Cu qui coupent x = 147 (vers y 59,3) et y = 87. Un bord scié met +BATT et GND à nu, et une bavure peut les court-circuiter en extérieur. | Zones d'exclusion cuivre de 1,5 mm sur les deux couches le long des deux lignes. Faire passer +BATT par un pont ou un cavalier hors de la partie conservée. | S |
+| P6 | Majeur | Fab | `min_copper_edge_clearance` est à 0,05 mm, et le plan GND arrive à 0,05 mm du bord. Les fabricants demandent au moins 0,2–0,3 mm, et le cuivre à nu s'oxyde dehors. | Régler le dégagement à 0,5 mm, re-remplir, relancer la DRC. | S |
+| P7 | Majeur | Méca | MH5 (150,89 ; 51,84) est sous le module DC-DC J2, alors que le champignon visse la carte par MH5. Une fois J2 soudé, le tournevis n'y accède plus. | Déplacer MH5 hors de J2 (et mettre `pcb.scad` à jour) ou déplacer J2. À vérifier : le module a-t-il un trou aligné ? | M |
+| P8 | Majeur | Méca | C6 (tantale traversant) est en B.Cu, alors que `pcb.scad` le modélise sur le dessus. Debout, il touche le plancher (`pcb_gap` = 5 mm). | Passer C6 en F.Cu, le coucher, ou corriger le modèle. | S |
+| P9 | Majeur | Montage | Rien n'indique les broches en sérigraphie : pas de +/− sur J13 RAW IN, ni de fonction des broches sur J1, J5 ou J7. Tous les textes sont en cuivre, pas en sérigraphie. | Textes en F.Silkscreen (au moins 1 mm). +/− sur J13, G/V/D sur J1, V/G/Q sur J5. Recoupe R16. | S |
+| P10 | Majeur | LED | Même constat que R5 : l'anode de D1 est sur GND. | Voir R5. | — |
+| P11 | Mineur | Méca | Les trous de fixation font 2,5 mm de diamètre, trop justes pour du M2,5. `pcb.scad` les modélise en Ø2,7. | `MountingHole_2.7mm_M2.5`. | S |
+| P12 | Mineur | Découpe | J2 (x 147,57) et J13 (≈ 147,7) frôlent la ligne x = 147 : un trait de scie de 1 mm peut les entamer. | Ligne en x ≈ 145,5 (le support CR2032 s'arrête vers 141) et mettre `k_crop` à jour, ou décaler J2/J13. À vérifier : les fils de J13 entrent-ils côté découpe ? | S |
+| P13 | Mineur | Alim | Le découplage de la radio est loin : C4 (10 µF) est à environ 11 mm de J1, et il n'y a pas de 100 nF. | 100 nF entre J1.1 et J1.2, et C4 à moins de 5 mm. | S |
+| P14 | Mineur | Masse | La broche 14 de U1 n'est pas reliée au plan (`zone_connect 0`). Sa masse passe seulement par C2 et JP5. | Connexion thermique au plan. | S |
+| P15 | Mineur | Alim | Les pistes +BATT font 0,25–0,3 mm, soit environ 0,09 Ω sur 45 mm. Ça suffit pour environ 100 mA. | Les élargir à 0,5–0,8 mm, pour la marge. | S |
+| P16 | Mineur | Montage | Une barrette femelle au pas de 2,54 dans une empreinte JST-EH au pas de 2,50 accumule 0,2 mm d'erreur sur 6 broches, avec des perçages de 0,95 mm. | Perçages de 1,0–1,1 mm, ou une empreinte double pas. | S |
+| P17 | Mineur | Hygiène | Références masquées : U1, C2, C3, C6, D2, D3, R6, J2, J7, I2C, I2C_SPI. C5 (1 nF) est sur une empreinte tantale marquée « + ». Le masque rogne la sérigraphie de SW1 et J10, et `min_silk_clearance` est à 0. Il reste des bouts de piste orphelins : GND (202,8 ; 97,0) et VCC (162,7–163,1 ; 61,7). Les bibliothèques sont cassées (voir R15). | Nettoyer. | S |
+| P18 | Question | Radio | Quel module va dans J1, et dans quel sens ? Un module de 19 mm debout peut gêner J5. Il n'y a pas de piste RF, donc le plan de masse n'est pas en cause. | — | — |
+| P19 | Question | Capteur | Dans la variante boîtier, le connecteur capteur est à 7 mm de U1, au-dessus du plan GND. C'est négligeable vu le rapport cyclique. Dans le champignon, le BME280 pend sous la carte : c'est bien. | — | — |
+| P20 | Évolution | v2.3 | Pistes : vraies languettes ou mouse-bites avec exclusion cuivre, trous de fixation hors des modules, une seule entrée batterie protégée (voir R2 : CR2032, 18650 à 4,2 V et entrée boost sont en parallèle), empreinte BH1750, fente d'isolation thermique autour du capteur. | — | L |
+
+Points non vérifiés : rien n'a été ouvert dans l'interface graphique, les Gerbers et le fichier de perçage n'ont pas été exportés, et les collisions 3D entre modules et barrettes n'ont pas été contrôlées. Les dimensions du module radio et le côté d'entrée des fils de J13 sont supposés.
+
+## Ordre suggéré, schéma et PCB ensemble
+
+1. **R3, R4 et R5/P10**, le firmware et la LED : la règle PLAT-POWER-003 est à relire.
+2. **P1** : sans masse, le BME280 du champignon ne marche pas. C'est à corriger avant toute fabrication.
+3. **R1 et R2/P2**, la sécurité de l'alimentation.
+4. **R6/P3/P4** : remettre le schéma en référence avant toute autre modification.
+5. **P5, P6, P7, P8, P12**, les points de fabrication et de mécanique du champignon.
+6. Le reste.
