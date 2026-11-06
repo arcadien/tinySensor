@@ -81,12 +81,15 @@ void sleep(uint16_t s) {
 
   PRR |= _BV(PRUSI) | _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRADC);
 
-  // all pins as input to avoid power draw
-  DDRA = 0;
-  DDRB = 0;
+  // all pins as input to avoid power draw, except the sensor rail and the
+  // radio data line (radio is always powered): driven low so neither floats
+  DDRA = _BV(SENSOR_VCC);
+  DDRB = _BV(TX_RADIO_PIN);
+  PORTB &= ~_BV(TX_RADIO_PIN);
 
-  // pull-up all unused pins by default
-  PORTA |= 0b01110000;
+  // 1-Wire, SCL, SDA pull up to SENSOR_VCC and MISO may reach the sensor SDO:
+  // an internal pull-up would back-power the sensors. Power-down clamps inputs.
+  PORTA &= ~(_BV(SENSOR_VCC) | _BV(PA3) | _BV(PA4) | _BV(PA5) | _BV(PA6));
 
   // pullup reset only
   // ( only 4 lasts are available - p. 67)
