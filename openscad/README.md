@@ -25,18 +25,25 @@ Pièce de 2 € (Ø25,75 mm) dans les rendus pour l'échelle.
 
 ## Export
 
-Les pièces prêtes à trancher (3MF, ouverts directement par OrcaSlicer) sont dans `print/`. Le suffixe `_xN` donne le nombre d'exemplaires. Pour les régénérer après une modification (environ 2 min 30) :
+Les pièces prêtes à trancher sont dans `print/`, **un projet OrcaSlicer par modèle**, une plaque par usage et chaque objet nommé :
+
+| Projet | Plaques | Objets |
+|---|---|---|
+| `box.3mf` | Fond extérieur, Fond intérieur, Couvercle | n'imprimer qu'un des deux fonds : `ext` (presse-étoupe, extérieur) ou `int` (aérations, intérieur) |
+| `shield.3mf` | Abri, Assiettes | Chapeau, Fond, Clip (optionnel) ; 4 assiettes |
+| `stand.3mf` | Mât, Pied | pied de table, optionnel |
+| `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10 |
+
+Après une modification d'un `.scad` (environ 30 s, fermer les projets dans Orca avant) :
 
 ```bash
-./export.sh        # 3MF dans print/
-./export.sh stl    # ou des STL
+./export.sh                  # tous les projets
+./export.sh print/box.3mf    # ou un seul
 ```
 
-Le champignon n'a pas de fichiers séparés : toutes ses pièces sont dans le projet Orca **`print/mushroom.3mf`**, une plaque par usage (Ailettes, Hat, White buttons, Ground, Divers, Foot, Support), chaque objet nommé (Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10). `export.sh` lance ensuite `python3 update_3mf.py`, qui réexporte chaque pièce depuis `mushroom.scad` et remplace son maillage sur place : plaques, positions, rotations et réglages Orca sont gardés, l'ancien projet reste en `print/mushroom.3mf.bak`. Fermer le projet dans Orca avant. Réglages posés par le script s'ils manquent : chapeau brim extérieur 10 mm, remplissage 10 % ; pied 6 parois. Les pièces ne doivent être tournées qu'autour de Z dans Orca, sinon le script refuse de les mettre à jour.
+`export.sh` lance `update_3mf.py`, qui réexporte chaque pièce et remplace son maillage dans le projet : plaques, positions, rotations et réglages Orca sont gardés, l'ancien projet reste en `print/<projet>.3mf.bak`. Un projet absent est recréé, avec les réglages d'imprimante et de filament de `mushroom.3mf` (Ender 3). Les pièces ne doivent être tournées qu'autour de Z dans Orca, sinon le script refuse de les mettre à jour ; une pièce supprimée dans Orca est signalée, pas remise. Réglages par objet posés s'ils manquent : chapeau du champignon brim extérieur 10 mm, remplissage 10 % ; pied du champignon 6 parois. Les nombres de pois sont ceux du projet : l'écho « Pois » de `mushroom.scad` donne le compte à placer si la graine ou `dot_gap` changent.
 
-Le boîtier existe en deux variantes, `box_base_ext` (presse-étoupe, extérieur) et `box_base_int` (aérations, intérieur) : n'en imprimer qu'une. Le pied de table (`stand_*`) et le clip d'abri sont optionnels. Les nombres de pois du champignon suivent l'écho « Pois » de `mushroom.scad` : si la graine ou `dot_gap` changent, ajuster les noms dans `export.sh`.
-
-Export d'une seule pièce : `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_box.scad` (voir l'en-tête de chaque `.scad`).
+Export d'une pièce hors projet (STL, autre format) : `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_box.scad` (voir l'en-tête de chaque `.scad`).
 
 Rendu boîtier ouvert : `openscad --preview -D 'part="open"' --camera=110,-230,420,110,30,0 --imgsize=1400,1000 -o rendu_ouvert.png tinysensor_box.scad`.
 
