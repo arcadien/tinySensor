@@ -15,7 +15,8 @@
 //   plug    : bouchon de la chambre à lest (sous le berceau), collé dans le lamage du fond
 //   dot     : pois blancs rapportés, collés dans les logements du dôme
 //
-// Export (toutes les pièces dans leur sens d'impression) :
+// Export : python3 update_3mf.py met à jour les pièces dans le projet Orca print/mushroom.3mf (plaques gardées).
+// À la main (toutes les pièces dans leur sens d'impression) :
 //   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # bord sur le plateau, supports internes
 //   openscad -D 'part="gills"'   -o mushroom_gills.3mf   mushroom.scad   # lamelles vers le haut
 //   openscad -D 'part="chassis"' -o mushroom_chassis.3mf mushroom.scad

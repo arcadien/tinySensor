@@ -28,22 +28,13 @@ run sensor_shield.scad shield_clip     -D 'part="clip"'
 # Pied de table
 run stand.scad stand_mast -D 'part="mast"'
 run stand.scad stand_foot -D 'part="foot"'
-# Champignon (nombre de pois : voir l'écho « Pois » de mushroom.scad)
-run mushroom.scad mushroom_cap     -D 'part="cap"'
-run mushroom.scad mushroom_gills   -D 'part="gills"'
-run mushroom.scad mushroom_chassis -D 'part="chassis"'
-run mushroom.scad mushroom_deck    -D 'part="deck"'
-run mushroom.scad mushroom_stem    -D 'part="stem"'
-run mushroom.scad mushroom_ground  -D 'part="ground"'
-run mushroom.scad mushroom_cradle  -D 'part="cradle"'
-run mushroom.scad mushroom_plug    -D 'part="plug"'
-run mushroom.scad mushroom_dot6_x45  -D 'part="dot"' -D 'dot_d=6'
-run mushroom.scad mushroom_dot8_x26  -D 'part="dot"' -D 'dot_d=8'
-run mushroom.scad mushroom_dot10_x28 -D 'part="dot"' -D 'dot_d=10'
+# Champignon : pas de fichiers séparés, ses pièces sont mises à jour dans le projet Orca print/mushroom.3mf
+# (plaques, positions et réglages gardés) par update_3mf.py, lancé après les autres exports
 
 fail=0
 for j in "${jobs[@]}"; do wait "$j" || fail=1; done
 if ls "$out"/*.log >/dev/null 2>&1; then
   echo "Échec : voir $out/*.log" >&2; exit 1
 fi
+[ $fail -eq 0 ] && [ "$ext" = 3mf ] && python3 update_3mf.py
 [ $fail -eq 0 ] && echo "OK : $(ls "$out"/*."$ext" | wc -l) fichiers dans $out/"
