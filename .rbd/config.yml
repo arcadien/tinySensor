@@ -10,3 +10,6 @@ test_tagging:
 
 linter:
   command: "find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror"
+
+# commit prefixes outside the RBD code cycle, accepted by the pre-push hook
+extra_commit_prefixes: [hw]
