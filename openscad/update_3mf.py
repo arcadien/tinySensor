@@ -35,10 +35,10 @@ FROM_FILE = {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_
              "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",
              "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon", "mushroom_dot6": "Pois Ø6",
              "mushroom_dot8": "Pois Ø8", "mushroom_dot10": "Pois Ø10"}
-# réglages par objet (README, « Impression ») : chapeau très haut, bord de 6 mm + brim, supports sous les consoles
+# réglages par objet (README, « Impression ») : chapeau très haut, bord de 6 mm + brim ; sans support (les
+# faces des consoles passent en pont en PETG, vérifié à l'impression du 2026-11)
 SETTINGS = {
-    "Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%",
-                "enable_support": "1", "support_on_build_plate_only": "1"},
+    "Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
     "Pied": {"wall_loops": "6"},
 }
 PLUG = ("Bouchon", "Divers", (300.0, -154.0))   # plaque et position (à gauche du plancher et du berceau)

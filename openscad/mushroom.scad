@@ -17,7 +17,7 @@
 //
 // Export : python3 update_3mf.py met à jour les pièces dans le projet Orca print/mushroom.3mf (plaques gardées).
 // À la main (toutes les pièces dans leur sens d'impression) :
-//   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # bord sur le plateau, supports internes
+//   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # bord sur le plateau, sans support
 //   openscad -D 'part="gills"'   -o mushroom_gills.3mf   mushroom.scad   # lamelles vers le haut
 //   openscad -D 'part="chassis"' -o mushroom_chassis.3mf mushroom.scad
 //   openscad -D 'part="deck"'    -o mushroom_deck.3mf    mushroom.scad
@@ -287,7 +287,7 @@ function argmax_a(a0) = let(c = [for (d = [-40 : 2 : 40]) lobe_at(a0 + d, rot)])
 tab_a = [for (a = tab_base) argmax_a(a)];
 // consoles sur la paroi, juste au-dessus du disque : le disque monte dans le dôme et y est tiré par les vis ;
 // face droite côté intérieur, chanfrein à 45° jusqu'à la paroi au-dessus ; seule face vers le plateau :
-// l'appui (corbel_z, ~7 mm au-dessus du plateau), sur supports comme le reste de l'intérieur
+// l'appui (corbel_z, ~7 mm au-dessus du plateau), en pont sans support (vérifié en PETG)
 module corbels() {
   intersection() {
     for (a = tab_a) let(x0 = tab_r(a) - corbel_in, x1 = 1.5 * cap_R)   // coupée par la paroi
