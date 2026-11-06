@@ -40,11 +40,12 @@ def delete_seg(*c): DOOMED.append(find_seg(*c))
 
 def place(lib, name, ref, value, x, y, rot, layer_back, nets):
     f = P.FootprintLoad(FP + lib + '.pretty', name)
-    f.SetReference(ref); f.SetValue(value)
+    f.SetReference(ref); f.SetValue(value); f.SetFPID(P.LIB_ID(lib, name))
     b.Add(f); FPS.setdefault(ref, []).insert(0, f)
     f.SetPosition(pt(x, y)); f.SetOrientationDegrees(rot)
     if layer_back: f.Flip(f.GetPosition(), P.FLIP_DIRECTION_LEFT_RIGHT)
-    for p in f.Pads(): p.SetNet(net(nets[p.GetNumber()]))
+    for p in f.Pads():
+        if p.GetNumber(): p.SetNet(net(nets[p.GetNumber()]))
     return f
 
 def pad_xy(f, n):
@@ -103,7 +104,7 @@ for ref, n in [('J13', '1'), ('REF**', '1')]:
         if p.GetNumber() == n: p.SetNet(net('/RAW_IN'))
 
 # --- P2: 18650 holder named BT1, minus on GND
-bt = fp('REF**'); bt.SetReference('BT1'); bt.SetValue('18650')
+bt = fp('REF**'); bt.SetReference('BT1'); bt.SetValue('18650'); FPS['BT1'] = FPS.pop('REF**')
 for p in bt.Pads():
     if p.GetNumber() == '2': p.SetNet(net('GND')); p.SetLocalZoneConnection(P.ZONE_CONNECTION_THERMAL)
 seg(196.72, 99.08, 196.72, 96.00, 'GND', B, 0.5)  # the pour does not reach the pad by itself
@@ -143,11 +144,11 @@ link(r9, '1', 160.03, 68.09, '/RESET'); link(r9, '2', 165.50, 69.00, 'VCC')
 
 # --- P8: C6 (0.1u under the DC-DC module, was a THT tantalum on the back) -> 0805 on top
 DOOMED.append(fp('C6'))
-c6 = place('Capacitor_SMD', 'C_0805_2012Metric', 'C6', '100n', 164.09, 56.18, 90, False,
-           {'1': 'Net-(J7-Pin_3)', '2': '/SENSOR_VCC'})
+c6 = place('Capacitor_SMD', 'C_0805_2012Metric', 'C6', '100n', 164.09, 56.18, -90, False,
+           {'1': '/SENSOR_VCC', '2': 'Net-(J7-Pin_3)'})  # pad 1 = SENSOR_VCC, as on the symbol
 for n in '12': print('C6', n, pad_xy(c6, n))
-vx, vy = pad_xy(c6, '2'); via(164.09, 54.63, '/SENSOR_VCC'); seg(164.09, 54.63, vx, vy, '/SENSOR_VCC', F)
-ox, oy = pad_xy(c6, '1');
+vx, vy = pad_xy(c6, '1'); via(164.09, 54.63, '/SENSOR_VCC'); seg(164.09, 54.63, vx, vy, '/SENSOR_VCC', F)
+ox, oy = pad_xy(c6, '2');
 if abs(oy - 57.13) > 0.05: seg(ox, oy, 164.09, 57.13, 'Net-(J7-Pin_3)', F)
 
 # --- P17: C5 (1n, unpolarised) on a ceramic disc footprint
@@ -155,11 +156,17 @@ c5 = fp('C5'); pos, rot = c5.GetPosition(), c5.GetOrientationDegrees(); nets5 = 
 DOOMED.append(c5)
 place('Capacitor_THT', 'C_Disc_D3.0mm_W1.6mm_P2.50mm', 'C5', '1n', mm(pos.x), mm(pos.y), rot, False, nets5)
 
-# --- P11: M2.5 clearance holes; P16: wider drills for 2.54 headers in the EH footprints
+# --- connector references as in the schematic
+fp('I2C').SetReference('J3'); fp('I2C_SPI').SetReference('J14')
+FPS['J3'] = FPS.pop('I2C'); FPS['J14'] = FPS.pop('I2C_SPI')
+
+# --- P11: M2.5 clearance holes (stock footprint); P16: wider drills for 2.54 headers in the EH footprints
+for ref in [r for r in list(FPS) if r.startswith('MH')]:
+    for old in list(FPS[ref]):
+        q = old.GetPosition(); DOOMED.append(old); FPS[ref].remove(old)
+        place('MountingHole', 'MountingHole_2.7mm_M2.5', old.GetReference(), 'MountingHole', mm(q.x), mm(q.y), 0, False, {})
 for f in [f for l in FPS.values() for f in l]:
-    if f.GetReference().startswith('MH'):
-        for p in f.Pads(): p.SetDrillSize(pt(2.7, 2.7)); p.SetSize(pt(2.7, 2.7))
-    if f.GetReference() in ('I2C', 'I2C_SPI'):
+    if f.GetReference() in ('J3', 'J14'):
         for p in f.Pads(): p.SetDrillSize(pt(1.05, 1.05))
 
 # --- P14: U1 GND pin onto the pour
@@ -211,6 +218,19 @@ ds = b.GetDesignSettings(); ds.m_CopperEdgeClearance = MM(0.5)
 tb = b.GetTitleBlock(); tb.SetTitle('TinySensor'); tb.SetRevision('3.0'); tb.SetDate('2026-11-06')
 
 for o in DOOMED: b.Remove(o)
+
+# --- R15: footprints gone from the stock libraries are kept in the project library
+import os
+LIB = os.path.join(os.path.dirname(os.path.abspath(sys.argv[2])), 'library')
+for ref in ('J10', 'J13', 'BT1'):
+    f = fp(ref); name = f.GetFPID().GetLibItemName().wx_str()
+    if ref != 'J10': P.FootprintSave(LIB, f)
+    f.SetFPID(P.LIB_ID('TinySensor lib', name))
+for ref in [r for r in FPS if r.startswith('MH')]:
+    for f in FPS[ref]: f.Reference().SetVisible(False)
 P.ZONE_FILLER(b).Fill(b.Zones())
 P.SaveBoard(sys.argv[2], b)
+import json  # pad nets of the parts added here, for the schematic script
+json.dump({r: {p.GetNumber(): p.GetNetname() for p in FPS[r][0].Pads()} for r in ('R7', 'R8', 'C7', 'C8', 'R9', 'C6', 'Q1', 'JP6', 'BT1', 'D1', 'J3', 'J14')},
+          open(sys.argv[2] + '.pads.json', 'w'), indent=1)
 print('saved', sys.argv[2])

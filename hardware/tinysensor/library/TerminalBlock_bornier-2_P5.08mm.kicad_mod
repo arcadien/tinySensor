@@ -1,0 +1,223 @@
+(footprint "TerminalBlock_bornier-2_P5.08mm"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "simple 2-pin terminal block, pitch 5.08mm, revamped version of bornier2")
+	(tags "terminal block bornier2")
+	(property "Reference" "J13"
+		(at 2.54 -2.7686 0)
+		(layer "F.SilkS")
+		(uuid "655a2875-939f-48d0-98f9-23e0b5bd7fcd")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "RAW IN"
+		(at 2.54 5.08 0)
+		(layer "F.Fab")
+		(uuid "f35b2a62-33fe-4117-94a6-3a04b74851f1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0a87bcef-37d5-438b-aa4c-6f3cd457fa0e")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "100f9252-dd8b-412e-aa11-1e949c7104d6")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(sheetfile "tinySensorv1.kicad_sch")
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -2.54 -3.81)
+		(end -2.54 3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "e2cd1b74-60ea-4294-803d-db3dd2ab3627")
+	)
+	(fp_line
+		(start -2.54 3.81)
+		(end 7.62 3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "f80e5072-0e7b-4990-bcf5-bf985821acb8")
+	)
+	(fp_line
+		(start 7.62 -3.81)
+		(end -2.54 -3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0ee3aef1-9e1a-415d-97a5-89f79e85f6a3")
+	)
+	(fp_line
+		(start 7.62 2.54)
+		(end -2.54 2.54)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d6ec1066-5720-4883-82e6-8d23f18ba572")
+	)
+	(fp_line
+		(start 7.62 3.81)
+		(end 7.62 -3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "3f033863-fd92-43c4-9e81-f439db931a8e")
+	)
+	(fp_line
+		(start -2.71 -4)
+		(end -2.71 4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "79422acc-3089-44ed-88c7-400849b73d95")
+	)
+	(fp_line
+		(start -2.71 -4)
+		(end 7.79 -4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "24523af5-6b8a-471d-9e67-7bcb246e1671")
+	)
+	(fp_line
+		(start 7.79 4)
+		(end -2.71 4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "be3ea3a0-ea0a-4015-a1b1-aa7219e11910")
+	)
+	(fp_line
+		(start 7.79 4)
+		(end 7.79 -4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "b7ad5417-7258-4f04-8b3e-a515cbb3ed19")
+	)
+	(fp_line
+		(start -2.46 -3.75)
+		(end -2.46 3.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "da65d1a1-b3b7-4262-84e0-a15dde274098")
+	)
+	(fp_line
+		(start -2.46 3.75)
+		(end 7.54 3.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "baf5b024-68b5-4d06-bfe6-7054182e6f12")
+	)
+	(fp_line
+		(start -2.41 2.55)
+		(end 7.49 2.55)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "1614b707-be9a-486e-b1c3-59110f283d52")
+	)
+	(fp_line
+		(start 7.54 -3.75)
+		(end -2.46 -3.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "45226708-e423-47da-ae33-a4c823227be3")
+	)
+	(fp_line
+		(start 7.54 3.75)
+		(end 7.54 -3.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "dd99b954-0584-461d-994c-9890311bb266")
+	)
+	(pad "1" thru_hole rect
+		(at 0 0)
+		(size 3 3)
+		(drill 1.52)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "7ae489f2-cd7f-44af-9dd3-db6a4a01c073")
+	)
+	(pad "2" thru_hole circle
+		(at 5.08 0)
+		(size 3 3)
+		(drill 1.52)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "e340a460-bbde-4ad0-a03d-4b14dba6c612")
+	)
+	(embedded_fonts no)
+	(model "${KISYS3DMOD}/TerminalBlock.3dshapes/TerminalBlock_bornier-2_P5.08mm.wrl"
+		(offset
+			(xyz 2.539999962 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
