@@ -26,7 +26,7 @@
 **Status:** validated
 **Dependencies:** PLAT-POWER-001, PLAT-POWER-002, TECH-HAL-004
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** Before entering the first sleep period, `sleep()` sets PRR bits for PRUSI, PRTIM0, PRTIM1, and PRADC. It drives PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) as outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL) and PA6 (SDA) are inputs without internal pull-up, because their external pull-ups go to `SENSOR_VCC` and an internal pull-up would back-power the sensors through them. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, all five registers (PRR, DDRA, DDRB, PORTA, PORTB) are restored to their pre-sleep values.
+**Description:** Before entering the first sleep period, `sleep()` sets PRR bits for PRUSI, PRTIM0, PRTIM1, and PRADC. It drives PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) as outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, all five registers (PRR, DDRA, DDRB, PORTA, PORTB) are restored to their pre-sleep values.
 
 ---
 
