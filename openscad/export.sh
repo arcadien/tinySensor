@@ -1,40 +1,7 @@
 #!/usr/bin/env bash
-# Exporte toutes les pièces imprimables en 3MF (orientation d'impression) dans print/.
-# Usage : ./export.sh [stl]   — "stl" pour des STL au lieu des 3MF.
-# Le suffixe _xN indique le nombre d'exemplaires à imprimer.
+# Met à jour les projets Orca de print/ (un par modèle) depuis les .scad : plaques, positions et réglages
+# gardés, projet créé s'il manque. Détail : update_3mf.py.
+# Usage : ./export.sh [projet.3mf ...]   (par défaut tous : box, shield, stand, mushroom)
 set -euo pipefail
 cd "$(dirname "$0")"
-OPENSCAD=$(ls ~/bin/OpenSCAD-*.AppImage | tail -1)
-ext=${1:-3mf}
-out=print
-mkdir -p "$out"
-
-jobs=()
-run() { # run <fichier.scad> <sortie> [-D ...]
-  local src=$1 dst=$2; shift 2
-  "$OPENSCAD" "$@" -o "$out/$dst.$ext" "$src" >"$out/$dst.log" 2>&1 && rm "$out/$dst.log" &
-  jobs+=($!)
-}
-
-# Boîtier mural
-run tinysensor_box.scad box_base_ext -D 'part="base"' -D 'usage="ext"'
-run tinysensor_box.scad box_base_int -D 'part="base"' -D 'usage="int"'
-run tinysensor_box.scad box_lid      -D 'part="lid"'
-# Abri de sonde
-run sensor_shield.scad shield_cap      -D 'part="cap"'
-run sensor_shield.scad shield_plate_x4 -D 'part="plate"'
-run sensor_shield.scad shield_base     -D 'part="base"'
-run sensor_shield.scad shield_clip     -D 'part="clip"'
-# Pied de table
-run stand.scad stand_mast -D 'part="mast"'
-run stand.scad stand_foot -D 'part="foot"'
-# Champignon : pas de fichiers séparés, ses pièces sont mises à jour dans le projet Orca print/mushroom.3mf
-# (plaques, positions et réglages gardés) par update_3mf.py, lancé après les autres exports
-
-fail=0
-for j in "${jobs[@]}"; do wait "$j" || fail=1; done
-if ls "$out"/*.log >/dev/null 2>&1; then
-  echo "Échec : voir $out/*.log" >&2; exit 1
-fi
-[ $fail -eq 0 ] && [ "$ext" = 3mf ] && python3 update_3mf.py
-[ $fail -eq 0 ] && echo "OK : $(ls "$out"/*."$ext" | wc -l) fichiers dans $out/"
+python3 update_3mf.py "$@"
