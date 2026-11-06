@@ -32,7 +32,7 @@ Les pièces prêtes à trancher (3MF, ouverts directement par OrcaSlicer) sont d
 ./export.sh stl    # ou des STL
 ```
 
-Le champignon n'a pas de fichiers séparés : toutes ses pièces sont dans le projet Orca **`print/mushroom.3mf`**, une plaque par usage (Ailettes, Hat, White buttons, Ground, Divers, Foot, Support), chaque objet nommé (Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10). `export.sh` lance ensuite `python3 update_3mf.py`, qui réexporte chaque pièce depuis `mushroom.scad` et remplace son maillage sur place : plaques, positions, rotations et réglages Orca sont gardés, l'ancien projet reste en `print/mushroom.3mf.bak`. Fermer le projet dans Orca avant. Réglages posés par le script s'ils manquent : chapeau brim extérieur 10 mm, remplissage 10 %, supports depuis le plateau ; pied 6 parois. Les pièces ne doivent être tournées qu'autour de Z dans Orca, sinon le script refuse de les mettre à jour.
+Le champignon n'a pas de fichiers séparés : toutes ses pièces sont dans le projet Orca **`print/mushroom.3mf`**, une plaque par usage (Ailettes, Hat, White buttons, Ground, Divers, Foot, Support), chaque objet nommé (Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10). `export.sh` lance ensuite `python3 update_3mf.py`, qui réexporte chaque pièce depuis `mushroom.scad` et remplace son maillage sur place : plaques, positions, rotations et réglages Orca sont gardés, l'ancien projet reste en `print/mushroom.3mf.bak`. Fermer le projet dans Orca avant. Réglages posés par le script s'ils manquent : chapeau brim extérieur 10 mm, remplissage 10 % ; pied 6 parois. Les pièces ne doivent être tournées qu'autour de Z dans Orca, sinon le script refuse de les mettre à jour.
 
 Le boîtier existe en deux variantes, `box_base_ext` (presse-étoupe, extérieur) et `box_base_int` (aérations, intérieur) : n'en imprimer qu'une. Le pied de table (`stand_*`) et le clip d'abri sont optionnels. Les nombres de pois du champignon suivent l'écho « Pois » de `mushroom.scad` : si la graine ou `dot_gap` changent, ajuster les noms dans `export.sh`.
 
@@ -40,7 +40,7 @@ Export d'une seule pièce : `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_
 
 Rendu boîtier ouvert : `openscad --preview -D 'part="open"' --camera=110,-230,420,110,30,0 --imgsize=1400,1000 -o rendu_ouvert.png tinysensor_box.scad`.
 
-Toutes les pièces sont exportées dans leur orientation d'impression et s'impriment **sans support** (sauf l'intérieur du dôme du champignon). `out/` est ignoré par git, pas `print/`.
+Toutes les pièces sont exportées dans leur orientation d'impression et s'impriment **sans support**, y compris le dôme du champignon. `out/` est ignoré par git, pas `print/`.
 
 ## Boîtier principal (`tinysensor_box.scad`)
 
@@ -126,7 +126,7 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 ### Impression
 
-- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (190 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, avec des **supports** uniquement sous les faces d'appui des consoles, à 7 mm du plateau. Remplissage faible (~10 %) : le haut est plein dans le modèle (~60 cm³, 76 g à 100 %, ~8 g à 10 %), juste pour se passer de supports derrière le col, et il pèse au mauvais endroit. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
+- Toutes les pièces sortent dans leur sens d'impression. Le **dôme** (190 mm de haut, tient sur Ender 3) s'imprime bord sur le plateau, **sans support** : imprimé en PETG (~20 h), les faces d'appui des consoles, à 7 mm du plateau, passent en pont sur plus de 20 mm avec deux angles droits. Remplissage faible (~10 %) : le haut est plein dans le modèle (~60 cm³, 76 g à 100 %, ~8 g à 10 %), juste pour se passer de supports derrière le col, et il pèse au mauvais endroit. Les autres pièces s'impriment sans support (pied : 113 mm de haut).
 - Pied : **6 parois** (buse 0,4) : la paroi de la chambre à lest fait 2,4 mm (`ballast_wall`), elle est ainsi pleine sans remplissage d'interstices. 4 parois suffisent pour les autres pièces.
 - Dôme en rouge (ou brun : panthère), pois en blanc, sol en vert, le reste en blanc / ivoire.
 - Sol : brins et frange de 0,9 mm d'épaisseur, pointes à 0,6 mm (buse 0,4) ; le slicer peut tronquer les pointes les plus fines.
