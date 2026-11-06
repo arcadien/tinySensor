@@ -1,0 +1,40 @@
+? | ? | Package_DIP:DIP-14_W7.62mm | 1=VCC 2=/TX_RADIO 3=/LED_OUT 4=/RESET 5=/INT0 6=/DIGITAL_OUT 7=/SDA 8=/MISO 9=/SCL 10=/OneWire 11=/SENSOR_VCC 12=+BATT 13=/Analog_sensor 14=GND
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | 1=GND 2=VCC 3=/TX_RADIO
+? | ? | Capacitor_THT:CP_Radial_D5.0mm_P2.50mm | 1=VCC 2=GND
+? | ? | LED_THT:LED_D1.8mm_W3.3mm_H2.4mm | 1=Net-(D1-K) 2=GND
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | 1=/LED_OUT 2=Net-(JP1-Pad2)
+? | ? | Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm | 1=VCC 2=GND
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | Capacitor_THT:C_Rect_L7.0mm_W2.0mm_P5.00mm | 1=GND 2=VCC
+? | ? | TinySensor lib:DC-DC_0.9v-3.3v_to_3.3v | 1=+BATT 2=GND 3=VCC
+? | ? | Capacitor_THT:CP_Radial_D5.0mm_P2.50mm | 1=VCC 2=GND
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | 1=/DIGITAL_OUT 2=GND
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | 1=/SENSOR_VCC 2=/Analog_sensor 3=Net-(J7-Pin_3)
+? | ? | TerminalBlock:TerminalBlock_bornier-2_P5.08mm | 1=+BATT 2=GND
+? | ? | battery supp.:BatteryHolder_Keystone_106_1x21mm | 1=+BATT 2=GND
+? | ? | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | 1=/SENSOR_VCC 2=/SCL
+? | ? | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | 1=/SENSOR_VCC 2=/SDA
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | 1=Net-(D1-K) 2=Net-(JP1-Pad2)
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | 1=/INT0 2=GND
+? | ? | TinySensor lib:ICSP_SOCKET_MINI_2x3 | 1=/MISO 2=VCC 3=/SCL 4=/SDA 5=/RESET 6=GND
+? | ? | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | 1=/SENSOR_VCC 2=GND 3=/OneWire
+? | ? | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | 1=/OneWire 2=/SENSOR_VCC
+? | ? | Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal | 1=GND 2=Net-(D2-K)
+? | ? | Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal | 1=Net-(D2-K) 2=Net-(D2-A)
+? | ? | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | 1=/Analog_sensor 2=Net-(JP3-B)
+? | ? | Capacitor_THT:CP_Radial_D4.0mm_P1.50mm | 1=Net-(JP3-B) 2=GND
+? | ? | Button_Switch_THT:SW_PUSH_6mm_H4.3mm | 1=/RESET 1=/RESET 2=GND 2=GND
+? | ? | MountingHole:MountingHole_2.5mm | =-
+? | ? | Battery:BatteryHolder_MPD_BH-18650-PC2 | =- =- 1=+BATT 2=-
+? | ? | Connector_JST:JST_EH_B6B-EH-A_1x06_P2.50mm_Vertical | 1=/SENSOR_VCC 2=GND 3=/SCL 4=/SDA 5=/MISO 6=GND
+? | ? | Connector_JST:JST_EH_B6B-EH-A_1x06_P2.50mm_Vertical | 1=/SENSOR_VCC 2=GND 3=/SCL 4=/SDA 5=- 6=GND
+? | ? | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | 1=VCC 2=+BATT
+? | ? | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | 1=GND 2=Net-(JP3-B)
+? | ? | Jumper:SolderJumper-3_P1.3mm_Open_Pad1.0x1.5mm_NumberLabels | 1=Net-(D2-A) 2=Net-(J7-Pin_3) 3=GND
+? | ? | Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm | 1=/SENSOR_VCC 2=Net-(J7-Pin_3)
+? | ? | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | 1=/MISO 2=/MISO
+? | ? | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | 1=GND 2=GND

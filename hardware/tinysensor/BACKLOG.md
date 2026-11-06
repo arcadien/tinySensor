@@ -6,11 +6,13 @@ Sévérités : **Critique** / **Majeur** / **Mineur** / **Question** / **Évolut
 État à l'ERC : 0 erreur et 47 avertissements. 39 sont des symboles embarqués périmés. Deux seulement signalent un vrai défaut, et ce défaut est R1.
 La parité schéma ↔ PCB remonte 39 écarts (voir R6).
 
+Rapports complets, ERC/DRC et images : `review/2026-11-06/`. Reprise des cartes v2.2 déjà fabriquées : `REWORK_v2.2.md`.
+
 ## Schéma
 
 | ID | Sév. | Zone | Constat | Correctif | Effort |
 |---|---|---|---|---|---|
-| R1 | Critique | Alim / MCU | PA1 (U1.12, mesure batterie) est relié directement à +BATT, sans résistance ni pont diviseur. Avec une batterie au-dessus de VCC + 0,5 V (Li-ion, 18650, J13 RAW IN au-dessus de 3,8 V), la diode de clamp conduit sans limite de courant : le MCU peut être détruit, ou VCC alimenté par PA1. La lecture sature aussi à 1023. ERC : `pin_to_pin` et `multiple_net_names` +BATT/Battery_Checker. | Résistance série de 10–100 k et 100 nF vers GND. Si la batterie peut dépasser VCC, un pont diviseur, éventuellement commuté par PA2, et adapter `ConvertAnalogValueToMv`. | S |
+| R1 | Critique (v2.2 : reprise) | Alim / MCU | PA1 (U1.12, mesure batterie) est relié directement à +BATT, sans résistance ni pont diviseur. Avec une batterie au-dessus de VCC + 0,5 V (Li-ion, 18650, J13 RAW IN au-dessus de 3,8 V), la diode de clamp conduit sans limite de courant : le MCU peut être détruit, ou VCC alimenté par PA1. La lecture sature aussi à 1023. ERC : `pin_to_pin` et `multiple_net_names` +BATT/Battery_Checker. | Résistance série de 10–100 k et 100 nF vers GND. Si la batterie peut dépasser VCC, un pont diviseur, éventuellement commuté par PA2, et adapter `ConvertAnalogValueToMv`. | S |
 | R2 | Majeur | Alim | Aucune protection contre l'inversion de polarité. J10 (CR2032), J11 (AAA), J12 (AA), J13 (RAW IN) et le support 18650 du PCB sont tous en parallèle. Un bornier inversé met une tension négative sur le DC-DC et le MCU. Deux piles posées ensemble se rechargent l'une l'autre, ce qui est dangereux pour la CR2032. | P-MOSFET en idéal-diode, ou Schottky sur RAW IN. Marquer les supports comme exclusifs (DNP, mention sérigraphiée). | M |
 | R3 | ✅ Corrigé | Alim / firmware | En hibernation, `sleep()` passe PA2 en entrée flottante (`DDRA = 0`, `Attiny84aHal.cpp:85`). La même fonction active les pull-ups internes de PA4/PA5/PA6 (l.89), et PA3 garde le sien depuis l'init (l.42). SENSOR_VCC est alors alimenté à travers R2/R3/R6 : les capteurs ne sont jamais vraiment coupés, et le BME280 n'a jamais de reset à la mise sous tension propre. | Firmware : en sommeil, PA2 en sortie à 0, PA3/PA4/PA6 en entrée sans pull-up. | S |
 | R4 | ✅ Corrigé | Radio | Le module radio est alimenté en permanence (J1.2 sur VCC), et sa broche DATA (PB0) flotte en sommeil (`DDRB = 0`). Un émetteur OOK peut s'activer tout seul. Le commentaire `Attiny84aHal.h:9` dit le contraire du schéma. | Firmware : PB0 en sortie à 0 en sommeil. Option : un pull-down de 100 k sur TX_RADIO. Corriger le commentaire. | S |
@@ -71,3 +73,9 @@ Points non vérifiés : rien n'a été ouvert dans l'interface graphique, les Ge
 4. **R6/P3/P4** : remettre le schéma en référence avant toute autre modification.
 5. **P5, P6, P7, P8, P12**, les points de fabrication et de mécanique du champignon.
 6. Le reste.
+
+## Firmware, suite de la revue
+
+| ID | Sév. | Constat | Correctif | Effort |
+|---|---|---|---|---|
+| F1 | Majeur | Avec le pont diviseur ajouté par la reprise v2.2 (R1), et dans la v3.0, PA1 ne reçoit plus que la moitié de la tension batterie. | Ajouter un réglage de rapport de pont (par exemple `BATTERY_DIVIDER`) dans `main.cpp`, ou dans `ConvertAnalogValueToMv`, via le workflow RBD. | S |

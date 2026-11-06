@@ -1,0 +1,158 @@
+** Drc report for tinySensorv1.kicad_pcb **
+** Created on 2026-11-06T16:12:05 **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 42 DRC violations **
+[malformed_courtyard]: Empreinte a une zone d'occupation mal formée (n'est pas une forme fermée)
+    Local override; error
+    @(130.0582 mm, 82.5703 mm): Empreinte J10
+[malformed_courtyard]: Empreinte a une zone d'occupation mal formée (n'est pas une forme fermée)
+    Local override; error
+    @(130.0582 mm, 82.5703 mm): Empreinte J10
+[malformed_courtyard]: Empreinte a une zone d'occupation mal formée (n'est pas une forme fermée)
+    Local override; error
+    @(130.0582 mm, 82.5703 mm): Empreinte J10
+[starved_thermal]: Connexion de frein thermique à la zone incomplète (couche B.Cu ; 1 rayons connectés à des ilots isolés)
+    Local override; error
+    @(113.0000 mm, 48.0000 mm): Zone [GND] sur B.Cu, priorité 0
+    @(196.8502 mm, 77.1103 mm): Pad métallisé 2 [GND] de I2C
+[lib_footprint_mismatch]: L’empreinte 'DIP-14_W7.62mm' ne correspond pas à la copie en librairie 'Package_DIP'
+    Local override; warning
+    @(168.9200 mm, 70.1200 mm): Empreinte U1
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x03_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(192.9994 mm, 56.8604 mm): Empreinte J1
+[lib_footprint_mismatch]: L’empreinte 'CP_Radial_D5.0mm_P2.50mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(162.6718 mm, 61.7423 mm): Empreinte C1
+[lib_footprint_mismatch]: L’empreinte 'LED_D1.8mm_W3.3mm_H2.4mm' ne correspond pas à la copie en librairie 'LED_THT'
+    Local override; warning
+    @(157.9982 mm, 81.5593 mm): Empreinte D1
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x02_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(171.2062 mm, 73.6803 mm): Empreinte JP1
+[lib_footprint_mismatch]: L’empreinte 'CP_Radial_Tantal_D4.5mm_P2.50mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(155.9204 mm, 61.6001 mm): Empreinte C5
+[lib_footprint_mismatch]: L’empreinte 'C_Rect_L7.0mm_W2.0mm_P5.00mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(165.5000 mm, 64.0000 mm): Empreinte C2
+[lib_footprint_mismatch]: L’empreinte 'DC-DC_0.9v-3.3v_to_3.3v' ne correspond pas à la copie en librairie 'TinySensor lib'
+    Local override; warning
+    @(147.5697 mm, 58.7888 mm): Empreinte J2
+[lib_footprint_mismatch]: L’empreinte 'CP_Radial_D5.0mm_P2.50mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(194.0000 mm, 70.0000 mm): Empreinte C4
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x02_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(199.7558 mm, 66.7969 mm): Empreinte J4
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x03_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(174.1780 mm, 58.5927 mm): Empreinte J7
+[lib_footprint_issues]: Empreinte 'TerminalBlock_bornier-2_P5.08mm' introuvable dans la librairie 'TerminalBlock'
+    Local override; warning
+    @(151.6736 mm, 77.9932 mm): Empreinte J13
+[lib_footprint_issues]: La librairie d'empreinte 'battery supp.' n’est pas activée dans la configuration actuelle
+    Local override; warning
+    @(130.0582 mm, 82.5703 mm): Empreinte J10
+[lib_footprint_mismatch]: L’empreinte 'R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Resistor_THT'
+    Local override; warning
+    @(179.9644 mm, 75.3934 mm): Empreinte R3
+[lib_footprint_mismatch]: L’empreinte 'R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Resistor_THT'
+    Local override; warning
+    @(182.3644 mm, 75.3934 mm): Empreinte R2
+[lib_footprint_mismatch]: L’empreinte 'R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Resistor_THT'
+    Local override; warning
+    @(162.0622 mm, 84.6023 mm): Empreinte R1
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x02_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(199.7100 mm, 56.6115 mm): Empreinte J8
+[lib_footprint_mismatch]: L’empreinte 'ICSP_SOCKET_MINI_2x3' ne correspond pas à la copie en librairie 'TinySensor lib'
+    Local override; warning
+    @(164.0000 mm, 85.0000 mm): Empreinte J6
+[lib_footprint_mismatch]: L’empreinte 'PinHeader_1x03_P2.54mm_Vertical' ne correspond pas à la copie en librairie 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(188.9506 mm, 51.1810 mm): Empreinte J5
+[lib_footprint_mismatch]: L’empreinte 'R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Resistor_THT'
+    Local override; warning
+    @(185.7807 mm, 57.9984 mm): Empreinte R6
+[lib_footprint_mismatch]: L’empreinte 'D_DO-35_SOD27_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Diode_THT'
+    Local override; warning
+    @(182.5803 mm, 58.0746 mm): Empreinte D3
+[lib_footprint_mismatch]: L’empreinte 'D_DO-35_SOD27_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Diode_THT'
+    Local override; warning
+    @(180.0200 mm, 50.4901 mm): Empreinte D2
+[lib_footprint_mismatch]: L’empreinte 'R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal' ne correspond pas à la copie en librairie 'Resistor_THT'
+    Local override; warning
+    @(175.4734 mm, 55.4584 mm): Empreinte R4
+[lib_footprint_mismatch]: L’empreinte 'CP_Radial_D4.0mm_P1.50mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(170.3680 mm, 51.3537 mm): Empreinte C3
+[lib_footprint_mismatch]: L’empreinte 'SW_PUSH_6mm_H4.3mm' ne correspond pas à la copie en librairie 'Button_Switch_THT'
+    Local override; warning
+    @(153.5302 mm, 68.0923 mm): Empreinte SW1
+[lib_footprint_issues]: Empreinte 'BatteryHolder_MPD_BH-18650-PC2' introuvable dans la librairie 'Battery'
+    Local override; warning
+    @(124.7242 mm, 99.0803 mm): Empreinte REF**
+[lib_footprint_mismatch]: L’empreinte 'JST_EH_B6B-EH-A_1x06_P2.50mm_Vertical' ne correspond pas à la copie en librairie 'Connector_JST'
+    Local override; warning
+    @(199.3502 mm, 83.9103 mm): Empreinte I2C_SPI
+[lib_footprint_mismatch]: L’empreinte 'JST_EH_B6B-EH-A_1x06_P2.50mm_Vertical' ne correspond pas à la copie en librairie 'Connector_JST'
+    Local override; warning
+    @(199.3502 mm, 77.1103 mm): Empreinte I2C
+[lib_footprint_mismatch]: L’empreinte 'SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm' ne correspond pas à la copie en librairie 'Jumper'
+    Local override; warning
+    @(151.6482 mm, 65.0951 mm): Empreinte JP2
+[lib_footprint_mismatch]: L’empreinte 'SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm' ne correspond pas à la copie en librairie 'Jumper'
+    Local override; warning
+    @(167.0950 mm, 50.8000 mm): Empreinte JP3
+[lib_footprint_mismatch]: L’empreinte 'SolderJumper-3_P1.3mm_Open_Pad1.0x1.5mm_NumberLabels' ne correspond pas à la copie en librairie 'Jumper'
+    Local override; warning
+    @(175.8645 mm, 52.0192 mm): Empreinte JP4
+[lib_footprint_mismatch]: L’empreinte 'CP_Radial_Tantal_D4.5mm_P2.50mm' ne correspond pas à la copie en librairie 'Capacitor_THT'
+    Local override; warning
+    @(164.0942 mm, 54.6303 mm): Empreinte C6
+[lib_footprint_mismatch]: L’empreinte 'SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm' ne correspond pas à la copie en librairie 'Jumper'
+    Local override; warning
+    @(189.3502 mm, 80.7103 mm): Empreinte JP6
+[lib_footprint_mismatch]: L’empreinte 'SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm' ne correspond pas à la copie en librairie 'Jumper'
+    Local override; warning
+    @(166.1262 mm, 61.2343 mm): Empreinte JP5
+[silk_overlap]: Silkscreen clearance
+    Rule: configuration des contraintes de la sérigraphie; warning
+    @(147.0000 mm, 88.0000 mm): Segment sur F.Silkscreen
+    @(121.7242 mm, 89.0303 mm): Segment de REF** sur F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(159.0302 mm, 67.0923 mm): Segment de SW1 sur F.Silkscreen
+    @(160.0302 mm, 68.0923 mm): Pad métallisé 1 [/RESET] de SW1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(159.0302 mm, 67.0923 mm): Segment de SW1 sur F.Silkscreen
+    @(153.5302 mm, 68.0923 mm): Pad métallisé 1 [/RESET] de SW1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(127.5582 mm, 84.6203 mm): Segment de J10 sur F.Silkscreen
+    @(130.0582 mm, 82.5703 mm): Pad métallisé 1 [+BATT] de J10
+
+** Found 2 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(186.8502 mm, 77.1103 mm): Pad métallisé 6 [GND] de I2C
+    @(113.0000 mm, 48.0000 mm): Zone [GND] sur B.Cu, priorité 0
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(189.3502 mm, 81.4353 mm): Piste [/MISO] sur B.Cu, long. 2.4750 mm
+    @(189.3502 mm, 79.9853 mm): Piste [/MISO] sur B.Cu, long. 10.6750 mm
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+
+** End of Report **
