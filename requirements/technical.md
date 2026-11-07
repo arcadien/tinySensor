@@ -4,10 +4,10 @@
 <!-- Format: req(ID): title -->
 
 ### TECH-HAL-001
-**Title:** All encoders and sensor wrappers receive Hal* at construction and never access AVR registers directly
+**Title:** Encoders and sensor wrappers that use the HAL receive Hal* at construction; no direct AVR register access
 **Status:** validated
 **Dependencies:** —
-**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and sensor wrapper (`BMx280`) must accept a `Hal*` parameter at construction time and must call only `Hal` virtual methods for all hardware I/O. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`.
+**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and every sensor wrapper that performs hardware timing or I/O itself (`Ds18b20`, `LightSensor`) must accept a `Hal*` at construction and must use only `Hal` methods for that I/O. A sensor wrapper whose hardware access is entirely delegated to a third-party bus driver (`BMx280`) takes no `Hal*`. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`, except register addresses passed as arguments to a third-party bus driver.
 
 ---
 
