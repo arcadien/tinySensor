@@ -45,6 +45,7 @@ static const unsigned char POWER_OFF = '-';
 static const unsigned char HIBERNATE = 'Z';
 static const unsigned char LED_ON = 'O';
 static const unsigned char LED_OFF = 'o';
+static const unsigned char DELAY_30MS = 'M';
 
 // Plausible ADC readings: VCC ~3 V, battery ~2.3 V, both above
 // LOW_BATTERY_VOLTAGE so every frame of the variant is sent.
@@ -54,8 +55,8 @@ static void SetNominalReadings(TestHal_ &hal) {
   hal.rawAnalogSensor = 512;
 }
 
-// Also records power, LED and hibernate calls in Orders, so the cycle order
-// is visible; Hibernate does not sleep.
+// Also records power, LED, Delay30ms and hibernate calls in Orders, so the
+// cycle order is visible; Delay30ms and Hibernate do not sleep.
 class CycleSpyHal : public TestHal_ {
  public:
   int hibernateCalls = 0;
@@ -79,6 +80,7 @@ class CycleSpyHal : public TestHal_ {
     TestHal_::LedOff();
     Orders.push_back(LED_OFF);
   }
+  void Delay30ms() override { Orders.push_back(DELAY_30MS); }
   void Hibernate(uint16_t seconds) override {
     hibernateCalls++;
     hibernateSeconds = seconds;
@@ -98,21 +100,36 @@ static int ExpectedFrameCount() {
   return frames;
 }
 
-// Appends one LED-wrapped transmission recorded on `ref`.
-static void AppendFrame(std::vector<unsigned char> &expected, TestHal_ &ref) {
+// Appends one TRANSMIT_WITH_LED transmission recorded on `ref` (which
+// includes the encoder's own LED calls, e.g. x10rf::SendCommand).
+static void AppendFrame(std::vector<unsigned char> &expected,
+                        CycleSpyHal &ref) {
   expected.push_back(LED_ON);
   expected.insert(expected.end(), ref.Orders.begin(), ref.Orders.end());
   expected.push_back(LED_OFF);
+  expected.push_back(DELAY_30MS);
   ref.ClearOrders();
+}
+
+// One TRANSMIT_WITH_LED ends with LedOff then Delay30ms; the BMx280 settle
+// delay and x10rf's inner LedOff do not match this pair.
+static int CountTransmissions(const std::vector<unsigned char> &orders) {
+  int n = 0;
+  for (size_t i = 1; i < orders.size(); i++) {
+    n += (orders[i - 1] == LED_OFF && orders[i] == DELAY_30MS);
+  }
+  return n;
 }
 
 // HAL sequence of one iteration of the former while(1) loop, rebuilt with
 // direct encoder calls on a separate HAL.
 static std::vector<unsigned char> ReferenceCycleOrders() {
-  TestHal_ ref;
-  SetNominalReadings(ref);
+  CycleSpyHal ref;
   std::vector<unsigned char> expected;
   expected.push_back(POWER_ON);
+#if defined(USE_BMP280) || defined(USE_BME280)
+  expected.push_back(DELAY_30MS);  // BMx280 settle delay in ReadEnvironment
+#endif
 
   x10rf x10(&ref, 2);
   uint16_t vccMv = ref.ComputeVccMv(INTERNAL_1v1);
@@ -218,7 +235,7 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
   runCycle(&spy);
 
   // Then
-  TEST_ASSERT_EQUAL_INT(ExpectedFrameCount(), Count(spy.Orders, LED_ON));
+  TEST_ASSERT_EQUAL_INT(ExpectedFrameCount(), CountTransmissions(spy.Orders));
 }
 
 // @req TECH-MAIN-001
