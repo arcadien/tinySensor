@@ -46,6 +46,8 @@ jobs:
         run: |
           bash test/compile_fail/check_both_protocols.sh
           bash test/compile_fail/check_lacrosse_id_required.sh
+      - name: Build variant checks
+        run: bash test/build_variants/check_sensor_selection.sh
 
   # Firmware build for every physical target
   build-avr:
