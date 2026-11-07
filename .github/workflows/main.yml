@@ -13,8 +13,8 @@ jobs:
     name: clang-format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install clang-format
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - uses: actions/cache@v6
@@ -41,7 +41,13 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
-        run: pio test -e native_debug
+        run: pio test -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
+      - name: Compile-fail checks
+        run: |
+          bash test/compile_fail/check_both_protocols.sh
+          bash test/compile_fail/check_lacrosse_id_required.sh
+      - name: Build variant checks
+        run: bash test/build_variants/check_sensor_selection.sh
 
   # Firmware build for every physical target
   build-avr:
@@ -53,7 +59,7 @@ jobs:
         env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - uses: actions/cache@v6

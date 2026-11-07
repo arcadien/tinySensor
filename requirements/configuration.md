@@ -4,16 +4,16 @@
 <!-- Format: req(ID): title -->
 
 ### CONF-BUILD-001
-**Title:** Enforce exclusive protocol selection at compile time
+**Title:** Select at most one environment protocol per build
 **Status:** validated
 **Dependencies:** —
-**Description:** Exactly one of `USE_OREGON` or `USE_LACROSSE` must be defined per build environment. Defining neither causes a compile error because no protocol encoder is included; defining both causes a compile error due to conflicting encoder instantiation in `main.cpp`.
+**Description:** At most one of `USE_OREGON` or `USE_LACROSSE` may be defined per build environment; defining both is rejected at compile time. With neither defined, the sensor sends no environment frame; X10 meters and luminosity are still transmitted.
 
 ### CONF-BUILD-002
-**Title:** Select sensor type exclusively via build flags
+**Title:** Select temperature and luminosity sensors via build flags
 **Status:** validated
-**Dependencies:** —
-**Description:** Exactly one of `USE_BMP280`, `USE_BME280`, `USE_DS18B20`, or `USE_BH1750` must be defined per build environment to select the active sensor. When any I2C sensor flag (`USE_BMP280`, `USE_BME280`, or `USE_BH1750`) is present and `USE_I2C` is not explicitly defined, `config.h` auto-derives `USE_I2C`.
+**Dependencies:** FUNC-SENSOR-001, FUNC-SENSOR-002, FUNC-SENSOR-003
+**Description:** `USE_BMP280` or `USE_BME280` enables the BMx280 sensor for temperature; `USE_BME280` adds humidity and pressure and takes precedence when both are defined. `USE_DS18B20` enables the DS18B20 temperature sensor; combined with a BMx280, the DS18B20 provides the temperature and the BMx280 humidity and pressure. With no temperature sensor defined, no environment frame is sent. `USE_BH1750` enables luminosity reporting independently of the temperature sensor and of the environment protocol. When `USE_BMP280`, `USE_BME280` or `USE_BH1750` is defined and `USE_I2C` is not, `USE_I2C` is derived automatically.
 
 ### CONF-BUILD-003
 **Title:** Set Oregon channel and rolling code per environment
@@ -24,8 +24,8 @@
 ### CONF-BUILD-004
 **Title:** Set Lacrosse device address per environment
 **Status:** validated
-**Dependencies:** CONF-BUILD-001
-**Description:** When `USE_LACROSSE` is defined, `LACROSSE_ID` must be set to a valid `LacrosseWS7000::Address` enum value. It is passed directly to `LacrosseWS7000::SetAddress()` in `main()`.
+**Dependencies:** CONF-BUILD-001, FUNC-SENSOR-003
+**Description:** `LACROSSE_ID` must be set to a valid `LacrosseWS7000::Address` value whenever `USE_LACROSSE` or `USE_BH1750` is defined, whatever the environment protocol. A build defining either flag without `LACROSSE_ID` is rejected at compile time with an error naming CONF-BUILD-004.
 
 ### CONF-BUILD-005
 **Title:** Supply individually calibrated internal 1.1 V reference per board

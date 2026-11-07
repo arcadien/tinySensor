@@ -337,6 +337,7 @@ void SendX10RfBit_one_uses_hal_bit_long_delay() {
 }
 
 // @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_gap_appears_once_per_repeat() {
   // Given
   // With rf_repeats=2 the gap delay must appear exactly twice.
@@ -356,6 +357,7 @@ void SendCommand_gap_appears_once_per_repeat() {
 }
 
 // @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_preamble_appears_once_per_repeat() {
   // Given
   // With rf_repeats=3 the preamble high must appear exactly 3 times.

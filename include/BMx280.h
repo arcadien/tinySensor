@@ -1,5 +1,4 @@
 #pragma once
-#include <Hal.h>
 
 #if defined(AVR)
 #include <SparkFunBME280.h>
@@ -9,7 +8,7 @@ class BMx280 {
   BME280 _bmX280;
 
  public:
-  BMx280(Hal *hal) : hal(hal) { _bmX280.setI2CAddress(0x76); }
+  BMx280() { _bmX280.setI2CAddress(0x76); }
 
   void Begin() { _bmX280.beginI2C(); }
 
@@ -26,9 +25,5 @@ class BMx280 {
   float GetPressure() { return 0; }
   float GetHumidity() { return 0; }
   void Shutdown() {}
-  BMx280(Hal *hal) : hal(hal) {}
 #endif
-
- private:
-  Hal *hal;
 };

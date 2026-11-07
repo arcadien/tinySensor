@@ -1,18 +1,18 @@
 # Architecture
 
-_Last updated: 2026-11-07 — PLAT-POWER-006 (switched 5 V module on PB2)_
+_Last updated: 2026-11-07 — PLAT-POWER-006 (switched 5 V module on PB2); TECH-HAL-001 / TECH-MAIN-001 (BMx280 takes no Hal*, file-scope object), see [Main loop structure](#main-loop-structure)_
 
 ## Component Diagram
 
 ```mermaid
 graph TD
-  main["main.cpp (loop)"] -->|Hal*| HAL
+  main["main.cpp (runCycle)"] -->|Hal*| HAL
   main -->|"Measurements"| EnvEnc["EnvironmentEncoder (build-time alias)"]
   EnvEnc -->|"USE_OREGON"| OregonV3
   EnvEnc -->|"USE_LACROSSE"| LacrosseWS7000
   main -->|"luminosity (always Lacrosse)"| LacrosseWS7000
   main -->|Hal*| x10rf
-  main -->|Hal*| BMx280
+  main --> BMx280["BMx280 (file-scope)"]
   main -->|Hal*| SoftSerial
   main -->|Hal*| Ds18b20["Ds18b20 (1-Wire wrapper)"]
   Ds18b20 -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire driver library)"]
@@ -27,7 +27,7 @@ graph TD
   LacrosseWS7000 -->|RadioGoHigh/Low\nDelay400Us| HAL
   x10rf -->|"RadioGoHigh/Low\nDelayX10PreambleHigh/Low\nDelayX10BitShort/Long\nDelayX10Gap"| HAL
   SoftSerial -->|SerialWriteBit| HAL
-  BMx280 -->|I2C via TinyI2C| HAL
+  BMx280 -->|"I2C 0x76 via TinyI2C"| BME280["SparkFun BME280 (I2C driver)"]
   Ds18b20 -->|Delay1s| HAL
 ```
 
@@ -41,7 +41,7 @@ graph TD
 | `OregonV3` | Encodes temperature/humidity/pressure into Oregon Scientific v3 frames | — |
 | `LacrosseWS7000` | Encodes temperature/humidity/pressure/luminosity into Lacrosse WS7000 frames | — |
 | `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors); routes all timing through Hal X10 delay methods | TECH-X10-001, TECH-X10-002 |
-| `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface | — |
+| `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface; no `Hal*`, hardware access delegated to SparkFun BME280 over TinyI2C; file-scope object in `main.cpp` | FUNC-SENSOR-001, TECH-HAL-001 |
 | `Ds18b20` | Wrapper class encapsulating DS18B20 1-Wire access; accepts `Hal*` at construction; exposes `Begin()`, `Convert()`, `Read()`; uses `hal->Delay1s()` between convert and read on AVR; stubs on non-AVR | TECH-SENSOR-001 |
 | `SoftSerial` | Software UART for debug logging (optional, `USE_SERIAL_LOG`) | — |
 | `ds18b20` | 1-Wire driver library on PA3; called only through `Ds18b20` wrapper | FUNC-SENSOR-002 |
@@ -49,7 +49,7 @@ graph TD
 | `LightSensor` | Wrapper for BH1750 (`include/LightSensor.h`); `Read()` starts a one-shot measurement, waits 150 ms through the HAL, returns lux; stub on non-AVR | FUNC-SENSOR-003 |
 | `Measurements` | Values of one cycle (`include/Measurements.h`): temperature, humidity, pressure, luminosity, each with a "present" flag | — |
 | `EnvironmentEncoder` | Build-time alias to `OregonV3` or `LacrosseWS7000` (`include/EnvironmentEncoder.h`) + `ConfigureEncoder()` and `ApplyMeasurements()` overloads | FUNC-OREGON-012, FUNC-LACROSSE-002, FUNC-BATTERY-003 |
-| `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
+| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*` (except the file-scope `BMx280`); `main()` (excluded under `UNIT_TEST`) = `hal.Init()` + endless `runCycle(&hal)` loop | TECH-MAIN-001 |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
@@ -60,29 +60,41 @@ graph TD
 | `OregonV3` | `Hal*` | constructor |
 | `LacrosseWS7000` | `Hal*` | constructor |
 | `x10rf` | `Hal*` | constructor |
-| `BMx280` | `Hal*` | constructor |
+| `BMx280` | — (none) | — |
 | `Ds18b20` | `Hal*` | constructor |
 | `SoftSerial` | `Hal*` | constructor |
 | `LightSensor` | `Hal*` | constructor |
+| `runCycle` (`main.cpp`) | `Hal*` | function parameter; forwarded to every encoder and wrapper it constructs |
 
-All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly.
+Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at construction; a wrapper whose bus access is delegated to a third-party driver (`BMx280`) receives none. None accesses AVR registers directly, except register addresses passed to a third-party bus driver (`Ds18b20`).
 
 ## Main loop structure
 
-`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers.
+`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers. One cycle is `void runCycle(Hal* hal)` (TECH-MAIN-001, declared in `include/main.h`); `main()` calls `hal.Init()` then loops on `runCycle(&hal)`, and is compiled out under `UNIT_TEST` so native test binaries can link `src/`.
 
-1. `hal.PowerOnSensors()`.
+1. `hal->PowerOnSensors()`.
 2. `ReadEnvironment()` fills a `Measurements` from the fitted sensors (`BMx280`, `Ds18b20`). A field is flagged present only if its sensor is fitted and read correctly (DS18B20: `0` means read error).
 3. Battery and analog X10 meters (`BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID`), suppressed when the battery is low. VCC is computed once when either is enabled.
 4. Luminosity (`USE_BH1750`, battery not low): `LightSensor::Read()`, then a dedicated Lacrosse encoder sends a type-5 frame `LIGHT_FRAME_REPEAT` (2) times.
 5. Environment frame (`USE_OREGON` / `USE_LACROSSE`): `ApplyMeasurements()` loads the present fields into the encoder and returns whether to send (only when a temperature is present). Oregon also gets the battery-low flag.
-6. `hal.PowerOffSensors()`, `hal.Hibernate(SLEEP_TIME_IN_SECONDS)`.
+6. `hal->PowerOffSensors()`, `hal->Hibernate(SLEEP_TIME_IN_SECONDS)`.
 
 Design choices:
 
 - **Static interface, no virtual call.** The protocol is fixed at build time, so `EnvironmentEncoder` is a `typedef` and `ApplyMeasurements()` an overload per encoder. On an ATtiny84a (8 KB flash) this avoids a vtable and indirect calls while keeping a single call site in `main.cpp`.
 - **Luminosity always uses Lacrosse.** Oregon v3 has no light frame, and a Lacrosse frame carrying luminosity cannot carry other fields (`LacrosseWS7000::Send()` gives luminosity priority). Targets with `USE_BH1750` therefore need `LACROSSE_ID`, whatever the environment protocol.
-- **Encoders and sensors are created once** (globals or before the loop) and reconfigured each cycle. Fields not present in a cycle keep their previous value in the encoder, as before the refactor.
+- **Encoders and sensors are built inside `runCycle`** from the injected `Hal*` and configured (`ConfigureEncoder()`, `SetAddress()`) on every cycle; the low-battery flag and battery voltage are locals of the cycle. Exception: `BMx280` is a file-scope object, because built per cycle it costs ~288 B flash on `robot` (97.7 % vs 93.9 %): LTO can no longer resolve the SparkFun driver at a fixed address. It only holds the driver configuration, re-initialised by `Begin()` every cycle. Otherwise nothing persists between cycles, so a field absent in a cycle no longer keeps its previous value in the encoder; this is harmless because the environment frame is only sent when a temperature is present.
+- **Native cycle tests.** `test_main_cycle` runs only in dedicated native envs that build `src/` (`test_build_src = yes`) with `SLEEP_TIME_IN_SECONDS=0` (`TestHal_::Hibernate` really sleeps); `native_debug` ignores it. One env per build variant family:
+
+  | Env | Variant | Flags |
+  |-----|---------|-------|
+  | `native_cycle` (common base) | — | `NATIVE`, `UNIT_TEST`, `SLEEP_TIME_IN_SECONDS=0`, `INTERNAL_1v1`, `LOW_BATTERY_VOLTAGE`, `BATTERY_VOLTAGE_X10_ID` |
+  | `native_cycle_oregon` | Oregon, divided battery | base + `USE_OREGON`, `USE_BMP280`, `ANALOG1_X10_ID` |
+  | `native_cycle_oregon_vcc` | Oregon, battery = VCC | base + `USE_OREGON`, `USE_BME280`, `BATTERY_IS_VCC` |
+  | `native_cycle_lacrosse` | Lacrosse | base + `USE_LACROSSE`, `USE_BMP280` |
+  | `native_cycle_x10` | No environment protocol | base + `ANALOG1_X10_ID` |
+
+  Protocol envs also set a sensor flag: the native `BMx280` stub returns 0, which still counts as a present temperature, so an environment frame is emitted.
 - **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
 - Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
@@ -124,7 +136,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-X10-005 | `x10rf` | Transmission repeated rf_repeats times with 40 ms inter-repeat cooldown via DelayX10Gap (see TECH-X10-001) |
 | FUNC-X10-006 | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | FUNC-X10-007 | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
-| TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Encoders and wrappers take Hal* at construction; no direct AVR register access |
+| TECH-HAL-001 | `Hal` / `Attiny84aHal` / `TestHal_` / `BMx280` | Encoders and HAL-using wrappers take Hal* at construction; BMx280 (third-party bus driver) takes none; no direct AVR register access except addresses passed to a bus driver |
 | TECH-HAL-002 | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W |
 | TECH-HAL-003 | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
 | TECH-HAL-004 | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; pull-ups unused pins; BOD-sleep disable |
@@ -135,6 +147,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; one SerialWriteBit call per bit, bit period (1 000 000 / 9600) − 25 µs held by the HAL |
+| TECH-MAIN-001 | `main.cpp` / `include/main.h` / `platformio.ini` | One cycle extracted into `runCycle(Hal*)`; encoders built from the injected Hal, BMx280 file-scope; `main()` excluded under UNIT_TEST; four `native_cycle_*` envs run `test_main_cycle` |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
@@ -146,10 +159,10 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
 | FUNC-SENSOR-003 | `main.cpp` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
-| CONF-BUILD-001 | `main.cpp` / `platformio.ini` | Exactly one of USE_OREGON or USE_LACROSSE per environment; violated at compile time otherwise |
-| CONF-BUILD-002 | `main.cpp` / `include/config.h` | Sensor type flag (USE_BMP280/BME280/DS18B20/BH1750) selects included driver; USE_I2C auto-derived |
+| CONF-BUILD-001 | `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | At most one of USE_OREGON / USE_LACROSSE; neither → no EnvironmentEncoder (HAS_ENVIRONMENT_ENCODER unset), no environment frame; both → #error |
+| CONF-BUILD-002 | `main.cpp` / `include/config.h` | USE_BMP280/BME280 → BMx280 (BME280 adds humidity/pressure, wins if both); USE_DS18B20 → Ds18b20, overrides BMx280 temperature when combined; no temperature sensor → no environment frame; USE_BH1750 independent of temperature sensor and protocol; USE_I2C auto-derived |
 | CONF-BUILD-003 | `main.cpp` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 in main() |
-| CONF-BUILD-004 | `main.cpp` / `platformio.ini` | LACROSSE_ID enum value applied to LacrosseWS7000 in main() |
+| CONF-BUILD-004 | `config.h` / `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | LACROSSE_ID applied to the Lacrosse environment encoder and to the luminosity encoder; USE_LACROSSE or USE_BH1750 without LACROSSE_ID → #error |
 | CONF-BUILD-005 | `Hal` / `platformio.ini` | INTERNAL_1v1 (mV) chip-calibrated constant consumed by Hal::ComputeVccMv() |
 | CONF-BUILD-006 | `main.cpp` / `include/config.h` | SLEEP_TIME_IN_SECONDS passed to Hal::Hibernate(); default 32 s from config.h |
 | CONF-BUILD-007 | `main.cpp` / `include/config.h` | LOW_BATTERY_VOLTAGE compared against batteryVoltageInMv; default 2000 mV from config.h |

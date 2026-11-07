@@ -57,6 +57,10 @@ inline bool ApplyMeasurements(LacrosseWS7000 &encoder, const Measurements &m,
   return m.Has(Measurements::TEMPERATURE);
 }
 
+#if defined(USE_OREGON) && defined(USE_LACROSSE)
+#error "CONF-BUILD-001: define at most one of USE_OREGON or USE_LACROSSE"
+#endif
+
 #if defined(USE_LACROSSE)
 typedef LacrosseWS7000 EnvironmentEncoder;
 inline void ConfigureEncoder(EnvironmentEncoder &encoder) {

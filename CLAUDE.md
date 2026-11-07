@@ -57,9 +57,9 @@ Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionT
 
 `main()` is a single `while(1)` loop: power on sensors → `ReadEnvironment()` fills a `Measurements` (`include/Measurements.h`) → X10 meters → luminosity → environment frame → power off → hibernate. The environment protocol is a build-time alias, `EnvironmentEncoder` (`include/EnvironmentEncoder.h`), loaded with `ApplyMeasurements()` — no virtual call. Luminosity (`LightSensor`, BH1750) always goes out through a dedicated Lacrosse encoder. Sensor selection stays via `#ifdef` (`USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`); wrappers (`BMx280`, `Ds18b20`, `LightSensor`) take a `Hal*` and stub out on native builds. Details: `docs/architecture.md`, section *Main loop structure*.
 
-### Dual source tree
+### Debugging
 
-`TinySensor/` is an Atmel Studio project kept for debugWIRE/JTAG step-debugging. It is intentionally not in sync with `src/` and `lib/` — treat it as a debug tool, not a source of truth.
+Step-debugging uses PlatformIO + AVaRICE + AVR Dragon over debugWIRE (the legacy Atmel Studio tree was removed). Toolchain, DWEN fuse procedure and hardware constraints (dedicated debug board) are in [`docs/debugging.md`](docs/debugging.md).
 
 ### RBD workflow
 
@@ -94,3 +94,45 @@ find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 | `USE_SWITCHED_5V` | PB2 (J8) drives a PNP that powers an off-board 5 V module during measurements (LM35 variant, `hardware/tinysensor/VARIANTE_LM35.md`, PLAT-POWER-006) |
 | `SLEEP_TIME_IN_SECONDS` | Hibernate duration between measurements |
 | `BATTERY_VOLTAGE_X10_ID` / `ANALOG1_X10_ID` | X10 meter IDs for reporting |
+
+## Hardware Conventions
+
+### Wire colors
+Power goes in pairs (thick wire):
+| Pair (+ / −)  | Use |
+|---------------|-----|
+| red / black   | battery and 5V: B+/B−, VBAT, switched battery rail, VUSB |
+| white / blue  | regulated or stepped voltages: 3V3, buck/boost outputs (never yellow) |
+| grey          | speaker |
+
+Signals (thin wire), by role:
+| Color  | Use |
+|--------|-----|
+| yellow | clocks: SCK, BCLK, SCL, SD_CLK |
+| green  | data: MOSI, DIN, SDA, SD_D0 |
+| purple | select / frame: CS, LRC/WS, SD_CMD |
+| red    | status: DC, interrupts, PIR out |
+| orange | reset, detect (RST, USB_DET) |
+| brown  | enables / analog: BL_EN, VBAT/2, *_SD, *_EN |
+
+The kit has 10 colors: red, black, white, blue, yellow, green, purple, orange, brown, grey. **Blue is reserved for power** (regulated GND) and never carries a signal. When several buses share colors, tell them apart with 1 / 2 / 3 heat-shrink rings at each end.
+
+### Wire ends
+Label every wire end as **soldered**, **Dupont** or **JST-XH** (with F/M contact), on both ends, and give each wire's length, in every doc and diagram.
+
+### Resistors
+Current-limiting and pull resistors sit **at the board end**, never at the LED or the sensor.
+
+### Images
+Strip EXIF/GPS from every image before committing: `python3 ~/.claude/skills/hardware-change/scripts/strip_exif.py <paths>` (`--check` to verify).
+
+### Commits
+No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`openscad/`, `hardware/`) and `docs:` for doc-only commits. Make granular commits, one per area, and push after each.
+
+## Modeling
+
+### OpenSCAD / Printing
+- Define all parameters at the top of the file, before any formula that uses them. Expose dimensions as named parameters.
+- After editing, render with `openscad -o` and check for errors before saying it's done.
+- Don't claim parts fit an Ender 3 (220x220) or CR-10 plate unless you've checked the bounding boxes. Flag any overhang over 45° that a design change introduces.
+- Regenerating 3MF files wipes the Orca plate layout, so warn me before doing it.

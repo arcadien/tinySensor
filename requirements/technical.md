@@ -4,10 +4,10 @@
 <!-- Format: req(ID): title -->
 
 ### TECH-HAL-001
-**Title:** All encoders and sensor wrappers receive Hal* at construction and never access AVR registers directly
+**Title:** Encoders and sensor wrappers that use the HAL receive Hal* at construction; no direct AVR register access
 **Status:** validated
 **Dependencies:** —
-**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and sensor wrapper (`BMx280`) must accept a `Hal*` parameter at construction time and must call only `Hal` virtual methods for all hardware I/O. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`.
+**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and every sensor wrapper that performs hardware timing or I/O itself (`Ds18b20`, `LightSensor`) must accept a `Hal*` at construction and must use only `Hal` methods for that I/O. A sensor wrapper whose hardware access is entirely delegated to a third-party bus driver (`BMx280`) takes no `Hal*`. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`, except register addresses passed as arguments to a third-party bus driver.
 
 ---
 
@@ -119,4 +119,12 @@
 **Title:** DS18B20 access encapsulated in a Ds18b20 wrapper class; main.cpp must not reference AVR registers or ds18b20 library functions directly
 **Status:** validated
 **Dependencies:** TECH-HAL-001, FUNC-SENSOR-002
-**Description:** A `Ds18b20` wrapper class (header `include/Ds18b20.h`) must encapsulate all 1-Wire DS18B20 interactions following the same pattern as `BMx280`. On AVR, `Ds18b20` must accept a `Hal*` at construction and expose `Begin()`, `Convert()`, `Read()` (returning `int16_t` temperature in °C as integer), and use `hal->Delay1s()` between `ds18b20convert` and `ds18b20read` internally. On non-AVR targets all methods must be stubs returning 0. `main.cpp` must not call `ds18b20convert()`, `ds18b20read()`, or reference `PORTA`, `DDRA`, or `PINA` in any `USE_DS18B20` code path; all such calls are delegated exclusively to `Ds18b20`.
+**Description:** A `Ds18b20` wrapper class (header `include/Ds18b20.h`) must encapsulate all 1-Wire DS18B20 interactions. On AVR, `Ds18b20` must accept a `Hal*` at construction and expose `Begin()`, `Convert()`, `Read()` (returning `int16_t` temperature in °C as integer), and use `hal->Delay1s()` between `ds18b20convert` and `ds18b20read` internally. On non-AVR targets all methods must be stubs returning 0. `main.cpp` must not call `ds18b20convert()`, `ds18b20read()`, or reference `PORTA`, `DDRA`, or `PINA` in any `USE_DS18B20` code path; all such calls are delegated exclusively to `Ds18b20`.
+
+---
+
+### TECH-MAIN-001
+**Title:** One measurement/transmission cycle is a standalone runCycle(Hal*) callable from native tests
+**Status:** validated
+**Dependencies:** TECH-HAL-001
+**Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence. `main()` only initialises the HAL and calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
