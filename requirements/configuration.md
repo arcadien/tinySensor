@@ -24,8 +24,8 @@
 ### CONF-BUILD-004
 **Title:** Set Lacrosse device address per environment
 **Status:** validated
-**Dependencies:** CONF-BUILD-001
-**Description:** When `USE_LACROSSE` is defined, `LACROSSE_ID` must be set to a valid `LacrosseWS7000::Address` enum value. It is passed directly to `LacrosseWS7000::SetAddress()` in `main()`.
+**Dependencies:** CONF-BUILD-001, FUNC-SENSOR-003
+**Description:** `LACROSSE_ID` must be set to a valid `LacrosseWS7000::Address` value whenever `USE_LACROSSE` or `USE_BH1750` is defined, whatever the environment protocol. A build defining either flag without `LACROSSE_ID` is rejected at compile time with an error naming CONF-BUILD-004.
 
 ### CONF-BUILD-005
 **Title:** Supply individually calibrated internal 1.1 V reference per board
