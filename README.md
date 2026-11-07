@@ -10,20 +10,21 @@ Large part of the code, especially wireless encoders, are unit-tested.
 
 ## Supported MCUs
 * ATTiny84a
-* ATMega328p (ongoing)
+* ATMega328p: started on branch `feat/328p_hal`, not merged
 
 ## Supported sensors
 * I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
 * Analog sensors (eg. [LM35](http://www.ti.com/lit/ds/symlink/lm35.pdf))
 * OneWire sensors (eg. [Dallas DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf))
+* Luminosity sensor ([ROHM BH1750](https://www.mouser.com/datasheet/2/348/bh1750fvi-e-186247.pdf), I2C)
 
 ## Wireless technology
-* "one pin" emmiters. Tested with low-cost 433Mhz emmitters.
+* "one pin" emitters. Tested with low-cost 433 MHz emitters.
 
-## Wireless protocol
-* Oregon(c) for environment measurement transmission
-* X10(c) for (optional) battery level transmission
-* Lacrosse Technology for enviroment measurement transmission
+## Wireless protocols
+* Environment frame (temperature, humidity, pressure): Oregon Scientific v3 **or** Lacrosse WS7000, at most one per build. A build without either sends no environment frame.
+* Luminosity: always a dedicated Lacrosse WS7000 frame (Oregon has no light frame), so `LACROSSE_ID` is required whenever the BH1750 is fitted.
+* Battery level and analog input: optional X10 RFXmeter frames, not sent when the battery is low.
 
 ## Used libraries
 Various libraries are used here, and some where tweaked to remove any Arduino dependencies, making the whole firmware more compact:
@@ -32,15 +33,31 @@ Various libraries are used here, and some where tweaked to remove any Arduino de
 * [Unity test harness](http://www.throwtheswitch.org/unity) from Throw The Switch, for all testing code
 * DS18B20 library of [Jacek Wieczorek](https://github.com/Jacajack/avr-ds18b20)
 
-## Firmware builder
-A web application wrapped in a Docker container allow to build the firmware in a sealed environment. NOTE: It is at his early stage!
-
 ## Useful documentation about low power AVR
 * [AVR4013: picoPower Basics](http://www.microchip.com/downloads/en/AppNotes/doc8349.pdf)
 
 ## Development
 
-TinySensor build environment now uses [PlatformIO](https://platformio.org/).
+The firmware is built with [PlatformIO](https://platformio.org/) and configured entirely at build time: each physical sensor is one PlatformIO environment (`S_02`…`S_05`, `robot`, `devmodule`, `SOLAR_TEST`) whose `build_flags` select protocol, sensors and calibration. See [docs/environments.md](docs/environments.md) to calibrate or add a board.
+
+```bash
+pio test -e native_debug        # encoder and library unit tests, on the host
+pio test -e native_cycle_oregon # one measurement cycle (runCycle) per build variant;
+                                # also native_cycle_oregon_vcc, _lacrosse, _x10
+pio run -e S_02                 # firmware for one board
+pio run -e S_02 -t upload       # flash it
+```
+
+CI runs the native tests, compile-fail checks for invalid flag combinations (`test/compile_fail/`), sensor-variant checks (`test/build_variants/`), `clang-format` and a build of every board.
+
+* Architecture: [docs/architecture.md](docs/architecture.md)
+* Step debugging over debugWIRE: [docs/debugging.md](docs/debugging.md)
+* Requirements: `requirements/*.md` (requirement-based development, see `CLAUDE.md`)
+
+## Hardware and enclosure
+
+* KiCad board (v3.0) in `hardware/tinysensor/`, with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
+* OpenSCAD enclosures (wall box, radiation shield, mushroom) in `openscad/`, see [openscad/README.md](openscad/README.md).
 
 ## Hardware options
 
@@ -59,6 +76,8 @@ Analog sensor can be used for [LM35](https://www.ti.com/lit/ds/symlink/lm35.pdf)
 
 ### LM35 temperature sensor
 
+On v2.2 and v3.0 boards running from 2×AA/AAA, the LM35 can be powered by an off-board 5 V boost module switched on PB2 only during measurements (`USE_SWITCHED_5V`), see [VARIANTE_LM35.md](hardware/tinysensor/VARIANTE_LM35.md). The instructions below are for v2.1.
+
 #### Without negative temperature support
 A 0v ground reference is needed.
 Solder pads *2* and *3* of **J4**, (rear side) as well **JP3**. 
@@ -68,7 +87,7 @@ In the case of a *-CAZ* version, temperature below 0 can be measured.
 To allow this, two 1N914 diodes must be placed to put the sensor reference below 0v. This setup is documented in the LM35 datasheet.
 On TinySensor board v2.1 and up, this can be implemented by:
 * solding **D2** and **D3** diodes
-*solding **R4** with a value of 18k
+* solding **R4** with a value of 18k
 * solding **JP3** to bypass C3 capacitor
 * solding pads *1* and *2* of **J4** (rear side) to set ground reference.
 
@@ -77,5 +96,5 @@ On TinySensor board v2.1 and up, this can be implemented by:
 You can add a filter capacitor *C3* to avoid swing if the wire is long. In this case, do not solder *JP3*.
 See datasheet for details.
 
-# LDR
+### LDR
 Use the right value for **R4** (should match the used LDR) and solder **JP3** and, on **JP4**, middle and *3* pads. This way, there will be no RC filter (no cap because of **J3**) and Vss analog reference thanks of **JP4**.
