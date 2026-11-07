@@ -45,3 +45,12 @@
 **Dependencies:** TECH-HAL-001
 **derives_from:** [TECH-HAL-001](technical.md#tech-hal-001)
 **Description:** All physical PlatformIO environments inherit `[env:avr_base]`, which sets `board_build.f_cpu = 1000000L` and `board_build.mcu = attiny84a`. All `Attiny84aHal` delay methods (`Delay512Us`, `Delay1024Us`, `Delay400Us`, `Delay30ms`) are calibrated exclusively for this 1 MHz clock frequency.
+
+---
+
+### PLAT-POWER-006
+**Title:** With USE_SWITCHED_5V, PB2 is driven low only inside the sensor power window to switch the off-board 5 V module
+**Status:** validated
+**Dependencies:** PLAT-POWER-002, PLAT-POWER-003, TECH-HAL-004
+**derives_from:** [FUNC-ANALOG-001](functional.md#func-analog-001)
+**Description:** When `USE_SWITCHED_5V` is defined (AVR build), PB2 (J8) switches the off-board 5 V module through a PNP (`hardware/tinysensor/VARIANTE_LM35.md`). `Attiny84aHal()` clears `PORTB.2` (no pull-up) and it stays 0. `PowerOnSensors()` makes PB2 an output (`DDRB.2 = 1`), hence driven low; `PowerOffSensors()` makes it an input again (`DDRB.2 = 0`, high impedance). PB2 is never driven high. During hibernate, PB2 is an input without pull-up. Without the flag, PB2 behaviour is unchanged. Verified by inspection and on the bench (AVR-only, no native test).
