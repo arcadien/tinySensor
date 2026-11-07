@@ -71,7 +71,7 @@
 **Title:** dec16ToHex returns the BCD hex representation of a uint16_t with each decimal digit in one nibble
 **Status:** validated
 **Dependencies:** —
-**Description:** `ConversionTools::dec16ToHex(n)` packs each decimal digit of `n` into one nibble of the returned `uint16_t` (e.g. 4200 → `0x4200`). Inputs above 9999 cause the most-significant nibble to overflow silently; no error is raised.
+**Description:** `ConversionTools::dec16ToHex(n)` packs each decimal digit of `n` into one nibble of the returned `uint16_t` (e.g. 4200 → `0x4200`). Inputs above 9999 saturate to `0x9999` (the largest 4-digit BCD value) instead of overflowing.
 
 ---
 
@@ -84,10 +84,10 @@
 ---
 
 ### TECH-SERIAL-001
-**Title:** SoftSerial transmits output-only UART at 9600 baud using SerialGoHigh/SerialGoLow HAL calls
+**Title:** SoftSerial transmits output-only UART at 9600 baud using the SerialWriteBit HAL call
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** `SoftSerial` accepts a `Hal*` at construction and drives UART output exclusively via `SerialGoHigh()` and `SerialGoLow()`. Each bit period is `(1 000 000 / 9600) − 25` µs, as defined by `BIT_PERIOD` in `lib/softSerial/SoftSerial.cpp:6`. No receive path is implemented.
+**Description:** `SoftSerial` accepts a `Hal*` at construction and drives UART output exclusively via `SerialWriteBit(level)`, one call per bit (start bit low, 8 data bits LSB first, stop bit high; `begin()` sets the idle level high). `SoftSerial` itself performs no delay: `SerialWriteBit` sets the line level and holds it for one bit period, `(1 000 000 / 9600) − 25` µs on AVR (`SERIAL_BIT_PERIOD_US` in `lib/hal/Attiny84aHal.cpp`, the −25 µs compensating the per-bit call overhead at 1 MHz). No receive path is implemented.
 
 ---
 

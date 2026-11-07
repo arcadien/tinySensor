@@ -8,16 +8,30 @@ on:
     branches: [master, main]
 
 jobs:
+  # clang-format check, same version as .pre-commit-config.yaml
+  lint:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install clang-format
+        run: pip install clang-format==18.1.8
+      - name: Check formatting
+        run: find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+
   # Native Unity tests (Oregon / Lacrosse / X10 encoders, analog filter, ...)
   test-native:
     name: Native tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
@@ -38,11 +52,11 @@ jobs:
       matrix:
         env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip

@@ -1,10 +1,5 @@
 #include "SoftSerial.h"
 
-#define __DELAY_ROUND_CLOSEST__
-#include <util/delay.h>
-
-#define BIT_PERIOD ((1000000L / 9600) - 25)
-
 SoftSerial::SoftSerial(Hal *hal) : _hal(hal) {}
 
 /******************************************************************************
@@ -12,27 +7,17 @@ SoftSerial::SoftSerial(Hal *hal) : _hal(hal) {}
  ******************************************************************************/
 
 void SoftSerial::begin() {
-  _hal->SerialGoHigh();
-  _delay_us(BIT_PERIOD);
+  _hal->SerialWriteBit(1);  // idle line
 }
 
 void SoftSerial::print(uint8_t b) {
-  uint8_t mask;
+  _hal->SerialWriteBit(0);  // start bit
 
-  _hal->SerialGoLow();
-  _delay_us(BIT_PERIOD);
-
-  for (mask = 0x01; mask; mask <<= 1) {
-    if (b & mask) {          // choose bit
-      _hal->SerialGoHigh();  // send 1
-    } else {
-      _hal->SerialGoLow();  // send 0
-    }
-    _delay_us(BIT_PERIOD);
+  for (uint8_t mask = 0x01; mask; mask <<= 1) {  // 8 data bits, LSB first
+    _hal->SerialWriteBit(b & mask);
   }
 
-  _hal->SerialGoHigh();
-  _delay_us(BIT_PERIOD);
+  _hal->SerialWriteBit(1);  // stop bit
 }
 
 void SoftSerial::print(const char *s) {

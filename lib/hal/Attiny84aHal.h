@@ -36,8 +36,7 @@ class Attiny84aHal : public Hal {
 
   void RadioGoLow() override;
   void RadioGoHigh() override;
-  void SerialGoHigh() override;
-  void SerialGoLow() override;
+  void SerialWriteBit(uint8_t level) override;
 
   void Hibernate(uint16_t seconds) override;
   void PowerOnSensors() override;

@@ -19,20 +19,7 @@
 
 #include <config.h>
 #include <conversionTools.h>
-
-#if defined(USE_BH1750)
-#include <BH1750.h>
-#endif
-
-#if defined(USE_DS18B20)
-#include <Ds18b20.h>
-#endif
-
-#if defined(USE_LACROSSE)
-#include <LacrosseWS7000.h>
-#elif defined(USE_OREGON)
-#include <Oregon_v3.h>
-#endif
+#include <Measurements.h>
 
 #if defined(__AVR_ATtiny84__)
 #include <Attiny84aHal.h>
@@ -42,13 +29,29 @@ Attiny84aHal hal;
 TestHal_ hal;
 #endif
 
+#if defined(USE_LACROSSE) or defined(USE_OREGON)
+#include <EnvironmentEncoder.h>
+#define HAS_ENVIRONMENT_ENCODER
+#endif
+
 #if defined(USE_BME280) or defined(USE_BMP280)
 #include <BMx280.h>
 BMx280 bmx280(&hal);
 #endif
 
 #if defined(USE_DS18B20)
+#include <Ds18b20.h>
 Ds18b20 ds18b20sensor(&hal);
+#endif
+
+#if defined(USE_BH1750)
+// Luminosity always goes out as a Lacrosse type-5 frame: Oregon has no light
+// frame, and a Lacrosse frame carrying luminosity carries nothing else.
+#include <LacrosseWS7000.h>
+#include <LightSensor.h>
+LightSensor lightSensor(&hal);
+LacrosseWS7000 lightEncoder(&hal);
+#define LIGHT_FRAME_REPEAT 2  // sent twice for reception reliability
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
@@ -56,7 +59,6 @@ Ds18b20 ds18b20sensor(&hal);
 x10rf x10encoder(&hal, 2);
 #endif
 
-#define NOT_SET (-1000.0f)
 #define TRANSMIT_WITH_LED(code) \
   do {                          \
     hal.LedOn();                \
@@ -81,6 +83,30 @@ static void SerialPrintInfo(const char *name, uint16_t value,
 static void SerialPrintInfo(const char *, uint16_t, const char *) {}
 #endif
 
+// Temperature, humidity and pressure from the fitted environment sensors.
+static Measurements ReadEnvironment() {
+  Measurements m;
+#if defined(USE_BME280) || defined(USE_BMP280)
+  bmx280.Begin();
+  hal.Delay30ms();
+  m.SetTemperature(bmx280.GetTemperature());
+#if defined(USE_BME280)
+  m.SetHumidity(bmx280.GetHumidity());
+  m.SetPressure(bmx280.GetPressure() / 100);
+#endif
+  bmx280.Shutdown();
+#endif
+
+#if defined(USE_DS18B20)
+  ds18b20sensor.Convert();
+  int16_t temp = ds18b20sensor.Read();
+  if (temp != 0) {  // 0 = read error
+    m.SetTemperature((float)temp);
+  }
+#endif
+  return m;
+}
+
 int main(void) {
   // Initialize hardware once at startup
   hal.Init();
@@ -88,43 +114,25 @@ int main(void) {
   uint16_t batteryVoltageInMv = 0;
   bool lowBattery = false;
 
-#if defined(USE_LACROSSE)
-  LacrosseWS7000 environmentEncoder(&hal);
-  environmentEncoder.SetAddress(LACROSSE_ID);
-#elif defined(USE_OREGON)
-  OregonV3 environmentEncoder(&hal);
-  environmentEncoder.SetChannel(OREGON_CHANNEL);
-  environmentEncoder.SetRollingCode(OREGON_RCODE);
+#if defined(HAS_ENVIRONMENT_ENCODER)
+  EnvironmentEncoder environmentEncoder(&hal);
+  ConfigureEncoder(environmentEncoder);
+#endif
+
+#if defined(USE_BH1750)
+  lightEncoder.SetAddress(LACROSSE_ID);
 #endif
 
   while (1) {
     hal.PowerOnSensors();
 
-    float temperature = NOT_SET;
-    float humidity = NOT_SET;
-    float pressure = NOT_SET;
+    Measurements measurements = ReadEnvironment();
 
-#if defined(USE_BME280) || defined(USE_BMP280)
-    bmx280.Begin();
-    hal.Delay30ms();
-    temperature = bmx280.GetTemperature();
-#if defined(USE_BME280)
-    humidity = bmx280.GetHumidity();
-    pressure = bmx280.GetPressure() / 100;
-#endif
-    bmx280.Shutdown();
-#endif
-
-#if defined(USE_DS18B20)
-    ds18b20sensor.Convert();
-    int16_t temp = ds18b20sensor.Read();
-    if (temp != 0) {
-      temperature = (float)temp;
-    }
+#if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
+    uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
-    uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
 #if defined(BATTERY_IS_VCC)
     batteryVoltageInMv = vccMv;
 #else
@@ -154,40 +162,30 @@ int main(void) {
 
 #if defined(USE_BH1750)
     if (!lowBattery) {
-      LacrosseWS7000 lightEncoder(&hal);
-      lightEncoder.SetAddress(LACROSSE_ID);
-      BH1750 lightMeter(0x23);
-      lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
-      _delay_ms(150);
-      uint16_t lux = (uint16_t)lightMeter.readLightLevel();
-      SerialPrintInfo("Luminosity", lux, " Lux");
-      lightEncoder.SetLuminosity(lux);
-      TRANSMIT_WITH_LED(lightEncoder.Send());
-      TRANSMIT_WITH_LED(lightEncoder.Send());
+      measurements.SetLuminosity(lightSensor.Read());
+      SerialPrintInfo("Luminosity", measurements.luminosity, " Lux");
+      lightEncoder.SetLuminosity(measurements.luminosity);
+      for (uint8_t i = 0; i < LIGHT_FRAME_REPEAT; i++) {
+        TRANSMIT_WITH_LED(lightEncoder.Send());
+      }
     }
 #endif
 
-#if defined(USE_LACROSSE) or defined(USE_OREGON)
-    if (temperature != NOT_SET) {
-      environmentEncoder.SetTemperature(temperature);
+#if defined(HAS_ENVIRONMENT_ENCODER)
+    bool sendEnvironment =
+        ApplyMeasurements(environmentEncoder, measurements, lowBattery);
+
+    if (measurements.Has(Measurements::TEMPERATURE)) {
+      SerialPrintInfo("Temp.", measurements.temperature * 10, " °C");
     }
-    if (humidity != NOT_SET) {
-      environmentEncoder.SetHumidity(humidity);
+    if (measurements.Has(Measurements::HUMIDITY)) {
+      SerialPrintInfo("RH ", measurements.humidity, " %");
     }
-    if (pressure != NOT_SET) {
-      environmentEncoder.SetPressure(pressure);
+    if (measurements.Has(Measurements::PRESSURE)) {
+      SerialPrintInfo("Pressure ", measurements.pressure, " hPA");
     }
 
-#if defined(USE_SERIAL_LOG)
-    SerialPrintInfo("Temp.", temperature * 10, " °C");
-    SerialPrintInfo("RH ", humidity, " %");
-    SerialPrintInfo("Pressure ", pressure, " hPA");
-#endif
-
-    if (temperature != NOT_SET) {
-#if defined(USE_OREGON)
-      environmentEncoder.SetBatteryLow(lowBattery);
-#endif
+    if (sendEnvironment) {
       TRANSMIT_WITH_LED(environmentEncoder.Send());
     }
 #endif
