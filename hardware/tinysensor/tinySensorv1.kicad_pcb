@@ -14529,10 +14529,21 @@
 			)
 		)
 	)
-	(gr_text "1 seule source batterie : CR2032, 18650 ou RAW IN"
-		(at 160 110.8 0)
+	(gr_text "1 seule source : CR2032, 18650 ou RAW IN"
+		(at 142.272142 110.8 0)
 		(layer "F.SilkS")
 		(uuid "a0f8e090-7d9b-485e-b640-e47e8b6da95f")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "18650 : TPS63020, ou élévateur sans BME280"
+		(at 176.849286 110.8 0)
+		(layer "F.SilkS")
+		(uuid "eb00eb27-ca10-476a-8e6f-52db587009c2")
 		(effects
 			(font
 				(size 0.9 0.9)

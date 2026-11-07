@@ -197,7 +197,8 @@ j5 = fp('J5')
 for p in j5.Pads():
     x, y = mm(p.GetPosition().x), mm(p.GetPosition().y)
     silk({'1': 'V', '2': 'G', '3': 'Q'}[p.GetNumber()], x, y + 2.4)
-silk('1 seule source batterie : CR2032, 18650 ou RAW IN', 160.0, 110.8, 0.9)
+silk('1 seule source : CR2032, 18650 ou RAW IN', 142.27, 110.8, 0.9)
+silk('18650 : TPS63020, ou élévateur sans BME280', 176.85, 110.8, 0.9)  # a step-up passes Vin > 3.3 V through
 
 # --- P5: no copper pour along the cut lines of the mushroom variant (tracks still allowed)
 def keepout(x1, y1, x2, y2):
