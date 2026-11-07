@@ -88,10 +88,13 @@ Design choices:
 
   | Env | Variant | Flags |
   |-----|---------|-------|
-  | `native_cycle_oregon` | Oregon, divided battery | `USE_OREGON`, `BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID` |
-  | `native_cycle_oregon_vcc` | Oregon, battery = VCC | `USE_OREGON`, `BATTERY_VOLTAGE_X10_ID`, `BATTERY_IS_VCC` |
-  | `native_cycle_lacrosse` | Lacrosse | `USE_LACROSSE`, `BATTERY_VOLTAGE_X10_ID` |
-  | `native_cycle_x10` | No environment protocol | `BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID` |
+  | `native_cycle` (common base) | — | `NATIVE`, `UNIT_TEST`, `SLEEP_TIME_IN_SECONDS=0`, `INTERNAL_1v1`, `LOW_BATTERY_VOLTAGE`, `BATTERY_VOLTAGE_X10_ID` |
+  | `native_cycle_oregon` | Oregon, divided battery | base + `USE_OREGON`, `USE_BMP280`, `ANALOG1_X10_ID` |
+  | `native_cycle_oregon_vcc` | Oregon, battery = VCC | base + `USE_OREGON`, `USE_BME280`, `BATTERY_IS_VCC` |
+  | `native_cycle_lacrosse` | Lacrosse | base + `USE_LACROSSE`, `USE_BMP280` |
+  | `native_cycle_x10` | No environment protocol | base + `ANALOG1_X10_ID` |
+
+  Protocol envs also set a sensor flag: the native `BMx280` stub returns 0, which still counts as a present temperature, so an environment frame is emitted.
 - **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
 - Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
