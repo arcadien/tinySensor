@@ -1,12 +1,12 @@
 # Architecture
 
-_Last updated: 2026-10-25 — main loop refactor (audit A2, A3), see [Main loop structure](#main-loop-structure)_
+_Last updated: 2026-11-07 — TECH-MAIN-001 (one cycle extracted into `runCycle(Hal*)`), see [Main loop structure](#main-loop-structure)_
 
 ## Component Diagram
 
 ```mermaid
 graph TD
-  main["main.cpp (loop)"] -->|Hal*| HAL
+  main["main.cpp (runCycle)"] -->|Hal*| HAL
   main -->|"Measurements"| EnvEnc["EnvironmentEncoder (build-time alias)"]
   EnvEnc -->|"USE_OREGON"| OregonV3
   EnvEnc -->|"USE_LACROSSE"| LacrosseWS7000
@@ -49,7 +49,7 @@ graph TD
 | `LightSensor` | Wrapper for BH1750 (`include/LightSensor.h`); `Read()` starts a one-shot measurement, waits 150 ms through the HAL, returns lux; stub on non-AVR | FUNC-SENSOR-003 |
 | `Measurements` | Values of one cycle (`include/Measurements.h`): temperature, humidity, pressure, luminosity, each with a "present" flag | — |
 | `EnvironmentEncoder` | Build-time alias to `OregonV3` or `LacrosseWS7000` (`include/EnvironmentEncoder.h`) + `ConfigureEncoder()` and `ApplyMeasurements()` overloads | FUNC-OREGON-012, FUNC-LACROSSE-002, FUNC-BATTERY-003 |
-| `main.cpp` | Measurement loop: power on → read sensors → encode → transmit → hibernate | — |
+| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*`; `main()` (excluded under `UNIT_TEST`) = `hal.Init()` + endless `runCycle(&hal)` loop | TECH-MAIN-001 |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
@@ -64,25 +64,34 @@ graph TD
 | `Ds18b20` | `Hal*` | constructor |
 | `SoftSerial` | `Hal*` | constructor |
 | `LightSensor` | `Hal*` | constructor |
+| `runCycle` (`main.cpp`) | `Hal*` | function parameter; forwarded to every encoder and wrapper it constructs |
 
 All protocol encoders and sensor wrappers receive `Hal*` at construction. They must never access AVR registers directly.
 
 ## Main loop structure
 
-`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers.
+`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers. One cycle is `void runCycle(Hal* hal)` (TECH-MAIN-001, declared in `include/main.h`); `main()` calls `hal.Init()` then loops on `runCycle(&hal)`, and is compiled out under `UNIT_TEST` so native test binaries can link `src/`.
 
-1. `hal.PowerOnSensors()`.
+1. `hal->PowerOnSensors()`.
 2. `ReadEnvironment()` fills a `Measurements` from the fitted sensors (`BMx280`, `Ds18b20`). A field is flagged present only if its sensor is fitted and read correctly (DS18B20: `0` means read error).
 3. Battery and analog X10 meters (`BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID`), suppressed when the battery is low. VCC is computed once when either is enabled.
 4. Luminosity (`USE_BH1750`, battery not low): `LightSensor::Read()`, then a dedicated Lacrosse encoder sends a type-5 frame `LIGHT_FRAME_REPEAT` (2) times.
 5. Environment frame (`USE_OREGON` / `USE_LACROSSE`): `ApplyMeasurements()` loads the present fields into the encoder and returns whether to send (only when a temperature is present). Oregon also gets the battery-low flag.
-6. `hal.PowerOffSensors()`, `hal.Hibernate(SLEEP_TIME_IN_SECONDS)`.
+6. `hal->PowerOffSensors()`, `hal->Hibernate(SLEEP_TIME_IN_SECONDS)`.
 
 Design choices:
 
 - **Static interface, no virtual call.** The protocol is fixed at build time, so `EnvironmentEncoder` is a `typedef` and `ApplyMeasurements()` an overload per encoder. On an ATtiny84a (8 KB flash) this avoids a vtable and indirect calls while keeping a single call site in `main.cpp`.
 - **Luminosity always uses Lacrosse.** Oregon v3 has no light frame, and a Lacrosse frame carrying luminosity cannot carry other fields (`LacrosseWS7000::Send()` gives luminosity priority). Targets with `USE_BH1750` therefore need `LACROSSE_ID`, whatever the environment protocol.
-- **Encoders and sensors are created once** (globals or before the loop) and reconfigured each cycle. Fields not present in a cycle keep their previous value in the encoder, as before the refactor.
+- **Encoders and sensors are built inside `runCycle`** from the injected `Hal*` and configured (`ConfigureEncoder()`, `SetAddress()`) on every cycle; the low-battery flag and battery voltage are locals of the cycle. Nothing persists between cycles, so a field absent in a cycle no longer keeps its previous value in the encoder; this is harmless because the environment frame is only sent when a temperature is present.
+- **Native cycle tests.** `test_main_cycle` runs only in dedicated native envs that build `src/` (`test_build_src = yes`) with `SLEEP_TIME_IN_SECONDS=0` (`TestHal_::Hibernate` really sleeps); `native_debug` ignores it. One env per build variant family:
+
+  | Env | Variant | Flags |
+  |-----|---------|-------|
+  | `native_cycle_oregon` | Oregon, divided battery | `USE_OREGON`, `BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID` |
+  | `native_cycle_oregon_vcc` | Oregon, battery = VCC | `USE_OREGON`, `BATTERY_VOLTAGE_X10_ID`, `BATTERY_IS_VCC` |
+  | `native_cycle_lacrosse` | Lacrosse | `USE_LACROSSE`, `BATTERY_VOLTAGE_X10_ID` |
+  | `native_cycle_x10` | No environment protocol | `BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID` |
 - **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
 - Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
@@ -135,6 +144,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; one SerialWriteBit call per bit, bit period (1 000 000 / 9600) − 25 µs held by the HAL |
+| TECH-MAIN-001 | `main.cpp` / `include/main.h` / `platformio.ini` | One cycle extracted into `runCycle(Hal*)`; encoders built from the injected Hal; `main()` excluded under UNIT_TEST; four `native_cycle_*` envs run `test_main_cycle` |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
