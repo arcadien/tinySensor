@@ -19,15 +19,8 @@
 
 #include <config.h>
 #include <conversionTools.h>
+#include <main.h>
 #include <Measurements.h>
-
-#if defined(__AVR_ATtiny84__)
-#include <Attiny84aHal.h>
-Attiny84aHal hal;
-#else
-#include <TestHal.h>
-TestHal_ hal;
-#endif
 
 #if defined(USE_LACROSSE) or defined(USE_OREGON)
 #include <EnvironmentEncoder.h>
@@ -36,12 +29,10 @@ TestHal_ hal;
 
 #if defined(USE_BME280) or defined(USE_BMP280)
 #include <BMx280.h>
-BMx280 bmx280(&hal);
 #endif
 
 #if defined(USE_DS18B20)
 #include <Ds18b20.h>
-Ds18b20 ds18b20sensor(&hal);
 #endif
 
 #if defined(USE_BH1750)
@@ -49,30 +40,27 @@ Ds18b20 ds18b20sensor(&hal);
 // frame, and a Lacrosse frame carrying luminosity carries nothing else.
 #include <LacrosseWS7000.h>
 #include <LightSensor.h>
-LightSensor lightSensor(&hal);
-LacrosseWS7000 lightEncoder(&hal);
 #define LIGHT_FRAME_REPEAT 2  // sent twice for reception reliability
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
 #include <x10rf.h>
-x10rf x10encoder(&hal, 2);
 #endif
 
 #define TRANSMIT_WITH_LED(code) \
   do {                          \
-    hal.LedOn();                \
+    hal->LedOn();               \
     code;                       \
-    hal.LedOff();               \
-    hal.Delay30ms();            \
+    hal->LedOff();              \
+    hal->Delay30ms();           \
   } while (0)
 
 #if defined(USE_SERIAL_LOG)
 #include <SoftSerial.h>
-SoftSerial swSerial(&hal);
 
-static void SerialPrintInfo(const char *name, uint16_t value,
+static void SerialPrintInfo(Hal *hal, const char *name, uint16_t value,
                             const char *unit) {
+  SoftSerial swSerial(hal);
   swSerial.print(name);
   swSerial.print(": ");
   swSerial.print(value);
@@ -80,15 +68,16 @@ static void SerialPrintInfo(const char *name, uint16_t value,
   swSerial.println();
 }
 #else
-static void SerialPrintInfo(const char *, uint16_t, const char *) {}
+static void SerialPrintInfo(Hal *, const char *, uint16_t, const char *) {}
 #endif
 
 // Temperature, humidity and pressure from the fitted environment sensors.
-static Measurements ReadEnvironment() {
+static Measurements ReadEnvironment(Hal *hal) {
   Measurements m;
 #if defined(USE_BME280) || defined(USE_BMP280)
+  BMx280 bmx280(hal);
   bmx280.Begin();
-  hal.Delay30ms();
+  hal->Delay30ms();
   m.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
   m.SetHumidity(bmx280.GetHumidity());
@@ -98,99 +87,111 @@ static Measurements ReadEnvironment() {
 #endif
 
 #if defined(USE_DS18B20)
+  Ds18b20 ds18b20sensor(hal);
   ds18b20sensor.Convert();
   int16_t temp = ds18b20sensor.Read();
   if (temp != 0) {  // 0 = read error
     m.SetTemperature((float)temp);
   }
 #endif
+  (void)hal;  // unused when no environment sensor is fitted
   return m;
 }
 
-int main(void) {
-  // Initialize hardware once at startup
-  hal.Init();
-
-  uint16_t batteryVoltageInMv = 0;
+void runCycle(Hal *hal) {
   bool lowBattery = false;
 
-#if defined(HAS_ENVIRONMENT_ENCODER)
-  EnvironmentEncoder environmentEncoder(&hal);
-  ConfigureEncoder(environmentEncoder);
-#endif
+  hal->PowerOnSensors();
 
-#if defined(USE_BH1750)
-  lightEncoder.SetAddress(LACROSSE_ID);
-#endif
-
-  while (1) {
-    hal.PowerOnSensors();
-
-    Measurements measurements = ReadEnvironment();
+  Measurements measurements = ReadEnvironment(hal);
 
 #if defined(BATTERY_VOLTAGE_X10_ID) or defined(ANALOG1_X10_ID)
-    uint16_t vccMv = hal.ComputeVccMv(INTERNAL_1v1);
+  x10rf x10encoder(hal, 2);
+  uint16_t vccMv = hal->ComputeVccMv(INTERNAL_1v1);
 #endif
 
 #if defined(BATTERY_VOLTAGE_X10_ID)
 #if defined(BATTERY_IS_VCC)
-    batteryVoltageInMv = vccMv;
+  uint16_t batteryVoltageInMv = vccMv;
 #else
-    uint16_t rawBattery = hal.GetRawBattery();
-    batteryVoltageInMv = hal.ConvertAnalogValueToMv(rawBattery, vccMv);
+  uint16_t rawBattery = hal->GetRawBattery();
+  uint16_t batteryVoltageInMv = hal->ConvertAnalogValueToMv(rawBattery, vccMv);
 #endif
-    lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
-    SerialPrintInfo("Vbatt", batteryVoltageInMv, " mV");
-    if (!lowBattery) {
-      TRANSMIT_WITH_LED(
-          x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
-                              ConversionTools::dec16ToHex(batteryVoltageInMv)));
-    }
+  lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
+  SerialPrintInfo(hal, "Vbatt", batteryVoltageInMv, " mV");
+  if (!lowBattery) {
+    TRANSMIT_WITH_LED(
+        x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
+                            ConversionTools::dec16ToHex(batteryVoltageInMv)));
+  }
 #endif
 
 #if defined(ANALOG1_X10_ID)
-    if (!lowBattery) {
-      uint16_t analogMeasurement = hal.GetRawAnalogSensor();
-      SerialPrintInfo("Raw analog", analogMeasurement, " ADC");
-      uint16_t analogVoltage =
-          hal.ConvertAnalogValueToMv(analogMeasurement, vccMv);
-      SerialPrintInfo("Analog voltage", analogVoltage, " mV");
-      TRANSMIT_WITH_LED(x10encoder.RFXmeter(
-          ANALOG1_X10_ID, 0x00, ConversionTools::dec16ToHex(analogVoltage)));
-    }
+  if (!lowBattery) {
+    uint16_t analogMeasurement = hal->GetRawAnalogSensor();
+    SerialPrintInfo(hal, "Raw analog", analogMeasurement, " ADC");
+    uint16_t analogVoltage =
+        hal->ConvertAnalogValueToMv(analogMeasurement, vccMv);
+    SerialPrintInfo(hal, "Analog voltage", analogVoltage, " mV");
+    TRANSMIT_WITH_LED(x10encoder.RFXmeter(
+        ANALOG1_X10_ID, 0x00, ConversionTools::dec16ToHex(analogVoltage)));
+  }
 #endif
 
 #if defined(USE_BH1750)
-    if (!lowBattery) {
-      measurements.SetLuminosity(lightSensor.Read());
-      SerialPrintInfo("Luminosity", measurements.luminosity, " Lux");
-      lightEncoder.SetLuminosity(measurements.luminosity);
-      for (uint8_t i = 0; i < LIGHT_FRAME_REPEAT; i++) {
-        TRANSMIT_WITH_LED(lightEncoder.Send());
-      }
+  if (!lowBattery) {
+    LightSensor lightSensor(hal);
+    LacrosseWS7000 lightEncoder(hal);
+    lightEncoder.SetAddress(LACROSSE_ID);
+    measurements.SetLuminosity(lightSensor.Read());
+    SerialPrintInfo(hal, "Luminosity", measurements.luminosity, " Lux");
+    lightEncoder.SetLuminosity(measurements.luminosity);
+    for (uint8_t i = 0; i < LIGHT_FRAME_REPEAT; i++) {
+      TRANSMIT_WITH_LED(lightEncoder.Send());
     }
+  }
 #endif
 
 #if defined(HAS_ENVIRONMENT_ENCODER)
-    bool sendEnvironment =
-        ApplyMeasurements(environmentEncoder, measurements, lowBattery);
+  EnvironmentEncoder environmentEncoder(hal);
+  ConfigureEncoder(environmentEncoder);
+  bool sendEnvironment =
+      ApplyMeasurements(environmentEncoder, measurements, lowBattery);
 
-    if (measurements.Has(Measurements::TEMPERATURE)) {
-      SerialPrintInfo("Temp.", measurements.temperature * 10, " °C");
-    }
-    if (measurements.Has(Measurements::HUMIDITY)) {
-      SerialPrintInfo("RH ", measurements.humidity, " %");
-    }
-    if (measurements.Has(Measurements::PRESSURE)) {
-      SerialPrintInfo("Pressure ", measurements.pressure, " hPA");
-    }
+  if (measurements.Has(Measurements::TEMPERATURE)) {
+    SerialPrintInfo(hal, "Temp.", measurements.temperature * 10, " °C");
+  }
+  if (measurements.Has(Measurements::HUMIDITY)) {
+    SerialPrintInfo(hal, "RH ", measurements.humidity, " %");
+  }
+  if (measurements.Has(Measurements::PRESSURE)) {
+    SerialPrintInfo(hal, "Pressure ", measurements.pressure, " hPA");
+  }
 
-    if (sendEnvironment) {
-      TRANSMIT_WITH_LED(environmentEncoder.Send());
-    }
+  if (sendEnvironment) {
+    TRANSMIT_WITH_LED(environmentEncoder.Send());
+  }
 #endif
 
-    hal.PowerOffSensors();
-    hal.Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
+  (void)lowBattery;    // unused without any transmitted output
+  (void)measurements;  // unused without any transmitted output
+  hal->PowerOffSensors();
+  hal->Hibernate((uint16_t)SLEEP_TIME_IN_SECONDS);
+}
+
+#if !defined(UNIT_TEST)
+#if defined(__AVR_ATtiny84__)
+#include <Attiny84aHal.h>
+Attiny84aHal hal;
+#else
+#include <TestHal.h>
+TestHal_ hal;
+#endif
+
+int main(void) {
+  hal.Init();
+  while (1) {
+    runCycle(&hal);
   }
 }
+#endif
