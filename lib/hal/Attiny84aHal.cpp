@@ -11,6 +11,8 @@
 #define DIGITAL_OUT PA7
 #define SENSOR_VCC PA2
 #define BAT_SENSOR_PIN PA1
+// PNP switch of the off-board 5 V module: hardware/tinysensor/VARIANTE_LM35.md
+#define SWITCHED_5V_PIN PB2
 
 ISR(BADISR_vect) {
   while (1) {
@@ -130,14 +132,23 @@ Attiny84aHal::Attiny84aHal() {
   DDRB |= _BV(LED_PIN);
   DDRA |= _BV(SENSOR_VCC);
   DDRA |= _BV(DIGITAL_OUT);
+#ifdef USE_SWITCHED_5V
+  PORTB &= ~_BV(SWITCHED_5V_PIN);
+#endif
 }
 
 void Attiny84aHal::PowerOnSensors() {
   PORTA |= _BV(SENSOR_VCC);
+#ifdef USE_SWITCHED_5V
+  DDRB |= _BV(SWITCHED_5V_PIN);
+#endif
 }
 
 void Attiny84aHal::PowerOffSensors() {
   PORTA &= ~_BV(SENSOR_VCC);
+#ifdef USE_SWITCHED_5V
+  DDRB &= ~_BV(SWITCHED_5V_PIN);
+#endif
 }
 
 void inline Attiny84aHal::LedOn() {
