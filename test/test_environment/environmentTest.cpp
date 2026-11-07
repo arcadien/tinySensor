@@ -88,6 +88,7 @@ void Expect_oregon_battery_low_flag_applied_with_temperature() {
 }
 
 // @req FUNC-OREGON-012
+// @req CONF-BUILD-002
 void Expect_no_environment_frame_without_temperature() {
   Measurements m;
   m.SetHumidity(50.0f);

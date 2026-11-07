@@ -39,6 +39,17 @@
 #include <Measurements.h>
 #include <x10rf.h>
 
+// An environment frame needs a protocol and a temperature. On native builds
+// only the BMx280 stub yields one: the Ds18b20 stub reads 0 (= read error).
+#if (defined(USE_OREGON) || defined(USE_LACROSSE)) && \
+    (defined(USE_BMP280) || defined(USE_BME280))
+#define EXPECT_ENVIRONMENT_FRAME
+#endif
+
+#if defined(USE_BH1750)
+#define LIGHT_FRAMES 2  // luminosity frame is sent twice
+#endif
+
 // Extra tokens, on top of TestHal_'s radio/delay tokens.
 static const unsigned char POWER_ON = '+';
 static const unsigned char POWER_OFF = '-';
@@ -94,8 +105,11 @@ static int ExpectedFrameCount() {
 #if defined(ANALOG1_X10_ID)
   frames++;
 #endif
-#if defined(USE_OREGON) || defined(USE_LACROSSE)
-  frames++;  // native BMx280 stub reports a temperature
+#if defined(USE_BH1750)
+  frames += LIGHT_FRAMES;
+#endif
+#if defined(EXPECT_ENVIRONMENT_FRAME)
+  frames++;
 #endif
   return frames;
 }
@@ -149,7 +163,17 @@ static std::vector<unsigned char> ReferenceCycleOrders() {
   AppendFrame(expected, ref);
 #endif
 
-#if defined(USE_OREGON) || defined(USE_LACROSSE)
+#if defined(USE_BH1750)
+  LacrosseWS7000 light(&ref);
+  light.SetAddress(LACROSSE_ID);
+  light.SetLuminosity(0);  // native LightSensor stub value
+  for (int i = 0; i < LIGHT_FRAMES; i++) {
+    light.Send();
+    AppendFrame(expected, ref);
+  }
+#endif
+
+#if defined(EXPECT_ENVIRONMENT_FRAME)
   Measurements m;
   m.SetTemperature(0);  // native BMx280 stub values
 #if defined(USE_BME280)
@@ -228,6 +252,7 @@ void Expect_cycle_on_TestHal_records_orders_on_TestHal() {
 
 // @req TECH-MAIN-001
 // @req CONF-BUILD-001 (native_cycle_x10: no protocol, no environment frame)
+// @req CONF-BUILD-002 (no temperature sensor: no environment frame)
 void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
   // Given
   CycleSpyHal spy;
@@ -240,6 +265,8 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
 }
 
 // @req TECH-MAIN-001
+// @req CONF-BUILD-002 (BMP280: temperature only; BME280: + humidity,
+// pressure)
 void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   // Given
   CycleSpyHal spy;
@@ -255,6 +282,26 @@ void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
                                expected.size());
 }
 
+// @req CONF-BUILD-002
+void Expect_i2c_derived_when_an_i2c_sensor_is_selected() {
+  // Given
+#if defined(USE_BMP280) || defined(USE_BME280) || defined(USE_BH1750)
+  bool needsI2c = true;
+#else
+  bool needsI2c = false;
+#endif
+
+  // When (USE_I2C is derived by config.h, included above)
+#if defined(USE_I2C)
+  bool hasI2c = true;
+#else
+  bool hasI2c = false;
+#endif
+
+  // Then
+  TEST_ASSERT_TRUE(!needsI2c || hasI2c);
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -266,6 +313,7 @@ int main(int, char **) {
   RUN_TEST(Expect_cycle_on_TestHal_records_orders_on_TestHal);
   RUN_TEST(Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant);
   RUN_TEST(Expect_cycle_hal_sequence_unchanged_from_former_main_loop);
+  RUN_TEST(Expect_i2c_derived_when_an_i2c_sensor_is_selected);
   return UNITY_END();
 }
 
