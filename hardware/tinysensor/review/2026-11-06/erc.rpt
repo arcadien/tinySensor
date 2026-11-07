@@ -1,0 +1,155 @@
+ERC report (2026-11-06T16:04:16, Encoding UTF8)
+Report includes: Errors, Warnings, Exclusions
+
+***** Sheet /
+[lib_symbol_mismatch]: Le symbole 'Jumper-Device' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(46.99 mm, 161.29 mm): Symbole JP1 [Jumper-Device]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(50.80 mm, 142.24 mm): Symbole #PWR0103 [GND]
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(54.61 mm, 95.25 mm): Symbole #PWR01 [VCC]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(54.61 mm, 120.65 mm): Symbole #PWR0119 [GND]
+[unconnected_wire_endpoint]: Extrémité de fil non connectée
+    ; warning
+    @(54.61 mm, 120.65 mm): Fil Vertical, longueur 3.81 mm
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(57.15 mm, 26.67 mm): Symbole #PWR02 [VCC]
+[lib_symbol_mismatch]: Le symbole 'ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(57.15 mm, 50.80 mm): Symbole U1 [ATtiny84A-PU-MCU_Microchip_ATtiny-...]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(57.15 mm, 78.74 mm): Symbole #PWR0102 [GND]
+[lib_symbol_mismatch]: Le symbole 'AVR-ISP-6-Connector' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(57.15 mm, 109.22 mm): Symbole J6 [AVR-ISP-6-Connector]
+[lib_symbol_mismatch]: Le symbole 'LED' ne correspond pas à la copie en librairie 'Device'
+    ; warning
+    @(71.12 mm, 161.29 mm): Symbole D1 [LED]
+[pin_to_pin]: Les pins de type Bidirectionnel et Power output sont connectées
+    ; warning
+    @(72.39 mm, 38.10 mm): Symbol U1 Pin 12 [PA1, Bidirectionnel, Ligne]
+    @(257.81 mm, 143.51 mm): Symbol #FLG0102 Pin 1 [pwr, Power output, Ligne]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(77.47 mm, 161.29 mm): Symbole #PWR0104 [GND]
+[lib_symbol_issues]: Symbole 'Conn_01x02_Male' non trouvée en librairie de symboles 'Connector'
+    ; warning
+    @(99.06 mm, 58.42 mm): Symbole J4 [Conn_01x02_Male]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(99.06 mm, 72.39 mm): Symbole #PWR0108 [GND]
+[lib_symbol_mismatch]: Le symbole 'CP-Device' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(104.14 mm, 115.57 mm): Symbole C6 [CP-Device]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(105.41 mm, 53.34 mm): Symbole #PWR0101 [GND]
+[lib_symbol_mismatch]: Le symbole 'CP1-Device' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(124.46 mm, 137.16 mm): Symbole C3 [CP1-Device]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(124.46 mm, 142.24 mm): Symbole #PWR0120 [GND]
+[lib_symbol_mismatch]: Le symbole 'SolderJumper_3_Open-Jumper' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(127.00 mm, 105.41 mm): Symbole JP4 [SolderJumper_3_Open-Jumper]
+[lib_symbol_mismatch]: Le symbole '1N914' ne correspond pas à la copie en librairie 'Diode'
+    ; warning
+    @(129.54 mm, 97.79 mm): Symbole D2 [1N914]
+[lib_symbol_mismatch]: Le symbole '1N914' ne correspond pas à la copie en librairie 'Diode'
+    ; warning
+    @(137.16 mm, 97.79 mm): Symbole D3 [1N914]
+[lib_symbol_mismatch]: Le symbole 'SolderJumper_2_Open' ne correspond pas à la copie en librairie 'Jumper'
+    ; warning
+    @(138.43 mm, 138.43 mm): Symbole JP3 [SolderJumper_2_Open]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(146.05 mm, 88.90 mm): Symbole #PWR0105 [GND]
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(151.13 mm, 33.02 mm): Symbole #PWR03 [VCC]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(160.02 mm, 30.48 mm): Symbole #PWR0110 [GND]
+[lib_symbol_mismatch]: Le symbole 'CP-Device' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(165.10 mm, 39.37 mm): Symbole C1 [CP-Device]
+[lib_symbol_mismatch]: Le symbole '+BATT' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(167.64 mm, 27.94 mm): Symbole #PWR0111 [+BATT]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(181.61 mm, 125.73 mm): Symbole #PWR0106 [GND]
+[lib_symbol_issues]: Symbole 'Conn_01x06_Female' non trouvée en librairie de symboles 'Connector'
+    ; warning
+    @(193.04 mm, 118.11 mm): Symbole J3 [Conn_01x06_Female]
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(199.39 mm, 49.53 mm): Symbole #PWR06 [VCC]
+[lib_symbol_mismatch]: Le symbole '+BATT' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(203.20 mm, 34.29 mm): Symbole #PWR0116 [+BATT]
+[lib_symbol_mismatch]: Le symbole 'SolderJumper_2_Open' ne correspond pas à la copie en librairie 'Jumper'
+    ; warning
+    @(209.55 mm, 45.72 mm): Symbole JP2 [SolderJumper_2_Open]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(217.17 mm, 92.71 mm): Symbole #PWR0109 [GND]
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(219.71 mm, 81.28 mm): Symbole #PWR04 [VCC]
+[lib_symbol_issues]: Symbole 'Conn_01x03_Male' non trouvée en librairie de symboles 'Connector'
+    ; warning
+    @(219.71 mm, 99.06 mm): Symbole J1 [Conn_01x03_Male]
+[footprint_link_issues]: La configuration actuelle n'inclut pas la librairie d'empreintes 'battery supp.'
+    ; warning
+    @(229.87 mm, 34.29 mm): Symbole J10 [Screw_Terminal_01x02]
+[lib_symbol_mismatch]: Le symbole 'PWR_FLAG' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(237.49 mm, 143.51 mm): Symbole #FLG0103 [PWR_FLAG]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(237.49 mm, 146.05 mm): Symbole #PWR0113 [GND]
+[multiple_net_names]: +BATT et Battery_Checker sont attachés aux mêmes éléments.  +BATT a été choisi comme label  en netliste
+    ; warning
+    @(167.64 mm, 27.94 mm): Symbol #PWR0111 Pin cachée 1 [+BATT, Power input, Ligne]]
+    @(240.03 mm, 21.59 mm): Label 'Battery_Checker'
+[lib_symbol_mismatch]: Le symbole 'CP-Device' ne correspond pas à la copie en librairie 'tinySensorv1-rescue'
+    ; warning
+    @(241.30 mm, 83.82 mm): Symbole C4 [CP-Device]
+[footprint_link_issues]: Empreinte 'TerminalBlock_bornier-2_P5.08mm' introuvable dans la librairie 'TerminalBlock'
+    ; warning
+    @(247.65 mm, 34.29 mm): Symbole J13 [Screw_Terminal_01x02]
+[lib_symbol_mismatch]: Le symbole 'PWR_FLAG' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(247.65 mm, 143.51 mm): Symbole #FLG0101 [PWR_FLAG]
+[lib_symbol_mismatch]: Le symbole 'VCC' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(247.65 mm, 146.05 mm): Symbole #PWR07 [VCC]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(248.92 mm, 83.82 mm): Symbole #PWR0123 [GND]
+[lib_symbol_mismatch]: Le symbole 'PWR_FLAG' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(257.81 mm, 143.51 mm): Symbole #FLG0102 [PWR_FLAG]
+[lib_symbol_mismatch]: Le symbole '+BATT' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(257.81 mm, 146.05 mm): Symbole #PWR0115 [+BATT]
+[lib_symbol_mismatch]: Le symbole 'GND' ne correspond pas à la copie en librairie 'power'
+    ; warning
+    @(261.62 mm, 46.99 mm): Symbole #PWR0117 [GND]
+
+ ** ERC messages: 47  Errors 0  Warnings 47
+
+ ** Ignored checks:
+    - Global label only appears once in the schematic
+    - Four connection points are joined together
+    - SPICE model issue
+    - Assigned footprint doesn't match footprint filters

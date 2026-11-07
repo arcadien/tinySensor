@@ -6,7 +6,7 @@
 
 /*
  * 1-wire interface is on PA3
- * Power for radio is on PA2 (sensor_vcc)
+ * Sensor power is on PA2 (sensor_vcc); the radio is always powered (VCC)
  * LED pin is PB1
  * PWM pin is PA7
  * SDA pin is PA6

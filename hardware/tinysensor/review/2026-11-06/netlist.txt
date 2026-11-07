@@ -1,0 +1,59 @@
+COMP C1 | 10u | Capacitor_THT:CP_Radial_D5.0mm_P2.50mm | CP-Device
+COMP C2 | 100n | Capacitor_THT:C_Rect_L7.0mm_W2.0mm_P5.00mm | C
+COMP C3 | 1u | Capacitor_THT:CP_Radial_D4.0mm_P1.50mm | CP1-Device
+COMP C4 | 10u | Capacitor_THT:CP_Radial_D5.0mm_P2.50mm | CP-Device
+COMP C5 | 1n | Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm | C
+COMP C6 | 0.1u | Capacitor_THT:CP_Radial_Tantal_D4.5mm_P2.50mm | CP-Device
+COMP D1 | LED | LED_THT:LED_D1.8mm_W3.3mm_H2.4mm | LED
+COMP D2 | 1N914 | Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal | 1N914
+COMP D3 | 1N914 | Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal | 1N914
+COMP J1 | RADIO | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | Conn_01x03_Male
+COMP J2 | DCDC converter | TinySensor lib:DC-DC_0.9v-3.3v_to_3.3v | Conn_01x03
+COMP J3 | I2C Sensor (BME/BMP 280) | TinySensor lib:BMx280_breakout | Conn_01x06_Female
+COMP J4 | Digital out | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | Conn_01x02_Male
+COMP J5 | OneWire sensor | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | Conn_01x03
+COMP J6 | ISP | TinySensor lib:ICSP_SOCKET_MINI_2x3 | AVR-ISP-6-Connector
+COMP J7 | Analog sensor | Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical | Conn_01x03
+COMP J8 | EXT. INT0 | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | Conn_01x02
+COMP J10 | CR2032 socket | battery supp.:BatteryHolder_Keystone_106_1x21mm | Screw_Terminal_01x02
+COMP J11 | AAA socket | Battery:BatteryHolder_Keystone_2466_1xAAA | Screw_Terminal_01x02
+COMP J12 | AA Socket | Battery:BatteryHolder_Keystone_2460_1xAA | Screw_Terminal_01x02
+COMP J13 | RAW IN | TerminalBlock:TerminalBlock_bornier-2_P5.08mm | Screw_Terminal_01x02
+COMP JP1 | LED Jumper | Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical | Jumper-Device
+COMP JP2 | DIRECT Vcc | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | SolderJumper_2_Open
+COMP JP3 | ~ | Jumper:SolderJumper-2_P1.3mm_Open_TrianglePad1.0x1.5mm | SolderJumper_2_Open
+COMP JP4 | Analog ref | Jumper:SolderJumper-3_P1.3mm_Open_Pad1.0x1.5mm_NumberLabels | SolderJumper_3_Open-Jumper
+COMP MH1 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP MH2 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP MH3 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP MH4 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP MH5 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP MH6 | MountingHole | MountingHole:MountingHole_2.5mm | MountingHole
+COMP R1 | 1k | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | R
+COMP R2 | 4,7k | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | R
+COMP R3 | 4,7k | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | R
+COMP R4 | 75R | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | R
+COMP R6 | 4k7 | Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal | R
+COMP SW1 | RESET | Button_Switch_THT:SW_PUSH_6mm_H4.3mm | SW_Push
+COMP U1 | ATtiny84A-PU | Package_DIP:DIP-14_W7.62mm | ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue
+NET +BATT : J10.1(Pin_1_1)[passive] J11.1(Pin_1_1)[passive] J12.1(Pin_1_1)[passive] J13.1(Pin_1_1)[passive] J2.1(Pin_1_1)[passive] JP2.2(B_2)[passive] U1.12(PA1_12)[bidirectional]
+NET /Analog_sensor : J7.2(Pin_2_2)[passive] R4.1[passive] U1.13(AREF/PA0_13)[bidirectional]
+NET /DIGITAL_OUT : J4.1(Pin_1_1)[passive] U1.6(PA7_6)[bidirectional]
+NET /INT0 : J8.1(Pin_1_1)[passive] U1.5(PB2_5)[bidirectional]
+NET /LED_OUT : JP1.1(1_1)[passive] U1.3(XTAL2/PB1_3)[bidirectional]
+NET /MISO : J6.1(MISO_1)[passive] U1.8(PA5_8)[bidirectional]
+NET /OneWire : J5.3(Pin_3_3)[passive] R6.1[passive] U1.10(PA3_10)[bidirectional]
+NET /RESET : J6.5(~{RST}_5)[passive] SW1.1(1_1)[passive] U1.4(~{RESET}/PB3_4)[bidirectional]
+NET /SCL : J3.3(Pin_3_3)[passive] J6.3(SCK_3)[passive] R3.2[passive] U1.9(PA4_9)[bidirectional]
+NET /SDA : J3.4(Pin_4_4)[passive] J6.4(MOSI_4)[passive] R2.2[passive] U1.7(PA6_7)[bidirectional]
+NET /SENSOR_VCC : C6.1[passive] J3.1(Pin_1_1)[passive] J5.1(Pin_1_1)[passive] J7.1(Pin_1_1)[passive] R2.1[passive] R3.1[passive] R6.2[passive] U1.11(PA2_11)[bidirectional]
+NET /TX_RADIO : J1.3(Pin_3_3)[passive] U1.2(XTAL1/PB0_2)[bidirectional]
+NET GND : C1.2[passive] C2.1[passive] C3.2[passive] C4.2[passive] C5.2[passive] D1.2(A_2)[passive] D3.1(K_1)[passive] J1.1(Pin_1_1)[passive] J10.2(Pin_2_2)[passive] J11.2(Pin_2_2)[passive] J12.2(Pin_2_2)[passive] J13.2(Pin_2_2)[passive] J2.2(Pin_2_2)[passive] J3.2(Pin_2_2)[passive] J3.6(Pin_6_6)[passive] J4.2(Pin_2_2)[passive] J5.2(Pin_2_2)[passive] J6.6(GND_6)[power_in] J8.2(Pin_2_2)[passive] JP3.1(A_1)[passive] JP4.3(B_3)[passive] SW1.2(2_2)[passive] U1.14(GND_14)[power_in]
+NET Net-(D1-K) : D1.1(K_1)[passive] R1.1[passive]
+NET Net-(D2-A) : D2.2(A_2)[passive] JP4.1(A_1)[passive]
+NET Net-(D2-K) : D2.1(K_1)[passive] D3.2(A_2)[passive]
+NET Net-(J7-Pin_3) : C6.2[passive] J7.3(Pin_3_3)[passive] JP4.2(C_2)[input]
+NET Net-(JP1-Pad2) : JP1.2(2_2)[passive] R1.2[passive]
+NET Net-(JP3-B) : C3.1[passive] JP3.2(B_2)[passive] R4.2[passive]
+NET VCC : C1.1[passive] C2.2[passive] C4.1[passive] C5.1[passive] J1.2(Pin_2_2)[passive] J2.3(Pin_3_3)[passive] J6.2(VCC_2)[power_in] JP2.1(A_1)[passive] U1.1(VCC_1)[power_in]
+NET unconnected-(J3-Pin_5-Pad5) : J3.5(Pin_5_5)[passive+no_connect]

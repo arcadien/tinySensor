@@ -22,11 +22,11 @@
 ---
 
 ### PLAT-POWER-003
-**Title:** Hibernate disables USI/Timer0/Timer1/ADC and reconfigures all GPIO as inputs with pull-ups; restores all state on wake
+**Title:** Hibernate disables USI/Timer0/Timer1/ADC, holds the sensor rail and radio data low, leaves sensor-rail pull-up pins unpulled; restores all state on wake
 **Status:** validated
-**Dependencies:** PLAT-POWER-001, TECH-HAL-004
+**Dependencies:** PLAT-POWER-001, PLAT-POWER-002, TECH-HAL-004
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** Before entering the first sleep period, `sleep()` sets PRR bits for PRUSI, PRTIM0, PRTIM1, and PRADC; sets DDRA and DDRB to 0; and applies pull-ups to unused pins. After the last sleep period, all five registers (PRR, DDRA, DDRB, PORTA, PORTB) are restored to their pre-sleep values.
+**Description:** Before entering the first sleep period, `sleep()` sets PRR bits for PRUSI, PRTIM0, PRTIM1, and PRADC. It drives PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) as outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, all five registers (PRR, DDRA, DDRB, PORTA, PORTB) are restored to their pre-sleep values.
 
 ---
 
@@ -45,3 +45,12 @@
 **Dependencies:** TECH-HAL-001
 **derives_from:** [TECH-HAL-001](technical.md#tech-hal-001)
 **Description:** All physical PlatformIO environments inherit `[env:avr_base]`, which sets `board_build.f_cpu = 1000000L` and `board_build.mcu = attiny84a`. All `Attiny84aHal` delay methods (`Delay512Us`, `Delay1024Us`, `Delay400Us`, `Delay30ms`) are calibrated exclusively for this 1 MHz clock frequency.
+
+---
+
+### PLAT-POWER-006
+**Title:** With USE_SWITCHED_5V, PB2 is driven low only inside the sensor power window to switch the off-board 5 V module
+**Status:** validated
+**Dependencies:** PLAT-POWER-002, PLAT-POWER-003, TECH-HAL-004
+**derives_from:** [FUNC-ANALOG-001](functional.md#func-analog-001)
+**Description:** When `USE_SWITCHED_5V` is defined (AVR build), PB2 (J8) switches the off-board 5 V module through a PNP (`hardware/tinysensor/VARIANTE_LM35.md`). `Attiny84aHal()` clears `PORTB.2` (no pull-up) and it stays 0. `PowerOnSensors()` makes PB2 an output (`DDRB.2 = 1`), hence driven low; `PowerOffSensors()` makes it an input again (`DDRB.2 = 0`, high impedance). PB2 is never driven high. During hibernate, PB2 is an input without pull-up. Without the flag, PB2 behaviour is unchanged. Verified by inspection and on the bench (AVR-only, no native test).
