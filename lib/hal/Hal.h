@@ -29,8 +29,10 @@ class Hal {
   virtual void RadioGoLow() = 0;
   virtual void RadioGoHigh() = 0;
 
-  virtual void SerialGoHigh() = 0;
-  virtual void SerialGoLow() = 0;
+  // Drives the debug UART line to `level` (0 = low, non-zero = high) and
+  // holds it for one bit period at 9600 baud. Level change and bit delay
+  // are a single call so the per-bit overhead stays constant.
+  virtual void SerialWriteBit(uint8_t level) = 0;
 
   virtual void PowerOnSensors() = 0;
   virtual void PowerOffSensors() = 0;

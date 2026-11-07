@@ -28,9 +28,7 @@ class Ds18b20 {
   Ds18b20(Hal *hal) : _hal(hal) {}
   void Begin() {}
   void Convert() {}
-  int16_t Read() {
-    return 0;
-  }
+  int16_t Read() { return 0; }
 #endif
 
  private:

@@ -36,7 +36,8 @@ void Test_dec16ToHex() {
     {5, 5}, 
     {4200,      0x4200}, 
     {9999,      0x9999},
-    {10000,     0xA000}, // overflow
+    {10000,     0x9999}, // saturated
+    {65535,     0x9999}, // saturated
   };
   // clang-format on
 
