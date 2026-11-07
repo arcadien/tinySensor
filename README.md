@@ -16,7 +16,7 @@ Large part of the code, especially wireless encoders, are unit-tested.
 * I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
 * Analog sensors (eg. [LM35](http://www.ti.com/lit/ds/symlink/lm35.pdf))
 * OneWire sensors (eg. [Dallas DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf))
-* Luminosity sensor (ROHM BH1750, I2C)
+* Luminosity sensor ([ROHM BH1750](https://www.mouser.com/datasheet/2/348/bh1750fvi-e-186247.pdf), I2C)
 
 ## Wireless technology
 * "one pin" emitters. Tested with low-cost 433 MHz emitters.
