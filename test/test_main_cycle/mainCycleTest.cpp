@@ -227,6 +227,7 @@ void Expect_cycle_on_TestHal_records_orders_on_TestHal() {
 }
 
 // @req TECH-MAIN-001
+// @req CONF-BUILD-001 (native_cycle_x10: no protocol, no environment frame)
 void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
   // Given
   CycleSpyHal spy;
