@@ -31,3 +31,7 @@
     (defined(USE_BMP280) or defined(USE_BME280) or defined(USE_BH1750))
 #define USE_I2C
 #endif
+
+#if (defined(USE_LACROSSE) || defined(USE_BH1750)) && !defined(LACROSSE_ID)
+#error "CONF-BUILD-004: LACROSSE_ID is required with USE_LACROSSE or USE_BH1750"
+#endif

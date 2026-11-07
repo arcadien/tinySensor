@@ -43,7 +43,9 @@ jobs:
       - name: Run native tests
         run: pio test -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
       - name: Compile-fail checks
-        run: bash test/compile_fail/check_both_protocols.sh
+        run: |
+          bash test/compile_fail/check_both_protocols.sh
+          bash test/compile_fail/check_lacrosse_id_required.sh
 
   # Firmware build for every physical target
   build-avr:
