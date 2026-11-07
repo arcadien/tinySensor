@@ -8150,7 +8150,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "DCDC converter"
+		(property "Value" "3V3 module (TPS63020)"
 			(at 177.2666 31.7246 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8161,7 +8161,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TinySensor lib:DC-DC_0.9v-3.3v_to_3.3v"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
 			(at 175.26 30.48 0)
 			(hide yes)
 			(show_name no)
