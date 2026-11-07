@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-07 — TECH-MAIN-001 (one cycle extracted into `runCycle(Hal*)`), see [Main loop structure](#main-loop-structure)_
+_Last updated: 2026-11-07 — CONF-BUILD-001 (environment protocol optional, at most one), see [Main loop structure](#main-loop-structure)_
 
 ## Component Diagram
 
@@ -159,7 +159,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
 | FUNC-SENSOR-003 | `main.cpp` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
-| CONF-BUILD-001 | `main.cpp` / `platformio.ini` | Exactly one of USE_OREGON or USE_LACROSSE per environment; violated at compile time otherwise |
+| CONF-BUILD-001 | `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | At most one of USE_OREGON / USE_LACROSSE; neither → no EnvironmentEncoder (HAS_ENVIRONMENT_ENCODER unset), no environment frame; both → #error |
 | CONF-BUILD-002 | `main.cpp` / `include/config.h` | Sensor type flag (USE_BMP280/BME280/DS18B20/BH1750) selects included driver; USE_I2C auto-derived |
 | CONF-BUILD-003 | `main.cpp` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 in main() |
 | CONF-BUILD-004 | `main.cpp` / `platformio.ini` | LACROSSE_ID enum value applied to LacrosseWS7000 in main() |
