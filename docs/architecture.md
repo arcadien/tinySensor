@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-10-25 — main loop refactor (audit A2, A3), see [Main loop structure](#main-loop-structure)_
+_Last updated: 2026-11-07 — PLAT-POWER-006 (switched 5 V module on PB2)_
 
 ## Component Diagram
 
@@ -162,3 +162,4 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | PLAT-POWER-003 | `Attiny84aHal` | PRR bits for USI/Timer0/Timer1/ADC set in sleep(); GPIO reconfigured as inputs with pull-ups; all restored on wake |
 | PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
+| PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
