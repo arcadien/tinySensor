@@ -34,6 +34,8 @@ Les pièces prêtes à trancher sont dans `print/`, **un projet OrcaSlicer par m
 | `stand.3mf` | Mât, Pied | pied de table, optionnel |
 | `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10 |
 
+`mushroom_cap.3mf` : chapeau du champignon tel qu'imprimé (réglages Orca de l'impression). Snapshot figé, hors de `export.sh`.
+
 Après une modification d'un `.scad` (environ 30 s, fermer les projets dans Orca avant) :
 
 ```bash
