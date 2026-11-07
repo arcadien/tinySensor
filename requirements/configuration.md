@@ -4,10 +4,10 @@
 <!-- Format: req(ID): title -->
 
 ### CONF-BUILD-001
-**Title:** Enforce exclusive protocol selection at compile time
+**Title:** Select at most one environment protocol per build
 **Status:** validated
 **Dependencies:** —
-**Description:** Exactly one of `USE_OREGON` or `USE_LACROSSE` must be defined per build environment. Defining neither causes a compile error because no protocol encoder is included; defining both causes a compile error due to conflicting encoder instantiation in `main.cpp`.
+**Description:** At most one of `USE_OREGON` or `USE_LACROSSE` may be defined per build environment; defining both is rejected at compile time. With neither defined, the sensor sends no environment frame; X10 meters and luminosity are still transmitted.
 
 ### CONF-BUILD-002
 **Title:** Select sensor type exclusively via build flags
