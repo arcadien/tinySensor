@@ -29,6 +29,8 @@
 
 #if defined(USE_BME280) or defined(USE_BMP280)
 #include <BMx280.h>
+// File-scope: building it per cycle costs ~288 B flash (robot).
+static BMx280 bmx280;
 #endif
 
 #if defined(USE_DS18B20)
@@ -75,7 +77,6 @@ static void SerialPrintInfo(Hal *, const char *, uint16_t, const char *) {}
 static Measurements ReadEnvironment(Hal *hal) {
   Measurements m;
 #if defined(USE_BME280) || defined(USE_BMP280)
-  BMx280 bmx280(hal);
   bmx280.Begin();
   hal->Delay30ms();
   m.SetTemperature(bmx280.GetTemperature());
