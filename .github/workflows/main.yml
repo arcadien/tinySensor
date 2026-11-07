@@ -41,7 +41,7 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
-        run: pio test -e native_debug
+        run: pio test -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
 
   # Firmware build for every physical target
   build-avr:
