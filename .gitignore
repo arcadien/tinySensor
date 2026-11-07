@@ -1,4 +1,4 @@
-# --- Build output (PlatformIO, Atmel Studio, CMake) ---
+# --- Build output (PlatformIO, CMake) ---
 .pio
 build/
 Debug/
