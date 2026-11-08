@@ -11,6 +11,7 @@ de TEMPLATE (le projet du champignon, réglé pour l'Ender 3).
 """
 import math
 import re
+import os
 import shutil
 import subprocess
 import sys
@@ -21,9 +22,13 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+if not sys.flags.utf8_mode:   # Windows : read_text/write_text en cp1252 sinon (noms accentués)
+    sys.exit(subprocess.call([sys.executable, "-X", "utf8", *sys.argv]))
+
 HERE = Path(__file__).resolve().parent
 PRINT = HERE / "print"
-OPENSCAD = sorted(Path.home().glob("bin/OpenSCAD-*.AppImage"))[-1]
+OPENSCAD = (os.environ.get("OPENSCAD") or shutil.which("openscad")
+            or sorted(Path.home().glob("bin/OpenSCAD-*.AppImage"))[-1])
 TEMPLATE = PRINT / "mushroom.3mf"
 BED = 220      # plateau de l'Ender 3 ; Orca espace ses plaques de 1,2 plateau
 GAP = 10       # entre deux pièces d'une même plaque
