@@ -3,7 +3,11 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <util/atomic.h>
+
+#include <Font8x16.h>
+#include <TinyI2CMaster.h>
 
 namespace {
 
@@ -27,9 +31,59 @@ volatile uint8_t overflowsSinceCapture = 2;
 volatile uint32_t overflowMicros = 0;
 volatile uint32_t seconds = 0;
 
+const uint8_t OledAddress = 0x3C;
+const uint8_t OledCommands = 0x00;  // control byte: command stream follows
+const uint8_t OledData = 0x40;      // control byte: data stream follows
+const uint8_t OledPages = 4;
+const uint8_t OledColumns = 128;
+const uint8_t OledDisplayOn = 0xAF;
+
+// Display off, clock, 32 lines, no offset, charge pump, page addressing,
+// remapped segments and rows, contrast, precharge, VCOMH, display RAM on
+const uint8_t OledInit[] PROGMEM = {
+    0xAE, 0xD5, 0x80, 0xA8, 0x1F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0x20, 0x02,
+    0xA1, 0xC8, 0xDA, 0x02, 0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6};
+
+void SendCommand(uint8_t command) {
+  TinyI2C.start(OledAddress, 0);
+  TinyI2C.write(OledCommands);
+  TinyI2C.write(command);
+  TinyI2C.stop();
+}
+
+// Places the next data byte at `page`, `column`
+void Locate(uint8_t page, uint8_t column) {
+  TinyI2C.start(OledAddress, 0);
+  TinyI2C.write(OledCommands);
+  TinyI2C.write(0xB0 + page);
+  TinyI2C.write(column & 0x0F);
+  TinyI2C.write(0x10 | (column >> 4));
+  TinyI2C.stop();
+}
+
+void InitDisplay() {
+  TinyI2C.init();
+  TinyI2C.start(OledAddress, 0);
+  TinyI2C.write(OledCommands);
+  for (uint8_t i = 0; i < sizeof OledInit; i++)
+    TinyI2C.write(pgm_read_byte(&OledInit[i]));
+  TinyI2C.stop();
+
+  for (uint8_t page = 0; page < OledPages; page++) {
+    Locate(page, 0);
+    TinyI2C.start(OledAddress, 0);
+    TinyI2C.write(OledData);
+    for (uint8_t column = 0; column < OledColumns; column++) TinyI2C.write(0);
+    TinyI2C.stop();
+  }
+  SendCommand(OledDisplayOn);
+}
+
 }  // namespace
 
 void Attiny84aReceiverHal::Init() {
+  InitDisplay();
+
   DDRA &= ~(1 << PA7);
   PORTA &= ~(1 << PA7);
   TCCR1A = 0;
@@ -61,6 +115,18 @@ uint32_t Attiny84aReceiverHal::NowSeconds() const {
     now = seconds;
   }
   return now;
+}
+
+void Attiny84aReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
+  uint8_t glyph[16];
+  ReadGlyph(c, glyph);
+  for (uint8_t half = 0; half < 2; half++) {
+    Locate(2 * row + half, col * 8);
+    TinyI2C.start(OledAddress, 0);
+    TinyI2C.write(OledData);
+    for (uint8_t i = 0; i < 8; i++) TinyI2C.write(glyph[half * 8 + i]);
+    TinyI2C.stop();
+  }
 }
 
 ISR(TIM1_CAPT_vect) {
