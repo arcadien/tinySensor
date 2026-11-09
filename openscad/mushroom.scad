@@ -156,6 +156,7 @@ bt_w = 13;         // butées à languette : plaque 13 x 11, languette 3 x 7 (pe
 bt_h = 11;
 bt_t = 0.4;        // épaisseur de la tôle (à mesurer)
 bt_tab = [3, 7];   // languette vers le haut (côté ouvert), fil soudé dessus
+cr_win = [3, 15, 4, 14];  // allègement : fenêtres par flanc (nombre, longueur, bas, haut au-dessus du méplat) ; fond et rails gardés
 wire_notch = [4.5, 3];  // passage du fil au-dessus de chaque bout : largeur, profondeur sous le dessus de l'accu
 bt_dimple = 1.8;   // bossage de la butée « + »
 spring_c = 4;      // ressort de la butée « − » comprimé (10.7 libre)
@@ -529,6 +530,9 @@ module cradle() {
       // fenêtre devant la plaque
       translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
     }
+    // fenêtres traversantes dans les flancs, sous les lèvres qui retiennent l'accu (dessus en pont)
+    let(n = cr_win[0], l = cr_win[1], post = (cr_len - 2 * cr_end - 8 - n * l) / (n - 1))
+      for (i = [0 : n - 1]) translate([cr_end + 4 + i * (l + post), -cr_r - 1, cr_win[2]]) cube([l, 2 * cr_r + 2, cr_win[3] - cr_win[2]]);
     // trou de tirage dans le bout du haut (ficelle, nœud à l'intérieur)
     translate([cr_len - cr_end - 1, 0, cl_z + cell_d / 2 + 0.8]) rotate([0, 90, 0]) cylinder(d = 2.5, h = cr_end + 2, $fn = 24);
     // polarité, gravée sur les faces des bouts
