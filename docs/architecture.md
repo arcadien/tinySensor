@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — TECH-DECODE-001 (new tinyDecoders sub-project, loopback test helper), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-09 — FUNC-DECODE-001 (X10Decoder in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -106,7 +106,9 @@ Design choices:
 graph TD
   subgraph tinyDecoders
     Loopback["Loopback: OrdersToPulses() (native only)"]
+    X10Decoder["X10Decoder: Feed(high, durationUs)"]
   end
+  Loopback -.->|"pulses (tests)"| X10Decoder
   Encoders["OregonV3 / LacrosseWS7000 / x10rf (repo lib/)"] -->|Hal*| TestHal["TestHal_ (repo lib/hal)"]
   Loopback -->|"reads Orders tokens"| TestHal
 ```
@@ -114,8 +116,11 @@ graph TD
 | Component | Responsibility | Requirement(s) |
 |-----------|----------------|----------------|
 | `Loopback` (`tinyDecoders/lib/Loopback/`) | Native-only test helper: converts a `TestHal_::Orders` token sequence into `{high, durationUs}` pulses using each delay token's nominal duration, so decoder tests can be fed with real encoder output | TECH-DECODE-001 |
+| `X10Decoder` (`tinyDecoders/lib/X10Decoder/`) | Rebuilds X10 RFXmeter frames from `(high, durationUs)` pulses; checks byte1 complement, packet type 0 and parity nibble; exposes `Address()` and raw `Value()` | FUNC-DECODE-001 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
+
+Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, OLED) will go through a new small interface dedicated to tinyDecoders, not the repository `Hal`; that interface is specified later with the tinyDecoders PLAT requirements.
 
 ## Build-time Configuration
 
@@ -196,3 +201,4 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
 | TECH-DECODE-001 | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
+| FUNC-DECODE-001 | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
