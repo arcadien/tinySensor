@@ -16,7 +16,7 @@ struct CapturedPulse {
   bool high;
 };
 
-const uint8_t PulseCapacity = 32;  // power of two, indexes wrap with a mask
+const uint8_t PulseCapacity = 16;  // power of two, indexes wrap with a mask
 const uint32_t MicrosPerOverflow = 65536;
 const uint32_t MicrosPerSecond = 1000000;
 
