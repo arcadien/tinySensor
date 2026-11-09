@@ -63,3 +63,12 @@
 **Dependencies:** TECH-DECODE-002, CONF-DECODE-001
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** In `tinyDecoders/lib/ReceiverHal/Attiny84aReceiverHal.{h,cpp}` (AVR only), `Init()` makes PA7 an input without pull-up, runs Timer1 in normal mode with prescaler 8 (1 µs ticks at 8 MHz), noise canceller on, capture edge opposite to the current PA7 level, capture and overflow interrupts on. `TIM1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture, 65535 if a full timer period has elapsed, toggles the edge, into a 32-pulse ring buffer; when full the pulse is dropped. `TIM1_OVF` adds 65536 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench (AVR only).
+
+---
+
+### PLAT-DECODE-002
+**Title:** Attiny84aReceiverHal drives an SSD1306 128x32 OLED at I2C 0x3C, one 8x16 character per DrawChar, without framebuffer
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-001
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** `Attiny84aReceiverHal` talks to the SSD1306 at 0x3C through `TinyI2C` (USI: SDA PA6, SCL PA4). `Init()` sends: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(row, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `2*row` then `2*row + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)`, then one data transfer (`0x40` and 8 glyph bytes). No display buffer is kept in RAM. Verified by inspection and on the bench (AVR only).
