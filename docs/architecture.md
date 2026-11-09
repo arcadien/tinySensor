@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — UI-DECODE-002 (Font8x16 in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-09 — TECH-DECODE-002, FUNC-DECODE-007 (ReceiverHal alias and Receiver loop in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -65,6 +65,7 @@ graph TD
 | `SoftSerial` | `Hal*` | constructor |
 | `LightSensor` | `Hal*` | constructor |
 | `runCycle` (`main.cpp`) | `Hal*` | function parameter; forwarded to every encoder and wrapper it constructs |
+| `Receiver` (tinyDecoders) | `ReceiverHal*` (compile-time alias: `Attiny84aReceiverHal` on AVR, `TestReceiverHal` on native) | constructor |
 
 Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at construction; a wrapper whose bus access is delegated to a third-party driver (`BMx280`) receives none. None accesses AVR registers directly, except register addresses passed to a third-party bus driver (`Ds18b20`).
 
@@ -112,7 +113,17 @@ graph TD
     SourceTable["SourceTable: Update(decoder, nowSeconds)"]
     PageFormatter["PageFormatter: FormatPage(record, ageSeconds)"]
     Font8x16["Font8x16: ReadGlyph(c, glyph) (PROGMEM)"]
+    Receiver["Receiver: Poll()"]
+    ReceiverHal["ReceiverHal (alias): PopPulse / NowSeconds / DrawChar"]
+    TestReceiverHal["TestReceiverHal (native only)"]
   end
+  Receiver -->|"ReceiverHal* (constructor)"| ReceiverHal
+  ReceiverHal -.->|"typedef on native"| TestReceiverHal
+  Receiver -->|"pulses"| X10Decoder
+  Receiver -->|"pulses"| LacrosseDecoder
+  Receiver -->|"pulses"| OregonDecoder
+  Receiver -->|"Update / At"| SourceTable
+  Receiver -->|"FormatPage"| PageFormatter
   X10Decoder -->|"const& after Feed true"| SourceTable
   LacrosseDecoder -->|"const& after Feed true"| SourceTable
   OregonDecoder -->|"const& after Feed true"| SourceTable
@@ -133,10 +144,14 @@ graph TD
 | `SourceTable` (`tinyDecoders/lib/SourceTable/`) | Keeps the last `SourceRecord` per source `(kind, id)` (Oregon channel, Lacrosse address, Lacrosse lux address, X10 address), max 6, oldest replaced; maps each decoder's values into common units (tenths, lux, mV from X10 BCD) with a presence bitmask | FUNC-DECODE-006 |
 | `PageFormatter` (`tinyDecoders/lib/PageFormatter/`) | Pure function: one `SourceRecord` + age in seconds to two 16-character lines (values, source label `Ore1`/`Lac3`/`X10`, age `12s`/`5m`/`2h`/`1d`) over a 31-glyph character set | UI-DECODE-001 |
 | `Font8x16` (`tinyDecoders/lib/Font8x16/`) | `ReadGlyph(c, glyph[16])`: 8x16 bitmaps of the 30 non-space UI-DECODE-001 characters in `PROGMEM` (496 B flash at most), SSD1306 page byte order; other characters blank. Generated from Spleen 8x16 (BSD-2-Clause) by `tinyDecoders/scripts/gen_font8x16.py` | UI-DECODE-002 |
+| `ReceiverHal` (`tinyDecoders/lib/ReceiverHal/`) | Compile-time alias of the receiver hardware: `Attiny84aReceiverHal` on AVR, `TestReceiverHal` on native. Static interface `PopPulse(high, durationUs)`, `NowSeconds()`, `DrawChar(row, col, c)`. The test double queues pulses, sets the clock and keeps the 2 × 16 drawn screen | TECH-DECODE-002 |
+| `Receiver` (`tinyDecoders/lib/Receiver/`) | Owns the three decoders and the `SourceTable`. `Poll()` drains pulses into every decoder and updates the table on each decoded frame. It picks the page (`(now / 4) % Count()`, or a waiting page `Ore Lac X` + uptime) and draws at most one changed character per call, so the pulse ring buffer never waits long | FUNC-DECODE-007 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
 
-Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, OLED) will go through a new small interface dedicated to tinyDecoders, not the repository `Hal`; that interface is specified later with the tinyDecoders PLAT requirements.
+Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, seconds clock, OLED) goes through `ReceiverHal`, a small interface dedicated to tinyDecoders, not the repository `Hal` (TECH-DECODE-002). Like `EnvironmentEncoder`, it is a `typedef` chosen at build time, not a virtual base: there is a single implementation per build, and the ATtiny avoids a vtable. `Receiver` receives a `ReceiverHal*` at construction and touches no AVR register, so its whole loop is host-tested through `TestReceiverHal`.
+
+Drawing one character per `Poll()` (≈ 1 ms of I2C) keeps the pulse latency within a 32-pulse ring buffer. A whole-screen redraw (≈ 25 ms) would need a buffer of 50+ pulses, which does not fit in RAM.
 
 `SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls on the ATtiny (same choice as `EnvironmentEncoder`). RAM: the table is 6 × 17 B = 102 B of the ATtiny84A's 512 B; the 128×32 OLED is therefore written page by page from the two text lines, never from a 512 B framebuffer.
 
@@ -227,3 +242,5 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-DECODE-006 | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id), kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 6, oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
 | UI-DECODE-001 | `PageFormatter` (tinyDecoders) | `FormatPage(record, ageSeconds, line1, line2)`; line 1 values + right-aligned label, line 2 pressure + right-aligned age; degree glyph `'\x7F'`; humidity capped at 99 %, age capped at 99d |
 | UI-DECODE-002 | `Font8x16` (tinyDecoders) | `ReadGlyph(c, glyph[16])` from `PROGMEM`; bytes 0–7 top page, 8–15 bottom page, bit 0 = top pixel; `'\x7F'` drawn as `°`; unknown and space give zeros; Spleen 8x16, BSD-2-Clause |
+| TECH-DECODE-002 | `ReceiverHal` / `TestReceiverHal` (tinyDecoders) | `typedef` on `AVR`; `PopPulse`, `NowSeconds`, `DrawChar`; double adds `PushPulse`, `SetNowSeconds`, `Row`, `DrawCount`; consumers take `ReceiverHal*` at construction |
+| FUNC-DECODE-007 | `Receiver` (tinyDecoders) | `Poll()`: pulses to X10, Lacrosse, Oregon decoders, `Update` on true; page `(now / 4) % Count()`, waiting page `Ore Lac X` + uptime; lines recomputed on new second or frame; at most one `DrawChar` per call, first differing character |
