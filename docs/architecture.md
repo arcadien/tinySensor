@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — FUNC-DECODE-001 (X10Decoder in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-09 — FUNC-DECODE-002/003 (LacrosseDecoder in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -107,8 +107,10 @@ graph TD
   subgraph tinyDecoders
     Loopback["Loopback: OrdersToPulses() (native only)"]
     X10Decoder["X10Decoder: Feed(high, durationUs)"]
+    LacrosseDecoder["LacrosseDecoder: Feed(high, durationUs)"]
   end
   Loopback -.->|"pulses (tests)"| X10Decoder
+  Loopback -.->|"pulses (tests)"| LacrosseDecoder
   Encoders["OregonV3 / LacrosseWS7000 / x10rf (repo lib/)"] -->|Hal*| TestHal["TestHal_ (repo lib/hal)"]
   Loopback -->|"reads Orders tokens"| TestHal
 ```
@@ -117,6 +119,7 @@ graph TD
 |-----------|----------------|----------------|
 | `Loopback` (`tinyDecoders/lib/Loopback/`) | Native-only test helper: converts a `TestHal_::Orders` token sequence into `{high, durationUs}` pulses using each delay token's nominal duration, so decoder tests can be fed with real encoder output | TECH-DECODE-001 |
 | `X10Decoder` (`tinyDecoders/lib/X10Decoder/`) | Rebuilds X10 RFXmeter frames from `(high, durationUs)` pulses; checks byte1 complement, packet type 0 and parity nibble; exposes `Address()` and raw `Value()` | FUNC-DECODE-001 |
+| `LacrosseDecoder` (`tinyDecoders/lib/LacrosseDecoder/`) | Rebuilds Lacrosse WS7000 frames from `(high, durationUs)` pulses; sync, `1` separators, frame length from the type nibble, XOR and sum checks; exposes `Type()`, `Address()` and measurements as integer tenths (temperature, humidity, pressure) or lux | FUNC-DECODE-002, FUNC-DECODE-003 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
 
@@ -202,3 +205,5 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
 | TECH-DECODE-001 | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
 | FUNC-DECODE-001 | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
+| FUNC-DECODE-002 | `LacrosseDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the high pulse of the last separator of a valid WS7000 frame; bit 1 = 400/800, 0 = 800/400 µs ±30 %; ≥ 6 zero bits sync; types 0/1/4/5 → 3/6/10/7 data nibbles; `Type()`, `Address()` |
+| FUNC-DECODE-003 | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()`; 0 when the type does not carry the value |
