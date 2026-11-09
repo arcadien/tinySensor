@@ -158,6 +158,7 @@ bt_tab = [3, 7];
 bt_dimple = 1.8;   // bossage de la butée « + »
 spring_c = 4;      // ressort de la butée « − » comprimé (10.7 libre)
 bt_slot = 0.8;     // rainure de la plaque
+bt_sink = 1;       // rainure plus profonde que la plaque (mesuré : plaque 1 mm trop haute au fond de la rainure)
 bt_win = 10.5;     // fenêtre devant la plaque (passage du ressort / du bossage)
 
 /* [Sol] */
@@ -518,7 +519,7 @@ module cradle() {
     for (s = [0, 1]) {
       xs = s == 0 ? 1.6 : cr_len - 1.6 - bt_slot;   // rainure
       // rainure de la plaque, ouverte en haut ; prolongée par la fente de la languette à travers le fond
-      translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
+      translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2 - bt_sink]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
       translate([xs, -(bt_tab[0] + 0.6) / 2, -1]) cube([bt_slot, bt_tab[0] + 0.6, cl_z]);
       // fenêtre devant la plaque
       translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
