@@ -23,7 +23,7 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 
 | Env | Purpose |
 |-----|---------|
-| `robot` | A robot device reworked to share the TinySensor PCB interface. Lacrosse WS7000 address THREE, BME280. |
+| `robot` | A robot device reworked to share the TinySensor PCB interface. Lacrosse WS7000 address FOUR, BME280. |
 | `devmodule` | Bench development board. `BATTERY_IS_VCC` — no battery divider, reports VCC directly. Lacrosse WS7000 address ONE, BME280. |
 | `SOLAR_TEST` | CI simulation target via `simavr`. Lacrosse WS7000 address TWO, BME280 + BH1750 light sensor. Not a physical board — used to run on-device tests in the AVR simulator. |
 
