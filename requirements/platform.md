@@ -62,7 +62,7 @@
 **Status:** validated
 **Dependencies:** TECH-DECODE-002, CONF-DECODE-001
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** In `tinyDecoders/lib/ReceiverHal/Attiny84aReceiverHal.{h,cpp}` (AVR only), `Init()` makes PA7 an input without pull-up, runs Timer1 in normal mode with prescaler 8 (1 µs ticks at 8 MHz), noise canceller on, capture edge opposite to the current PA7 level, capture and overflow interrupts on. `TIM1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture, 65535 if a full timer period has elapsed, toggles the edge, into a 32-pulse ring buffer; when full the pulse is dropped. `TIM1_OVF` adds 65536 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench (AVR only).
+**Description:** In `tinyDecoders/lib/ReceiverHal/Attiny84aReceiverHal.{h,cpp}` (AVR only), `Init()` makes PA7 an input without pull-up, runs Timer1 in normal mode with prescaler 8 (1 µs ticks at 8 MHz), noise canceller on, capture edge opposite to the current PA7 level, capture and overflow interrupts on. `TIM1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture, 65535 if a full timer period has elapsed, toggles the edge, into a 16-pulse ring buffer; when full the pulse is dropped. `TIM1_OVF` adds 65536 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench (AVR only).
 
 ---
 
