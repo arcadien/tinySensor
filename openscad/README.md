@@ -189,6 +189,7 @@ Cheminement :
 
 ### Points ouverts
 
+- Berceau (1er tirage) : entre tout juste dans le pied (jeu `cr_fit` 0,4 mm au rayon, à passer à ~0,8) ; le fil « − » ne passait pas, encoche coupée à la pince sur le côté arrondi, parallèle au bout de la languette : à modéliser au prochain berceau (position et cotes à relever). Rainures des butées creusées de 1 mm (`bt_sink`).
 - Cotes à mesurer : butées (épaisseur de tôle `bt_t`, ressort comprimé `spring_c`), position de la prise du module de charge (`usb_cut`), breakout BME (`bme_w/d`, `bme_edge`, hauteur de la barrette femelle `fh_h`).
 - Pas de lame d'air entre le dôme et la carte : le capteur est sous le plancher, ventilé par en dessous ; échauffement au soleil à vérifier par mesure.
 - Stabilité : réglée par le lest, à vérifier une fois imprimé. Estimation (coque PETG pleine, appui r ~38 mm) : basculement vers ~15° sans lest, ~21° avec 350 g, ~28° avec la chambre pleine (~1 kg, ~1,7 kg au total, centre de gravité à ~69 mm). Un remplissage partiel suffit : à figer à la colle, pied à l'endroit.
