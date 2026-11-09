@@ -68,3 +68,9 @@
 **Status:** validated
 **Dependencies:** —
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
+
+### CONF-DECODE-001
+**Title:** tinyDecoders attiny84a env builds the receiver firmware at 8 MHz internal within 8 KB flash and 384 B static RAM
+**Status:** validated
+**Dependencies:** FUNC-DECODE-007, PLAT-DECODE-001, PLAT-DECODE-002
+**Description:** `tinyDecoders/platformio.ini` gains `[env:attiny84a]`: `platform = atmelavr`, `board = attiny84`, `board_build.mcu = attiny84a`, `board_build.f_cpu = 8000000L`, no framework, `board_fuses.lfuse = 0xE2` (internal 8 MHz, no CKDIV8), `hfuse = 0xDF`, `efuse = 0xFF`, `lib_deps` = the root `tinyi2c` pinned commit, upload settings copied from the root `platformio.ini`, `board_upload.maximum_size = 8192`, `board_upload.maximum_ram_size = 384` (128 B kept for stack and interrupts), so PlatformIO fails the build beyond. `tinyDecoders/src/main.cpp` (excluded from native) builds `Attiny84aReceiverHal hal`, calls `hal.Init()`, enables interrupts, builds `Receiver receiver(&hal)` and loops on `receiver.Poll()`. Verified by `pio run -d tinyDecoders -e attiny84a`.
