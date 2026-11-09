@@ -15,7 +15,7 @@
 **Title:** TestHal_ records each HAL call as a single-character token in the Orders vector
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** `TestHal_` appends one character per call to its `Orders` vector: `H`=`RadioGoHigh`, `L`=`RadioGoLow`, `D`=`Delay512Us`, `P`=`Delay1024Us`, `A`=`Delay400Us`, `S`=`SerialGoHigh`, `W`=`SerialGoLow`. Protocol tests verify correctness by asserting against expected `Orders` sequences.
+**Description:** `TestHal_` appends one character per call to its `Orders` vector: `H`=`RadioGoHigh`, `L`=`RadioGoLow`, `D`=`Delay512Us`, `P`=`Delay1024Us`, `A`=`Delay400Us`, `S`=`SerialGoHigh`, `W`=`SerialGoLow`, `Q`=`DelayX10PreambleHigh`, `R`=`DelayX10PreambleLow`, `T`=`DelayX10BitShort`, `U`=`DelayX10BitLong`, `G`=`DelayX10Gap`. Protocol tests verify correctness by asserting against expected `Orders` sequences.
 
 ---
 
