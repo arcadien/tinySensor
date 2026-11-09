@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — FUNC-DECODE-002/003 (LacrosseDecoder in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-09 — FUNC-DECODE-004/005 (OregonDecoder in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -108,9 +108,11 @@ graph TD
     Loopback["Loopback: OrdersToPulses() (native only)"]
     X10Decoder["X10Decoder: Feed(high, durationUs)"]
     LacrosseDecoder["LacrosseDecoder: Feed(high, durationUs)"]
+    OregonDecoder["OregonDecoder: Feed(high, durationUs)"]
   end
   Loopback -.->|"pulses (tests)"| X10Decoder
   Loopback -.->|"pulses (tests)"| LacrosseDecoder
+  Loopback -.->|"pulses (tests)"| OregonDecoder
   Encoders["OregonV3 / LacrosseWS7000 / x10rf (repo lib/)"] -->|Hal*| TestHal["TestHal_ (repo lib/hal)"]
   Loopback -->|"reads Orders tokens"| TestHal
 ```
@@ -120,6 +122,7 @@ graph TD
 | `Loopback` (`tinyDecoders/lib/Loopback/`) | Native-only test helper: converts a `TestHal_::Orders` token sequence into `{high, durationUs}` pulses using each delay token's nominal duration, so decoder tests can be fed with real encoder output | TECH-DECODE-001 |
 | `X10Decoder` (`tinyDecoders/lib/X10Decoder/`) | Rebuilds X10 RFXmeter frames from `(high, durationUs)` pulses; checks byte1 complement, packet type 0 and parity nibble; exposes `Address()` and raw `Value()` | FUNC-DECODE-001 |
 | `LacrosseDecoder` (`tinyDecoders/lib/LacrosseDecoder/`) | Rebuilds Lacrosse WS7000 frames from `(high, durationUs)` pulses; sync, `1` separators, frame length from the type nibble, XOR and sum checks; exposes `Type()`, `Address()` and measurements as integer tenths (temperature, humidity, pressure) or lux | FUNC-DECODE-002, FUNC-DECODE-003 |
+| `OregonDecoder` (`tinyDecoders/lib/OregonDecoder/`) | Rebuilds Oregon v3 frames from `(high, durationUs)` pulses; bit = level of each 1024 µs pulse, ≥ 16 one-bit preamble, LSB-first bytes, frame length and checksum position from the device ID; exposes `DeviceId()`, `Channel()`, `RollingCode()`, `BatteryLow()` and the measurements the ID carries (temperature tenths, humidity %, pressure hPa) | FUNC-DECODE-004, FUNC-DECODE-005 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
 
@@ -207,3 +210,5 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-DECODE-001 | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
 | FUNC-DECODE-002 | `LacrosseDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the high pulse of the last separator of a valid WS7000 frame; bit 1 = 400/800, 0 = 800/400 µs ±30 %; ≥ 6 zero bits sync; types 0/1/4/5 → 3/6/10/7 data nibbles; `Type()`, `Address()` |
 | FUNC-DECODE-003 | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()`; 0 when the type does not carry the value |
+| FUNC-DECODE-004 | `OregonDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the long pulse of the last checksum bit (frame bit 60/72/88 for 0xEC40/0x1D20/0x5A5D); short 358–666, long 717–1331 µs; ≥ 16 ones sync; checksum = nibble sum − 0xA; `DeviceId()`, `Channel()`, `RollingCode()`, `BatteryLow()` |
+| FUNC-DECODE-005 | `OregonDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by b5 bit 3), `HumidityPercent()` (0x1D20, 0x5A5D), `PressureHpa()` (+795, 0x5A5D); 0 when the ID does not carry the value |
