@@ -224,3 +224,11 @@
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-001
 **Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` calls `hal.GetRawAnalogSensor()` (PA0 ADC reading) and converts it to millivolts via `hal.ConvertAnalogValueToMv(rawAdc, vccMv)`, where `vccMv` was computed by `ComputeVccMv(INTERNAL_1v1)`.
+
+---
+
+### FUNC-DECODE-001
+**Title:** X10Decoder rebuilds RFXmeter frames (address, raw value) from level/duration pulses
+**Status:** validated
+**Dependencies:** FUNC-X10-001, TECH-DECODE-001
+**Description:** Class `X10Decoder` (`tinyDecoders/lib/X10Decoder/X10Decoder.h`, default constructor, depends only on `<stdint.h>`: no `Hal`, no AVR register) exposes `bool Feed(bool high, uint16_t durationUs)`, `uint8_t Address() const`, `uint32_t Value() const`. Each window is nominal ±30 %: preamble high 8960 then low 4500 µs, then 48 bits MSB-first, each high 560 then low 560 (`0`) or 1680 (`1`). `Feed` returns true on the low pulse of bit 48 if the 6 bytes `b0..b5` satisfy: `b1 == (~b0 & 0xF0) | (b0 & 0x0F)`, `b5 >> 4 == 0`, `b5 & 0x0F` equals the low nibble of the bitwise complement of the sum of all nibbles of `b0..b4` plus `b5 >> 4`. Then `Address()` is `b0` and `Value()` is `(b4 << 16) | (b2 << 8) | b3` until the next true. A failed check or a pulse of unexpected level or duration resets the decoder and that pulse is re-checked as a preamble high. Test: pulses from `OrdersToPulses()` of `x10rf` with 2 repeats sending `RFXmeter(address, 0, value)` make `Feed` return true exactly twice, each time with that address and value.
