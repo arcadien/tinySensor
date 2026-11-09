@@ -136,3 +136,9 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-002, TECH-X10-001
 **Description:** A native-only function `OrdersToPulses()` in `tinyDecoders/lib/Loopback/` converts a `TestHal_::Orders` token sequence into an ordered list of pulses `{bool high; uint16_t durationUs}`. The line starts low. `H` and `L` set the level; each delay token adds its nominal duration to the current level: `A`=400, `D`=512, `P`=1024, `T`=560, `U`=1120, `Q`=8960, `R`=4500, `G`=40000 µs (saturating at 65535). A pulse is emitted at each level change and after the last token; zero-duration pulses are not emitted. Other tokens are ignored. It runs in the `native` env of `tinyDecoders/platformio.ini`, which builds the repository `lib/` encoders.
+
+### TECH-DECODE-002
+**Title:** Receiver hardware is a compile-time ReceiverHal alias injected by pointer, with a native test double
+**Status:** validated
+**Dependencies:** TECH-DECODE-001
+**Description:** `tinyDecoders/lib/ReceiverHal/ReceiverHal.h` defines `typedef Attiny84aReceiverHal ReceiverHal` when `AVR` is defined, else `typedef TestReceiverHal ReceiverHal` (no virtual call, as `EnvironmentEncoder`). Both classes expose `bool PopPulse(bool& high, uint16_t& durationUs)` (oldest ended pulse, false when none), `uint32_t NowSeconds() const` and `void DrawChar(uint8_t row, uint8_t col, char c)` (row 0–1, col 0–15). Native-only `TestReceiverHal` (`TestReceiverHal.h`) adds `PushPulse(high, durationUs)` (FIFO), `SetNowSeconds(s)`, `const char* Row(uint8_t row) const` (16 characters, initially spaces, updated by `DrawChar`) and `uint16_t DrawCount() const`. Components needing the hardware receive a `ReceiverHal*` at construction and touch no AVR register. Test: double FIFO order, `Row` after draws.
