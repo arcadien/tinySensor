@@ -30,6 +30,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
+//   openscad --preview -D 'part="exploded"' --camera=0,0,330,70,0,25,1950 --imgsize=1000,1800 -o rendu_champignon_eclate.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=56,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
@@ -42,8 +43,9 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+part = "assembly"; // [assembly, exploded, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
+explode = 40;      // vue éclatée : écart entre étages (part = "exploded")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
 
 /* [Carte v2.2 découpée — voir pcb.scad] */
@@ -628,6 +630,27 @@ module assembled() {
   }
 }
 
+// vue éclatée, ordre de montage : accu sorti du pied, chapeau levé ; dans le chapeau, de bas en haut :
+// disque, châssis + chargeur, plancher, carte + BME280, dôme
+module exploded(e = explode) {
+  color("Ivory") stem();
+  color("#4a8f3c") translate([0, 0, -ground_t]) ground();
+  translate([0, 0, 2 * e]) cradle_placed() cradle_cell();
+  translate([0, 0, 4 * e]) cap_xf() {
+    color("Ivory") gills();
+    translate([0, 0, e]) { color("Beige") chassis(); translate([chg_x + 0.15, 0, ch_z]) charger(); }
+    translate([0, 0, 2 * e + 15]) color("WhiteSmoke") translate([0, 0, deck_z]) deck();
+    translate([0, 0, 3 * e + 30]) {
+      translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
+      translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
+    }
+    translate([0, 0, 5 * e + 60 - cap_skirt]) {
+      color(cap_color) cap();
+      for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
+    }
+  }
+}
+
 echo(str("Contour : graine ", lobe_seed, ", orientation ", rot, "°, indice de jeu ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok : >= 3 mm partout)" : " (ATTENTION : électronique à moins de 3 mm du dôme, augmenter cap_R / cap_H ou changer de graine)"));
 echo(str("Pois : ", len(dots), " au total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
 echo(str("Sommet du dôme : ", [for (v = [apex[0], apex[1]]) round(v * 10) / 10], " (J1 « RADIO » en ", [for (v = radio_p) round(v * 10) / 10], "), ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm au-dessus de la carte ; ", round(collar_h * sin(cap_tilt) + apex[0] * cos(cap_tilt) + (apex[2] - cap_skirt) * sin(cap_tilt)), " mm de l'axe du pied en X"));
@@ -649,6 +672,7 @@ else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous 
   translate([-100, -100, 70]) cube([200, 200, 30]);
 }
 else if (part == "console") console_cut(tab_a[0]);
+else if (part == "exploded") exploded();
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {
   assembled();
