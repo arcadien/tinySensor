@@ -23,6 +23,7 @@ class Receiver {
 
   bool Receive();
   void Compose(uint32_t now);
+  void MarkChanges(const char previous[Rows][Columns + 1]);
   void DrawFirstChange();
 
   ReceiverHal *hal;
@@ -31,7 +32,7 @@ class Receiver {
   OregonDecoder oregon;
   SourceTable sources;
   char lines[Rows][Columns + 1];  // page to show, '\0' left by FormatPage
-  char shown[Rows][Columns];      // what DrawChar put on screen
+  uint32_t toDraw = 0;  // bit row * Columns + col: character not drawn yet
   bool composed = false;
   uint32_t composedAt = 0;
 };

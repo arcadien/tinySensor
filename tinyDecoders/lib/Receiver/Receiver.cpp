@@ -5,14 +5,19 @@
 #include <PageFormatter.h>
 
 Receiver::Receiver(ReceiverHal *hal) : hal(hal) {
-  memset(shown, ' ', sizeof shown);
+  // The screen starts cleared: blank target lines, nothing to draw
+  memset(lines, ' ', sizeof lines);
 }
 
 void Receiver::Poll() {
   bool decoded = Receive();
   uint32_t now = hal->NowSeconds();
-  if (decoded || !composed || now != composedAt)
+  if (decoded || !composed || now != composedAt) {
+    char previous[Rows][Columns + 1];
+    memcpy(previous, lines, sizeof lines);
     Compose(now);
+    MarkChanges(previous);
+  }
   DrawFirstChange();
 }
 
@@ -54,14 +59,21 @@ void Receiver::Compose(uint32_t now) {
   FormatPage(record, now - record.lastSeenSeconds, lines[0], lines[1]);
 }
 
+void Receiver::MarkChanges(const char previous[Rows][Columns + 1]) {
+  for (uint8_t row = 0; row < Rows; row++)
+    for (uint8_t col = 0; col < Columns; col++)
+      if (lines[row][col] != previous[row][col])
+        toDraw |= (uint32_t)1 << (row * Columns + col);
+}
+
 void Receiver::DrawFirstChange() {
-  for (uint8_t row = 0; row < Rows; row++) {
-    for (uint8_t col = 0; col < Columns; col++) {
-      if (lines[row][col] != shown[row][col]) {
-        hal->DrawChar(row, col, lines[row][col]);
-        shown[row][col] = lines[row][col];
-        return;
-      }
+  for (uint8_t bit = 0; bit < Rows * Columns; bit++) {
+    if (toDraw & ((uint32_t)1 << bit)) {
+      toDraw &= ~((uint32_t)1 << bit);
+      uint8_t row = bit / Columns;
+      uint8_t col = bit % Columns;
+      hal->DrawChar(row, col, lines[row][col]);
+      return;
     }
   }
 }
