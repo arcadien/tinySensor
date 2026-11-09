@@ -16,7 +16,7 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 |-----|----------|--------|---------|-------|
 | `S_02` | Oregon v3, channel 1, rolling code `0x20` | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 2 |
 | `S_03` | Lacrosse WS7000, address THREE | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 3 |
-| `S_04` | Oregon v3, channel 1, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
+| `S_04` | Oregon v3, channel 3, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
 | `S_05` | Oregon v3, channel 2, mode 2 | BME280 (temp + humidity + pressure) | 18650 Li-ion | Prototype rev 5 — older HW design, higher `INTERNAL_1v1=1343` reflects this chip |
 
 ## Special environments
