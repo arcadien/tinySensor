@@ -74,3 +74,9 @@
 **Status:** validated
 **Dependencies:** FUNC-DECODE-007, PLAT-DECODE-001, PLAT-DECODE-002
 **Description:** `tinyDecoders/platformio.ini` gains `[env:attiny84a]`: `platform = atmelavr`, `board = attiny84`, `board_build.mcu = attiny84a`, `board_build.f_cpu = 8000000L`, no framework, `board_fuses.lfuse = 0xE2` (internal 8 MHz, no CKDIV8), `hfuse = 0xDF`, `efuse = 0xFF`, `lib_deps` = the root `tinyi2c` pinned commit, upload settings copied from the root `platformio.ini`, `board_upload.maximum_size = 8192`, `board_upload.maximum_ram_size = 384` (128 B kept for stack and interrupts), so PlatformIO fails the build beyond. `tinyDecoders/src/main.cpp` (excluded from native) builds `Attiny84aReceiverHal hal`, calls `hal.Init()`, enables interrupts, builds `Receiver receiver(&hal)` and loops on `receiver.Poll()`. Verified by `pio run -d tinyDecoders -e attiny84a`.
+
+### CONF-DECODE-002
+**Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the attiny84a build
+**Status:** validated
+**Dependencies:** CONF-DECODE-001, TECH-DECODE-001
+**Description:** In `.github/workflows/main.yml`, the `lint` job runs the `.rbd/config.yml` linter command (adds `tinyDecoders`, prunes `*/.pio`); `test-native` also runs `pio test -d tinyDecoders -e native`; a `build-tinydecoders` job runs `pio run -d tinyDecoders -e attiny84a` and uploads `firmware.hex`/`firmware.elf` as `firmware-tinydecoders`, and `release` also needs it. Cache keys hash `tinyDecoders/platformio.ini` too. `.pre-commit-config.yaml` clang-format `files` becomes `^(src|lib|include|test|tinyDecoders/(src|lib|test))/`. Verified by a green CI run.
