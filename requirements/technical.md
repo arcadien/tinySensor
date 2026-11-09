@@ -128,3 +128,11 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-001
 **Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence. `main()` only initialises the HAL and calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
+
+---
+
+### TECH-DECODE-001
+**Title:** Loopback helper converts TestHal_ Orders into level/duration pulses for decoder tests
+**Status:** validated
+**Dependencies:** TECH-HAL-002, TECH-X10-001
+**Description:** A native-only function `OrdersToPulses()` in `tinyDecoders/lib/Loopback/` converts a `TestHal_::Orders` token sequence into an ordered list of pulses `{bool high; uint16_t durationUs}`. The line starts low. `H` and `L` set the level; each delay token adds its nominal duration to the current level: `A`=400, `D`=512, `P`=1024, `T`=560, `U`=1120, `Q`=8960, `R`=4500, `G`=40000 µs (saturating at 65535). A pulse is emitted at each level change and after the last token; zero-duration pulses are not emitted. Other tokens are ignored. It runs in the `native` env of `tinyDecoders/platformio.ini`, which builds the repository `lib/` encoders.
