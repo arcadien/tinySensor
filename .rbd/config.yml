@@ -9,7 +9,8 @@ test_tagging:
   convention: "// @req {id}"  # placed above the test function
 
 linter:
-  command: "find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror"
+  # tinyDecoders/ is the 433 MHz receiver sub-project; its .pio/ build tree is skipped
+  command: "find src lib include test tinyDecoders -path '*/.pio' -prune -o \\( -name '*.cpp' -o -name '*.h' \\) -print | xargs clang-format --dry-run --Werror"
 
 # commit prefixes outside the RBD code cycle, accepted by the pre-push hook
 extra_commit_prefixes: [hw]
