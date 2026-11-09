@@ -54,3 +54,12 @@
 **Dependencies:** PLAT-POWER-002, PLAT-POWER-003, TECH-HAL-004
 **derives_from:** [FUNC-ANALOG-001](functional.md#func-analog-001)
 **Description:** When `USE_SWITCHED_5V` is defined (AVR build), PB2 (J8) switches the off-board 5 V module through a PNP (`hardware/tinysensor/VARIANTE_LM35.md`). `Attiny84aHal()` clears `PORTB.2` (no pull-up) and it stays 0. `PowerOnSensors()` makes PB2 an output (`DDRB.2 = 1`), hence driven low; `PowerOffSensors()` makes it an input again (`DDRB.2 = 0`, high impedance). PB2 is never driven high. During hibernate, PB2 is an input without pull-up. Without the flag, PB2 behaviour is unchanged. Verified by inspection and on the bench (AVR-only, no native test).
+
+---
+
+### PLAT-DECODE-001
+**Title:** Attiny84aReceiverHal captures radio pulses on ICP1 (PA7) with Timer1 at 1 µs and counts seconds from its overflow
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-001
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** In `tinyDecoders/lib/ReceiverHal/Attiny84aReceiverHal.{h,cpp}` (AVR only), `Init()` makes PA7 an input without pull-up, runs Timer1 in normal mode with prescaler 8 (1 µs ticks at 8 MHz), noise canceller on, capture edge opposite to the current PA7 level, capture and overflow interrupts on. `TIM1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture, 65535 if a full timer period has elapsed, toggles the edge, into a 32-pulse ring buffer; when full the pulse is dropped. `TIM1_OVF` adds 65536 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench (AVR only).
