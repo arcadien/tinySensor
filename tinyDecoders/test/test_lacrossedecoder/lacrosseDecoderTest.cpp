@@ -10,7 +10,13 @@
  *     bool Feed(bool high, uint16_t durationUs);
  *     uint8_t Type() const;
  *     uint8_t Address() const;
+ *     int16_t TemperatureTenths() const;  // FUNC-DECODE-003
+ *     uint16_t HumidityTenths() const;    // FUNC-DECODE-003
+ *     uint16_t PressureTenths() const;    // FUNC-DECODE-003
+ *     uint16_t Lux() const;               // FUNC-DECODE-003
  *   };
+ *
+ * Also FUNC-DECODE-003: decoded measurements in integer tenths and lux.
  */
 
 #include <stdint.h>
@@ -319,6 +325,73 @@ void LacrosseDecoder_completes_frame_on_last_separator_high() {
   TEST_ASSERT_EQUAL_UINT8(3, decoder.Address());
 }
 
+struct ValueCase {
+  const char *id;
+  Reading reading;
+  int16_t temperature;
+  uint16_t humidity, pressure, lux;
+};
+
+// Fields the frame type does not carry are expected to read 0
+static const ValueCase valueCases[] = {
+    {"spec-weather-station",
+     {TEMP | HUM | PRES, -10.2f, 42.5f, 1013.4f, 0},
+     -102,
+     425,
+     10134,
+     0},
+    {"spec-luminosity", {LUX, 0, 0, 0, 1000}, 0, 0, 0, 1000},
+    {"positive-temperature", {TEMP, 21.5f, 0, 0, 0}, 215, 0, 0, 0},
+    {"zero-temperature", {TEMP, 0, 0, 0, 0}, 0, 0, 0, 0},
+    {"decimal-rounds-to-ten", {TEMP, 24.96f, 0, 0, 0}, 250, 0, 0, 0},
+    {"negative-below-one-degree", {TEMP | HUM, -0.5f, 0, 0, 0}, -5, 0, 0, 0},
+    {"humidity-clamped", {TEMP | HUM, 30.1f, 100, 0, 0}, 301, 999, 0, 0},
+    {"pressure-min", {TEMP | HUM | PRES, 20, 50, 850, 0}, 200, 500, 8500, 0},
+    {"pressure-max", {TEMP | HUM | PRES, 20, 50, 1100, 0}, 200, 500, 11000, 0},
+    {"lux-zero", {LUX, 0, 0, 0, 0}, 0, 0, 0, 0},
+    {"lux-max-hundreds-nibble", {LUX, 0, 0, 0, 1599}, 0, 0, 0, 1599},
+};
+
+// @req FUNC-DECODE-003
+void LacrosseDecoder_exposes_measurements_of_lacrosse_ws7000() {
+  for (const ValueCase &c : valueCases) {
+    // Given
+    std::vector<Pulse> pulses = sentPulses(2, c.reading, 1);
+    LacrosseDecoder decoder;
+
+    // When
+    int frames = countFrames(decoder, pulses);
+
+    // Then
+    TEST_ASSERT_EQUAL_INT_MESSAGE(1, frames, c.id);
+    TEST_ASSERT_EQUAL_INT16_MESSAGE(c.temperature, decoder.TemperatureTenths(),
+                                    c.id);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.humidity, decoder.HumidityTenths(),
+                                     c.id);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.pressure, decoder.PressureTenths(),
+                                     c.id);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.lux, decoder.Lux(), c.id);
+  }
+}
+
+// @req FUNC-DECODE-003
+void LacrosseDecoder_clears_fields_absent_from_the_next_frame() {
+  // Given
+  LacrosseDecoder decoder;
+  countFrames(decoder,
+              sentPulses(1, {TEMP | HUM | PRES, -10.2f, 42.5f, 1013.4f, 0}, 1));
+
+  // When
+  int frames = countFrames(decoder, sentPulses(1, {LUX, 0, 0, 0, 1000}, 1));
+
+  // Then
+  TEST_ASSERT_EQUAL_INT(1, frames);
+  TEST_ASSERT_EQUAL_INT16(0, decoder.TemperatureTenths());
+  TEST_ASSERT_EQUAL_UINT16(0, decoder.HumidityTenths());
+  TEST_ASSERT_EQUAL_UINT16(0, decoder.PressureTenths());
+  TEST_ASSERT_EQUAL_UINT16(1000, decoder.Lux());
+}
+
 void setUp(void) {
   TestHal.ClearOrders();
 }
@@ -332,5 +405,7 @@ int main(int, char **) {
   RUN_TEST(LacrosseDecoder_requires_at_least_six_sync_zeros);
   RUN_TEST(LacrosseDecoder_recovers_from_noise_and_partial_frames);
   RUN_TEST(LacrosseDecoder_completes_frame_on_last_separator_high);
+  RUN_TEST(LacrosseDecoder_exposes_measurements_of_lacrosse_ws7000);
+  RUN_TEST(LacrosseDecoder_clears_fields_absent_from_the_next_frame);
   return UNITY_END();
 }
