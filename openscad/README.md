@@ -142,6 +142,8 @@ Le contour vu de dessus est une somme d'harmoniques (2 à 7) à phases aléatoir
 
 ### Montage, accu
 
+![Vue éclatée : sol et pied, accu, disque à lamelles, châssis et chargeur, plancher percé, carte + BME280, dôme](rendu_champignon_eclate.png)
+
 0. Pied à l'envers : grenaille par le trou du fond (quelques gouttes de colle pour la figer et éviter qu'elle sonne), bouchon collé dans son lamage (époxy), puis pied collé sur le sol.
 1. Carte : souder une **barrette femelle 2,54 1×6** sur le **dessous** de la carte, dans l'empreinte « I2C » ; les JST « I2C » et « I2C_SPI » ne sont pas posés (voir *Câblage*). Côté breakout, souder sa barrette mâle de façon que la puce regarde le disque une fois enfiché (corps du breakout vers l'intérieur du châssis, à vérifier selon le modèle de breakout).
 2. Module de charge : souder W5 / W6 (rouge / noir, 70 mm, OUT+ / OUT− soudé → bornier à vis J13). W3 / W4 se soudent à l'étape 3 : le boîtier JST-XH (~7,4 × 5,8 mm) passe de justesse dans la fenêtre de la paroi +Y (8 mm de large), on passe donc l'extrémité nue.
