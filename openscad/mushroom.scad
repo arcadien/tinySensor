@@ -31,6 +31,7 @@
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="exploded"' --camera=0,0,330,70,0,25,1950 --imgsize=1000,1800 -o rendu_champignon_eclate.png mushroom.scad
+//   openscad --preview -D 'part="cradle_view"' --camera=40,20,10,55,0,30,230 --imgsize=1200,800 -o rendu_champignon_berceau.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
 //   openscad --preview -D 'part="console"'  --camera=56,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
@@ -43,7 +44,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Rendu] */
-part = "assembly"; // [assembly, exploded, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
+part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
 dot_d = 8;         // diamètre du pois exporté (part = "dot")
 explode = 40;      // vue éclatée : écart entre étages (part = "exploded")
 cap_color = "#c0392b"; // rendu uniquement (tue-mouches ; panthère : "#8b5a2b")
@@ -151,16 +152,17 @@ ring_rot = 131;    // phase des ondulations de la coupelle (°) : son creux le p
 /* [Berceau de l'accu] */
 cell_d = 18.6;     // 18650 nue, téton plat (protégée / à bouton : jusqu'à ~70)
 cell_l = 65;
-cr_fit = 0.4;      // jeu berceau / logement (au rayon)
+cr_fit = 0.8;      // jeu berceau / logement (au rayon ; 0.4 : 1er tirage entré tout juste)
 cell_up = 2;       // déport de l'accu vers le dessus ouvert (épaisseur du fond sous l'accu)
 bt_w = 13;         // butées à languette : plaque 13 x 11, languette 3 x 7 (percée)
 bt_h = 11;
 bt_t = 0.4;        // épaisseur de la tôle (à mesurer)
-bt_tab = [3, 7];
+bt_tab = [3, 7];   // languette vers le haut (côté ouvert), fil soudé dessus
+wire_notch = [4.5, 3];  // passage du fil au-dessus de chaque bout : largeur, profondeur sous le dessus de l'accu
 bt_dimple = 1.8;   // bossage de la butée « + »
 spring_c = 4;      // ressort de la butée « − » comprimé (10.7 libre)
 bt_slot = 0.8;     // rainure de la plaque
-bt_sink = 1;       // rainure plus profonde que la plaque (mesuré : plaque 1 mm trop haute au fond de la rainure)
+bt_sink = 1.5;     // rainure plus profonde que la plaque (1er tirage : languette 1 mm au-dessus du bord ; +0.4 pour cr_fit 0.8)
 bt_win = 10.5;     // fenêtre devant la plaque (passage du ressort / du bossage)
 
 /* [Sol] */
@@ -500,8 +502,8 @@ module stem() {
 
 // ---------- berceau de l'accu ----------
 // Gouttière imprimée à plat (méplat sur le plateau, ouverte vers le haut), glissée dans le pied par le haut.
-// Une butée à languette par bout, glissée dans une rainure ; la languette traverse le fond et ressort
-// dans le méplat, où passent aussi les fils (jusqu'au fourreau). Ressort « − » en bas, bossage « + » en haut.
+// Une butée à languette par bout, glissée dans une rainure, languette vers le haut ; le fil soudé dessus sort par
+// l'encoche voisine et longe l'accu dans la fente du dessus (jusqu'au fourreau). Ressort « − » en bas, bossage « + » en haut.
 // Repère d'impression : X = axe de l'accu (X = 0 en bas), méplat en Z = 0.
 cr_r = bore_r - cr_fit;
 cr_flat = cr_r * cos(45);           // méplat : flancs à 45° au plus
@@ -525,9 +527,12 @@ module cradle() {
     translate([cr_end, -cell_d / 2 - 0.3, cl_z + 1]) cube([cr_len - 2 * cr_end, cell_d + 0.6, 2 * cr_r]);
     for (s = [0, 1]) {
       xs = s == 0 ? 1.6 : cr_len - 1.6 - bt_slot;   // rainure
-      // rainure de la plaque, ouverte en haut ; prolongée par la fente de la languette à travers le fond
+      // rainure de la plaque, ouverte en haut (languette vers le haut)
       translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2 - bt_sink]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
-      translate([xs, -(bt_tab[0] + 0.6) / 2, -1]) cube([bt_slot, bt_tab[0] + 0.6, cl_z]);
+      // encoche du fil à côté de la languette, à travers les parois du bout, jusqu'au-dessus de l'accu :
+      // le fil longe ensuite l'accu dans la fente du dessus (≈3 mm sous le logement)
+      translate([s == 0 ? -1 : cr_len - cr_end - 1, -(bt_w + 0.6) / 2 - wire_notch[0] + 2, cl_z + cell_d / 2 - wire_notch[1]])
+        cube([cr_end + 2, wire_notch[0], 2 * cr_r]);
       // fenêtre devant la plaque
       translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
     }
@@ -583,9 +588,9 @@ module ground() {
 module cradle_cell() {   // berceau, accu, butées (repère d'impression)
   color("#303030") cradle();
   color("#2e6fd8") translate([cell_x0, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d, h = cell_l);
-  color("Silver") for (x = [1.6, cr_len - 1.6 - bt_t]) translate([x, -bt_w / 2, cl_z - bt_h / 2]) {
+  color("Silver") for (x = [1.6, cr_len - 1.6 - bt_t]) translate([x, -bt_w / 2, cl_z - bt_h / 2 - bt_sink]) {
     cube([bt_t, bt_w, bt_h]);
-    translate([0, (bt_w - bt_tab[0]) / 2, -bt_tab[1]]) cube([bt_t, bt_tab[0], bt_tab[1]]);
+    translate([0, (bt_w - bt_tab[0]) / 2, bt_h]) cube([bt_t, bt_tab[0], bt_tab[1]]);
   }
 }
 module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
@@ -674,6 +679,7 @@ else if (part == "sensor") difference() {   // gros plan : BME280 enfiché sous 
 }
 else if (part == "console") console_cut(tab_a[0]);
 else if (part == "exploded") exploded();
+else if (part == "cradle_view") { cradle_cell(); translate([0, 40, 0]) color("Gold") cradle(); }   // berceau monté et nu
 else if (part == "section") difference() { assembled(); translate([-200, -200, -1]) cube([400, 200, 400]); }
 else {
   assembled();
