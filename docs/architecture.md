@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — FUNC-DECODE-006, UI-DECODE-001 (SourceTable and PageFormatter in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-09 — UI-DECODE-002 (Font8x16 in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -111,6 +111,7 @@ graph TD
     OregonDecoder["OregonDecoder: Feed(high, durationUs)"]
     SourceTable["SourceTable: Update(decoder, nowSeconds)"]
     PageFormatter["PageFormatter: FormatPage(record, ageSeconds)"]
+    Font8x16["Font8x16: ReadGlyph(c, glyph) (PROGMEM)"]
   end
   X10Decoder -->|"const& after Feed true"| SourceTable
   LacrosseDecoder -->|"const& after Feed true"| SourceTable
@@ -129,8 +130,9 @@ graph TD
 | `X10Decoder` (`tinyDecoders/lib/X10Decoder/`) | Rebuilds X10 RFXmeter frames from `(high, durationUs)` pulses; checks byte1 complement, packet type 0 and parity nibble; exposes `Address()` and raw `Value()` | FUNC-DECODE-001 |
 | `LacrosseDecoder` (`tinyDecoders/lib/LacrosseDecoder/`) | Rebuilds Lacrosse WS7000 frames from `(high, durationUs)` pulses; sync, `1` separators, frame length from the type nibble, XOR and sum checks; exposes `Type()`, `Address()` and measurements as integer tenths (temperature, humidity, pressure) or lux | FUNC-DECODE-002, FUNC-DECODE-003 |
 | `OregonDecoder` (`tinyDecoders/lib/OregonDecoder/`) | Rebuilds Oregon v3 frames from `(high, durationUs)` pulses; bit = level of each 1024 µs pulse, ≥ 16 one-bit preamble, LSB-first bytes, frame length and checksum position from the device ID; exposes `DeviceId()`, `Channel()`, `RollingCode()`, `BatteryLow()` and the measurements the ID carries (temperature tenths, humidity %, pressure hPa) | FUNC-DECODE-004, FUNC-DECODE-005 |
-| `SourceTable` (`tinyDecoders/lib/SourceTable/`) | Keeps the last `SourceRecord` per source `(kind, id)` (Oregon channel, Lacrosse address, Lacrosse lux address, X10 address), max 12, oldest replaced; maps each decoder's values into common units (tenths, lux, mV from X10 BCD) with a presence bitmask | FUNC-DECODE-006 |
+| `SourceTable` (`tinyDecoders/lib/SourceTable/`) | Keeps the last `SourceRecord` per source `(kind, id)` (Oregon channel, Lacrosse address, Lacrosse lux address, X10 address), max 6, oldest replaced; maps each decoder's values into common units (tenths, lux, mV from X10 BCD) with a presence bitmask | FUNC-DECODE-006 |
 | `PageFormatter` (`tinyDecoders/lib/PageFormatter/`) | Pure function: one `SourceRecord` + age in seconds to two 16-character lines (values, source label `Ore1`/`Lac3`/`X10`, age `12s`/`5m`/`2h`/`1d`) over a 31-glyph character set | UI-DECODE-001 |
+| `Font8x16` (`tinyDecoders/lib/Font8x16/`) | `ReadGlyph(c, glyph[16])`: 8x16 bitmaps of the 30 non-space UI-DECODE-001 characters in `PROGMEM` (496 B flash at most), SSD1306 page byte order; other characters blank. Generated from Spleen 8x16 (BSD-2-Clause) by `tinyDecoders/scripts/gen_font8x16.py` | UI-DECODE-002 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
 
@@ -222,5 +224,6 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-DECODE-003 | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()`; 0 when the type does not carry the value |
 | FUNC-DECODE-004 | `OregonDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the long pulse of the last checksum bit (frame bit 60/72/88 for 0xEC40/0x1D20/0x5A5D); short 358–666, long 717–1331 µs; ≥ 16 ones sync; checksum = nibble sum − 0xA; `DeviceId()`, `Channel()`, `RollingCode()`, `BatteryLow()` |
 | FUNC-DECODE-005 | `OregonDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by b5 bit 3), `HumidityPercent()` (0x1D20, 0x5A5D), `PressureHpa()` (+795, 0x5A5D); 0 when the ID does not carry the value |
-| FUNC-DECODE-006 | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id), kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 12, oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
+| FUNC-DECODE-006 | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id), kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 6, oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
 | UI-DECODE-001 | `PageFormatter` (tinyDecoders) | `FormatPage(record, ageSeconds, line1, line2)`; line 1 values + right-aligned label, line 2 pressure + right-aligned age; degree glyph `'\x7F'`; humidity capped at 99 %, age capped at 99d |
+| UI-DECODE-002 | `Font8x16` (tinyDecoders) | `ReadGlyph(c, glyph[16])` from `PROGMEM`; bytes 0–7 top page, 8–15 bottom page, bit 0 = top pixel; `'\x7F'` drawn as `°`; unknown and space give zeros; Spleen 8x16, BSD-2-Clause |
