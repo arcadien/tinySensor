@@ -136,7 +136,7 @@ graph TD
 
 Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, OLED) will go through a new small interface dedicated to tinyDecoders, not the repository `Hal`; that interface is specified later with the tinyDecoders PLAT requirements.
 
-`SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls on the ATtiny (same choice as `EnvironmentEncoder`). RAM: the table is 12 × 17 B = 204 B of the ATtiny84A's 512 B; the 128×32 OLED is therefore written page by page from the two text lines, never from a 512 B framebuffer.
+`SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls on the ATtiny (same choice as `EnvironmentEncoder`). RAM: the table is 6 × 17 B = 102 B of the ATtiny84A's 512 B; the 128×32 OLED is therefore written page by page from the two text lines, never from a 512 B framebuffer.
 
 ## Build-time Configuration
 
