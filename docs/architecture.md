@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-07 — PLAT-POWER-006 (switched 5 V module on PB2); TECH-HAL-001 / TECH-MAIN-001 (BMx280 takes no Hal*, file-scope object), see [Main loop structure](#main-loop-structure)_
+_Last updated: 2026-11-09 — TECH-DECODE-001 (new tinyDecoders sub-project, loopback test helper), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -98,6 +98,25 @@ Design choices:
 - **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
 - Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
+## tinyDecoders sub-project
+
+`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
+
+```mermaid
+graph TD
+  subgraph tinyDecoders
+    Loopback["Loopback: OrdersToPulses() (native only)"]
+  end
+  Encoders["OregonV3 / LacrosseWS7000 / x10rf (repo lib/)"] -->|Hal*| TestHal["TestHal_ (repo lib/hal)"]
+  Loopback -->|"reads Orders tokens"| TestHal
+```
+
+| Component | Responsibility | Requirement(s) |
+|-----------|----------------|----------------|
+| `Loopback` (`tinyDecoders/lib/Loopback/`) | Native-only test helper: converts a `TestHal_::Orders` token sequence into `{high, durationUs}` pulses using each delay token's nominal duration, so decoder tests can be fed with real encoder output | TECH-DECODE-001 |
+
+`OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
+
 ## Build-time Configuration
 
 Every physical board is a separate PlatformIO environment with its own `build_flags`. There is no runtime configuration. See `docs/environments.md` for the full table.
@@ -176,3 +195,4 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
+| TECH-DECODE-001 | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
