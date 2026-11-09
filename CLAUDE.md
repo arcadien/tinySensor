@@ -136,3 +136,4 @@ No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`open
 - After editing, render with `openscad -o` and check for errors before saying it's done.
 - Don't claim parts fit an Ender 3 (220x220) or CR-10 plate unless you've checked the bounding boxes. Flag any overhang over 45° that a design change introduces.
 - Regenerating 3MF files wipes the Orca plate layout, so warn me before doing it.
+- **Never use `mirror()` to put a part in its print orientation**: a mirror flips its handedness, and the printed part can't be turned back to fit (the mushroom gills disc was printed mirrored and didn't fit the lobed cap). To flip a part upside down, use `rotate([180, 0, 0])`. Before exporting a part whose print transform changed, compare it with the assembly (e.g. the sign of the xy moment of its vertices).

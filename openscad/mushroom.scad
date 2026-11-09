@@ -628,7 +628,7 @@ echo(str("BME280 : broche 1 en ", [for (v = i2c_p1) round(v * 100) / 100], ", de
 echo(str("Hauteur ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_skirt + collar_h) * cos(cap_tilt) + ground_t), " mm ; chapeau Ø~", round(2 * cap_R), " ; logement accu Ø", 2 * bore_r, " ; berceau ", round(cr_len * 10) / 10, " mm (accu ", cell_l, " mm) ; berceau ", round(cradle_top), " mm au-dessus du dessous du disque, ", round(wire_gap), " mm sous le BME280 ; lest ", round(ballast_v), " cm³ ≈ ", round(ballast_v * 4.7), " g de grenaille acier"));
 
 if (part == "cap") cap();
-else if (part == "gills") translate([0, 0, disc_t]) mirror([0, 0, 1]) gills();   // lamelles vers le haut
+else if (part == "gills") translate([0, 0, disc_t]) rotate([180, 0, 0]) gills();   // lamelles vers le haut
 else if (part == "chassis") translate([0, 0, -ch_z]) chassis();
 else if (part == "deck") deck();
 else if (part == "stem") stem();
