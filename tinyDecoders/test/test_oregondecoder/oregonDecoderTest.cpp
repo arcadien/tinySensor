@@ -13,7 +13,12 @@
  *     uint8_t Channel() const;
  *     uint8_t RollingCode() const;
  *     bool BatteryLow() const;
+ *     int16_t TemperatureTenths() const;  // FUNC-DECODE-005
+ *     uint8_t HumidityPercent() const;    // FUNC-DECODE-005
+ *     uint16_t PressureHpa() const;       // FUNC-DECODE-005
  *   };
+ *
+ * Also FUNC-DECODE-005: decoded measurements in tenths of °C, % and hPa.
  */
 
 #include <stdint.h>
@@ -379,6 +384,69 @@ void OregonDecoder_completes_frame_on_last_checksum_bit() {
   TEST_ASSERT_TRUE(decoder.BatteryLow());
 }
 
+struct ValueCase {
+  const char *id;
+  Reading reading;
+  int16_t temperature;
+  uint8_t humidity;
+  uint16_t pressure;
+};
+
+// Fields the device ID does not carry are expected to read 0
+static const ValueCase valueCases[] = {
+    {"spec-thn132n", {TEMP, -10.2f, 0, 0}, -102, 0, 0},
+    {"spec-thgn123n", {TEMP | HUM, 23.7f, 45, 0}, 237, 45, 0},
+    {"spec-bthr918", {TEMP | HUM | PRES, 21.5f, 60, 1013}, 215, 60, 1013},
+    {"zero-temperature", {TEMP, 0, 0, 0}, 0, 0, 0},
+    {"negative-below-one-degree", {TEMP, -0.5f, 0, 0}, -5, 0, 0},
+    {"negative-dozens", {TEMP | HUM, -25.3f, 80, 0}, -253, 80, 0},
+    {"positive-high", {TEMP, 59.9f, 0, 0}, 599, 0, 0},
+    {"humidity-min", {TEMP | HUM, 20, 0, 0}, 200, 0, 0},
+    {"humidity-max", {TEMP | HUM, 20, 99, 0}, 200, 99, 0},
+    {"pressure-offset", {TEMP | HUM | PRES, 20, 50, 795}, 200, 50, 795},
+    {"pressure-1050", {TEMP | HUM | PRES, 20, 50, 1050}, 200, 50, 1050},
+    {"pressure-high-nibble", {TEMP | HUM | PRES, 20, 50, 1100}, 200, 50, 1100},
+};
+
+// @req FUNC-DECODE-005
+void OregonDecoder_exposes_measurements_of_oregon_v3() {
+  for (const ValueCase &c : valueCases) {
+    // Given
+    std::vector<Pulse> pulses = sentPulses({1, 0x3C, false}, c.reading, 1);
+    OregonDecoder decoder;
+
+    // When
+    int frames = countFrames(decoder, pulses);
+
+    // Then
+    TEST_ASSERT_EQUAL_INT_MESSAGE(1, frames, c.id);
+    TEST_ASSERT_EQUAL_INT16_MESSAGE(c.temperature, decoder.TemperatureTenths(),
+                                    c.id);
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(c.humidity, decoder.HumidityPercent(),
+                                    c.id);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.pressure, decoder.PressureHpa(), c.id);
+  }
+}
+
+// @req FUNC-DECODE-005
+void OregonDecoder_clears_fields_absent_from_the_next_device() {
+  // Given
+  OregonDecoder decoder;
+  countFrames(decoder, sentPulses({3, 0x7E, false},
+                                  {TEMP | HUM | PRES, 21.5f, 60, 1013}, 1));
+
+  // When
+  int frames = countFrames(
+      decoder, sentPulses({1, 0x3C, false}, {TEMP, -10.2f, 0, 0}, 1));
+
+  // Then
+  TEST_ASSERT_EQUAL_INT(1, frames);
+  TEST_ASSERT_EQUAL_HEX16(0xEC40, decoder.DeviceId());
+  TEST_ASSERT_EQUAL_INT16(-102, decoder.TemperatureTenths());
+  TEST_ASSERT_EQUAL_UINT8(0, decoder.HumidityPercent());
+  TEST_ASSERT_EQUAL_UINT16(0, decoder.PressureHpa());
+}
+
 void setUp(void) {
   TestHal.ClearOrders();
 }
@@ -393,5 +461,7 @@ int main(int, char **) {
   RUN_TEST(OregonDecoder_requires_at_least_16_sync_ones);
   RUN_TEST(OregonDecoder_recovers_from_noise_and_partial_frames);
   RUN_TEST(OregonDecoder_completes_frame_on_last_checksum_bit);
+  RUN_TEST(OregonDecoder_exposes_measurements_of_oregon_v3);
+  RUN_TEST(OregonDecoder_clears_fields_absent_from_the_next_device);
   return UNITY_END();
 }
