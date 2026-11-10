@@ -94,6 +94,7 @@ clear_m = 3;       // jeu mini visé entre l'électronique et le dôme (indice d
 disc_t = 3;
 collar_h = 20;     // fourreau sous le disque, reçoit le tenon du pied
 collar_r = 22.5;   // rayon extérieur du fourreau (= haut du pied)
+collar_screw_a = 0; // vis radiale du fourreau : sous la prise USB (+X), là où la coupelle est en creux
 tenon_r = 19.5;
 disc_bore = 18.5;   // trou central du disque : le haut du berceau y passe, en biais de cap_tilt
 n_gills = 48;
@@ -143,6 +144,7 @@ ring_z = 72;       // anneau en coupelle : attache sur le col, bord relevé sous
 ring_ext = 20;     // débord moyen de la coupelle
 ring_rise = 0.75;  // montée du bord / débord (< 1 : 45° au plus, imprimable sans support)
 ring_amp = 0.35;   // ondulation de la coupelle (débord et montée)
+ring_rot = 131;    // phase des ondulations de la coupelle (°) : son creux le plus large sous la prise USB (+X), pour brancher le câble
 
 /* [Berceau de l'accu] */
 cell_d = 18.6;     // 18650 nue, téton plat (protégée / à bouton : jusqu'à ~70)
@@ -334,7 +336,7 @@ function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0
 function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
 // angles où une lamelle gênerait : vis du dôme, prise USB, vis du châssis, vis du fourreau
 ch_screws = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (ix - 2.5), sy * (iy - 2.5)]];
-gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [180, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
+gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [collar_screw_a, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
 assert(min([for (a = [-12 : 2 : 12]) inner_min(a) - disc_fit]) >= chg_x + chg_t + 1.5 + usb_cut[0] / 2 + 2, "Disque trop petit autour de la prise USB");
 function gill_ok(a) = min([for (s = gill_skip) adiff(a, s[0]) - s[1]]) > 0;
 
@@ -355,8 +357,8 @@ module gills() {
     // fourreau
     translate([0, 0, -collar_h - eps]) cylinder(r = tenon_r + 0.25, h = collar_h);
     translate([0, 0, -1]) cylinder(r = disc_bore, h = disc_t + 2);
-    // vis radiale du fourreau (côté -X)
-    translate([-collar_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_clear, h = collar_r - tenon_r + 2);
+    // vis radiale du fourreau
+    rotate([0, 0, collar_screw_a]) translate([tenon_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_clear, h = collar_r - tenon_r + 2);
     // fentes de ventilation sous la chambre du capteur, entre les lamelles ; côté +X aussi (au ras du bord
     // du BME280, le reste du breakout est au-dessus du fourreau)
     for (i = [0 : n_gills - 1]) let(a = i * 360 / n_gills)
@@ -451,10 +453,15 @@ module stem_body(off = 0, zs = stem_zs) {   // off : retrait de la surface (int�
 }
 
 // anneau en coupelle : part du col et remonte en s'évasant, bord ondulé ; 45° au plus, sans support
+function ring_prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = ring_ext * (1 + ring_amp * hnorm(ring_T, ring_P, a - ring_rot)),
+  rise = ext * ring_rise * (1 + 0.3 * ring_amp * hnorm(ring_T2, ring_P2, a - ring_rot)))
+  [[ri, ring_z + 2.4], [ri + ext, ring_z + rise + 1.2], [ri + ext, ring_z + rise], [ri, ring_z - 1.2]];
+// prise USB vue du pied : bord intérieur de la fenêtre (rayon) ; la coupelle reste 2 mm en deçà sous la fiche (~11 mm de large : ±8°)
+usb_in_r = (chg_x + chg_t + 1.5 - usb_cut[0] / 2) * cos(cap_tilt) + collar_h * sin(cap_tilt);
+usb_ring_r = max([for (a = [-8 : 1 : 8]) ring_prof(a)[1][0]]);
+assert(usb_ring_r <= usb_in_r - 2, str("Coupelle sous la prise USB (bord à ", usb_ring_r, " mm, fenêtre à ", usb_in_r, " mm) : changer ring_rot"));
 module ring_skirt() {
-  function prof(a) = let(ri = stem_rr(a, ring_z) - 1, ext = ring_ext * (1 + ring_amp * hnorm(ring_T, ring_P, a)),
-    rise = ext * ring_rise * (1 + 0.3 * ring_amp * hnorm(ring_T2, ring_P2, a)))
-    [[ri, ring_z + 2.4], [ri + ext, ring_z + rise + 1.2], [ri + ext, ring_z + rise], [ri, ring_z - 1.2]];
+  function prof(a) = ring_prof(a);
   function v(i, k) = (i % ns) * 4 + (k % 4);
   polyhedron(convexity = 4,
     points = [for (i = [0 : ns - 1], p = prof(i * 360 / ns)) let(a = i * 360 / ns) [p[0] * cos(a), p[0] * sin(a), p[1]]],
@@ -484,7 +491,7 @@ module stem() {
     translate([0, 0, -1]) cylinder(d = fill_d, h = foot_t + 2);
     translate([0, 0, -1]) cylinder(d = plug_d + 0.3, h = plug_t + 1);
     // vis radiale du fourreau
-    cap_xf() translate([-tenon_r - 1, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_pilot, h = 6);
+    cap_xf() rotate([0, 0, collar_screw_a]) translate([tenon_r - 5, 0, -collar_h + 8]) rotate([0, 90, 0]) cylinder(d = m3_pilot, h = 6);
   }
 }
 
