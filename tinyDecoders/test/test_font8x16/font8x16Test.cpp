@@ -15,10 +15,10 @@
 
 #include <Font8x16.h>
 
-// The 30 non-space characters of UI-DECODE-001 ('\x7F' is the degree glyph)
+// The 32 non-space characters of UI-DECODE-001 ('\x7F' is the degree glyph)
 static const char drawable[] =
     "0123456789.-%\x7F"
-    "COreLacXhPlxVsmd";
+    "COreLabcfXhPlxVsmd";
 
 struct Glyph {
   uint8_t bytes[16];
@@ -42,7 +42,7 @@ static bool hasSetPixel(const Glyph &glyph) {
 
 // @req UI-DECODE-002
 void ReadGlyph_draws_every_character_of_the_page_set_distinctly() {
-  TEST_ASSERT_EQUAL_size_t(30, strlen(drawable));  // table typo
+  TEST_ASSERT_EQUAL_size_t(32, strlen(drawable));  // table typo
   for (size_t i = 0; i < strlen(drawable); i++) {
     // Given
     char c = drawable[i];
