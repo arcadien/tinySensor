@@ -1,9 +1,13 @@
 #ifdef __AVR_ATmega32U4__
 #include "ProMicroReceiverHal.h"
 
+#include <Wire.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <util/atomic.h>
+
+#include <Font8x16.h>
 
 namespace {
 
@@ -28,9 +32,69 @@ volatile uint8_t overflowsSinceCapture = 2;
 volatile uint32_t overflowMicros = 0;
 volatile uint32_t seconds = 0;
 
+const uint8_t OledAddress = 0x3C;
+const uint8_t OledCommands = 0x00;  // control byte: command stream follows
+const uint8_t OledData = 0x40;      // control byte: data stream follows
+const uint8_t OledPages = 4;
+const uint8_t OledColumns = 128;
+const uint8_t OledBytesPerWrite = 8;  // within the 32-byte Wire buffer
+const uint8_t OledDisplayOn = 0xAF;
+const uint32_t OledClockHz = 400000;
+
+// Same sequence as Attiny84aReceiverHal (PLAT-DECODE-002): display off,
+// clock, 32 lines, no offset, charge pump, page addressing, remapped segments
+// and rows, contrast, precharge, VCOMH, display RAM on
+const uint8_t OledInit[] PROGMEM = {
+    0xAE, 0xD5, 0x80, 0xA8, 0x1F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0x20, 0x02,
+    0xA1, 0xC8, 0xDA, 0x02, 0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6};
+
+void SendCommand(uint8_t command) {
+  Wire.beginTransmission(OledAddress);
+  Wire.write(OledCommands);
+  Wire.write(command);
+  Wire.endTransmission();
+}
+
+// Places the next data byte at `page`, `column`
+void Locate(uint8_t page, uint8_t column) {
+  Wire.beginTransmission(OledAddress);
+  Wire.write(OledCommands);
+  Wire.write(0xB0 + page);
+  Wire.write(column & 0x0F);
+  Wire.write(0x10 | (column >> 4));
+  Wire.endTransmission();
+}
+
+void SendData(const uint8_t *bytes) {
+  Wire.beginTransmission(OledAddress);
+  Wire.write(OledData);
+  Wire.write(bytes, OledBytesPerWrite);
+  Wire.endTransmission();
+}
+
+void InitDisplay() {
+  Wire.begin();
+  Wire.setClock(OledClockHz);
+  Wire.beginTransmission(OledAddress);
+  Wire.write(OledCommands);
+  for (uint8_t i = 0; i < sizeof OledInit; i++)
+    Wire.write(pgm_read_byte(&OledInit[i]));
+  Wire.endTransmission();
+
+  const uint8_t blank[OledBytesPerWrite] = {};
+  for (uint8_t page = 0; page < OledPages; page++) {
+    Locate(page, 0);
+    for (uint8_t column = 0; column < OledColumns; column += OledBytesPerWrite)
+      SendData(blank);
+  }
+  SendCommand(OledDisplayOn);
+}
+
 }  // namespace
 
 void ProMicroReceiverHal::Init() {
+  InitDisplay();
+
   // RXB6 at 5 V drives PD4 directly: input, no pull-up
   DDRD &= ~(1 << PD4);
   PORTD &= ~(1 << PD4);
@@ -65,6 +129,15 @@ uint32_t ProMicroReceiverHal::NowSeconds() const {
     now = seconds;
   }
   return now;
+}
+
+void ProMicroReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
+  uint8_t glyph[16];
+  ReadGlyph(c, glyph);
+  for (uint8_t half = 0; half < 2; half++) {
+    Locate(2 * row + half, col * 8);
+    SendData(&glyph[half * OledBytesPerWrite]);
+  }
 }
 
 ISR(TIMER1_CAPT_vect) {
