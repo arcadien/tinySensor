@@ -87,6 +87,12 @@
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, FUNC-OREGON-013
 **Description:** The 11-byte payload produced by `FinalizeMessage()` matches: THN132N channel 1, rolling code 0x3C, battery low, −10.2 °C gives `EA4C103C2410D803000000`; THGR228N channel 3, rolling code 0xC4, 21.5 °C, 67 % gives `1A2D40C450217006390000`; BTHR918 channel 3, rolling code 0x7E, battery low, 21.5 °C, 60 %, 1013 hPa gives `5A5D407E54210006DA605F`. Read with the RFLink `Plugins/Plugin_048.c` (couin3) field formulas and the 795 hPa offset (FUNC-OREGON-008), these payloads give back their inputs.
 
+### FUNC-OREGON-015
+**Title:** A reused `OregonV3` instance carries no field bits over from a previous frame
+**Status:** validated
+**Dependencies:** FUNC-OREGON-006, FUNC-OREGON-009, FUNC-OREGON-012, FUNC-OREGON-013, FUNC-OREGON-014
+**Description:** Every setter overwrites all bits of its field, never OR-ing into a previous value: `SetTemperature()` with a non-negative value clears the sign bit (bit 3 of byte 6); `SetChannel()` with 1, 2 or 3 sets the high nibble of byte 2 to 0x1, 0x2 or 0x4, clearing the previous channel; `FinalizeMessage()` rewrites the checksum nibbles. `messageStatus` stays cumulative (FUNC-OREGON-013). Test: one instance sends the FUNC-OREGON-014 THN132N frame, then the THGR228N inputs, then the BTHR918 inputs; each payload equals its FUNC-OREGON-014 reference.
+
 ### FUNC-LACROSSE-001
 **Title:** Preamble is exactly 10 consecutive zero bits
 **Status:** validated

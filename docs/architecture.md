@@ -201,6 +201,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-OREGON-012 | `OregonV3` | Device ID with sync nibble (`EA4C`/`1A2D`/`5A5D`) selected by FinalizeMessage() from messageStatus; checksum at nibbles 13, 16 or 20 |
 | FUNC-OREGON-013 | `OregonV3` | messageStatus bit-field (bit0=temp, bit1=humi, bit2=press) |
 | FUNC-OREGON-014 | `OregonV3` | Full frame matches the Oregon v2.1 reference payloads decoded by RFLink |
+| FUNC-OREGON-015 | `OregonV3` | Reused instance: setters replace their field (sign bit, channel nibble), checksum rewritten |
 | FUNC-LACROSSE-001 | `LacrosseWS7000` | Preamble is exactly 10 consecutive zero bits |
 | FUNC-LACROSSE-002 | `LacrosseWS7000` | Sensor-type nibble encoding: 0=temp, 1=T+H, 4=T+H+P, 5=lux, F=unknown |
 | FUNC-LACROSSE-003 | `LacrosseWS7000` | Address (0–7) in bits 0–2; negative temperature sign in bit 3 of second nibble |
