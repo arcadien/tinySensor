@@ -46,10 +46,10 @@
 **Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the tens digit in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink `Plugins/Plugin_048.c` (couin3) line 737). The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
-**Title:** Pressure encoded with 795 hPa offset in bytes 7–8; weather prediction byte at byte 9
+**Title:** Pressure stored as hPa − 795 in byte 8; weather prediction byte at byte 9
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetPressure()` subtracts 795 from the hPa value and stores the result across bytes 7 and 8. Byte 9 holds a weather-prediction code: 0x30 (rain, <1000 hPa), 0x20 (cloudy, <1010), 0x60 (partly cloudy, <1025), or 0xC0 (sunny, ≥1025).
+**Description:** `SetPressure()` stores the hPa value minus 795, clamped to 0–255, in byte 8 (frame nibbles 16–17). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a weather-prediction code: 0x30 (rain, <1000 hPa), 0x20 (cloudy, <1010), 0x60 (partly cloudy, <1025), or 0xC0 (sunny, ≥1025).
 
 ### FUNC-OREGON-009
 **Title:** Channel (1–3) encoded as 1-bit mask in high nibble of byte 2; out-of-range silently ignored
