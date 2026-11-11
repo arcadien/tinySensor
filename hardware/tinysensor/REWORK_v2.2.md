@@ -6,7 +6,7 @@ Les coordonnées sont celles de KiCad, en mm, carte non tournée, vue de dessus 
 
 ## À faire absolument
 
-### 1. Masse du BME280 (P1) : un strap
+### 1. ~~Masse du BME280 (P1) : un strap~~ — ✅ vérifié au multimètre (2026-11-11)
 
 Les pastilles GND de l'empreinte « I2C » (pads 2 et 6) et la broche GND de l'ISP (J6.6) sont sur un îlot de cuivre isolé.
 Sans correction, le BME280 n'a pas de masse. Sa broche SDO, câblée au GND, flotte elle aussi, et l'adresse I2C du capteur n'est plus fixée.
