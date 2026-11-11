@@ -70,10 +70,10 @@
 **Description:** `SetBatteryLow(true)` sets bit 2 of byte 4 (`message[4] |= 0x04`, flags nibble 8, read by RFLink `Plugins/Plugin_048.c` (couin3) line 714). `SetBatteryLow(false)` clears it (`message[4] &= 0xFB`). All other bits of byte 4 are unaffected.
 
 ### FUNC-OREGON-012
-**Title:** Device ID auto-selected at Send() based on which fields are populated
+**Title:** Device ID, sync nibble included, auto-selected at Send() based on which fields are populated
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** `FinalizeMessage()` writes the Oregon Scientific device ID into bytes 0–1 based on `messageStatus`: temperature-only sets `0xEC40` (THN132N); temperature and humidity sets `0x1D20` (THGN123N); temperature, humidity, and pressure sets `0x5A5D` (BTHR918). The checksum is computed and appended accordingly.
+**Description:** `FinalizeMessage()` writes bytes 0–1 as transmitted, the low nibble of byte 0 being the sync nibble 0xA, based on `messageStatus`: temperature only gives `0xEA 0x4C` (THN132N); temperature and humidity give `0x1A 0x2D` (THGR228N); temperature, humidity and pressure give `0x5A 0x5D` (BTHR918) (RFLink `Plugins/Plugin_048.c` (couin3) lines 650, 696, 730). The checksum is (sum of all preceding nibbles − 0xA) & 0xFF, low nibble first: nibbles 13–14 (high nibble of byte 6, low nibble of byte 7) for THN132N, byte 8 for THGR228N, byte 10 for BTHR918 (RFLink `Plugins/Plugin_048.c` (couin3) lines 465, 654, 698).
 
 ### FUNC-OREGON-013
 **Title:** messageStatus bit-field tracks which fields are set (bit 0=temp, bit 1=humi, bit 2=press)
