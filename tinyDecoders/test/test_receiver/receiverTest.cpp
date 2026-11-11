@@ -12,6 +12,10 @@
  *     void Poll();
  *   };
  * The waiting page line 1 is "Ore Lac X" from column 0, space-filled.
+ *
+ * FUNC-DECODE-009: with ReceiverHal::HasLineOutput, each decoded frame also
+ * goes out as one RFLink line (FormatRflink, FUNC-DECODE-008) through
+ * hal->WriteLine, with a uint8_t counter starting at 0, no deduplication.
  */
 
 #include <stdint.h>
@@ -234,6 +238,32 @@ void Receiver_shows_a_new_frame_without_waiting_for_the_next_second() {
                hal);
 }
 
+// @req FUNC-DECODE-009
+void Receiver_writes_one_rflink_line_per_decoded_frame() {
+  // Given
+  TestReceiverHal hal;
+  Receiver receiver(&hal);
+  sendOregon(hal);
+  sendOregon(hal);
+  sendLacrosse(hal, -0.5f);
+  sendLacrosse(hal, -0.5f);
+
+  // When
+  receiver.Poll();
+
+  // Then
+  static const char *const expected[] = {
+      "20;00;Oregon TempHygro;ID=3C02;TEMP=00ed;HUM=45;BAT=OK;",
+      "20;01;Oregon TempHygro;ID=3C02;TEMP=00ed;HUM=45;BAT=OK;",
+      "20;02;LaCrosse WS7000;ID=0103;TEMP=8005;HUM=64;",
+      "20;03;LaCrosse WS7000;ID=0103;TEMP=8005;HUM=64;",
+  };
+  TEST_ASSERT_EQUAL_INT(4, hal.Lines().size());
+  for (size_t i = 0; i < 4; i++) {
+    TEST_ASSERT_EQUAL_STRING(expected[i], hal.Lines()[i].c_str());
+  }
+}
+
 void setUp(void) {
   TestHal.ClearOrders();
 }
@@ -247,5 +277,6 @@ int main(int, char **) {
   RUN_TEST(Receiver_consumes_every_pending_pulse_in_one_poll);
   RUN_TEST(Receiver_alternates_source_pages_every_4_seconds);
   RUN_TEST(Receiver_shows_a_new_frame_without_waiting_for_the_next_second);
+  RUN_TEST(Receiver_writes_one_rflink_line_per_decoded_frame);
   return UNITY_END();
 }
