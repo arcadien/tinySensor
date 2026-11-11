@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-09 — PLAT-DECODE-001, PLAT-DECODE-002, CONF-DECODE-001, CONF-DECODE-002 (receiver hardware, firmware build and CI in the tinyDecoders sub-project), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-11 — CONF-DECODE-003 (Pro Micro receiver variant: RFLink USB output, `ProMicroReceiverHal`, `promicro` env; with TECH-DECODE-002, FUNC-DECODE-008/009, PLAT-DECODE-003/004/005, CONF-DECODE-002), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -65,7 +65,7 @@ graph TD
 | `SoftSerial` | `Hal*` | constructor |
 | `LightSensor` | `Hal*` | constructor |
 | `runCycle` (`main.cpp`) | `Hal*` | function parameter; forwarded to every encoder and wrapper it constructs |
-| `Receiver` (tinyDecoders) | `ReceiverHal*` (compile-time alias: `Attiny84aReceiverHal` on AVR, `TestReceiverHal` on native) | constructor |
+| `Receiver` (tinyDecoders) | `ReceiverHal*` (compile-time alias: `ProMicroReceiverHal` on ATmega32U4, `Attiny84aReceiverHal` on ATtiny84A, `TestReceiverHal` on native) | constructor |
 
 Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at construction; a wrapper whose bus access is delegated to a third-party driver (`BMx280`) receives none. None accesses AVR registers directly, except register addresses passed to a third-party bus driver (`Ds18b20`).
 
@@ -101,7 +101,7 @@ Design choices:
 
 ## tinyDecoders sub-project
 
-`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
+`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED; the Pro Micro variant also writes one RFLink line per frame on USB serial. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
 
 ```mermaid
 graph TD
@@ -112,14 +112,22 @@ graph TD
     OregonDecoder["OregonDecoder: Feed(high, durationUs)"]
     SourceTable["SourceTable: Update(decoder, nowSeconds)"]
     PageFormatter["PageFormatter: FormatPage(record, ageSeconds)"]
+    RflinkFormatter["RflinkFormatter: FormatRflink(decoder, counter, line)"]
     Font8x16["Font8x16: ReadGlyph(c, glyph) (PROGMEM)"]
     Receiver["Receiver: Poll()"]
-    ReceiverHal["ReceiverHal (alias): PopPulse / NowSeconds / DrawChar"]
+    ReceiverHal["ReceiverHal (alias): PopPulse / NowSeconds / DrawChar / WriteLine"]
     TestReceiverHal["TestReceiverHal (native only)"]
-    Attiny84aReceiverHal["Attiny84aReceiverHal (AVR): Timer1 ICP1 PA7, SSD1306 0x3C"]
-    Main["src/main.cpp (AVR): Init, Poll loop"]
+    Attiny84aReceiverHal["Attiny84aReceiverHal (ATtiny84A): Timer1 ICP1 PA7, SSD1306 0x3C, no line output"]
+    ProMicroReceiverHal["ProMicroReceiverHal (ATmega32U4): Timer1 ICP1 PD4, SSD1306 0x3C, USB CDC"]
+    Main["src/main.cpp (ATtiny84A): Init, Poll loop"]
+    MainProMicro["src/main_promicro.cpp (ATmega32U4): setup Init, loop Poll"]
   end
-  ReceiverHal -.->|"typedef on AVR"| Attiny84aReceiverHal
+  ReceiverHal -.->|"typedef on ATtiny84A"| Attiny84aReceiverHal
+  ReceiverHal -.->|"typedef on ATmega32U4"| ProMicroReceiverHal
+  ProMicroReceiverHal -->|"ReadGlyph"| Font8x16
+  ProMicroReceiverHal -->|"TWI I2C"| Wire["Wire (Arduino core)"]
+  ProMicroReceiverHal -->|"USB CDC"| Serial["Serial (Arduino core)"]
+  MainProMicro -->|"&hal"| Receiver
   Attiny84aReceiverHal -->|"ReadGlyph"| Font8x16
   Attiny84aReceiverHal -->|"USI I2C"| TinyI2C["TinyI2C (lib_deps)"]
   Main -->|"&hal"| Receiver
@@ -130,6 +138,7 @@ graph TD
   Receiver -->|"pulses"| OregonDecoder
   Receiver -->|"Update / At"| SourceTable
   Receiver -->|"FormatPage"| PageFormatter
+  Receiver -->|"FormatRflink, then WriteLine"| RflinkFormatter
   X10Decoder -->|"const& after Feed true"| SourceTable
   LacrosseDecoder -->|"const& after Feed true"| SourceTable
   OregonDecoder -->|"const& after Feed true"| SourceTable
@@ -150,18 +159,23 @@ graph TD
 | `SourceTable` (`tinyDecoders/lib/SourceTable/`) | Keeps the last `SourceRecord` per source `(kind, id)` (Oregon channel, Lacrosse address, Lacrosse lux address, X10 address), max 6, oldest replaced; maps each decoder's values into common units (tenths, lux, mV from X10 BCD) with a presence bitmask | FUNC-DECODE-006 |
 | `PageFormatter` (`tinyDecoders/lib/PageFormatter/`) | Pure function: one `SourceRecord` + age in seconds to two 16-character lines (values, source label `Ore1`/`Lac3`/`X10`, age `12s`/`5m`/`2h`/`1d`) over a 31-glyph character set | UI-DECODE-001 |
 | `Font8x16` (`tinyDecoders/lib/Font8x16/`) | `ReadGlyph(c, glyph[16])`: 8x16 bitmaps of the 30 non-space UI-DECODE-001 characters in `PROGMEM` (510 B flash), SSD1306 page byte order; other characters blank. Generated from Spleen 8x16 (BSD-2-Clause) by `tinyDecoders/scripts/gen_font8x16.py` | UI-DECODE-002 |
-| `ReceiverHal` (`tinyDecoders/lib/ReceiverHal/`) | Compile-time alias of the receiver hardware: `Attiny84aReceiverHal` on AVR, `TestReceiverHal` on native. Static interface `PopPulse(high, durationUs)`, `NowSeconds()`, `DrawChar(row, col, c)`. The test double queues pulses, sets the clock and keeps the 2 × 16 drawn screen | TECH-DECODE-002 |
-| `Receiver` (`tinyDecoders/lib/Receiver/`) | Owns the three decoders and the `SourceTable`. `Poll()` drains pulses into every decoder and updates the table on each decoded frame. It picks the page (`(now / 4) % Count()`, or a waiting page `Ore Lac X` + uptime) and draws at most one changed character per call, so the pulse ring buffer never waits long | FUNC-DECODE-007 |
+| `RflinkFormatter` (`tinyDecoders/lib/RflinkFormatter/`) | Pure functions, one overload per decoder: a decoded frame and a counter to one RFLink line `20;NN;Name;ID=XXXX;KEY=value;` (`Oregon Temp`/`TempHygro`/`BTHR`, `LaCrosse WS7000`, `X10Meter`; `TEMP`, `HUM`, `BARO`, `LUX`, `METER`, `BAT`), at most 63 characters, no `printf` | FUNC-DECODE-008 |
+| `ReceiverHal` (`tinyDecoders/lib/ReceiverHal/`) | Compile-time alias of the receiver hardware: `ProMicroReceiverHal` on ATmega32U4, `Attiny84aReceiverHal` on ATtiny84A, `TestReceiverHal` on native. Static interface `PopPulse(high, durationUs)`, `NowSeconds()`, `DrawChar(row, col, c)`, `HasLineOutput`, `WriteLine(line)`. The test double queues pulses, sets the clock, keeps the 2 × 16 drawn screen and records written lines | TECH-DECODE-002 |
+| `Receiver` (`tinyDecoders/lib/Receiver/`) | Owns the three decoders and the `SourceTable`. `Poll()` drains pulses into every decoder and updates the table on each decoded frame. It picks the page (`(now / 4) % Count()`, or a waiting page `Ore Lac X` + uptime) and draws at most one changed character per call, so the pulse ring buffer never waits long. When `ReceiverHal::HasLineOutput`, writes one RFLink line per decoded frame with a wrapping counter | FUNC-DECODE-007, FUNC-DECODE-009 |
 | `Attiny84aReceiverHal` (`tinyDecoders/lib/ReceiverHal/`, AVR only) | Timer1 at 1 µs (8 MHz / 8): input capture on both edges of PA7 (ICP1) into a 32-pulse ring buffer, durations clamped to 65535; seconds from overflows. SSD1306 128×32 at 0x3C over `TinyI2C`: init sequence and screen clear in `Init()`, then one 8×16 glyph (2 pages × 8 columns) per `DrawChar`, no framebuffer | PLAT-DECODE-001, PLAT-DECODE-002 |
-| `main.cpp` (`tinyDecoders/src/`, AVR only) | `hal.Init()`, `sei()`, then `receiver.Poll()` forever | CONF-DECODE-001 |
+| `ProMicroReceiverHal` (`tinyDecoders/lib/ReceiverHal/`, ATmega32U4 only) | Pro Micro 5 V / 16 MHz. Timer1 at 0.5 µs (16 MHz / 8): input capture on both edges of PD4 (ICP1, pin 4, RXB6 at 5 V) into a 64-pulse ring buffer; seconds from overflows. SSD1306 at 0x3C over `Wire` (SDA D2, SCL D3, 400 kHz, OLED module 5 V tolerant), same commands as the ATtiny. `WriteLine` to USB CDC `Serial` plus `\r\n`, dropped when the endpoint lacks room | PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005 |
+| `main.cpp` (`tinyDecoders/src/`, ATtiny84A only) | `hal.Init()`, `sei()`, then `receiver.Poll()` forever | CONF-DECODE-001 |
+| `main_promicro.cpp` (`tinyDecoders/src/`, ATmega32U4 only) | Arduino `setup()` calls `hal.Init()`, `loop()` calls `receiver.Poll()`; the Arduino `main` keeps the USB stack running | CONF-DECODE-003 |
 
 `OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
 
 Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, seconds clock, OLED) goes through `ReceiverHal`, a small interface dedicated to tinyDecoders, not the repository `Hal` (TECH-DECODE-002). Like `EnvironmentEncoder`, it is a `typedef` chosen at build time, not a virtual base: there is a single implementation per build, and the ATtiny avoids a vtable. `Receiver` receives a `ReceiverHal*` at construction and touches no AVR register, so its whole loop is host-tested through `TestReceiverHal`.
 
+The RFLink line output is selected by the compile-time constant `ReceiverHal::HasLineOutput`: false on the ATtiny84A, so `RflinkFormatter` is not linked there and its RAM and flash budget is unchanged; the formatter stays pure logic, reusable on the ATtiny if a software UART is added later (`tinyDecoders/BACKLOG.md`). On the Pro Micro, `Wire` and `Serial` are Arduino core singletons used only inside `ProMicroReceiverHal`, which stays the only hardware boundary: no new injected dependency.
+
 Drawing one character per `Poll()` (≈ 1 ms of I2C) keeps the pulse latency within a 32-pulse ring buffer. A whole-screen redraw (≈ 25 ms) would need a buffer of 50+ pulses, which does not fit in RAM.
 
-Firmware build: env `attiny84a` of `tinyDecoders/platformio.ini`. It targets the ATtiny84A at 8 MHz internal RC (lfuse 0xE2) without framework. Limits are 8192 B of flash and 384 B of static RAM; the other 128 B are kept for the stack and interrupts. Static RAM budget: table 102 B, ring buffer 48 B (16 pulses: one character draw lasts about 2 ms, a few pulses at most), decoders about 73 B, two 17 B target lines plus a 4 B mask of characters still to draw. CI lints `tinyDecoders/`, runs its `native` tests and builds `attiny84a`. The pre-commit clang-format hook covers `tinyDecoders/{src,lib,test}` (CONF-DECODE-002).
+Firmware build: env `attiny84a` of `tinyDecoders/platformio.ini`. It targets the ATtiny84A at 8 MHz internal RC (lfuse 0xE2) without framework. Limits are 8192 B of flash and 384 B of static RAM; the other 128 B are kept for the stack and interrupts. Static RAM budget: table 102 B, ring buffer 48 B (16 pulses: one character draw lasts about 2 ms, a few pulses at most), decoders about 73 B, two 17 B target lines plus a 4 B mask of characters still to draw. Env `promicro` targets the Pro Micro 5 V / 16 MHz (ATmega32U4) with the Arduino framework (USB CDC stack); each env selects its own entry point with `build_src_filter` (CONF-DECODE-003). CI lints `tinyDecoders/`, runs its `native` tests and builds `attiny84a` and `promicro`. The pre-commit clang-format hook covers `tinyDecoders/{src,lib,test}` (CONF-DECODE-002).
 
 `SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls on the ATtiny (same choice as `EnvironmentEncoder`). RAM: the table is 6 × 17 B = 102 B of the ATtiny84A's 512 B; the 128×32 OLED is therefore written page by page from the two text lines, never from a 512 B framebuffer.
 
@@ -252,9 +266,15 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-DECODE-006 | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id), kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 6, oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
 | UI-DECODE-001 | `PageFormatter` (tinyDecoders) | `FormatPage(record, ageSeconds, line1, line2)`; line 1 values + right-aligned label, line 2 pressure + right-aligned age; degree glyph `'\x7F'`; humidity capped at 99 %, age capped at 99d |
 | UI-DECODE-002 | `Font8x16` (tinyDecoders) | `ReadGlyph(c, glyph[16])` from `PROGMEM`; bytes 0–7 top page, 8–15 bottom page, bit 0 = top pixel; `'\x7F'` drawn as `°`; unknown and space give zeros; Spleen 8x16, BSD-2-Clause |
-| TECH-DECODE-002 | `ReceiverHal` / `TestReceiverHal` (tinyDecoders) | `typedef` on `AVR`; `PopPulse`, `NowSeconds`, `DrawChar`; double adds `PushPulse`, `SetNowSeconds`, `Row`, `DrawCount`; consumers take `ReceiverHal*` at construction |
+| TECH-DECODE-002 | `ReceiverHal` / `TestReceiverHal` (tinyDecoders) | `typedef` per MCU (`__AVR_ATmega32U4__`, `__AVR_ATtiny84A__`, native), `#error` otherwise; `PopPulse`, `NowSeconds`, `DrawChar`, `HasLineOutput`, `WriteLine`; double adds `PushPulse`, `SetNowSeconds`, `Row`, `DrawCount`, `Lines`; consumers take `ReceiverHal*` at construction |
 | FUNC-DECODE-007 | `Receiver` (tinyDecoders) | `Poll()`: pulses to X10, Lacrosse, Oregon decoders, `Update` on true; page `(now / 4) % Count()`, waiting page `Ore Lac X` + uptime; lines recomputed on new second or frame; at most one `DrawChar` per call, first differing character |
 | PLAT-DECODE-001 | `Attiny84aReceiverHal` (tinyDecoders) | PA7 input without pull-up; Timer1 normal mode, prescaler 8, ICNC1, ICES1 toggled per capture; ended pulse level = opposite of the captured edge; 32-pulse ring, drop when full; overflow adds 65536 µs, seconds per 1 000 000 µs; atomic reads |
 | PLAT-DECODE-002 | `Attiny84aReceiverHal` (tinyDecoders) | SSD1306 0x3C via `TinyI2C` (PA6 SDA, PA4 SCL); fixed init sequence, 4 × 128 zero bytes, `AF`; `DrawChar` = pages 2·row and 2·row+1, column col·8, 8 glyph bytes each |
 | CONF-DECODE-001 | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `attiny84a`: 8 MHz, lfuse 0xE2 / hfuse 0xDF / efuse 0xFF, no framework, pinned `tinyi2c`, `maximum_size` 8192, `maximum_ram_size` 384; main = Init, sei, Poll loop |
-| CONF-DECODE-002 | `.github/workflows/main.yml` / `.pre-commit-config.yaml` | Lint includes `tinyDecoders` (prune `.pio`); `pio test -d tinyDecoders -e native`; `build-tinydecoders` job, artifact `firmware-tinydecoders`, needed by `release`; pre-commit `files` includes `tinyDecoders/(src\|lib\|test)` |
+| CONF-DECODE-002 | `.github/workflows/main.yml` / `.pre-commit-config.yaml` | Lint includes `tinyDecoders` (prune `.pio`); `pio test -d tinyDecoders -e native`; `build-tinydecoders` job builds `attiny84a` and `promicro`, artifacts `firmware-tinydecoders` and `firmware-tinydecoders-promicro`, needed by `release`; pre-commit `files` includes `tinyDecoders/(src\|lib\|test)` |
+| FUNC-DECODE-008 | `RflinkFormatter` (tinyDecoders) | `FormatRflink(decoder, counter, line[64])` per decoder; `20;NN;`; Oregon `ID=(rc<<8)\|ch`, Lacrosse `ID=(type<<8)\|addr`, X10 `ID=addr`; `TEMP` hex with 0x8000 sign, `HUM` decimal, `BARO`/`LUX` hex, `METER` mV decimal (valid BCD only), `BAT=OK/LOW` (Oregon) |
+| FUNC-DECODE-009 | `Receiver` (tinyDecoders) | When `HasLineOutput`: `FormatRflink` + `WriteLine` after each `SourceTable::Update`; `uint8_t` counter from 0, wrapping; no deduplication |
+| PLAT-DECODE-003 | `ProMicroReceiverHal` (tinyDecoders) | PD4 input without pull-up (RXB6 at 5 V); Timer1 normal mode, prescaler 8, ICNC1, edge toggled per capture; duration ticks/2, 65535 after a full period; 64-pulse ring, drop when full; overflow adds 32768 µs; atomic reads |
+| PLAT-DECODE-004 | `ProMicroReceiverHal` (tinyDecoders) | `Wire` at 400 kHz, SDA D2 (PD1), SCL D3 (PD0); SSD1306 0x3C, same init and `DrawChar` bytes as PLAT-DECODE-002; no level shifting (OLED module regulated, 5 V I2C) |
+| PLAT-DECODE-005 | `ProMicroReceiverHal` (tinyDecoders) | `Serial.begin(57600)`; `WriteLine` drops the line when `availableForWrite() < len + 2`, else line + `\r\n`; no `operator bool`; input ignored, no banner |
+| CONF-DECODE-003 | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main_promicro.cpp` | env `promicro`: `sparkfun_promicro16`, Arduino framework, avr109 upload, `build_src_filter` per env; ATtiny `Arduino.h` shim does `#include_next` off ATtiny84A; `attiny84a` size unchanged |
