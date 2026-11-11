@@ -80,3 +80,9 @@
 **Status:** validated
 **Dependencies:** CONF-DECODE-001, TECH-DECODE-001
 **Description:** In `.github/workflows/main.yml`, the `lint` job runs the `.rbd/config.yml` linter command (adds `tinyDecoders`, prunes `*/.pio`); `test-native` also runs `pio test -d tinyDecoders -e native`; a `build-tinydecoders` job runs `pio run -d tinyDecoders -e attiny84a` and uploads `firmware.hex`/`firmware.elf` as `firmware-tinydecoders`, and `release` also needs it. Cache keys hash `tinyDecoders/platformio.ini` too. `.pre-commit-config.yaml` clang-format `files` becomes `^(src|lib|include|test|tinyDecoders/(src|lib|test))/`. Verified by a green CI run.
+
+### CONF-DECODE-003
+**Title:** tinyDecoders promicro env builds the receiver firmware for the Pro Micro 5 V / 16 MHz with the Arduino framework
+**Status:** validated
+**Dependencies:** FUNC-DECODE-009, PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005
+**Description:** `tinyDecoders/platformio.ini` gains `[env:promicro]`: `platform = atmelavr`, `board = sparkfun_promicro16`, `framework = arduino`, default upload (`avr109`, Caterina bootloader over USB), no `lib_deps` (`Wire` is in the core), `build_src_filter = -<*> +<main_promicro.cpp>`; `[env:attiny84a]` gets `build_src_filter = -<*> +<main.cpp>`. `tinyDecoders/src/main_promicro.cpp` defines `hal` (`ProMicroReceiverHal`) and `receiver` (`Receiver`, built on `&hal`) at file scope; `setup()` calls `hal.Init()`, `loop()` calls `receiver.Poll()` (the Arduino `main` keeps the USB stack running). The ATtiny shim `tinyDecoders/include/Arduino.h` does `#include_next <Arduino.h>` when `__AVR_ATtiny84A__` is not defined, so it never hides the framework core. Verified by `pio run -d tinyDecoders -e promicro`, and the `attiny84a` build size is unchanged.
