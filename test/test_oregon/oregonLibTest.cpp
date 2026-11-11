@@ -598,6 +598,31 @@ void Expect_payload_to_match_rflink_reference() {
   }
 }
 
+// @req FUNC-OREGON-015
+void Expect_reused_instance_to_carry_no_bits_over() {
+  // Given
+  OregonV3 oregonv3(&TestHal);
+
+  for (const ReferenceCase &c : referenceCases) {
+    // When
+    oregonv3.SetChannel(c.channel);
+    oregonv3.SetRollingCode(c.rollingCode);
+    oregonv3.SetBatteryLow(c.batteryLow);
+    if (c.fields & TEMP)
+      oregonv3.SetTemperature(c.temperature);
+    if (c.fields & HUM)
+      oregonv3.SetHumidity(c.humidity);
+    if (c.fields & PRES)
+      oregonv3.SetPressure(c.pressure);
+    oregonv3.Send();
+
+    // Then
+    std::string payload = MessageNibblesToString(
+        oregonv3.GetMessage(), OregonV3::MESSAGE_SIZE_IN_BYTES);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(c.payload, payload.c_str(), c.id);
+  }
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
 
@@ -624,6 +649,7 @@ int main(int, char **) {
   RUN_TEST(Expect_fields_set_to_select_device_id_with_sync_nibble);
 
   RUN_TEST(Expect_payload_to_match_rflink_reference);
+  RUN_TEST(Expect_reused_instance_to_carry_no_bits_over);
 
   return UNITY_END();
 }
