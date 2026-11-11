@@ -40,10 +40,10 @@
 **Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 6 (`0x08`, low nibble of byte 6 = frame nibble 12, RFLink `Plugins/Plugin_048.c` (couin3) line 734) as the negative sign flag, then encodes the absolute value with the FUNC-OREGON-005 layout.
 
 ### FUNC-OREGON-007
-**Title:** Humidity encoded in byte 6 with units and dozens nibbles swapped
+**Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the dozens digit in the low nibble of byte 6, reversing the conventional tens-before-units order.
+**Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the tens digit in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink `Plugins/Plugin_048.c` (couin3) line 737). The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
 **Title:** Pressure encoded with 795 hPa offset in bytes 7–8; weather prediction byte at byte 9
