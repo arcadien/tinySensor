@@ -1,10 +1,12 @@
 #ifdef __AVR_ATmega32U4__
 #include "ProMicroReceiverHal.h"
 
+#include <Arduino.h>
 #include <Wire.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <string.h>
 #include <util/atomic.h>
 
 #include <Font8x16.h>
@@ -47,6 +49,8 @@ const uint32_t OledClockHz = 400000;
 const uint8_t OledInit[] PROGMEM = {
     0xAE, 0xD5, 0x80, 0xA8, 0x1F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0x20, 0x02,
     0xA1, 0xC8, 0xDA, 0x02, 0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6};
+
+const unsigned long SerialBaud = 57600;  // ignored by USB CDC, rflink default
 
 void SendCommand(uint8_t command) {
   Wire.beginTransmission(OledAddress);
@@ -94,6 +98,7 @@ void InitDisplay() {
 
 void ProMicroReceiverHal::Init() {
   InitDisplay();
+  Serial.begin(SerialBaud);
 
   // RXB6 at 5 V drives PD4 directly: input, no pull-up
   DDRD &= ~(1 << PD4);
@@ -138,6 +143,15 @@ void ProMicroReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
     Locate(2 * row + half, col * 8);
     SendData(&glyph[half * OledBytesPerWrite]);
   }
+}
+
+// Never waits for the host: the Serial operator bool would block 10 ms
+void ProMicroReceiverHal::WriteLine(const char *line) {
+  size_t length = strlen(line);
+  if ((size_t)Serial.availableForWrite() < length + 2)
+    return;  // no room in the USB endpoint: drop the line
+  Serial.write(line, length);
+  Serial.write("\r\n");
 }
 
 ISR(TIMER1_CAPT_vect) {
