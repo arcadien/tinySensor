@@ -17,11 +17,16 @@
  *       void SetNowSeconds(uint32_t s);
  *       const char *Row(uint8_t row) const;  // 16 chars, initially spaces
  *       uint16_t DrawCount() const;          // DrawChar calls so far
+ *       static const bool HasLineOutput;     // true
+ *       void WriteLine(const char *line);    // appends to Lines()
+ *       const std::vector<std::string> &Lines() const;
  *     };  // default-constructible, no virtual
  */
 
 #include <stdint.h>
+#include <string>
 #include <type_traits>
+#include <vector>
 #include <unity.h>
 
 #include <ReceiverHal.h>
@@ -29,6 +34,8 @@
 
 static_assert(std::is_same<ReceiverHal, TestReceiverHal>::value,
               "ReceiverHal is TestReceiverHal on native");
+static_assert(TestReceiverHal::HasLineOutput,
+              "the native double records RFLink lines");
 
 struct PulseCase {
   bool high;
@@ -118,6 +125,23 @@ void TestReceiverHal_keeps_the_drawn_screen() {
   }
 }
 
+// @req TECH-DECODE-002
+void TestReceiverHal_records_written_lines_in_order() {
+  // Given
+  TestReceiverHal hal;
+
+  // When
+  hal.WriteLine("20;00;X10Meter;ID=000A;");
+  hal.WriteLine("20;01;LaCrosse WS7000;ID=0502;LUX=03e8;");
+
+  // Then
+  const std::vector<std::string> &lines = hal.Lines();
+  TEST_ASSERT_EQUAL_INT(2, lines.size());
+  TEST_ASSERT_EQUAL_STRING("20;00;X10Meter;ID=000A;", lines[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("20;01;LaCrosse WS7000;ID=0502;LUX=03e8;",
+                           lines[1].c_str());
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -126,5 +150,6 @@ int main(int, char **) {
   RUN_TEST(TestReceiverHal_pops_pushed_pulses_in_order_then_none);
   RUN_TEST(TestReceiverHal_reports_the_set_clock);
   RUN_TEST(TestReceiverHal_keeps_the_drawn_screen);
+  RUN_TEST(TestReceiverHal_records_written_lines_in_order);
   return UNITY_END();
 }
