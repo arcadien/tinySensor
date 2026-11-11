@@ -10,8 +10,7 @@
 #define PREAMBLE_BYTE2 0xFF
 #define PREAMBLE_BYTE3 0xFF
 
-// BTHR918 pressure field: 3 nibbles carrying (pressure in hPa - 795), so that
-// receivers decode hPa = field + 795.
+// BTHR918 pressure byte: hPa - 795, as decoded by RFLink (FUNC-OREGON-008)
 #define PRESSURE_SCALING_VALUE 795
 
 OregonV3::OregonV3(Hal *hal) : _hal(hal) {
@@ -24,9 +23,9 @@ const unsigned char *OregonV3::GetMessage() {
 
 void OregonV3::SetBatteryLow(bool batteryIsLow) {
   if (batteryIsLow) {
-    message[3] |= (1 << 2);  // set low status
+    message[4] |= (1 << 2);  // set low status
   } else {
-    message[3] &= 0xFB;  // clear low status
+    message[4] &= 0xFB;  // clear low status
   }
 }
 
@@ -48,10 +47,8 @@ void OregonV3::SetPressure(uint16_t pressure) {
     message[9] = 0xC0;
   }
 
-  pressure -= PRESSURE_SCALING_VALUE;
-  message[7] &= 0xF0;
-  message[7] |= pressure & 0x000f;
-  message[8] = (pressure & 0x0f0) + ((pressure & 0xf00) >> 8);
+  int16_t offset = (int16_t)pressure - PRESSURE_SCALING_VALUE;
+  message[8] = offset < 0 ? 0 : offset > 0xFF ? 0xFF : offset;
 }
 
 void OregonV3::SendMSB(const uint8_t data) {
@@ -107,13 +104,8 @@ void OregonV3::SetChannel(uint8_t channel) {
   message[2] |= 1 << (4 + (channel - 1));
 }
 
-/*
- * \param rollingCode 8-bit rolling code (nibbles 4 and 5 of the message).
- *        Previously documented as "must be less than 0xA5"; not enforced.
- */
 void OregonV3::SetRollingCode(uint8_t rollingCode) {
-  message[2] |= (rollingCode & 0xf0) >> 4;  // nibble 4
-  message[3] |= (rollingCode & 0x0f) << 4;  // nibble 5
+  message[3] = rollingCode;
 }
 
 void OregonV3::SendOne() {
@@ -128,16 +120,16 @@ void OregonV3::SendOne() {
 void OregonV3::SetHumidity(uint8_t humidity) {
   messageStatus |= 1 << 1;
 
-  // flip dozens and unit
+  // units share byte 6 with the temperature sign bit
   uint8_t dozens = humidity / 10;
-  message[6] = (humidity - (dozens * 10)) << 4;
-  message[6] |= dozens;
+  message[6] = (message[6] & 0x0F) | ((humidity - dozens * 10) << 4);
+  message[7] = dozens;
 }
 
 void OregonV3::SetTemperature(float temperature) {
   messageStatus |= 1;
   if (temperature < 0) {
-    message[5] = 0x08;
+    message[6] |= 0x08;
     temperature *= -1;
   }
 
@@ -159,8 +151,7 @@ void OregonV3::SetTemperature(float temperature) {
   );
 
   message[4] |= (temperatureDecimal << 4);
-  message[4] |= temperatureUnit;
-  message[5] |= (temperatureDozen << 4);
+  message[5] |= (temperatureDozen << 4) | temperatureUnit;
 }
 
 void OregonV3::FinalizeMessage() {
@@ -175,17 +166,17 @@ void OregonV3::FinalizeMessage() {
 
   if (messageLength == 8) {
     // THN132N (Temperature)
-    message[0] = 0xEC;
-    message[1] = 0x40;
+    message[0] = 0xEA;
+    message[1] = 0x4C;
     int s = ((Sum(6, message) + (message[6] & 0xF) - 0xa) & 0xff);
     message[6] |= (s & 0x0F) << 4;
     message[7] = (s & 0xF0) >> 4;
   }
 
   if (messageLength == 9) {
-    // THGN123N (Temperature + Humidity)
-    message[0] = 0x1D;
-    message[1] = 0x20;
+    // THGR228N (Temperature + Humidity)
+    message[0] = 0x1A;
+    message[1] = 0x2D;
     message[8] = ((Sum(8, message) - 0xa) & 0xFF);
   }
 
