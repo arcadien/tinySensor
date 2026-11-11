@@ -9,9 +9,13 @@
 // Capture state lives in Attiny84aReceiverHal.cpp, shared with the ISRs.
 class Attiny84aReceiverHal {
  public:
+  // No serial output on the ATtiny: the RFLink formatter is not linked
+  static const bool HasLineOutput = false;
+
   void Init();
 
   bool PopPulse(bool &high, uint16_t &durationUs);
   uint32_t NowSeconds() const;
   void DrawChar(uint8_t row, uint8_t col, char c);
+  void WriteLine(const char *) {}
 };

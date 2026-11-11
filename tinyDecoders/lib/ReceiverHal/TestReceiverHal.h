@@ -4,11 +4,15 @@
 #include <string.h>
 
 #include <deque>
+#include <string>
+#include <vector>
 
 // Native ReceiverHal double: queued pulses, settable clock, drawn 2 x 16
-// screen (TECH-DECODE-002)
+// screen, recorded RFLink lines (TECH-DECODE-002)
 class TestReceiverHal {
  public:
+  static const bool HasLineOutput = true;
+
   TestReceiverHal() { memset(screen, ' ', sizeof screen); }
 
   bool PopPulse(bool &high, uint16_t &durationUs) {
@@ -24,6 +28,7 @@ class TestReceiverHal {
     screen[row][col] = c;
     drawCount++;
   }
+  void WriteLine(const char *line) { lines.push_back(line); }
 
   void PushPulse(bool high, uint16_t durationUs) {
     pulses.push_back({high, durationUs});
@@ -32,6 +37,7 @@ class TestReceiverHal {
   // 16 characters, not '\0'-terminated
   const char *Row(uint8_t row) const { return screen[row]; }
   uint16_t DrawCount() const { return drawCount; }
+  const std::vector<std::string> &Lines() const { return lines; }
 
  private:
   struct QueuedPulse {
@@ -43,4 +49,5 @@ class TestReceiverHal {
   uint32_t nowSeconds = 0;
   char screen[2][16];
   uint16_t drawCount = 0;
+  std::vector<std::string> lines;
 };

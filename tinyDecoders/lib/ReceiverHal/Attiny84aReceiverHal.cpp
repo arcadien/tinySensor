@@ -1,4 +1,4 @@
-#ifdef AVR
+#ifdef __AVR_ATtiny84A__
 #include "Attiny84aReceiverHal.h"
 
 #include <avr/interrupt.h>
