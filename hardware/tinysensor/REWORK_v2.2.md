@@ -58,12 +58,19 @@ On le remplace par le module **TPS63020** abaisseur-élévateur 3,3 V disponible
   Noter le résultat aussi dans le banc de test Tars `tests/bench/PLAT-POWER-REG-001.md`, qui n'a pas encore été passé.
 - Consommation : l'ATtiny en sommeil consomme quelques µA ; le module en ajoute environ 25–50 µA à vide. Cela reste plusieurs années sur une 18650 de 2500 mAh.
 
+### 6. CSB du BME280 (R11) : une 10 kΩ de rappel
+
+La position 5 de l'empreinte « I2C » (CSB) n'est pas connectée, et le breakout utilisé ne tire pas CSB vers le haut (vérifié au multimètre le 2026-11-11). Si CSB est vue à 0, le capteur passe en SPI.
+
+- Une résistance de **10 kΩ** entre **I2C pad 5** (CSB, 189,35 ; 77,11) et **I2C pad 1** (VCC capteur, 199,35 ; 77,11), côté dessous, pattes gainées. Elle reste côté carte, pas sur le breakout.
+- La relier au pad 1 et non à VCC : CSB suit ainsi l'alimentation du capteur, sans l'alimenter par cette broche quand il est éteint.
+- Contrôle, BME280 retiré : ≈ 10 kΩ entre I2C pad 5 et I2C pad 1.
+
 ## Montage adapté
 
 - **J2 (P7) :** ne rien monter dans l'empreinte, seulement les fils W7–W9 (voir point 5).
 - **C6 (P8) :** ne pas le monter. Il ne sert qu'au capteur analogique (J7 / JP4), absent du champignon.
 - **JP2 « DIRECT Vcc » (R9) :** le laisser ouvert : sinon il court-circuite l'entrée et la sortie du TPS63020.
-- **CSB du BME280 (R11) :** la position 5 n'est pas connectée. Vérifier au multimètre que le breakout tire bien CSB vers VIN (≈ 10 kΩ) : sinon le capteur passe en SPI.
 - **Polarité de J13 (R2, P9) :** pas de protection contre l'inversion. Respecter le code couleur W5 rouge = borne 1 (+, pastille carrée) et W6 noir = borne 2. Marquer « + » au feutre à côté de J13.
 
 ## Recommandé, peu coûteux
