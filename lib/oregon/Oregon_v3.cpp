@@ -101,7 +101,7 @@ void OregonV3::SendZero() {
 void OregonV3::SetChannel(uint8_t channel) {
   if (channel < 1 || channel > 3)
     return;
-  message[2] |= 1 << (4 + (channel - 1));
+  message[2] = (message[2] & 0x0F) | (1 << (4 + (channel - 1)));
 }
 
 void OregonV3::SetRollingCode(uint8_t rollingCode) {
@@ -128,6 +128,8 @@ void OregonV3::SetHumidity(uint8_t humidity) {
 
 void OregonV3::SetTemperature(float temperature) {
   messageStatus |= 1;
+  // A reused instance must not keep the previous sign (FUNC-OREGON-015)
+  message[6] &= 0xF7;
   if (temperature < 0) {
     message[6] |= 0x08;
     temperature *= -1;
@@ -150,8 +152,8 @@ void OregonV3::SetTemperature(float temperature) {
       * 10                                           // 0.4 * 10 = 4
   );
 
-  message[4] |= (temperatureDecimal << 4);
-  message[5] |= (temperatureDozen << 4) | temperatureUnit;
+  message[4] = (message[4] & 0x0F) | (temperatureDecimal << 4);
+  message[5] = (temperatureDozen << 4) | temperatureUnit;
 }
 
 void OregonV3::FinalizeMessage() {
@@ -169,7 +171,7 @@ void OregonV3::FinalizeMessage() {
     message[0] = 0xEA;
     message[1] = 0x4C;
     int s = ((Sum(6, message) + (message[6] & 0xF) - 0xa) & 0xff);
-    message[6] |= (s & 0x0F) << 4;
+    message[6] = (message[6] & 0x0F) | ((s & 0x0F) << 4);
     message[7] = (s & 0xF0) >> 4;
   }
 
