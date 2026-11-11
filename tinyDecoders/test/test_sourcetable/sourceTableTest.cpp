@@ -1,6 +1,6 @@
 /*
  * Integration tests for FUNC-DECODE-006: SourceTable keeps the last decoded
- * record of each radio source (kind, id), fed with loopback frames of the
+ * record of each radio source (kind, id, code), fed with loopback frames of the
  * repository encoders through the three decoders.
  *
  * Production side must provide (code-builder handles this), in
@@ -10,13 +10,15 @@
  *     enum Kind : uint8_t { Oregon, Lacrosse, LacrosseLux, X10 };
  *     enum : uint8_t { Temperature = 1, Humidity = 2, Pressure = 4, Lux = 8,
  *                      Millivolts = 16 };  // bits of `fields`
- *     Kind kind; uint8_t id; uint8_t fields; int16_t temperatureTenths;
+ *     Kind kind; uint8_t id; uint8_t code; uint8_t fields;
+ *     int16_t temperatureTenths;
  *     uint16_t humidityTenths; uint16_t pressureTenths; uint16_t lux;
  *     uint16_t millivolts; uint32_t lastSeenSeconds;
  *   };  // aggregate, members in this order
  *   class SourceTable {
  *    public:
- *     static const uint8_t kCapacity = 6;
+ *     // 16 when __AVR_ATmega32U4__ is defined, else 8
+ *     static const uint8_t kCapacity = 8;
  *     void Update(const OregonDecoder &, uint32_t nowSeconds);
  *     void Update(const LacrosseDecoder &, uint32_t nowSeconds);
  *     void Update(const X10Decoder &, uint32_t nowSeconds);
@@ -49,10 +51,12 @@ static const uint8_t MV = SourceRecord::Millivolts;
 enum Protocol : uint8_t { OREGON_V3, WS7000, RFXMETER };
 
 // One frame sent by a repository encoder. `id` is the Oregon channel, the
-// Lacrosse address or the X10 address; `value` is the lux or the X10 value.
+// Lacrosse address or the X10 address; `code` the Oregon rolling code (0 for
+// the others); `value` is the lux or the X10 value.
 struct Transmission {
   Protocol protocol;
   uint8_t id;
+  uint8_t code;
   uint8_t fields;
   float temperature, humidity, pressure;
   uint32_t value;
@@ -74,7 +78,7 @@ static void transmit(SourceTable &table, const Transmission &t,
   if (t.protocol == OREGON_V3) {
     OregonV3 encoder(&TestHal);
     encoder.SetChannel(t.id);
-    encoder.SetRollingCode(0x3C);
+    encoder.SetRollingCode(t.code);
     if (t.fields & T)
       encoder.SetTemperature(t.temperature);
     if (t.fields & H)
@@ -110,6 +114,7 @@ static void assertRecord(const char *id, const SourceRecord &expected,
                          const SourceRecord &actual) {
   TEST_ASSERT_EQUAL_UINT8_MESSAGE(expected.kind, actual.kind, id);
   TEST_ASSERT_EQUAL_UINT8_MESSAGE(expected.id, actual.id, id);
+  TEST_ASSERT_EQUAL_HEX8_MESSAGE(expected.code, actual.code, id);
   TEST_ASSERT_EQUAL_HEX8_MESSAGE(expected.fields, actual.fields, id);
   TEST_ASSERT_EQUAL_INT16_MESSAGE(expected.temperatureTenths,
                                   actual.temperatureTenths, id);
@@ -133,7 +138,7 @@ void SourceTable_starts_empty() {
 
   // Then
   TEST_ASSERT_EQUAL_UINT8(0, count);
-  TEST_ASSERT_EQUAL_UINT8(6, SourceTable::kCapacity);
+  TEST_ASSERT_EQUAL_UINT8(8, SourceTable::kCapacity);  // native build
 }
 
 struct MappingCase {
@@ -144,44 +149,44 @@ struct MappingCase {
 
 static const MappingCase mappingCases[] = {
     {"oregon-thn132n",
-     {OREGON_V3, 1, T, -10.2f, 0, 0, 0},
-     {SourceRecord::Oregon, 1, T, -102, 0, 0, 0, 0, 100}},
-    {"oregon-thgn123n",
-     {OREGON_V3, 2, T | H, 23.7f, 45, 0, 0},
-     {SourceRecord::Oregon, 2, T | H, 237, 450, 0, 0, 0, 100}},
+     {OREGON_V3, 1, 0x3C, T, -10.2f, 0, 0, 0},
+     {SourceRecord::Oregon, 1, 0x3C, T, -102, 0, 0, 0, 0, 100}},
+    {"oregon-thgr228n",
+     {OREGON_V3, 3, 0xC4, T | H, 21.5f, 67, 0, 0},
+     {SourceRecord::Oregon, 3, 0xC4, T | H, 215, 670, 0, 0, 0, 100}},
     {"oregon-bthr918",
-     {OREGON_V3, 3, T | H | P, 21.5f, 60, 1013, 0},
-     {SourceRecord::Oregon, 3, T | H | P, 215, 600, 10130, 0, 0, 100}},
+     {OREGON_V3, 3, 0x7E, T | H | P, 21.5f, 60, 1013, 0},
+     {SourceRecord::Oregon, 3, 0x7E, T | H | P, 215, 600, 10130, 0, 0, 100}},
     {"lacrosse-type0",
-     {WS7000, 0, T, 21.5f, 0, 0, 0},
-     {SourceRecord::Lacrosse, 0, T, 215, 0, 0, 0, 0, 100}},
+     {WS7000, 0, 0, T, 21.5f, 0, 0, 0},
+     {SourceRecord::Lacrosse, 0, 0, T, 215, 0, 0, 0, 0, 100}},
     {"lacrosse-type1",
-     {WS7000, 3, T | H, -0.5f, 63.7f, 0, 0},
-     {SourceRecord::Lacrosse, 3, T | H, -5, 637, 0, 0, 0, 100}},
+     {WS7000, 3, 0, T | H, -0.5f, 63.7f, 0, 0},
+     {SourceRecord::Lacrosse, 3, 0, T | H, -5, 637, 0, 0, 0, 100}},
     {"lacrosse-type4",
-     {WS7000, 5, T | H | P, -10.2f, 42.5f, 1013.4f, 0},
-     {SourceRecord::Lacrosse, 5, T | H | P, -102, 425, 10134, 0, 0, 100}},
+     {WS7000, 5, 0, T | H | P, -10.2f, 42.5f, 1013.4f, 0},
+     {SourceRecord::Lacrosse, 5, 0, T | H | P, -102, 425, 10134, 0, 0, 100}},
     {"lacrosse-type5-lux",
-     {WS7000, 7, LX, 0, 0, 0, 1000},
-     {SourceRecord::LacrosseLux, 7, LX, 0, 0, 0, 1000, 0, 100}},
+     {WS7000, 7, 0, LX, 0, 0, 0, 1000},
+     {SourceRecord::LacrosseLux, 7, 0, LX, 0, 0, 0, 1000, 0, 100}},
     {"x10-bcd-millivolts",
-     {RFXMETER, 10, 0, 0, 0, 0, 0x2950},
-     {SourceRecord::X10, 10, MV, 0, 0, 0, 0, 2950, 100}},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x2950},
+     {SourceRecord::X10, 10, 0, MV, 0, 0, 0, 0, 2950, 100}},
     {"x10-zero-millivolts",
-     {RFXMETER, 0, 0, 0, 0, 0, 0x0000},
-     {SourceRecord::X10, 0, MV, 0, 0, 0, 0, 0, 100}},
+     {RFXMETER, 0, 0, 0, 0, 0, 0, 0x0000},
+     {SourceRecord::X10, 0, 0, MV, 0, 0, 0, 0, 0, 100}},
     {"x10-max-bcd",
-     {RFXMETER, 255, 0, 0, 0, 0, 0x9999},
-     {SourceRecord::X10, 255, MV, 0, 0, 0, 0, 9999, 100}},
+     {RFXMETER, 255, 0, 0, 0, 0, 0, 0x9999},
+     {SourceRecord::X10, 255, 0, MV, 0, 0, 0, 0, 9999, 100}},
     {"x10-hex-hundreds-nibble",
-     {RFXMETER, 10, 0, 0, 0, 0, 0x2A50},
-     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 100}},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x2A50},
+     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 0, 100}},
     {"x10-hex-units-nibble",
-     {RFXMETER, 10, 0, 0, 0, 0, 0x295A},
-     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 100}},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x295A},
+     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 0, 100}},
     {"x10-above-9999",
-     {RFXMETER, 10, 0, 0, 0, 0, 0x10000},
-     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 100}},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x10000},
+     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 0, 100}},
 };
 
 // @req FUNC-DECODE-006
@@ -208,21 +213,21 @@ struct UpdateCase {
 // The whole record is overwritten: fields absent from the second frame clear
 static const UpdateCase updateCases[] = {
     {"oregon-device-change",
-     {OREGON_V3, 1, T | H | P, 21.5f, 60, 1013, 0},
-     {OREGON_V3, 1, T, -10.2f, 0, 0, 0},
-     {SourceRecord::Oregon, 1, T, -102, 0, 0, 0, 0, 40}},
+     {OREGON_V3, 1, 0x3C, T | H | P, 21.5f, 60, 1013, 0},
+     {OREGON_V3, 1, 0x3C, T, -10.2f, 0, 0, 0},
+     {SourceRecord::Oregon, 1, 0x3C, T, -102, 0, 0, 0, 0, 40}},
     {"lacrosse-new-values",
-     {WS7000, 3, T | H, 21.5f, 63.7f, 0, 0},
-     {WS7000, 3, T | H, 22.0f, 50, 0, 0},
-     {SourceRecord::Lacrosse, 3, T | H, 220, 500, 0, 0, 0, 40}},
+     {WS7000, 3, 0, T | H, 21.5f, 63.7f, 0, 0},
+     {WS7000, 3, 0, T | H, 22.0f, 50, 0, 0},
+     {SourceRecord::Lacrosse, 3, 0, T | H, 220, 500, 0, 0, 0, 40}},
     {"lux-new-value",
-     {WS7000, 3, LX, 0, 0, 0, 1000},
-     {WS7000, 3, LX, 0, 0, 0, 12},
-     {SourceRecord::LacrosseLux, 3, LX, 0, 0, 0, 12, 0, 40}},
+     {WS7000, 3, 0, LX, 0, 0, 0, 1000},
+     {WS7000, 3, 0, LX, 0, 0, 0, 12},
+     {SourceRecord::LacrosseLux, 3, 0, LX, 0, 0, 0, 12, 0, 40}},
     {"x10-value-loses-field",
-     {RFXMETER, 10, 0, 0, 0, 0, 0x2950},
-     {RFXMETER, 10, 0, 0, 0, 0, 0x2A50},
-     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 40}},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x2950},
+     {RFXMETER, 10, 0, 0, 0, 0, 0, 0x2A50},
+     {SourceRecord::X10, 10, 0, 0, 0, 0, 0, 0, 0, 40}},
 };
 
 // @req FUNC-DECODE-006
@@ -230,19 +235,19 @@ void SourceTable_updates_a_known_source_in_place() {
   for (const UpdateCase &c : updateCases) {
     // Given
     SourceTable table;
-    transmit(table, {WS7000, 6, T, 5.0f, 0, 0, 0}, 10);
+    transmit(table, {WS7000, 6, 0, T, 5.0f, 0, 0, 0}, 10);
     transmit(table, c.first, 20);
-    transmit(table, {RFXMETER, 99, 0, 0, 0, 0, 0x3300}, 30);
+    transmit(table, {RFXMETER, 99, 0, 0, 0, 0, 0, 0x3300}, 30);
 
     // When
     transmit(table, c.second, 40);
 
     // Then
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(3, table.Count(), c.id);
-    assertRecord(c.id, {SourceRecord::Lacrosse, 6, T, 50, 0, 0, 0, 0, 10},
+    assertRecord(c.id, {SourceRecord::Lacrosse, 6, 0, T, 50, 0, 0, 0, 0, 10},
                  table.At(0));
     assertRecord(c.id, c.expected, table.At(1));
-    assertRecord(c.id, {SourceRecord::X10, 99, MV, 0, 0, 0, 0, 3300, 30},
+    assertRecord(c.id, {SourceRecord::X10, 99, 0, MV, 0, 0, 0, 0, 3300, 30},
                  table.At(2));
   }
 }
@@ -251,28 +256,42 @@ struct DistinctCase {
   const char *id;
   Transmission first, second;
   SourceRecord::Kind firstKind, secondKind;
+  uint8_t firstCode, secondCode;
 };
 
 static const DistinctCase distinctCases[] = {
     {"lacrosse-environment-and-lux-same-address",
-     {WS7000, 4, T | H | P, 21.5f, 50, 1013, 0},
-     {WS7000, 4, LX, 0, 0, 0, 1000},
+     {WS7000, 4, 0, T | H | P, 21.5f, 50, 1013, 0},
+     {WS7000, 4, 0, LX, 0, 0, 0, 1000},
      SourceRecord::Lacrosse,
-     SourceRecord::LacrosseLux},
+     SourceRecord::LacrosseLux,
+     0,
+     0},
     {"oregon-and-lacrosse-same-id",
-     {OREGON_V3, 1, T, 21.5f, 0, 0, 0},
-     {WS7000, 1, T, 21.5f, 0, 0, 0},
+     {OREGON_V3, 1, 0x3C, T, 21.5f, 0, 0, 0},
+     {WS7000, 1, 0, T, 21.5f, 0, 0, 0},
      SourceRecord::Oregon,
-     SourceRecord::Lacrosse},
-    {"lacrosse-and-x10-same-id",
-     {WS7000, 1, T, 21.5f, 0, 0, 0},
-     {RFXMETER, 1, 0, 0, 0, 0, 0x2950},
      SourceRecord::Lacrosse,
-     SourceRecord::X10},
+     0x3C,
+     0},
+    {"lacrosse-and-x10-same-id",
+     {WS7000, 1, 0, T, 21.5f, 0, 0, 0},
+     {RFXMETER, 1, 0, 0, 0, 0, 0, 0x2950},
+     SourceRecord::Lacrosse,
+     SourceRecord::X10,
+     0,
+     0},
+    {"oregon-same-channel-other-rolling-code",
+     {OREGON_V3, 2, 0xB8, T, 21.5f, 0, 0, 0},
+     {OREGON_V3, 2, 0x36, T, 21.5f, 0, 0, 0},
+     SourceRecord::Oregon,
+     SourceRecord::Oregon,
+     0xB8,
+     0x36},
 };
 
 // @req FUNC-DECODE-006
-void SourceTable_keeps_same_id_of_other_kind_as_another_source() {
+void SourceTable_keeps_other_kind_or_code_as_another_source() {
   for (const DistinctCase &c : distinctCases) {
     // Given
     SourceTable table;
@@ -284,8 +303,10 @@ void SourceTable_keeps_same_id_of_other_kind_as_another_source() {
     // Then
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(2, table.Count(), c.id);
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(c.firstKind, table.At(0).kind, c.id);
+    TEST_ASSERT_EQUAL_HEX8_MESSAGE(c.firstCode, table.At(0).code, c.id);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(10, table.At(0).lastSeenSeconds, c.id);
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(c.secondKind, table.At(1).kind, c.id);
+    TEST_ASSERT_EQUAL_HEX8_MESSAGE(c.secondCode, table.At(1).code, c.id);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(20, table.At(1).lastSeenSeconds, c.id);
   }
 }
@@ -294,16 +315,19 @@ static const int8_t NONE = -1;
 
 struct FullCase {
   const char *id;
-  uint32_t seen[6];  // time each X10 source (address index + 1) is sent at
-  int8_t refreshed;  // index sent again at t=400 before the 7th source
+  uint32_t seen[8];  // time each X10 source (address index + 1) is sent at
+  int8_t refreshed;  // index sent again at t=400 before the 9th source
   uint8_t replaced;
 };
 
 static const FullCase fullCases[] = {
-    {"oldest-first", {100, 101, 102, 103, 104, 105}, NONE, 0},
-    {"oldest-in-middle", {105, 104, 100, 101, 102, 103}, NONE, 2},
-    {"oldest-last", {105, 104, 103, 102, 101, 100}, NONE, 5},
-    {"oldest-refreshed-then-next-oldest", {100, 101, 102, 103, 104, 105}, 0, 1},
+    {"oldest-first", {100, 101, 102, 103, 104, 105, 106, 107}, NONE, 0},
+    {"oldest-in-middle", {107, 106, 100, 101, 102, 103, 104, 105}, NONE, 2},
+    {"oldest-last", {107, 106, 105, 104, 103, 102, 101, 100}, NONE, 7},
+    {"oldest-refreshed-then-next-oldest",
+     {100, 101, 102, 103, 104, 105, 106, 107},
+     0,
+     1},
 };
 
 // @req FUNC-DECODE-006
@@ -311,31 +335,34 @@ void SourceTable_replaces_least_recently_seen_source_when_full() {
   for (const FullCase &c : fullCases) {
     // Given
     SourceTable table;
-    uint32_t seen[6];
-    for (uint8_t i = 0; i < 6; i++) {
+    uint32_t seen[8];
+    for (uint8_t i = 0; i < 8; i++) {
       seen[i] = c.seen[i];
-      transmit(table, {RFXMETER, uint8_t(i + 1), 0, 0, 0, 0, 0x3300}, seen[i]);
+      transmit(table, {RFXMETER, uint8_t(i + 1), 0, 0, 0, 0, 0, 0x3300},
+               seen[i]);
     }
     if (c.refreshed != NONE) {
       seen[c.refreshed] = 400;
-      transmit(table, {RFXMETER, uint8_t(c.refreshed + 1), 0, 0, 0, 0, 0x3300},
+      transmit(table,
+               {RFXMETER, uint8_t(c.refreshed + 1), 0, 0, 0, 0, 0, 0x3300},
                400);
     }
 
     // When
-    transmit(table, {OREGON_V3, 2, T, 21.5f, 0, 0, 0}, 500);
+    transmit(table, {OREGON_V3, 2, 0x3C, T, 21.5f, 0, 0, 0}, 500);
 
     // Then
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(6, table.Count(), c.id);
-    for (uint8_t i = 0; i < 6; i++) {
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(8, table.Count(), c.id);
+    for (uint8_t i = 0; i < 8; i++) {
       if (i == c.replaced) {
-        assertRecord(c.id, {SourceRecord::Oregon, 2, T, 215, 0, 0, 0, 0, 500},
+        assertRecord(c.id,
+                     {SourceRecord::Oregon, 2, 0x3C, T, 215, 0, 0, 0, 0, 500},
                      table.At(i));
       } else {
-        assertRecord(
-            c.id,
-            {SourceRecord::X10, uint8_t(i + 1), MV, 0, 0, 0, 0, 3300, seen[i]},
-            table.At(i));
+        assertRecord(c.id,
+                     {SourceRecord::X10, uint8_t(i + 1), 0, MV, 0, 0, 0, 0,
+                      3300, seen[i]},
+                     table.At(i));
       }
     }
   }
@@ -351,7 +378,7 @@ int main(int, char **) {
   RUN_TEST(SourceTable_starts_empty);
   RUN_TEST(SourceTable_maps_each_decoded_frame_to_a_record);
   RUN_TEST(SourceTable_updates_a_known_source_in_place);
-  RUN_TEST(SourceTable_keeps_same_id_of_other_kind_as_another_source);
+  RUN_TEST(SourceTable_keeps_other_kind_or_code_as_another_source);
   RUN_TEST(SourceTable_replaces_least_recently_seen_source_when_full);
   return UNITY_END();
 }
