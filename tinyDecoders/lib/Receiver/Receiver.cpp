@@ -30,14 +30,17 @@ bool Receiver::Receive() {
   while (hal->PopPulse(high, durationUs)) {
     if (x10.Feed(high, durationUs)) {
       sources.Update(x10, now);
+      WriteRflink(hal, x10);
       decoded = true;
     }
     if (lacrosse.Feed(high, durationUs)) {
       sources.Update(lacrosse, now);
+      WriteRflink(hal, lacrosse);
       decoded = true;
     }
     if (oregon.Feed(high, durationUs)) {
       sources.Update(oregon, now);
+      WriteRflink(hal, oregon);
       decoded = true;
     }
   }

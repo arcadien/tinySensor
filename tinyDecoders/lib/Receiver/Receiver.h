@@ -5,13 +5,39 @@
 #include <LacrosseDecoder.h>
 #include <OregonDecoder.h>
 #include <ReceiverHal.h>
+#include <RflinkFormatter.h>
 #include <SourceTable.h>
 #include <X10Decoder.h>
+
+// Writes one RFLink line per decoded frame with a wrapping counter
+// (FUNC-DECODE-009)
+template <bool HasLineOutput>
+class RflinkOutput {
+ protected:
+  template <class Decoder>
+  void WriteRflink(ReceiverHal *hal, const Decoder &decoder) {
+    char line[RflinkLineSize];
+    FormatRflink(decoder, lineCounter++, line);
+    hal->WriteLine(line);
+  }
+
+ private:
+  uint8_t lineCounter = 0;
+};
+
+// No line output: empty base, so neither the counter nor the formatter cost
+// RAM or flash
+template <>
+class RflinkOutput<false> {
+ protected:
+  template <class Decoder>
+  void WriteRflink(ReceiverHal *, const Decoder &) {}
+};
 
 // Decodes received frames and shows one page per source, cycling every 4 s
 // (FUNC-DECODE-007). Draws at most one character per Poll so the pulse
 // buffer is drained often.
-class Receiver {
+class Receiver : private RflinkOutput<ReceiverHal::HasLineOutput> {
  public:
   explicit Receiver(ReceiverHal *hal);
   void Poll();
