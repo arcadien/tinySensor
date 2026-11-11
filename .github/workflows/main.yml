@@ -86,7 +86,8 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # 433 MHz receiver firmware; check_size.py fails the build past 384 B of RAM
+  # 433 MHz receiver firmware (attiny84a, promicro); check_size.py fails the
+  # attiny84a build past 384 B of RAM
   build-tinydecoders:
     name: Build tinyDecoders
     runs-on: ubuntu-latest
@@ -105,14 +106,25 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Build firmware
-        run: pio run -d tinyDecoders -e attiny84a
-      - name: Upload firmware artifact
+        run: |
+          pio run -d tinyDecoders -e attiny84a
+          pio run -d tinyDecoders -e promicro
+      - name: Upload attiny84a firmware artifact
         uses: actions/upload-artifact@v7
         with:
           name: firmware-tinydecoders
           path: |
             tinyDecoders/.pio/build/attiny84a/firmware.hex
             tinyDecoders/.pio/build/attiny84a/firmware.elf
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload promicro firmware artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-tinydecoders-promicro
+          path: |
+            tinyDecoders/.pio/build/promicro/firmware.hex
+            tinyDecoders/.pio/build/promicro/firmware.elf
           if-no-files-found: error
           retention-days: 30
 
