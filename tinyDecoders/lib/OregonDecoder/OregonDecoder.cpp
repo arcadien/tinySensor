@@ -1,22 +1,18 @@
 #include "OregonDecoder.h"
 
-static const uint16_t ShortUs = 512;
-static const uint16_t LongUs = 1024;
-static const uint8_t MinSyncOnes = 16;
-static const uint16_t Thn132nId = 0xEC40;
-static const uint16_t Thgn123nId = 0x1D20;
+// RFLink OregonDecoderV2 windows (Plugin_048.c lines 322-324)
+static const uint16_t MinShortUs = 150;
+static const uint16_t MinLongUs = 600;
+static const uint16_t MaxLongUs = 1199;
+static const uint8_t MinSyncOnes = 12;
+static const uint16_t Thn132nId = 0xEA4C;
+static const uint16_t Thgr228nId = 0x1A2D;
+static const uint16_t Thgr918Id = 0x1A3D;
 static const uint16_t Bthr918Id = 0x5A5D;
 
-// Nominal duration +/- 30 % rounded (512 -> 358..666), bounds included
-static bool Within(uint16_t durationUs, uint16_t nominalUs) {
-  uint16_t tolerance = ((uint32_t)nominalUs * 3 + 5) / 10;
-  return durationUs >= nominalUs - tolerance &&
-         durationUs <= nominalUs + tolerance;
-}
-
 bool OregonDecoder::Feed(bool high, uint16_t durationUs) {
-  bool isLong = Within(durationUs, LongUs);
-  bool isShort = Within(durationUs, ShortUs);
+  bool isLong = durationUs >= MinLongUs && durationUs <= MaxLongUs;
+  bool isShort = durationUs >= MinShortUs && durationUs < MinLongUs;
   bool sameLevel = high == level;
   switch (state) {
     case AfterBit:
@@ -73,24 +69,20 @@ bool OregonDecoder::ShiftIn(bool one) {
     }
     if (syncOnes < MinSyncOnes)
       return Restart(false);
-    // Kept from the last sync one: b0 starts there for 0x1D20
+    // This zero is the first bit of b0, whose low nibble is the sync 0xA
     for (uint8_t &byte : bytes) byte = 0;
     frameBits = 0;
-    Store(true);
   }
   Store(one);
-  if (frameBits == 0 && bitCount == 17) {
-    if (Id() == Thgn123nId) {
-      frameBits = 72;
-    } else {
-      // Other IDs start at the first zero: drop the last sync one
-      for (uint8_t i = 0; i < 3; i++)
-        bytes[i] = (bytes[i] >> 1) | (bytes[i + 1] << 7);
-      bitCount--;
-      frameBits = Id() == Thn132nId ? 60 : Id() == Bthr918Id ? 88 : 0;
-      if (frameBits == 0)
-        return Restart(one);
-    }
+  if (bitCount == 16) {
+    // Bits up to the last checksum nibble (checksum at nibble 13, 16 or 20)
+    uint16_t id = Id();
+    frameBits = id == Thn132nId                       ? 60
+                : id == Thgr228nId || id == Thgr918Id ? 72
+                : id == Bthr918Id                     ? 88
+                                                      : 0;
+    if (frameBits == 0)
+      return Restart(one);
   }
   if (bitCount < frameBits || frameBits == 0)
     return false;
@@ -130,17 +122,15 @@ void OregonDecoder::Publish() {
   // Channels 1, 2 and 3 are sent as bits 0, 1 and 2
   uint8_t channelBits = bytes[2] >> 4;
   channel = channelBits == 4 ? 3 : channelBits <= 2 ? channelBits : 0;
-  rollingCode = ((bytes[2] & 0x0F) << 4) | (bytes[3] >> 4);
-  batteryLow = bytes[3] & 0x04;
+  rollingCode = bytes[3];
+  batteryLow = (bytes[4] & 0x0C) != 0;
   int16_t temperature =
-      (bytes[5] >> 4) * 100 + (bytes[4] & 0x0F) * 10 + (bytes[4] >> 4);
-  temperatureTenths = bytes[5] & 0x08 ? -temperature : temperature;
+      (bytes[5] >> 4) * 100 + (bytes[5] & 0x0F) * 10 + (bytes[4] >> 4);
+  temperatureTenths = bytes[6] & 0x08 ? -temperature : temperature;
   humidityPercent = 0;
   pressureHpa = 0;
   if (deviceId != Thn132nId)
-    humidityPercent = (bytes[6] & 0x0F) * 10 + (bytes[6] >> 4);
+    humidityPercent = (bytes[7] & 0x0F) * 10 + (bytes[6] >> 4);
   if (deviceId == Bthr918Id)
-    pressureHpa =
-        (((bytes[8] & 0x0F) << 8) | (bytes[8] & 0xF0) | (bytes[7] & 0x0F)) +
-        795;
+    pressureHpa = bytes[8] + 795;
 }

@@ -2,9 +2,10 @@
 
 #include <stdint.h>
 
-// Rebuilds Oregon Scientific v3 frames from radio pulses (FUNC-DECODE-004)
-// and exposes their measurements (FUNC-DECODE-005).
-// Pure logic: fed with (level, duration) pulses, no hardware access.
+// Rebuilds Oregon Scientific v2.1 frames (RFLink Plugin_048.c layout) from
+// radio pulses (FUNC-DECODE-004) and exposes their measurements
+// (FUNC-DECODE-005). Pure logic: fed with (level, duration) pulses, no hardware
+// access.
 class OregonDecoder {
  public:
   // Returns true when this pulse completes a valid frame
@@ -18,7 +19,7 @@ class OregonDecoder {
   uint16_t PressureHpa() const { return pressureHpa; }
 
  private:
-  // Pulses expected around the 1024 us middle pulse carrying each bit
+  // Pulses expected around the long middle pulse carrying each bit
   enum State : uint8_t {
     Idle,             // waiting for a high long pulse (a sync one)
     AfterBit,         // separator: one long or a first short, opposite level
