@@ -28,10 +28,10 @@
 **Description:** Every `Send()` call first transmits three `0xFF` preamble bytes (24 one-bits total via `SendData`), then the 11-byte message payload, then one `0x00` postamble byte (8 zero-bits, equivalent to two zero nibbles).
 
 ### FUNC-OREGON-005
-**Title:** Positive temperature encoded as decimal, unit, and dozen nibbles in bytes 4–5
+**Title:** Positive temperature encoded as tenths, units and tens nibbles 9–11 in bytes 4–5
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 4, and the dozens digit into the high nibble of byte 5. The low nibble of byte 5 is reserved for the sign flag.
+**Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 5 and the tens digit into the high nibble of byte 5 (frame nibbles 9, 10, 11 counting the sync nibble as 0: Oregon v2.1 layout as decoded by RFLink `Plugins/Plugin_048.c` (couin3) lines 733-734). The low nibble of byte 4 is the flags nibble (FUNC-OREGON-011).
 
 ### FUNC-OREGON-006
 **Title:** Negative temperature sets sign bit in byte 5 and encodes absolute value
