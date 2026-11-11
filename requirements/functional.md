@@ -64,10 +64,10 @@
 **Description:** `SetRollingCode()` writes the rolling code byte as byte 3 (frame nibbles 6–7, RFLink `osdata[3]`, RFLink `Plugins/Plugin_048.c` (couin3) line 711). The low nibble of byte 2 (last device ID nibble) stays 0. Any value 0x00–0xFF is accepted.
 
 ### FUNC-OREGON-011
-**Title:** Battery-low flag is bit 2 of byte 3; cleared when battery is OK
+**Title:** Battery-low flag is bit 2 of byte 4; cleared when battery is OK
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetBatteryLow(true)` sets bit 2 of byte 3 (`message[3] |= 0x04`). `SetBatteryLow(false)` clears bit 2 (`message[3] &= 0xFB`). All other bits of byte 3 are unaffected.
+**Description:** `SetBatteryLow(true)` sets bit 2 of byte 4 (`message[4] |= 0x04`, flags nibble 8, read by RFLink `Plugins/Plugin_048.c` (couin3) line 714). `SetBatteryLow(false)` clears it (`message[4] &= 0xFB`). All other bits of byte 4 are unaffected.
 
 ### FUNC-OREGON-012
 **Title:** Device ID auto-selected at Send() based on which fields are populated
