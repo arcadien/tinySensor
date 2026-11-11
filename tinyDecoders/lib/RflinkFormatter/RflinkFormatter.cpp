@@ -2,7 +2,8 @@
 
 namespace {
 
-const uint16_t OregonThgn123n = 0x1D20;
+// The decoder only accepts EA4C, 1A2D, 1A3D and 5A5D
+const uint16_t OregonThn132n = 0xEA4C;
 const uint16_t OregonBthr918 = 0x5A5D;
 
 const uint8_t LacrosseHumidityType = 1;
@@ -112,13 +113,13 @@ uint8_t FormatRflink(const LacrosseDecoder &decoder, uint8_t counter,
 uint8_t FormatRflink(const OregonDecoder &decoder, uint8_t counter,
                      char line[RflinkLineSize]) {
   uint16_t device = decoder.DeviceId();
-  const char *name = device == OregonThgn123n  ? "Oregon TempHygro"
+  const char *name = device == OregonThn132n   ? "Oregon Temp"
                      : device == OregonBthr918 ? "Oregon BTHR"
-                                               : "Oregon Temp";
+                                               : "Oregon TempHygro";
   Line out(line, counter, name);
   out.Id((decoder.RollingCode() << 8) | decoder.Channel());
   out.Temperature(decoder.TemperatureTenths());
-  if (device == OregonThgn123n || device == OregonBthr918)
+  if (device != OregonThn132n)
     out.DecimalField("HUM=", decoder.HumidityPercent());
   if (device == OregonBthr918)
     out.HexField("BARO=", decoder.PressureHpa());
