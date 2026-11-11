@@ -1,6 +1,7 @@
 #include "SourceTable.h"
 
-static const uint16_t OregonThgn123n = 0x1D20;
+// Decoded IDs: EA4C, 1A2D, 1A3D, 5A5D; all but EA4C carry humidity
+static const uint16_t OregonThn132n = 0xEA4C;
 static const uint16_t OregonBthr918 = 0x5A5D;
 
 static const uint8_t LacrosseHumidityType = 1;
@@ -12,6 +13,7 @@ static const uint32_t MaxBcdValue = 0x9999;
 void SourceTable::Update(const OregonDecoder &decoder, uint32_t nowSeconds) {
   SourceRecord record = {SourceRecord::Oregon,
                          decoder.Channel(),
+                         decoder.RollingCode(),
                          SourceRecord::Temperature,
                          decoder.TemperatureTenths(),
                          0,
@@ -20,7 +22,7 @@ void SourceTable::Update(const OregonDecoder &decoder, uint32_t nowSeconds) {
                          0,
                          nowSeconds};
   uint16_t device = decoder.DeviceId();
-  if (device == OregonThgn123n || device == OregonBthr918) {
+  if (device != OregonThn132n) {
     record.fields |= SourceRecord::Humidity;
     record.humidityTenths = decoder.HumidityPercent() * 10;
   }
@@ -32,8 +34,16 @@ void SourceTable::Update(const OregonDecoder &decoder, uint32_t nowSeconds) {
 }
 
 void SourceTable::Update(const LacrosseDecoder &decoder, uint32_t nowSeconds) {
-  SourceRecord record = {
-      SourceRecord::Lacrosse, decoder.Address(), 0, 0, 0, 0, 0, 0, nowSeconds};
+  SourceRecord record = {SourceRecord::Lacrosse,
+                         decoder.Address(),
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         nowSeconds};
   uint8_t type = decoder.Type();
   if (type == LacrosseLuxType) {
     record.kind = SourceRecord::LacrosseLux;
@@ -56,8 +66,8 @@ void SourceTable::Update(const LacrosseDecoder &decoder, uint32_t nowSeconds) {
 
 // The X10 value carries millivolts as 4 BCD digits; anything else is no field
 void SourceTable::Update(const X10Decoder &decoder, uint32_t nowSeconds) {
-  SourceRecord record = {SourceRecord::X10, decoder.Address(), 0, 0, 0, 0, 0, 0,
-                         nowSeconds};
+  SourceRecord record = {
+      SourceRecord::X10, decoder.Address(), 0, 0, 0, 0, 0, 0, 0, nowSeconds};
   uint32_t bcd = decoder.Value();
   bool valid = bcd <= MaxBcdValue;
   uint16_t millivolts = 0;
@@ -83,7 +93,8 @@ void SourceTable::Store(const SourceRecord &record) {
 // The source's own slot, else the next free one, else the least recently seen
 uint8_t SourceTable::SlotFor(const SourceRecord &record) const {
   for (uint8_t i = 0; i < count; i++) {
-    if (records[i].kind == record.kind && records[i].id == record.id)
+    if (records[i].kind == record.kind && records[i].id == record.id &&
+        records[i].code == record.code)
       return i;
   }
   if (count < kCapacity)

@@ -20,6 +20,7 @@ struct SourceRecord {
 
   Kind kind;
   uint8_t id;
+  uint8_t code;  // Oregon rolling code, 0 for the other kinds
   uint8_t fields;
   int16_t temperatureTenths;
   uint16_t humidityTenths;
@@ -29,11 +30,15 @@ struct SourceRecord {
   uint32_t lastSeenSeconds;
 };
 
-// Keeps the last record of each source (kind, id), in first-seen order.
+// Keeps the last record of each source (kind, id, code), in first-seen order.
 // When full, the least recently seen source is replaced.
 class SourceTable {
  public:
-  static const uint8_t kCapacity = 6;
+#ifdef __AVR_ATmega32U4__
+  static const uint8_t kCapacity = 16;
+#else
+  static const uint8_t kCapacity = 8;
+#endif
 
   // Each called after that decoder's Feed returned true
   void Update(const OregonDecoder &decoder, uint32_t nowSeconds);
