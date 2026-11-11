@@ -34,10 +34,10 @@
 **Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 5 and the tens digit into the high nibble of byte 5 (frame nibbles 9, 10, 11 counting the sync nibble as 0: Oregon v2.1 layout as decoded by RFLink `Plugins/Plugin_048.c` (couin3) lines 733-734). The low nibble of byte 4 is the flags nibble (FUNC-OREGON-011).
 
 ### FUNC-OREGON-006
-**Title:** Negative temperature sets sign bit in byte 5 and encodes absolute value
+**Title:** Negative temperature sets bit 3 of byte 6 and encodes the absolute value
 **Status:** validated
 **Dependencies:** FUNC-OREGON-005
-**Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 5 (`0x08`) as a negative sign flag, then encodes the absolute value using the same decimal/unit/dozen layout as for positive temperatures.
+**Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 6 (`0x08`, low nibble of byte 6 = frame nibble 12, RFLink `Plugins/Plugin_048.c` (couin3) line 734) as the negative sign flag, then encodes the absolute value with the FUNC-OREGON-005 layout.
 
 ### FUNC-OREGON-007
 **Title:** Humidity encoded in byte 6 with units and dozens nibbles swapped
