@@ -52,7 +52,8 @@ void Receiver::Compose(uint32_t now) {
   composedAt = now;
   if (sources.Count() == 0) {
     // A record without fields gives only its label and the right-aligned age
-    SourceRecord none = {};
+    // Not Oregon, so line 2 holds only the uptime (no rolling code)
+    SourceRecord none = {SourceRecord::X10};
     FormatPage(none, now, lines[0], lines[1]);
     memcpy(lines[0], "Ore Lac X       ", Columns);
     return;

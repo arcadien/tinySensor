@@ -21,6 +21,11 @@ static char *PutText(char *at, const char *text) {
   return at;
 }
 
+// Lowercase hex digit, computed: a digit table would cost 17 B of AVR RAM
+static char *PutHexDigit(char *at, uint8_t digit) {
+  return PutChar(at, digit < 10 ? '0' + digit : 'a' + digit - 10);
+}
+
 static char *PutNumber(char *at, uint32_t value) {
   uint8_t digits = 1;
   for (uint32_t rest = value / 10; rest; rest /= 10) digits++;
@@ -121,8 +126,13 @@ void FormatPage(const SourceRecord &record, uint32_t ageSeconds, char line1[17],
   PutRight(line1, label, PutLabel(label, record));
 
   Clear(line2);
+  at = line2;
   if (record.fields & SourceRecord::Pressure)
-    PutText(PutNumber(line2, RoundTenths(record.pressureTenths)), "hPa");
+    at = PutText(PutNumber(line2, RoundTenths(record.pressureTenths)), "hPa");
+  if (record.kind == SourceRecord::Oregon) {
+    at = PutChar(Separate(line2, at), 'r');
+    PutHexDigit(PutHexDigit(at, record.code >> 4), record.code & 0x0F);
+  }
   char age[4];
   PutRight(line2, age, PutAge(age, ageSeconds));
 }
