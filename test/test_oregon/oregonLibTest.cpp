@@ -342,7 +342,7 @@ static const PressureCase pressureCases[] = {
     {"offset-795-is-zero", 795, 0x00, 0x30},
     {"1005-cloudy", 1005, 0xD2, 0x20},
     {"1013-partly-cloudy", 1013, 0xDA, 0x60},
-    {"1025-sunny", 1025, 0xEE, 0xC0},
+    {"1025-sunny", 1025, 0xE6, 0xC0},
     {"1050-is-255", 1050, 0xFF, 0xC0},
     {"1200-clamped-to-255", 1200, 0xFF, 0xC0},
     {"700-clamped-to-0", 700, 0x00, 0x30},
