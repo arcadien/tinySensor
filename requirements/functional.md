@@ -58,10 +58,10 @@
 **Description:** `SetChannel()` accepts values 1, 2, or 3 and sets bit `(4 + channel - 1)` of byte 2, producing 0x10, 0x20, or 0x40 respectively. Any value outside the range 1–3 is silently ignored and the message byte is left unchanged.
 
 ### FUNC-OREGON-010
-**Title:** Rolling code (≤ 0xA5) stored across low nibble of byte 2 and high nibble of byte 3
+**Title:** Rolling code stored as byte 3
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetRollingCode()` writes the high nibble of the rolling code byte into the low nibble of byte 2 and the low nibble of the rolling code byte into the high nibble of byte 3. Values greater than `0xA5` are accepted without validation.
+**Description:** `SetRollingCode()` writes the rolling code byte as byte 3 (frame nibbles 6–7, RFLink `osdata[3]`, RFLink `Plugins/Plugin_048.c` (couin3) line 711). The low nibble of byte 2 (last device ID nibble) stays 0. Any value 0x00–0xFF is accepted.
 
 ### FUNC-OREGON-011
 **Title:** Battery-low flag is bit 2 of byte 3; cleared when battery is OK
