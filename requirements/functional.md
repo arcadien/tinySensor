@@ -82,10 +82,10 @@
 **Description:** The private `messageStatus` byte is initialised to 0. `SetTemperature()` sets bit 0, `SetHumidity()` sets bit 1, and `SetPressure()` sets bit 2. The field is readable via `GetMessageStatus()` and governs device-ID selection in `FinalizeMessage()`.
 
 ### FUNC-OREGON-014
-**Title:** Full frame byte sequence matches Oregon Scientific v3 reference decoding samples
+**Title:** Full frame byte sequence matches the Oregon v2.1 reference payloads decoded by RFLink
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, FUNC-OREGON-013
-**Description:** The 11-byte payload produced by `FinalizeMessage()` for known channel, rolling code, battery, temperature, humidity, and pressure inputs must match the reference hex strings from the Oregon Scientific v3 protocol document (e.g., `5A5D423448088209603054`, `1D20485448088200390000`, `1D2016B0091073002C0000`).
+**Description:** The 11-byte payload produced by `FinalizeMessage()` matches: THN132N channel 1, rolling code 0x3C, battery low, −10.2 °C gives `EA4C103C2410D803000000`; THGR228N channel 3, rolling code 0xC4, 21.5 °C, 67 % gives `1A2D40C450217006390000`; BTHR918 channel 3, rolling code 0x7E, battery low, 21.5 °C, 60 %, 1013 hPa gives `5A5D407E54210006DA605F`. Read with the RFLink `Plugins/Plugin_048.c` (couin3) field formulas and the 795 hPa offset (FUNC-OREGON-008), these payloads give back their inputs.
 
 ### FUNC-LACROSSE-001
 **Title:** Preamble is exactly 10 consecutive zero bits
