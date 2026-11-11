@@ -190,106 +190,180 @@ void Expect_messages_to_have_preamble_and_postamble() {
   actualEmptyMessageOrders = TestHal.GetOrders();
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actualEmptyMessageOrders, ordersCount);
 }
+/*
+ * Oregon v2.1 layout as decoded by RFLink Plugins/Plugin_048.c (couin3),
+ * nibble 2i being the low nibble of byte i (nibble 0 is the sync nibble 0xA):
+ *
+ * byte:      0    1    2    3    4     5      6      7      8      9    10
+ * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19][20 21]
+ *
+ * byte 0-1 : device ID, sync nibble included (EA4C, 1A2D, 5A5D)
+ * byte 2   : channel in the high nibble
+ * byte 3   : rolling code
+ * byte 4   : flags (bit 2 battery low) | temperature tenths << 4
+ * byte 5   : temperature units | tens << 4
+ * byte 6   : sign (bit 3) | humidity units << 4
+ * byte 7   : humidity tens (comfort nibble 0)
+ * byte 8   : pressure hPa - 795, clamped 0-255 (BTHR918)
+ * byte 9   : weather prediction (BTHR918)
+ * checksum : nibbles 13-14 (THN132N), byte 8 (THGR228N), byte 10 (BTHR918)
+ */
+struct TemperatureCase {
+  const char *id;
+  float temperature;
+  uint8_t byte4, byte5, byte6;
+};
+
+static const TemperatureCase positiveTemperatureCases[] = {
+    {"27.5", 27.5f, 0x50, 0x27, 0x00},
+    {"21.5", 21.5f, 0x50, 0x21, 0x00},
+    {"8.4-no-tens", 8.4f, 0x40, 0x08, 0x00},
+    {"zero", 0.0f, 0x00, 0x00, 0x00},
+};
+
 // @req FUNC-OREGON-005
-void Expect_right_positive_temperature_encoding()
+void Expect_right_positive_temperature_encoding() {
+  for (const TemperatureCase &c : positiveTemperatureCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    expected[4] = c.byte4;
+    expected[5] = c.byte5;
+    expected[6] = c.byte6;
 
-{
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetTemperature(27.5);
+    // When
+    oregonv3.SetTemperature(c.temperature);
 
-  // clang-format off
-  unsigned char byte4 = 5 << 4; // 0x50
-                byte4 |= 7;     // 0x57
-  unsigned char byte5 = 2 << 4; // 0x20
-  // clang-format on
-
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
-
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(expected, actualMessage,
-                                       OregonV3::MESSAGE_SIZE_IN_BYTES,
-                                       "Failed with positive temp. with dozen");
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
 }
+
+static const TemperatureCase negativeTemperatureCases[] = {
+    {"-27.5", -27.5f, 0x50, 0x27, 0x08},
+    {"-8.4-no-tens", -8.4f, 0x40, 0x08, 0x08},
+    {"-10.2", -10.2f, 0x20, 0x10, 0x08},
+    {"-0.5", -0.5f, 0x50, 0x00, 0x08},
+};
+
 // @req FUNC-OREGON-006
 void Expect_right_negative_temperature_encoding() {
-  {
-    // clang-format off
-    unsigned char byte4 = 5 << 4; // 0x50
-                  byte4 |= 7;     // 0x57
-    unsigned char byte5 = 2 << 4; // 0x20
-                  byte5 |= 0x08;  // 0x08 (negative temp)
-    // clang-format on
-
-    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
-
+  for (const TemperatureCase &c : negativeTemperatureCases) {
+    // Given
     OregonV3 oregonv3(&TestHal);
-    oregonv3.SetTemperature(-27.5);
-    const unsigned char *actualMessage = oregonv3.GetMessage();
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    expected[4] = c.byte4;
+    expected[5] = c.byte5;
+    expected[6] = c.byte6;
 
-    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
-        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-        "Failed with negative temp. with dozen");
-  }
-  {
-    // clang-format off
-    unsigned char byte4 = 4 << 4; // 0x40
-                  byte4 |= 8;     // 0x48
-    unsigned char byte5 = 0x00;   // 0x00
-                  byte5 |= 0x08;   // 0x08 (negative temp)
-    // clang-format on
+    // When
+    oregonv3.SetTemperature(c.temperature);
 
-    unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-        0, 0, 0, 0, byte4, byte5, 0, 0, 0, 0, 0};
-
-    OregonV3 oregonv3(&TestHal);
-    oregonv3.SetTemperature(-8.4);
-    const unsigned char *actualMessage = oregonv3.GetMessage();
-
-    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(
-        expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-        "Failed with negative temp without dozen");
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
   }
 }
-// @req FUNC-OREGON-008
-void Expect_right_pressure_encoding() {
-  const int actualPressureInHPa = 1200;
-  const int pressureScalingValue = 795;  // //OregonV3::PRESSURE_SCALING_VALUE;
-  uint16_t pressureValue =
-      (uint16_t)(actualPressureInHPa - pressureScalingValue);  // 405, 0x195
 
-  uint8_t byte7 = 0x05;
-  uint8_t byte8 = 0x91;
-  uint8_t byte9 = 0xC0;  // sunny
+struct SignAndHumidityCase {
+  const char *id;
+  bool humidityFirst;
+};
 
-  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0, 0, 0, 0, 0, 0, 0, byte7, byte8, byte9, 0};
+static const SignAndHumidityCase signAndHumidityCases[] = {
+    {"temperature-then-humidity", false},
+    {"humidity-then-temperature", true},
+};
 
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetPressure(actualPressureInHPa);
-  uint8_t actualMessage[OregonV3::MESSAGE_SIZE_IN_BYTES];
-  memcpy(&actualMessage, oregonv3.GetMessage(),
-         OregonV3::MESSAGE_SIZE_IN_BYTES);
+// @req FUNC-OREGON-006
+void Expect_negative_sign_to_share_byte_6_with_humidity_units() {
+  for (const SignAndHumidityCase &c : signAndHumidityCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    const uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {
+        0, 0, 0, 0, 0x20, 0x10, 0x78, 0x06, 0, 0, 0};
 
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage,
-                                       OregonV3::MESSAGE_SIZE_IN_BYTES,
-                                       "Failed with possible pressure value");
+    // When
+    if (c.humidityFirst) {
+      oregonv3.SetHumidity(67);
+      oregonv3.SetTemperature(-10.2f);
+    } else {
+      oregonv3.SetTemperature(-10.2f);
+      oregonv3.SetHumidity(67);
+    }
+
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
 }
+
+struct HumidityCase {
+  const char *id;
+  uint8_t humidity;
+  uint8_t byte6, byte7;
+};
+
+static const HumidityCase humidityCases[] = {
+    {"52", 52, 0x20, 0x05},       {"67", 67, 0x70, 0x06},
+    {"7-no-tens", 7, 0x70, 0x00}, {"zero", 0, 0x00, 0x00},
+    {"99", 99, 0x90, 0x09},
+};
+
 // @req FUNC-OREGON-007
 void Expect_right_humidity_encoding() {
-  uint8_t byte6 = 0x25;
+  for (const HumidityCase &c : humidityCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    expected[6] = c.byte6;
+    expected[7] = c.byte7;
 
-  uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0,     0, 0, 0, 0, 0,
-                                                    byte6, 0, 0, 0, 0};
+    // When
+    oregonv3.SetHumidity(c.humidity);
 
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetHumidity(52);
-  const uint8_t *actualMessage = oregonv3.GetMessage();
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
+}
 
-  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actualMessage,
-                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+struct PressureCase {
+  const char *id;
+  uint16_t pressure;
+  uint8_t byte8, byte9;
+};
+
+static const PressureCase pressureCases[] = {
+    // Old-firmware tinySensor on the bench: RFLink showed 975 hPa while the
+    // receiver captured byte 8 = 0xB4 in the same frame (FUNC-OREGON-008)
+    {"bench-old-firmware-975-rain", 975, 0xB4, 0x30},
+    {"offset-795-is-zero", 795, 0x00, 0x30},
+    {"1005-cloudy", 1005, 0xD2, 0x20},
+    {"1013-partly-cloudy", 1013, 0xDA, 0x60},
+    {"1025-sunny", 1025, 0xEE, 0xC0},
+    {"1050-is-255", 1050, 0xFF, 0xC0},
+    {"1200-clamped-to-255", 1200, 0xFF, 0xC0},
+    {"700-clamped-to-0", 700, 0x00, 0x30},
+};
+
+// @req FUNC-OREGON-008
+void Expect_right_pressure_encoding() {
+  for (const PressureCase &c : pressureCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    expected[8] = c.byte8;
+    expected[9] = c.byte9;
+
+    // When
+    oregonv3.SetPressure(c.pressure);
+
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
 }
 // @req FUNC-OREGON-009
 void Expect_right_channel_encoding() {
@@ -330,55 +404,73 @@ void Expect_right_channel_encoding() {
                                          given.label);
   }
 }
+struct RollingCodeCase {
+  const char *id;
+  uint8_t channel;
+  uint8_t rollingCode;
+  uint8_t byte2;
+};
+
+static const RollingCodeCase rollingCodeCases[] = {
+    {"0x85", 0, 0x85, 0x00},
+    {"0x00", 0, 0x00, 0x00},
+    {"0xFF-keeps-channel-3", 3, 0xFF, 0x40},
+};
+
 // @req FUNC-OREGON-010
 void Expect_right_rolling_code_encoding() {
-  //  byte:      0    1    2    3    4     5      6      7      8      9
-  // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-  //
-  // nibbles 5..6    : rolling code
+  for (const RollingCodeCase &c : rollingCodeCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    oregonv3.SetChannel(c.channel);
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    expected[2] = c.byte2;
+    expected[3] = c.rollingCode;
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{0, 0, 0x08, 0x50, 0,
-                                                          0, 0, 0,    0,    0};
+    // When
+    oregonv3.SetRollingCode(c.rollingCode);
 
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetRollingCode(0x85);
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actualMessage,
-                               OregonV3::MESSAGE_SIZE_IN_BYTES);
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
 }
+
+struct BatteryCase {
+  const char *id;
+  bool withTemperature;
+  bool batteryLow;
+  uint8_t byte4;
+};
+
+// Each case first sets the opposite flag, so the call under test changes it
+static const BatteryCase batteryCases[] = {
+    {"low-sets-bit-2", false, true, 0x04},
+    {"ok-clears-bit-2", false, false, 0x00},
+    {"low-keeps-temperature-tenths", true, true, 0x54},
+    {"ok-keeps-temperature-tenths", true, false, 0x50},
+};
+
 // @req FUNC-OREGON-011
-void Expect_right_battery_ok_encoding() {
-  //  byte:      0    1    2    3    4     5      6      7      8      9
-  // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-  //                            4
-  // nibble 7    : low batt
+void Expect_right_battery_flag_encoding() {
+  for (const BatteryCase &c : batteryCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    uint8_t expected[OregonV3::MESSAGE_SIZE_IN_BYTES] = {0};
+    if (c.withTemperature) {
+      oregonv3.SetTemperature(27.5f);
+      expected[5] = 0x27;
+    }
+    oregonv3.SetBatteryLow(!c.batteryLow);
+    expected[4] = c.byte4;
 
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetBatteryLow(false);
+    // When
+    oregonv3.SetBatteryLow(c.batteryLow);
 
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  uint8_t thirdByte = actualMessage[3];
-
-  TEST_ASSERT_EQUAL_HEX8_MESSAGE(0b00000000, (thirdByte & 0x00000100),
-                                 "Testing battery ok flag");
-}
-// @req FUNC-OREGON-011
-void Expect_right_low_battery_encoding() {
-  //  byte:      0    1    2    3    4     5      6      7      8      9
-  // nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-  //                            4
-  // nibble 7    : low batt
-
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetBatteryLow(true);
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  uint8_t thirdByte = actualMessage[3];
-
-  TEST_ASSERT_EQUAL_HEX8_MESSAGE(0x04, (thirdByte & 0x04),
-                                 "Testing battery low flag");
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(),
+                                         OregonV3::MESSAGE_SIZE_IN_BYTES, c.id);
+  }
 }
 // @req FUNC-OREGON-013
 void Expect_temperature_set_to_change_message_status() {
@@ -426,185 +518,84 @@ void Expect_all_values_set_to_change_message_status() {
   messageStatus = oregonv3.GetMessageStatus();
   TEST_ASSERT_TRUE((messageStatus & 0x7) == 0x7);
 }
+enum Field : uint8_t { TEMP = 1, HUM = 2, PRES = 4 };
+
+struct DeviceCase {
+  const char *id;
+  uint8_t fields;
+  uint8_t byte0, byte1;
+};
+
+static const DeviceCase deviceCases[] = {
+    {"thn132n-temperature", TEMP, 0xEA, 0x4C},
+    {"thgr228n-temperature-humidity", TEMP | HUM, 0x1A, 0x2D},
+    {"bthr918-temperature-humidity-pressure", TEMP | HUM | PRES, 0x5A, 0x5D},
+};
+
 // @req FUNC-OREGON-012
-void Expect_temperature_set_to_change_sensor_type() {
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetTemperature(10.f);
+void Expect_fields_set_to_select_device_id_with_sync_nibble() {
+  for (const DeviceCase &c : deviceCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    if (c.fields & TEMP)
+      oregonv3.SetTemperature(10.f);
+    if (c.fields & HUM)
+      oregonv3.SetHumidity(50);
+    if (c.fields & PRES)
+      oregonv3.SetPressure(1000);
+    const uint8_t expected[2] = {c.byte0, c.byte1};
 
-  static const uint16_t THN132 = 0xEC40;
+    // When
+    oregonv3.FinalizeMessage();
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      (THN132 >> 8), (THN132 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-  oregonv3.FinalizeMessage();
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
-      expected, actualMessage, 2,
-      "Expect THN132 (0xEC40) with temperature only");
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, oregonv3.GetMessage(), 2,
+                                         c.id);
+  }
 }
-// @req FUNC-OREGON-012
-void Expect_humidity_set_to_change_sensor_type() {
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetHumidity(10.f);
-  static const uint16_t THGN123N = 0x1D20;
 
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      (THGN123N >> 8), (THGN123N & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
+struct ReferenceCase {
+  const char *id;
+  uint8_t channel, rollingCode;
+  bool batteryLow;
+  uint8_t fields;
+  float temperature;
+  uint8_t humidity;
+  uint16_t pressure;
+  const char *payload;
+};
 
-  oregonv3.FinalizeMessage();
-  const unsigned char *actualMessage = oregonv3.GetMessage();
+static const ReferenceCase referenceCases[] = {
+    {"thn132n", 1, 0x3C, true, TEMP, -10.2f, 0, 0, "EA4C103C2410D803000000"},
+    {"thgr228n", 3, 0xC4, false, TEMP | HUM, 21.5f, 67, 0,
+     "1A2D40C450217006390000"},
+    {"bthr918", 3, 0x7E, true, TEMP | HUM | PRES, 21.5f, 60, 1013,
+     "5A5D407E54210006DA605F"},
+};
 
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
-      expected, actualMessage, 2, "Expect THGN123N (0x1D20) with humidity");
-}
-// @req FUNC-OREGON-012
-void Expect_pressure_set_to_change_sensor_type() {
-  OregonV3 oregonv3(&TestHal);
-  oregonv3.SetPressure(900);
-  static const uint16_t BTHR918 = 0x5A5D;
-
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      (BTHR918 >> 8), (BTHR918 & 0xFF), 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-  oregonv3.FinalizeMessage();
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(expected, actualMessage, 2,
-                                       "Expect BTHR918 (0x5A5D) with pressure");
-}
 // @req FUNC-OREGON-014
-void Expect_sample_message_to_be_well_encoded() {
-  // nibbles 0..3 are sensor ID. All measurement, shall be 0x5A, 0x5D
-  // nibble 4 is channel 3 (1 << (3-1))
-  // nibbles 5 and 6 are rolling code, 0x85
-  // nibble 7 contains the battery low flag bit (0x4)
-  // nibbles 8..11 are temperature. 0x48, 0x08 (-8.4 °c)
-  // nibbles 12..13 are humidity, 28%
-  // nibbles 16..17 are pressure, 900 hpa. (900-795 = 105)
-  // nibbles 18..19 are the checksum byte, 0x53
+void Expect_payload_to_match_rflink_reference() {
+  for (const ReferenceCase &c : referenceCases) {
+    // Given
+    OregonV3 oregonv3(&TestHal);
+    oregonv3.SetChannel(c.channel);
+    oregonv3.SetRollingCode(c.rollingCode);
+    oregonv3.SetBatteryLow(c.batteryLow);
+    if (c.fields & TEMP)
+      oregonv3.SetTemperature(c.temperature);
+    if (c.fields & HUM)
+      oregonv3.SetHumidity(c.humidity);
+    if (c.fields & PRES)
+      oregonv3.SetPressure(c.pressure);
 
-  /*
-   * byte:      0    1    2    3    4     5      6      7      8      9
-   * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19]
-   *           5 A  5 D  4 8  5 4  4 8   0  8   8  2  8        105   5 3
-   *
-   * nibbles 0..3    : sensor ID
-   * nibble  4       : channel
-   * nibbles 5..6    : rolling code
-   * nibble  7       : battery state (0x4 is low battery)
-   * nibbles 8..13   : temperature
-   * nibble 12,14,15 : humidity (or-ed with temperature)
-   * nibbles 16..19  : pressure
-   */
-  std::string expectedMessage = "5A5D423448088209603054";
+    // When
+    oregonv3.FinalizeMessage();
 
-  OregonV3 oregonv3(&TestHal);
-
-  oregonv3.SetChannel(3);
-  oregonv3.SetRollingCode(0x23);
-
-  oregonv3.SetTemperature(-8.4);
-  oregonv3.SetHumidity(28);
-  oregonv3.SetPressure(900);
-
-  oregonv3.SetBatteryLow(true);
-
-  oregonv3.FinalizeMessage();
-
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0x5A, 0x5D, 0x42, 0x34, 0x48, 0x08, 0x82, 0x09, 0x60, 0x30, 0x54};
-  //   0     1      2     3     4    5     6     7     8     9     10
-
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
-      expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-      "Expect right encoding for full message");
-
-  std::string decodedMessage =
-      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
-  std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
-
-  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
-}
-// @req FUNC-OREGON-014
-void Expect_implementation_follows_samples_1() {
-  /*
-
-  This sensor is set to channel 3 (1 << (3-1)) and has a rolling ID code of
-  0x85. The first flag nibble contains the battery low flag bit (0x4). The
-  temperature is -8.4 ºC since nibbles 11..8 are “8084”. The first “8” indicates
-  a negative temperature and the next three (“084”) represent the decimal value
-  8.4. Humidity is 28% and the checksum byte is 0x53 and is valid.
-
-  NOTE: as byte 7 has been set to 0, checksum changes to 0x93
-
-  */
-
-  std::string expectedMessage = "1D20485448088200390000";
-
-  OregonV3 oregonv3(&TestHal);
-
-  oregonv3.SetChannel(3);
-  oregonv3.SetRollingCode(0x85);
-  oregonv3.SetBatteryLow(true);
-  oregonv3.SetTemperature(-8.4);
-  oregonv3.SetHumidity(28);
-
-  oregonv3.FinalizeMessage();
-
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0x1D, 0x20, 0x48, 0x54, 0x48, 0x08, 0x82, 0x00, 0x39};
-
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
-      expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-      "Expect right encoding for full message");
-
-  std::string decodedMessage =
-      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
-  std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
-
-  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
-}
-// @req FUNC-OREGON-014
-void Expect_implementation_follows_samples_2() {
-  /*
-  This sensor is set to channel 1 (1 << (1-1)) and has a rolling ID code of
-  0x6B, and the battery low bit is not set in the flag nibble. Temperature
-  and humidity are 19.0 ºC and 37%. Checksum is 0x41 and is valid.
-
-  NOTE: as byte 7 has been set to 0, checksum changes to 0xD2
-
-  */
-
-  std::string expectedMessage = "1D2016B0091073002C0000";
-
-  OregonV3 oregonv3(&TestHal);
-
-  oregonv3.SetChannel(1);
-  oregonv3.SetRollingCode(0x6B);
-
-  oregonv3.SetTemperature(19);
-  oregonv3.SetHumidity(37);
-
-  oregonv3.FinalizeMessage();
-
-  const unsigned char *actualMessage = oregonv3.GetMessage();
-
-  unsigned char expected[OregonV3::MESSAGE_SIZE_IN_BYTES]{
-      0x1D, 0x20, 0x16, 0xB0, 0x09, 0x10, 0x73, 0x00, 0x2C};
-  TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(
-      expected, actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES,
-      "Expect right encoding for full message");
-
-  std::string decodedMessage =
-      MessageNibblesToString(actualMessage, OregonV3::MESSAGE_SIZE_IN_BYTES);
-  std::cout << "Decoded: [" << decodedMessage << "]" << std::endl;
-
-  TEST_ASSERT_EQUAL_STRING(expectedMessage.c_str(), decodedMessage.c_str());
+    // Then
+    std::string payload = MessageNibblesToString(
+        oregonv3.GetMessage(), OregonV3::MESSAGE_SIZE_IN_BYTES);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(c.payload, payload.c_str(), c.id);
+  }
 }
 
 int main(int, char **) {
@@ -617,26 +608,22 @@ int main(int, char **) {
   RUN_TEST(Expect_messages_to_have_preamble_and_postamble);
 
   RUN_TEST(Expect_right_negative_temperature_encoding);
+  RUN_TEST(Expect_negative_sign_to_share_byte_6_with_humidity_units);
   RUN_TEST(Expect_right_positive_temperature_encoding);
   RUN_TEST(Expect_right_humidity_encoding);
   RUN_TEST(Expect_right_pressure_encoding);
   RUN_TEST(Expect_right_channel_encoding);
   RUN_TEST(Expect_right_rolling_code_encoding);
-  RUN_TEST(Expect_right_battery_ok_encoding);
-  RUN_TEST(Expect_right_low_battery_encoding);
+  RUN_TEST(Expect_right_battery_flag_encoding);
 
   RUN_TEST(Expect_temperature_set_to_change_message_status);
   RUN_TEST(Expect_humidity_set_to_change_message_status);
   RUN_TEST(Expect_pressure_set_to_change_message_status);
   RUN_TEST(Expect_all_values_set_to_change_message_status);
 
-  RUN_TEST(Expect_temperature_set_to_change_sensor_type);
-  RUN_TEST(Expect_humidity_set_to_change_sensor_type);
-  RUN_TEST(Expect_pressure_set_to_change_sensor_type);
+  RUN_TEST(Expect_fields_set_to_select_device_id_with_sync_nibble);
 
-  RUN_TEST(Expect_sample_message_to_be_well_encoded);
-  RUN_TEST(Expect_implementation_follows_samples_1);
-  RUN_TEST(Expect_implementation_follows_samples_2);
+  RUN_TEST(Expect_payload_to_match_rflink_reference);
 
   return UNITY_END();
 }
