@@ -81,3 +81,12 @@
 **Dependencies:** TECH-DECODE-002, CONF-DECODE-003
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** In `tinyDecoders/lib/ReceiverHal/ProMicroReceiverHal.{h,cpp}` (ATmega32U4 only, Pro Micro 5 V / 16 MHz), `Init()` makes PD4 an input without pull-up (the RXB6 receiver is powered at 5 V and drives PD4 directly, no level shifting) and fully reconfigures Timer1 (Arduino uses only Timer0 for `millis`): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture edge opposite to the current PD4 level, capture and overflow interrupts on. `TIMER1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture / 2, 65535 if a full timer period has elapsed, toggles the edge, into a 64-pulse ring buffer (absorbs I2C and USB waits); when full the pulse is dropped. `TIMER1_OVF` adds 32768 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench.
+
+---
+
+### PLAT-DECODE-004
+**Title:** ProMicroReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI (SDA D2/PD1, SCL D3/PD0) with Wire
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-003
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** `ProMicroReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends the same SSD1306 init sequence, screen clear and `AF` as PLAT-DECODE-002. `DrawChar(row, col, c)` sends the same commands and glyph bytes as PLAT-DECODE-002, one `Wire` transaction per command group and per 8-byte data transfer (within the 32-byte `Wire` buffer). No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V Pro Micro, no level shifting. Verified by inspection and on the bench.
