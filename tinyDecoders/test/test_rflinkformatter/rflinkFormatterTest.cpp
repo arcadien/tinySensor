@@ -63,6 +63,25 @@ static OregonDecoder oregon(uint8_t channel, uint8_t rollingCode,
   return decoded<OregonDecoder>(OrdersToPulses(TestHal.Orders));
 }
 
+// Oregon v2.1 frame bytes as RFLink prints them, sent as 24 sync ones then
+// the bits LSB-first up to the last checksum nibble (FUNC-DECODE-004)
+static OregonDecoder oregonFrame(const std::vector<uint8_t> &bytes) {
+  size_t bits = bytes[0] == 0xEA ? 60 : bytes[0] == 0x1A ? 72 : 88;
+  OregonV3 encoder(&TestHal);
+  TestHal.ClearOrders();
+  for (int i = 0; i < 24; i++) {
+    encoder.SendOne();
+  }
+  for (size_t i = 0; i < bits; i++) {
+    if ((bytes[i / 8] >> (i % 8)) & 1) {
+      encoder.SendOne();
+    } else {
+      encoder.SendZero();
+    }
+  }
+  return decoded<OregonDecoder>(OrdersToPulses(TestHal.Orders));
+}
+
 static LacrosseDecoder lacrosse(uint8_t address, uint8_t fields,
                                 float temperature, float humidity,
                                 float pressure, uint16_t lux) {
@@ -97,12 +116,12 @@ struct FormatCase {
 };
 
 static const FormatCase formatCases[] = {
-    {"oregon-thgn123n",
+    {"oregon-thgr228n",
      [](uint8_t n, char *l) {
-       return FormatRflink(oregon(2, 0xA5, false, TEMP | HUM, 23.7f, 45, 0), n,
+       return FormatRflink(oregon(3, 0xC4, false, TEMP | HUM, 21.5f, 67, 0), n,
                            l);
      },
-     0x0A, "20;0A;Oregon TempHygro;ID=A502;TEMP=00ed;HUM=45;BAT=OK;"},
+     0x0A, "20;0A;Oregon TempHygro;ID=C403;TEMP=00d7;HUM=67;BAT=OK;"},
     {"oregon-thn132n-negative-battery-low",
      [](uint8_t n, char *l) {
        return FormatRflink(oregon(1, 0x3C, true, TEMP, -10.2f, 0, 0), n, l);
@@ -114,6 +133,34 @@ static const FormatCase formatCases[] = {
            oregon(3, 0x7E, true, TEMP | HUM | PRES, 21.5f, 60, 1013), n, l);
      },
      0xFF, "20;FF;Oregon BTHR;ID=7E03;TEMP=00d7;HUM=60;BARO=03f5;BAT=LOW;"},
+    {"rflink-capture-thn132n-0xEA4C",
+     [](uint8_t n, char *l) {
+       return FormatRflink(
+           oregonFrame({0xEA, 0x4C, 0x20, 0x72, 0x5C, 0x21, 0xD0, 0x83}), n, l);
+     },
+     0x05, "20;05;Oregon Temp;ID=7202;TEMP=00d7;BAT=LOW;"},
+    {"rflink-capture-thgr228n-0x1A2D",
+     [](uint8_t n, char *l) {
+       return FormatRflink(
+           oregonFrame({0x1A, 0x2D, 0x40, 0xC4, 0x51, 0x21, 0x70, 0x46, 0x3E}),
+           n, l);
+     },
+     0x06, "20;06;Oregon TempHygro;ID=C403;TEMP=00d7;HUM=67;BAT=OK;"},
+    {"thgr228n-capture-as-0x1A3D",
+     [](uint8_t n, char *l) {
+       // same capture, ID byte 1 = 0x3D, checksum recomputed (0x3F)
+       return FormatRflink(
+           oregonFrame({0x1A, 0x3D, 0x40, 0xC4, 0x51, 0x21, 0x70, 0x46, 0x3F}),
+           n, l);
+     },
+     0x07, "20;07;Oregon TempHygro;ID=C403;TEMP=00d7;HUM=67;BAT=OK;"},
+    {"reference-bthr918-0x5A5D",
+     [](uint8_t n, char *l) {
+       return FormatRflink(oregonFrame({0x5A, 0x5D, 0x40, 0x7E, 0x54, 0x21,
+                                        0x00, 0x06, 0xDA, 0x60, 0x5F}),
+                           n, l);
+     },
+     0x08, "20;08;Oregon BTHR;ID=7E03;TEMP=00d7;HUM=60;BARO=03f5;BAT=LOW;"},
     {"lacrosse-type4-rounded",
      [](uint8_t n, char *l) {
        return FormatRflink(
