@@ -40,7 +40,7 @@ static void receive(TestReceiverHal &hal) {
   hal.PushPulse(false, 65535);
 }
 
-// Oregon channel 2: "23.7°C 45%  Ore2"
+// Oregon channel 2, rolling code 0x3C: "23.7°C 45%  Ore2" / "r3c ..."
 static void sendOregon(TestReceiverHal &hal) {
   OregonV3 encoder(&TestHal);
   encoder.SetChannel(2);
@@ -192,11 +192,11 @@ struct CycleCase {
 
 // Both frames decoded at 8 s: Oregon is source 0, Lacrosse source 1
 static const CycleCase cycleCases[] = {
-    {"8s-oregon", 8, "23.7" DEG "C 45%  Ore2", "              0s"},
-    {"11s-oregon-ages", 11, "23.7" DEG "C 45%  Ore2", "              3s"},
+    {"8s-oregon", 8, "23.7" DEG "C 45%  Ore2", "r3c           0s"},
+    {"11s-oregon-ages", 11, "23.7" DEG "C 45%  Ore2", "r3c           3s"},
     {"12s-lacrosse", 12, "-0.5" DEG "C 64%  Lac3", "              4s"},
     {"15s-lacrosse", 15, "-0.5" DEG "C 64%  Lac3", "              7s"},
-    {"16s-oregon-again", 16, "23.7" DEG "C 45%  Ore2", "              8s"},
+    {"16s-oregon-again", 16, "23.7" DEG "C 45%  Ore2", "r3c           8s"},
     {"20s-lacrosse-again", 20, "-0.5" DEG "C 64%  Lac3", "             12s"},
 };
 
