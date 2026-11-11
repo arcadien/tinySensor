@@ -72,3 +72,12 @@
 **Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-001
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** `Attiny84aReceiverHal` talks to the SSD1306 at 0x3C through `TinyI2C` (USI: SDA PA6, SCL PA4). `Init()` sends: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(row, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `2*row` then `2*row + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)`, then one data transfer (`0x40` and 8 glyph bytes). No display buffer is kept in RAM. Verified by inspection and on the bench (AVR only).
+
+---
+
+### PLAT-DECODE-003
+**Title:** ProMicroReceiverHal captures radio pulses on ICP1 (PD4, Pro Micro pin 4) with Timer1 at 0.5 µs and counts seconds from its overflow
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** In `tinyDecoders/lib/ReceiverHal/ProMicroReceiverHal.{h,cpp}` (ATmega32U4 only, Pro Micro 5 V / 16 MHz), `Init()` makes PD4 an input without pull-up (the RXB6 receiver is powered at 5 V and drives PD4 directly, no level shifting) and fully reconfigures Timer1 (Arduino uses only Timer0 for `millis`): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture edge opposite to the current PD4 level, capture and overflow interrupts on. `TIMER1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture / 2, 65535 if a full timer period has elapsed, toggles the edge, into a 64-pulse ring buffer (absorbs I2C and USB waits); when full the pulse is dropped. `TIMER1_OVF` adds 32768 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench.
