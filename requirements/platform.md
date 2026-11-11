@@ -90,3 +90,12 @@
 **Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-003
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** `ProMicroReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends the same SSD1306 init sequence, screen clear and `AF` as PLAT-DECODE-002. `DrawChar(row, col, c)` sends the same commands and glyph bytes as PLAT-DECODE-002, one `Wire` transaction per command group and per 8-byte data transfer (within the 32-byte `Wire` buffer). No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V Pro Micro, no level shifting. Verified by inspection and on the bench.
+
+---
+
+### PLAT-DECODE-005
+**Title:** ProMicroReceiverHal writes RFLink lines to the native USB CDC serial without blocking the pulse capture
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** `ProMicroReceiverHal::Init()` calls `Serial.begin(57600)` (USB CDC ignores the rate; 57600 is the Home Assistant `rflink` default). `WriteLine(line)` drops the line when `Serial.availableForWrite()` is below its length + 2; otherwise it writes the line then `\r\n`. `Serial`'s `operator bool` is never used (it waits 10 ms). Incoming bytes (e.g. RFLink `10;` commands) are ignored and no startup banner is sent. Verified on the bench with `pio device monitor`.
