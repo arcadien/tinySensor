@@ -1,14 +1,14 @@
 /*
- * Integration tests for UI-DECODE-001: FormatPage renders one SourceRecord
- * and its age as two 16-character lines.
+ * Integration tests for UI-DECODE-001: FormatPage renders one SourceRecord as
+ * a 6-character big main value and a 4-character side column (top: source
+ * identifier, bottom: humidity or pressure).
  *
  * Production side must provide (code-builder handles this), in
  * tinyDecoders/lib/PageFormatter/PageFormatter.h (no dynamic allocation, no
  * printf):
- *   void FormatPage(const SourceRecord &record, uint32_t ageSeconds,
- *                   char line1[17], char line2[17]);
- * SourceRecord comes from SourceTable.h (FUNC-DECODE-006), with Kind and
- * field bits nested in it (SourceRecord::Oregon, SourceRecord::Temperature).
+ *   void FormatPage(const SourceRecord &record, bool alternate, char big[7],
+ *                   char top[5], char bottom[5]);
+ * SourceRecord comes from SourceTable.h (FUNC-DECODE-006).
  */
 
 #include <stdint.h>
@@ -33,15 +33,16 @@ static const SourceRecord::Kind LUX = SourceRecord::LacrosseLux;
 static const SourceRecord::Kind X10 = SourceRecord::X10;
 
 struct Page {
-  char line1[17];
-  char line2[17];
+  char big[7];
+  char top[5];
+  char bottom[5];
 };
 
 // Buffers start dirty so unwritten characters show up
-static Page format(const SourceRecord &record, uint32_t ageSeconds) {
+static Page format(const SourceRecord &record, bool alternate) {
   Page page;
   memset(&page, '#', sizeof page);
-  FormatPage(record, ageSeconds, page.line1, page.line2);
+  FormatPage(record, alternate, page.big, page.top, page.bottom);
   return page;
 }
 
@@ -49,256 +50,295 @@ struct PageCase {
   const char *id;
   SourceRecord record;  // kind, id, code, fields, temperature, humidity,
                         // pressure, lux, millivolts (lastSeenSeconds unused)
-  uint32_t age;
-  const char *line1;
-  const char *line2;
+  bool alternate;
+  const char *big;
+  const char *top;
+  const char *bottom;
 };
 
 static const PageCase pageCases[] = {
-    {"spec-oregon",
-     {ORE, 1, 0xB8, T | H | P, 215, 600, 10130, 0, 0},
-     12,
-     "21.5" DEG "C 60%  Ore1",
-     "1013hPa rb8  12s"},
+    // Test clause of the requirement
+    {"spec-basile",
+     {ORE, 1, 0x01, T | H, 235, 670, 0, 0, 0},
+     false,
+     "23.5" DEG " ",
+     "1-01",
+     " 67%"},
+    {"spec-bthr-humidity",
+     {ORE, 2, 0x60, T | H | P, 188, 770, 9690, 0, 0},
+     false,
+     "18.8" DEG " ",
+     "2-60",
+     " 77%"},
+    {"spec-bthr-pressure",
+     {ORE, 2, 0x60, T | H | P, 188, 770, 9690, 0, 0},
+     true,
+     "18.8" DEG " ",
+     "2-60",
+     " 969"},
     {"spec-oregon-temperature-only",
-     {ORE, 2, 0x0F, T, 215, 0, 0, 0, 0},
-     12,
-     "21.5" DEG "C      Ore2",
-     "r0f          12s"},
+     {ORE, 3, 0xB8, T, 215, 0, 0, 0, 0},
+     false,
+     "21.5" DEG " ",
+     "3-b8",
+     "    "},
     {"spec-lacrosse",
      {LAC, 3, 0, T | H, -102, 425, 0, 0, 0},
-     300,
-     "-10.2" DEG "C 43% Lac3",
-     "              5m"},
+     false,
+     "-10.2" DEG,
+     "  L3",
+     " 43%"},
+    {"spec-lacrosse-pressure-humidity",
+     {LAC, 1, 0, T | H | P, 215, 425, 10134, 0, 0},
+     false,
+     "21.5" DEG " ",
+     "  L1",
+     " 43%"},
+    {"spec-lacrosse-pressure-pressure",
+     {LAC, 1, 0, T | H | P, 215, 425, 10134, 0, 0},
+     true,
+     "21.5" DEG " ",
+     "  L1",
+     "1013"},
+    {"spec-lux",
+     {LUX, 2, 0, LX, 0, 0, 0, 1000, 0},
+     false,
+     "1000lx",
+     "  L2",
+     "    "},
     {"spec-x10",
-     {X10, 10, 0, MV, 0, 0, 0, 0, 2950},
-     7200,
-     "2.95V        X10",
-     "              2h"},
-    {"spec-humidity-capped",
-     {ORE, 2, 0x3C, T | H, 237, 999, 0, 0, 0},
-     0,
-     "23.7" DEG "C 99%  Ore2",
-     "r3c           0s"},
-    {"worst-case-line1",
-     {LAC, 7, 0, T | H, -999, 999, 0, 0, 0},
-     0,
-     "-99.9" DEG "C 99% Lac7",
-     "              0s"},
-    {"temperature-only",
-     {ORE, 1, 0, T, -102, 0, 0, 0, 0},
-     0,
-     "-10.2" DEG "C     Ore1",
-     "r00           0s"},
-    {"oregon-code-letters-after-pressure",
-     {ORE, 3, 0xAB, T | H | P, 200, 500, 8500, 0, 0},
-     0,
-     "20.0" DEG "C 50%  Ore3",
-     "850hPa rab    0s"},
-    {"oregon-code-letters-cd",
-     {ORE, 1, 0xCD, T, 200, 0, 0, 0, 0},
-     59,
-     "20.0" DEG "C      Ore1",
-     "rcd          59s"},
-    {"oregon-code-letters-ef",
-     {ORE, 1, 0xEF, T, 200, 0, 0, 0, 0},
-     0,
-     "20.0" DEG "C      Ore1",
-     "ref           0s"},
-    {"worst-case-line2",
-     {ORE, 3, 0xFF, T | H | P, 215, 600, 10500, 0, 0},
-     9000000,
-     "21.5" DEG "C 60%  Ore3",
-     "1050hPa rff  99d"},
-    {"temperature-minus-half",
+     {X10, 204, 0, MV, 0, 0, 0, 0, 3960},
+     false,
+     "3.96V ",
+     "X204",
+     "    "},
+    {"spec-x10-without-field",
+     {X10, 10, 0, 0, 0, 0, 0, 0, 0},
+     false,
+     "      ",
+     " X10",
+     "    "},
+    {"spec-minus-half",
      {LAC, 0, 0, T, -5, 0, 0, 0, 0},
-     0,
-     "-0.5" DEG "C      Lac0",
-     "              0s"},
-    {"temperature-minus-one",
-     {LAC, 0, 0, T, -10, 0, 0, 0, 0},
-     0,
-     "-1.0" DEG "C      Lac0",
-     "              0s"},
-    {"temperature-zero",
-     {LAC, 0, 0, T, 0, 0, 0, 0, 0},
-     0,
-     "0.0" DEG "C       Lac0",
-     "              0s"},
+     false,
+     "-0.5" DEG " ",
+     "  L0",
+     "    "},
+    {"spec-humidity-capped",
+     {LAC, 0, 0, T | H, 200, 999, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L0",
+     " 99%"},
+    // Temperature
+    {"temperature-worst-case",
+     {LAC, 7, 0, T | H, -999, 999, 0, 0, 0},
+     false,
+     "-99.9" DEG,
+     "  L7",
+     " 99%"},
     {"temperature-high",
      {LAC, 0, 0, T, 999, 0, 0, 0, 0},
-     0,
-     "99.9" DEG "C      Lac0",
-     "              0s"},
-    {"humidity-rounds-down",
-     {LAC, 1, 0, T | H, 200, 424, 0, 0, 0},
-     0,
-     "20.0" DEG "C 42%  Lac1",
-     "              0s"},
-    {"humidity-rounds-up",
-     {LAC, 1, 0, T | H, 200, 425, 0, 0, 0},
-     0,
-     "20.0" DEG "C 43%  Lac1",
-     "              0s"},
-    {"humidity-994-below-cap",
-     {LAC, 1, 0, T | H, 200, 994, 0, 0, 0},
-     0,
-     "20.0" DEG "C 99%  Lac1",
-     "              0s"},
-    {"humidity-995-capped",
-     {LAC, 1, 0, T | H, 200, 995, 0, 0, 0},
-     0,
-     "20.0" DEG "C 99%  Lac1",
-     "              0s"},
-    {"humidity-zero",
-     {LAC, 1, 0, T | H, 200, 0, 0, 0, 0},
-     0,
-     "20.0" DEG "C 0%   Lac1",
-     "              0s"},
-    {"pressure-rounds-down",
-     {LAC, 5, 0, T | H | P, -102, 425, 10134, 0, 0},
-     0,
-     "-10.2" DEG "C 43% Lac5",
-     "1013hPa       0s"},
-    {"pressure-rounds-up",
-     {LAC, 5, 0, T | H | P, 200, 500, 10135, 0, 0},
-     0,
-     "20.0" DEG "C 50%  Lac5",
-     "1014hPa       0s"},
-    {"pressure-three-digits",
-     {LAC, 5, 0, T | H | P, 200, 500, 8500, 0, 0},
-     0,
-     "20.0" DEG "C 50%  Lac5",
-     "850hPa        0s"},
-    {"lux",
-     {LUX, 7, 0, LX, 0, 0, 0, 1000, 0},
-     0,
-     "1000lx      Lac7",
-     "              0s"},
+     false,
+     "99.9" DEG " ",
+     "  L0",
+     "    "},
+    {"temperature-zero",
+     {LAC, 0, 0, T, 0, 0, 0, 0, 0},
+     false,
+     "0.0" DEG "  ",
+     "  L0",
+     "    "},
+    {"temperature-minus-one",
+     {LAC, 0, 0, T, -10, 0, 0, 0, 0},
+     false,
+     "-1.0" DEG " ",
+     "  L0",
+     "    "},
+    {"temperature-before-lux",
+     {LAC, 0, 0, T | LX, 215, 0, 0, 1000, 0},
+     false,
+     "21.5" DEG " ",
+     "  L0",
+     "    "},
+    {"lux-before-millivolts",
+     {LUX, 0, 0, LX | MV, 0, 0, 0, 1000, 3960},
+     false,
+     "1000lx",
+     "  L0",
+     "    "},
+    // Lux
     {"lux-zero",
      {LUX, 7, 0, LX, 0, 0, 0, 0, 0},
-     0,
-     "0lx         Lac7",
-     "              0s"},
-    {"lux-max",
-     {LUX, 7, 0, LX, 0, 0, 0, 65535, 0},
-     0,
-     "65535lx     Lac7",
-     "              0s"},
+     false,
+     "0lx   ",
+     "  L7",
+     "    "},
+    {"lux-four-digits-max",
+     {LUX, 7, 0, LX, 0, 0, 0, 9999, 0},
+     false,
+     "9999lx",
+     "  L7",
+     "    "},
+    // Millivolts
     {"millivolts-rounds-down",
      {X10, 10, 0, MV, 0, 0, 0, 0, 2994},
-     0,
-     "2.99V        X10",
-     "              0s"},
+     false,
+     "2.99V ",
+     " X10",
+     "    "},
     {"millivolts-rounds-up",
      {X10, 10, 0, MV, 0, 0, 0, 0, 2995},
-     0,
-     "3.00V        X10",
-     "              0s"},
+     false,
+     "3.00V ",
+     " X10",
+     "    "},
     {"millivolts-hundredths-padded",
      {X10, 10, 0, MV, 0, 0, 0, 0, 1050},
-     0,
-     "1.05V        X10",
-     "              0s"},
+     false,
+     "1.05V ",
+     " X10",
+     "    "},
     {"millivolts-below-half-hundredth",
      {X10, 10, 0, MV, 0, 0, 0, 0, 4},
-     0,
-     "0.00V        X10",
-     "              0s"},
+     false,
+     "0.00V ",
+     " X10",
+     "    "},
     {"millivolts-ten-volts",
      {X10, 10, 0, MV, 0, 0, 0, 0, 9999},
-     0,
-     "10.00V       X10",
-     "              0s"},
-    {"x10-without-field",
-     {X10, 10, 0, 0, 0, 0, 0, 0, 0},
-     0,
-     "             X10",
-     "              0s"},
+     false,
+     "10.00V",
+     " X10",
+     "    "},
+    // Identifier
+    {"oregon-channel-0",
+     {ORE, 0, 0x0A, T, 200, 0, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "0-0a",
+     "    "},
+    {"oregon-code-letters-cd",
+     {ORE, 1, 0xCD, T, 200, 0, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "1-cd",
+     "    "},
+    {"oregon-code-letters-ef",
+     {ORE, 3, 0xEF, T, 200, 0, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "3-ef",
+     "    "},
+    {"x10-one-digit",
+     {X10, 7, 0, MV, 0, 0, 0, 0, 2950},
+     false,
+     "2.95V ",
+     "  X7",
+     "    "},
     {"x10-max-address",
      {X10, 255, 0, MV, 0, 0, 0, 0, 2950},
-     0,
-     "2.95V       X255",
-     "              0s"},
+     false,
+     "2.95V ",
+     "X255",
+     "    "},
+    {"lacrosse-two-digits",
+     {LAC, 15, 0, T, 200, 0, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     " L15",
+     "    "},
+    // Humidity / pressure
+    {"humidity-rounds-down",
+     {LAC, 1, 0, T | H, 200, 424, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L1",
+     " 42%"},
+    {"humidity-994-below-cap",
+     {LAC, 1, 0, T | H, 200, 994, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L1",
+     " 99%"},
+    {"humidity-995-capped",
+     {LAC, 1, 0, T | H, 200, 995, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L1",
+     " 99%"},
+    {"humidity-zero",
+     {LAC, 1, 0, T | H, 200, 0, 0, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L1",
+     "  0%"},
+    {"humidity-only-ignores-alternate",
+     {LAC, 1, 0, T | H, 200, 425, 0, 0, 0},
+     true,
+     "20.0" DEG " ",
+     "  L1",
+     " 43%"},
+    {"pressure-only-not-alternate",
+     {LAC, 5, 0, T | P, 200, 0, 10135, 0, 0},
+     false,
+     "20.0" DEG " ",
+     "  L5",
+     "1014"},
+    {"pressure-only-alternate",
+     {LAC, 5, 0, T | P, 200, 0, 10135, 0, 0},
+     true,
+     "20.0" DEG " ",
+     "  L5",
+     "1014"},
+    {"neither-ignores-alternate",
+     {ORE, 3, 0xB8, T, 215, 0, 0, 0, 0},
+     true,
+     "21.5" DEG " ",
+     "3-b8",
+     "    "},
 };
 
-static void assertLine(const char *id, const char *expected,
-                       const char *actual) {
-  TEST_ASSERT_EQUAL_size_t_MESSAGE(16, strlen(expected), id);  // table typo
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, actual, id);
-}
-
 // @req UI-DECODE-001
-void FormatPage_renders_values_label_and_pressure() {
+void FormatPage_renders_main_value_identifier_and_side_value() {
   for (const PageCase &c : pageCases) {
     // Given
     const SourceRecord &record = c.record;
 
     // When
-    Page page = format(record, c.age);
+    Page page = format(record, c.alternate);
 
     // Then
-    assertLine(c.id, c.line1, page.line1);
-    assertLine(c.id, c.line2, page.line2);
+    TEST_ASSERT_EQUAL_size_t_MESSAGE(6, strlen(c.big), c.id);  // table typo
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(c.big, page.big, c.id);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(c.top, page.top, c.id);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(c.bottom, page.bottom, c.id);
   }
 }
 
-struct AgeCase {
-  const char *id;
-  uint32_t age;
-  const char *line2;
-};
+static const bool kAlternates[] = {false, true};
+static const char allowedGlyphs[] = "0123456789 .-%" DEG "VlxLXabcdef";
 
-static const AgeCase ageCases[] = {
-    {"0s", 0, "              0s"},
-    {"59s", 59, "             59s"},
-    {"60s-is-1m", 60, "              1m"},
-    {"3599s-is-59m", 3599, "             59m"},
-    {"3600s-is-1h", 3600, "              1h"},
-    {"86399s-is-23h", 86399, "             23h"},
-    {"86400s-is-1d", 86400, "              1d"},
-    {"99d", 99UL * 86400, "             99d"},
-    {"just-below-100d", 100UL * 86400 - 1, "             99d"},
-    {"100d-capped", 100UL * 86400, "             99d"},
-    {"spec-9000000s", 9000000, "             99d"},
-    {"max-age", 0xFFFFFFFF, "             99d"},
-};
-
-// @req UI-DECODE-001
-void FormatPage_renders_age_at_the_end_of_line2() {
-  for (const AgeCase &c : ageCases) {
-    // Given
-    SourceRecord record = {X10, 10, 0, 0, 0, 0, 0, 0, 0};
-
-    // When
-    Page page = format(record, c.age);
-
-    // Then
-    assertLine(c.id, c.line2, page.line2);
-  }
-}
-
-static const char allowedGlyphs[] = "0123456789 .-%" DEG "COreLabcfXhPlxVsmd";
-
-static void assertGlyphs(const char *id, const char *line) {
-  for (int i = 0; i < 16; i++) {
-    TEST_ASSERT_NOT_NULL_MESSAGE(strchr(allowedGlyphs, line[i]), id);
+static void assertGlyphs(const char *id, const char *text, size_t length) {
+  for (size_t i = 0; i < length; i++) {
+    TEST_ASSERT_NOT_NULL_MESSAGE(strchr(allowedGlyphs, text[i]), id);
   }
 }
 
 // @req UI-DECODE-001
 void FormatPage_uses_only_the_allowed_glyphs() {
   for (const PageCase &c : pageCases) {
-    for (const AgeCase &a : ageCases) {
+    for (bool alternate : kAlternates) {
       // Given
       const SourceRecord &record = c.record;
 
       // When
-      Page page = format(record, a.age);
+      Page page = format(record, alternate);
 
       // Then
-      assertGlyphs(c.id, page.line1);
-      assertGlyphs(a.id, page.line2);
+      assertGlyphs(c.id, page.big, 6);
+      assertGlyphs(c.id, page.top, 4);
+      assertGlyphs(c.id, page.bottom, 4);
     }
   }
 }
@@ -308,8 +348,7 @@ void tearDown(void) {}
 
 int main(int, char **) {
   UNITY_BEGIN();
-  RUN_TEST(FormatPage_renders_values_label_and_pressure);
-  RUN_TEST(FormatPage_renders_age_at_the_end_of_line2);
+  RUN_TEST(FormatPage_renders_main_value_identifier_and_side_value);
   RUN_TEST(FormatPage_uses_only_the_allowed_glyphs);
   return UNITY_END();
 }
