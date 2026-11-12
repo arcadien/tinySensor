@@ -1,12 +1,8 @@
 #include "PageFormatter.h"
 
-static const uint8_t LineLength = 16;
+static const uint8_t BigLength = 6;
+static const uint8_t SideLength = 4;
 static const char Degree = '\x7F';
-
-static const uint32_t SecondsPerMinute = 60;
-static const uint32_t SecondsPerHour = 3600;
-static const uint32_t SecondsPerDay = 86400;
-static const uint32_t MaxDays = 99;
 static const uint8_t MaxHumidityPercent = 99;
 
 // Each writer puts its text at `at` and returns the position after it
@@ -50,8 +46,7 @@ static char *PutTemperature(char *at, int16_t tenths) {
   at = PutNumber(at, magnitude / 10);
   at = PutChar(at, '.');
   at = PutNumber(at, magnitude % 10);
-  at = PutChar(at, Degree);
-  return PutChar(at, 'C');
+  return PutChar(at, Degree);
 }
 
 static char *PutHumidity(char *at, uint16_t tenths) {
@@ -63,7 +58,7 @@ static char *PutHumidity(char *at, uint16_t tenths) {
 
 // Volts with two decimals, from millivolts rounded to the nearest hundredth
 static char *PutVolts(char *at, uint16_t millivolts) {
-  uint16_t hundredths = (millivolts + 5u) / 10;
+  uint32_t hundredths = (millivolts + 5u) / 10;
   at = PutNumber(at, hundredths / 100);
   at = PutChar(at, '.');
   at = PutNumber(at, hundredths / 10 % 10);
@@ -71,68 +66,46 @@ static char *PutVolts(char *at, uint16_t millivolts) {
   return PutChar(at, 'V');
 }
 
-static char *PutLabel(char *at, const SourceRecord &record) {
-  if (record.kind == SourceRecord::Oregon)
-    at = PutText(at, "Ore");
-  else if (record.kind == SourceRecord::X10)
-    at = PutChar(at, 'X');
-  else
-    at = PutText(at, "Lac");
-  return PutNumber(at, record.id);
-}
-
-static char *PutAge(char *at, uint32_t seconds) {
-  if (seconds < SecondsPerMinute)
-    return PutChar(PutNumber(at, seconds), 's');
-  if (seconds < SecondsPerHour)
-    return PutChar(PutNumber(at, seconds / SecondsPerMinute), 'm');
-  if (seconds < SecondsPerDay)
-    return PutChar(PutNumber(at, seconds / SecondsPerHour), 'h');
-  uint32_t days = seconds / SecondsPerDay;
-  return PutChar(PutNumber(at, days > MaxDays ? MaxDays : days), 'd');
-}
-
-// Starts the next left item, one space after the previous one
-static char *Separate(const char *line, char *at) {
-  return at == line ? at : PutChar(at, ' ');
-}
-
-// Copies the text [begin, end) so that it ends at the last column
-static void PutRight(char *line, const char *begin, const char *end) {
-  char *at = line + LineLength - (end - begin);
-  while (begin != end) *at++ = *begin++;
-}
-
-static void Clear(char *line) {
-  for (uint8_t i = 0; i < LineLength; i++) line[i] = ' ';
-  line[LineLength] = '\0';
-}
-
-// Item widths are bounded by the decoded ranges, so items and right-aligned
-// text never overlap or overflow the 16 columns
-void FormatPage(const SourceRecord &record, uint32_t ageSeconds, char line1[17],
-                char line2[17]) {
-  Clear(line1);
-  char *at = line1;
-  if (record.fields & SourceRecord::Temperature)
-    at = PutTemperature(Separate(line1, at), record.temperatureTenths);
-  if (record.fields & SourceRecord::Humidity)
-    at = PutHumidity(Separate(line1, at), record.humidityTenths);
-  if (record.fields & SourceRecord::Lux)
-    at = PutText(PutNumber(Separate(line1, at), record.lux), "lx");
-  if (record.fields & SourceRecord::Millivolts)
-    at = PutVolts(Separate(line1, at), record.millivolts);
-  char label[8];
-  PutRight(line1, label, PutLabel(label, record));
-
-  Clear(line2);
-  at = line2;
-  if (record.fields & SourceRecord::Pressure)
-    at = PutText(PutNumber(line2, RoundTenths(record.pressureTenths)), "hPa");
+static char *PutIdentifier(char *at, const SourceRecord &record) {
   if (record.kind == SourceRecord::Oregon) {
-    at = PutChar(Separate(line2, at), 'r');
-    PutHexDigit(PutHexDigit(at, record.code >> 4), record.code & 0x0F);
+    at = PutChar(PutNumber(at, record.id), '-');
+    return PutHexDigit(PutHexDigit(at, record.code >> 4), record.code & 0x0F);
   }
-  char age[4];
-  PutRight(line2, age, PutAge(age, ageSeconds));
+  return PutNumber(PutChar(at, record.kind == SourceRecord::X10 ? 'X' : 'L'),
+                   record.id);
+}
+
+// Fills `field` (length characters plus '\0') with the text [begin, end),
+// space-padded and aligned; text out of the decoded sensor ranges is clipped
+// so a corrupt frame never overflows the buffer
+static void PutField(char *field, uint8_t length, const char *begin,
+                     const char *end, bool right) {
+  uint8_t size = end - begin > length ? length : end - begin;
+  for (uint8_t i = 0; i < length; i++) field[i] = ' ';
+  field[length] = '\0';
+  char *at = right ? field + length - size : field;
+  for (uint8_t i = 0; i < size; i++) at[i] = begin[i];
+}
+
+void FormatPage(const SourceRecord &record, bool alternate, char big[7],
+                char top[5], char bottom[5]) {
+  char text[10];  // widest raw item: "-3276.8°"
+  char *end = text;
+  if (record.fields & SourceRecord::Temperature)
+    end = PutTemperature(text, record.temperatureTenths);
+  else if (record.fields & SourceRecord::Lux)
+    end = PutText(PutNumber(text, record.lux), "lx");
+  else if (record.fields & SourceRecord::Millivolts)
+    end = PutVolts(text, record.millivolts);
+  PutField(big, BigLength, text, end, false);
+
+  PutField(top, SideLength, text, PutIdentifier(text, record), true);
+
+  bool humidity = record.fields & SourceRecord::Humidity;
+  end = text;
+  if ((record.fields & SourceRecord::Pressure) && (alternate || !humidity))
+    end = PutNumber(text, RoundTenths(record.pressureTenths));
+  else if (humidity)
+    end = PutHumidity(text, record.humidityTenths);
+  PutField(bottom, SideLength, text, end, true);
 }

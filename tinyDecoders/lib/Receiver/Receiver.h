@@ -34,31 +34,39 @@ class RflinkOutput<false> {
   void WriteRflink(ReceiverHal *, const Decoder &) {}
 };
 
-// Decodes received frames and shows one page per source, cycling every 4 s
-// (FUNC-DECODE-007). Draws at most one character per Poll so the pulse
-// buffer is drained often.
+// Decodes received frames and shows one page per source, cycling every 10 s,
+// or a waiting page while no source is known (FUNC-DECODE-007). Draws at most
+// one cell per Poll so the pulse buffer is drained often.
 class Receiver : private RflinkOutput<ReceiverHal::HasLineOutput> {
  public:
   explicit Receiver(ReceiverHal *hal);
   void Poll();
 
  private:
-  static const uint8_t Rows = 2;
-  static const uint8_t Columns = 16;
-  static const uint8_t SecondsPerPage = 4;
+  // Source cells: big 0-5, top 6-9, bottom 10-13
+  static const uint8_t SourceCells = 14;
+  static const uint8_t WaitingCells = 16;
+  static const uint8_t SecondsPerPage = 10;
+  static const uint8_t SecondsPerAlternate = 2;
 
   bool Receive();
   void Compose(uint32_t now);
-  void MarkChanges(const char previous[Rows][Columns + 1]);
-  void DrawFirstChange();
+  char Target(uint8_t cell) const;
+  void DrawNextCell();
 
   ReceiverHal *hal;
   X10Decoder x10;
   LacrosseDecoder lacrosse;
   OregonDecoder oregon;
   SourceTable sources;
-  char lines[Rows][Columns + 1];  // page to show, '\0' left by FormatPage
-  uint32_t toDraw = 0;  // bit row * Columns + col: character not drawn yet
+  // Page to show; all spaces on the waiting page
+  char big[7];
+  char top[5];
+  char bottom[5];
+  char drawn[SourceCells];  // source cells as on the screen
+  uint16_t forced = 0;      // bit cell: source cell to draw even if unchanged
+  uint8_t nextWaitingCell = WaitingCells;  // WaitingCells: nothing to draw
+  bool waiting = false;
   bool composed = false;
   uint32_t composedAt = 0;
 };

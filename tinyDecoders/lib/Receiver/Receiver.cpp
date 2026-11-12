@@ -4,21 +4,31 @@
 
 #include <PageFormatter.h>
 
+#ifdef AVR
+#include <avr/pgmspace.h>
+#else
+#define PROGMEM
+#define pgm_read_byte(address) (*(const uint8_t *)(address))
+#endif
+
+static const char WaitingText[] PROGMEM = "Waiting for data";
+static const uint8_t WaitingPage = 1;
+static const uint8_t TopPage = 0;
+static const uint8_t BottomPage = 2;
+static const uint8_t SideColumn = 12;
+static const uint16_t AllSourceCells = (1u << 14) - 1;
+
 Receiver::Receiver(ReceiverHal *hal) : hal(hal) {
-  // The screen starts cleared: blank target lines, nothing to draw
-  memset(lines, ' ', sizeof lines);
+  // The screen starts cleared
+  memset(drawn, ' ', sizeof drawn);
 }
 
 void Receiver::Poll() {
   bool decoded = Receive();
   uint32_t now = hal->NowSeconds();
-  if (decoded || !composed || now != composedAt) {
-    char previous[Rows][Columns + 1];
-    memcpy(previous, lines, sizeof lines);
+  if (decoded || !composed || now != composedAt)
     Compose(now);
-    MarkChanges(previous);
-  }
-  DrawFirstChange();
+  DrawNextCell();
 }
 
 // Feeds every pending pulse to all decoders; true when a frame was stored
@@ -47,37 +57,62 @@ bool Receiver::Receive() {
   return decoded;
 }
 
+// A layout switch redraws every cell of the new layout: entering the waiting
+// page from a source page blanks the source cells first, while entering a
+// source page covers the whole screen, waiting text included
 void Receiver::Compose(uint32_t now) {
+  sources.Expire(now);
+  bool empty = sources.Count() == 0;
+  if (empty) {
+    memset(big, ' ', sizeof big - 1);
+    memset(top, ' ', sizeof top - 1);
+    memset(bottom, ' ', sizeof bottom - 1);
+    if (!composed || !waiting) {
+      if (composed)
+        forced = AllSourceCells;
+      nextWaitingCell = 0;
+    }
+  } else {
+    const SourceRecord &record =
+        sources.At(now / SecondsPerPage % sources.Count());
+    FormatPage(record, now / SecondsPerAlternate % 2 == 1, big, top, bottom);
+    if (!composed || waiting) {
+      forced = AllSourceCells;
+      nextWaitingCell = WaitingCells;
+    }
+  }
+  waiting = empty;
   composed = true;
   composedAt = now;
-  if (sources.Count() == 0) {
-    // A record without fields gives only its label and the right-aligned age
-    // Not Oregon, so line 2 holds only the uptime (no rolling code)
-    SourceRecord none = {SourceRecord::X10};
-    FormatPage(none, now, lines[0], lines[1]);
-    memcpy(lines[0], "Ore Lac X       ", Columns);
+}
+
+char Receiver::Target(uint8_t cell) const {
+  if (cell < 6)
+    return big[cell];
+  if (cell < 10)
+    return top[cell - 6];
+  return bottom[cell - 10];
+}
+
+void Receiver::DrawNextCell() {
+  for (uint8_t cell = 0; cell < SourceCells; cell++) {
+    char c = Target(cell);
+    uint16_t bit = 1u << cell;
+    if (!(forced & bit) && c == drawn[cell])
+      continue;
+    forced &= ~bit;
+    drawn[cell] = c;
+    if (cell < 6)
+      hal->DrawBigChar(cell, c);
+    else if (cell < 10)
+      hal->DrawChar(TopPage, SideColumn + cell - 6, c);
+    else
+      hal->DrawChar(BottomPage, SideColumn + cell - 10, c);
     return;
   }
-  const SourceRecord &record =
-      sources.At(now / SecondsPerPage % sources.Count());
-  FormatPage(record, now - record.lastSeenSeconds, lines[0], lines[1]);
-}
-
-void Receiver::MarkChanges(const char previous[Rows][Columns + 1]) {
-  for (uint8_t row = 0; row < Rows; row++)
-    for (uint8_t col = 0; col < Columns; col++)
-      if (lines[row][col] != previous[row][col])
-        toDraw |= (uint32_t)1 << (row * Columns + col);
-}
-
-void Receiver::DrawFirstChange() {
-  for (uint8_t bit = 0; bit < Rows * Columns; bit++) {
-    if (toDraw & ((uint32_t)1 << bit)) {
-      toDraw &= ~((uint32_t)1 << bit);
-      uint8_t row = bit / Columns;
-      uint8_t col = bit % Columns;
-      hal->DrawChar(2 * row, col, lines[row][col]);
-      return;
-    }
+  if (nextWaitingCell < WaitingCells) {
+    hal->DrawChar(WaitingPage, nextWaitingCell,
+                  pgm_read_byte(&WaitingText[nextWaitingCell]));
+    nextWaitingCell++;
   }
 }
