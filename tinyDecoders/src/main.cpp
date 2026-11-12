@@ -1,14 +1,16 @@
-#include <avr/interrupt.h>
+#include <Arduino.h>
 
 #include <Receiver.h>
 
-// Receiver firmware entry point (CONF-DECODE-001). File scope so the static
-// RAM check counts both objects.
-Attiny84aReceiverHal hal;
+// Receiver entry point for the Pro Mini and the Pro Micro (CONF-DECODE-003,
+// CONF-DECODE-004): the Arduino main runs setup() then loop().
+AtmegaReceiverHal hal;
 Receiver receiver(&hal);
 
-int main() {
+void setup() {
   hal.Init();
-  sei();
-  for (;;) receiver.Poll();
+}
+
+void loop() {
+  receiver.Poll();
 }

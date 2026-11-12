@@ -1,5 +1,5 @@
-#ifdef __AVR_ATmega32U4__
-#include "ProMicroReceiverHal.h"
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega32U4__)
+#include "AtmegaReceiverHal.h"
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -12,6 +12,19 @@
 #include <Font8x16.h>
 
 namespace {
+
+// ICP1, the only pin-level difference between the two boards
+#ifdef __AVR_ATmega328P__
+#define ICP1_DDR DDRB
+#define ICP1_PORT PORTB
+#define ICP1_PIN PINB
+#define ICP1_BIT PB0  // Pro Mini D8
+#else
+#define ICP1_DDR DDRD
+#define ICP1_PORT PORTD
+#define ICP1_PIN PIND
+#define ICP1_BIT PD4  // Pro Micro pin 4
+#endif
 
 struct CapturedPulse {
   uint16_t durationUs;
@@ -43,7 +56,7 @@ const uint8_t OledBytesPerWrite = 8;  // within the 32-byte Wire buffer
 const uint8_t OledDisplayOn = 0xAF;
 const uint32_t OledClockHz = 400000;
 
-// Same sequence as Attiny84aReceiverHal (PLAT-DECODE-002): display off,
+// SSD1306 128x32 init (PLAT-DECODE-004): display off,
 // clock, 32 lines, no offset, charge pump, page addressing, remapped segments
 // and rows, contrast, precharge, VCOMH, display RAM on
 const uint8_t OledInit[] PROGMEM = {
@@ -96,17 +109,17 @@ void InitDisplay() {
 
 }  // namespace
 
-void ProMicroReceiverHal::Init() {
+void AtmegaReceiverHal::Init() {
   InitDisplay();
   Serial.begin(SerialBaud);
 
-  // RXB6 at 5 V drives PD4 directly: input, no pull-up
-  DDRD &= ~(1 << PD4);
-  PORTD &= ~(1 << PD4);
+  // RXB6 at 5 V drives ICP1 directly: input, no pull-up
+  ICP1_DDR &= ~(1 << ICP1_BIT);
+  ICP1_PORT &= ~(1 << ICP1_BIT);
   // The Arduino init() leaves Timer1 in 8-bit PWM: reconfigure it fully.
   // Normal mode, noise canceller, prescaler 8, first capture on the edge
   // leaving the current level
-  uint8_t risingEdge = (PIND & (1 << PIND4)) ? 0 : (1 << ICES1);
+  uint8_t risingEdge = (ICP1_PIN & (1 << ICP1_BIT)) ? 0 : (1 << ICES1);
   TCCR1A = 0;
   TCCR1C = 0;
   TCCR1B = (1 << ICNC1) | (1 << CS11) | risingEdge;
@@ -114,7 +127,7 @@ void ProMicroReceiverHal::Init() {
   TIMSK1 = (1 << ICIE1) | (1 << TOIE1);
 }
 
-bool ProMicroReceiverHal::PopPulse(bool &high, uint16_t &durationUs) {
+bool AtmegaReceiverHal::PopPulse(bool &high, uint16_t &durationUs) {
   bool popped = false;
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     if (pulseCount > 0) {
@@ -128,7 +141,7 @@ bool ProMicroReceiverHal::PopPulse(bool &high, uint16_t &durationUs) {
   return popped;
 }
 
-uint32_t ProMicroReceiverHal::NowSeconds() const {
+uint32_t AtmegaReceiverHal::NowSeconds() const {
   uint32_t now;
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     now = seconds;
@@ -136,7 +149,7 @@ uint32_t ProMicroReceiverHal::NowSeconds() const {
   return now;
 }
 
-void ProMicroReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
+void AtmegaReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
   uint8_t glyph[16];
   ReadGlyph(c, glyph);
   for (uint8_t half = 0; half < 2; half++) {
@@ -146,7 +159,7 @@ void ProMicroReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
 }
 
 // Never waits for the host: the Serial operator bool would block 10 ms
-void ProMicroReceiverHal::WriteLine(const char *line) {
+void AtmegaReceiverHal::WriteLine(const char *line) {
   size_t length = strlen(line);
   if ((size_t)Serial.availableForWrite() < length + 2)
     return;  // no room in the USB endpoint: drop the line
