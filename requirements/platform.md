@@ -67,11 +67,11 @@
 ---
 
 ### PLAT-DECODE-004
-**Title:** AtmegaReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI with Wire, one 8x16 character per DrawChar, without framebuffer
+**Title:** AtmegaReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI with Wire, one 8x16 cell per DrawChar or one 16x32 cell per DrawBigChar, without framebuffer
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, UI-DECODE-003, CONF-DECODE-003, CONF-DECODE-004
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** The OLED is on the hardware TWI: SDA A4 (PC4) and SCL A5 (PC5) on the Pro Mini, SDA D2 (PD1) and SCL D3 (PD0) on the Pro Micro. `AtmegaReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends, in one transaction after control byte `0x00`: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(row, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `2*row` then `2*row + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)` in one transaction, then `0x40` and the 8 glyph bytes in another (within the 32-byte `Wire` buffer). No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V board, no level shifting. Verified by inspection and on the bench on both boards.
+**Description:** The OLED is on the hardware TWI: SDA A4 (PC4) and SCL A5 (PC5) on the Pro Mini, SDA D2 (PD1) and SCL D3 (PD0) on the Pro Micro. `AtmegaReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends, in one transaction after control byte `0x00`: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(page, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `page` then `page + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)` in one transaction, then `0x40` and the 8 glyph bytes in another. `DrawBigChar(col, c)`, for page 0 to 3, sends commands `B0+page`, `col*16 & 0x0F`, `0x10 | (col*16 >> 4)`, then `0x40` and the 16 bytes of `ReadBigGlyphPage(c, page)` (17 bytes, within the 32-byte `Wire` buffer); about 2 ms at 400 kHz, short against the 64-pulse ring of PLAT-DECODE-003. No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V board, no level shifting. Verified by inspection and on the bench on both boards.
 
 ---
 
