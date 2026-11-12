@@ -10,6 +10,8 @@ static const uint8_t LacrosseLuxType = 5;
 
 static const uint32_t MaxBcdValue = 0x9999;
 
+static const uint32_t ExpirySeconds = 1800;
+
 void SourceTable::Update(const OregonDecoder &decoder, uint32_t nowSeconds) {
   SourceRecord record = {SourceRecord::Oregon,
                          decoder.Channel(),
@@ -105,4 +107,13 @@ uint8_t SourceTable::SlotFor(const SourceRecord &record) const {
       oldest = i;
   }
   return oldest;
+}
+
+void SourceTable::Expire(uint32_t nowSeconds) {
+  uint8_t kept = 0;
+  for (uint8_t i = 0; i < count; i++) {
+    if (nowSeconds - records[i].lastSeenSeconds < ExpirySeconds)
+      records[kept++] = records[i];
+  }
+  count = kept;
 }

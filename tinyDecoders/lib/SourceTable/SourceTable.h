@@ -44,6 +44,8 @@ class SourceTable {
   void Update(const OregonDecoder &decoder, uint32_t nowSeconds);
   void Update(const LacrosseDecoder &decoder, uint32_t nowSeconds);
   void Update(const X10Decoder &decoder, uint32_t nowSeconds);
+  // Removes sources not seen for 30 minutes, keeping first-seen order
+  void Expire(uint32_t nowSeconds);
 
   uint8_t Count() const { return count; }
   const SourceRecord &At(uint8_t index) const { return records[index]; }
