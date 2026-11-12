@@ -17,7 +17,7 @@
  *   };  // aggregate, members in this order
  *   class SourceTable {
  *    public:
- *     // 16 when __AVR_ATmega32U4__ is defined, else 8
+ *     // 16 when AVR is defined (Pro Mini, Pro Micro), else 8
  *     static const uint8_t kCapacity = 8;
  *     void Update(const OregonDecoder &, uint32_t nowSeconds);
  *     void Update(const LacrosseDecoder &, uint32_t nowSeconds);
