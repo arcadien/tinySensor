@@ -76,8 +76,8 @@
 ---
 
 ### PLAT-DECODE-005
-**Title:** ProMicroReceiverHal writes RFLink lines to the native USB CDC serial without blocking the pulse capture
+**Title:** AtmegaReceiverHal writes RFLink lines to Serial (debug UART TX D1 on the Pro Mini, USB CDC on the Pro Micro) without blocking the pulse capture
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, CONF-DECODE-003
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** `ProMicroReceiverHal::Init()` calls `Serial.begin(57600)` (USB CDC ignores the rate; 57600 is the Home Assistant `rflink` default). `WriteLine(line)` drops the line when `Serial.availableForWrite()` is below its length + 2; otherwise it writes the line then `\r\n`. `Serial`'s `operator bool` is never used (it waits 10 ms). Incoming bytes (e.g. RFLink `10;` commands) are ignored and no startup banner is sent. Verified on the bench with `pio device monitor`.
+**Description:** `AtmegaReceiverHal::Init()` calls `Serial.begin(57600)`. On the Pro Mini, `Serial` is the hardware USART (TX D1/PD1, 57600 baud 8N1, interrupt-driven 128-byte TX buffer set by CONF-DECODE-004): a debug output only, which works with or without a USB-serial adapter connected. On the Pro Micro it is the native USB CDC serial (the rate is ignored). `WriteLine(line)` drops the line when `Serial.availableForWrite()` is below its length + 2; otherwise it writes the line then `\r\n`, so it never waits for the serial to drain. `Serial`'s `operator bool` is never used (it waits 10 ms on the Pro Micro). Incoming bytes are ignored and no startup banner is sent. Verified on the bench with `pio device monitor -b 57600` (through a USB-serial adapter on the Pro Mini).
