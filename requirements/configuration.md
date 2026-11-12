@@ -69,12 +69,6 @@
 **Dependencies:** —
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
 
-### CONF-DECODE-001
-**Title:** tinyDecoders attiny84a env builds the receiver firmware at 8 MHz internal within 8 KB flash and 384 B static RAM
-**Status:** validated
-**Dependencies:** FUNC-DECODE-007, PLAT-DECODE-001, PLAT-DECODE-002
-**Description:** `tinyDecoders/platformio.ini` gains `[env:attiny84a]`: `platform = atmelavr`, `board = attiny84`, `board_build.mcu = attiny84a`, `board_build.f_cpu = 8000000L`, no framework, `board_fuses.lfuse = 0xE2` (internal 8 MHz, no CKDIV8), `hfuse = 0xDF`, `efuse = 0xFF`, `lib_deps` = the root `tinyi2c` pinned commit, upload settings copied from the root `platformio.ini`, `board_upload.maximum_size = 8192`, `board_upload.maximum_ram_size = 384` (128 B kept for stack and interrupts); PlatformIO only warns, so a post-build `extra_scripts` step `tinyDecoders/scripts/check_size.py` fails the build when `.data` + `.bss` exceeds 384 B. `tinyDecoders/include/Arduino.h` supplies the ATtiny84 USI pin macros that TinyI2C expects, since there is no framework. `tinyDecoders/src/main.cpp` (excluded from native) defines `hal` (`Attiny84aReceiverHal`) and `receiver` (`Receiver`, built on `&hal`) at file scope, so the static RAM check counts them; `main()` calls `hal.Init()`, enables interrupts and loops on `receiver.Poll()`. Verified by `pio run -d tinyDecoders -e attiny84a`.
-
 ### CONF-DECODE-002
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the attiny84a and promicro builds
 **Status:** validated
@@ -86,3 +80,10 @@
 **Status:** validated
 **Dependencies:** FUNC-DECODE-009, PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005
 **Description:** `tinyDecoders/platformio.ini` gains `[env:promicro]`: `platform = atmelavr`, `board = sparkfun_promicro16`, `framework = arduino`, default upload (`avr109`, Caterina bootloader over USB), no `lib_deps` (`Wire` is in the core), `build_src_filter = -<*> +<main_promicro.cpp>`; `[env:attiny84a]` gets `build_src_filter = -<*> +<main.cpp>`. `tinyDecoders/src/main_promicro.cpp` defines `hal` (`ProMicroReceiverHal`) and `receiver` (`Receiver`, built on `&hal`) at file scope; `setup()` calls `hal.Init()`, `loop()` calls `receiver.Poll()` (the Arduino `main` keeps the USB stack running). The ATtiny shim `tinyDecoders/include/Arduino.h` does `#include_next <Arduino.h>` when `__AVR_ATtiny84A__` is not defined, so it never hides the framework core. Verified by `pio run -d tinyDecoders -e promicro`, and the `attiny84a` build size is unchanged.
+
+### CONF-DECODE-004
+**Title:** tinyDecoders promini env builds the production receiver firmware for the Pro Mini 5 V / 16 MHz (ATmega328P) with the Arduino framework
+**Status:** validated
+**Dependencies:** FUNC-DECODE-007, FUNC-DECODE-009, PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005
+**Description:** The production tinyDecoders receiver is a standalone viewer on an Arduino Pro Mini 5 V / 16 MHz (ATmega328P): RXB6 DATA on D8 (PB0), SSD1306 OLED on A4/A5, debug UART TX on D1, all wired at 5 V. The board is fed USB 5 V on its VCC pin, bypassing the onboard regulator. `tinyDecoders/platformio.ini` has `[env:promini]`: `platform = atmelavr`, `board = pro16MHzatmega328`, `framework = arduino`, default upload (`arduino` protocol through the Pro Mini bootloader, over a USB-serial adapter on the programming header), no `lib_deps`, `build_flags = -DSERIAL_TX_BUFFER_SIZE=128` (the core default of 64 B leaves 63 free bytes, exactly the longest RFLink line plus `
+`; 128 B gives room for a second line). It builds the same `tinyDecoders/src/main.cpp` as CONF-DECODE-003. Verified by `pio run -d tinyDecoders -e promini`.
