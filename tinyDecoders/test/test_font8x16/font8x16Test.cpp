@@ -1,6 +1,7 @@
 /*
  * Integration tests for UI-DECODE-002: Font8x16 holds the 8x16 glyphs of the
- * FormatPage character set (UI-DECODE-001), in SSD1306 page byte order.
+ * FormatPage character set (UI-DECODE-001) and of the waiting text
+ * "Waiting for data" (FUNC-DECODE-007), in SSD1306 page byte order.
  *
  * Production side must provide (code-builder handles this), in
  * tinyDecoders/lib/Font8x16/Font8x16.h:
@@ -19,9 +20,11 @@
 #include <Font8x16.h>
 
 // The 32 non-space characters of UI-DECODE-001 ('\x7F' is the degree glyph)
+// and of the waiting text "Waiting for data" (adds W g i n o r t)
 static const char drawable[] =
     "0123456789.-%\x7F"
-    "COreLabcfXhPlxVsmd";
+    "VlxLXabcdef"
+    "Wginort";
 
 struct Glyph {
   uint8_t bytes[16];
@@ -72,6 +75,8 @@ struct BlankCase {
 static const BlankCase blankCases[] = {
     {"space", ' '},
     {"uppercase-A-not-in-set", 'A'},
+    {"uppercase-C-dropped-with-the-unit", 'C'},
+    {"lowercase-s-dropped-with-the-age", 's'},
     {"nul", '\0'},
 };
 
