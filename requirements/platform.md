@@ -57,15 +57,6 @@
 
 ---
 
-### PLAT-DECODE-002
-**Title:** Attiny84aReceiverHal drives an SSD1306 128x32 OLED at I2C 0x3C, one 8x16 character per DrawChar, without framebuffer
-**Status:** validated
-**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-001
-**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** `Attiny84aReceiverHal` talks to the SSD1306 at 0x3C through `TinyI2C` (USI: SDA PA6, SCL PA4). `Init()` sends: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(row, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `2*row` then `2*row + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)`, then one data transfer (`0x40` and 8 glyph bytes). No display buffer is kept in RAM. Verified by inspection and on the bench (AVR only).
-
----
-
 ### PLAT-DECODE-003
 **Title:** AtmegaReceiverHal captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
 **Status:** validated
@@ -76,11 +67,11 @@
 ---
 
 ### PLAT-DECODE-004
-**Title:** ProMicroReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI (SDA D2/PD1, SCL D3/PD0) with Wire
+**Title:** AtmegaReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI with Wire, one 8x16 character per DrawChar, without framebuffer
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-003
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** `ProMicroReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends the same SSD1306 init sequence, screen clear and `AF` as PLAT-DECODE-002. `DrawChar(row, col, c)` sends the same commands and glyph bytes as PLAT-DECODE-002, one `Wire` transaction per command group and per 8-byte data transfer (within the 32-byte `Wire` buffer). No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V Pro Micro, no level shifting. Verified by inspection and on the bench.
+**Description:** The OLED is on the hardware TWI: SDA A4 (PC4) and SCL A5 (PC5) on the Pro Mini, SDA D2 (PD1) and SCL D3 (PD0) on the Pro Micro. `AtmegaReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends, in one transaction after control byte `0x00`: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(row, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `2*row` then `2*row + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)` in one transaction, then `0x40` and the 8 glyph bytes in another (within the 32-byte `Wire` buffer). No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V board, no level shifting. Verified by inspection and on the bench on both boards.
 
 ---
 
