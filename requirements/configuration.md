@@ -70,10 +70,10 @@
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
 
 ### CONF-DECODE-002
-**Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the attiny84a and promicro builds
+**Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated
-**Dependencies:** CONF-DECODE-001, CONF-DECODE-003, TECH-DECODE-001
-**Description:** In `.github/workflows/main.yml`, the `lint` job runs the `.rbd/config.yml` linter command (adds `tinyDecoders`, prunes `*/.pio`); `test-native` also runs `pio test -d tinyDecoders -e native`; a `build-tinydecoders` job runs `pio run -d tinyDecoders -e attiny84a` and `pio run -d tinyDecoders -e promicro`, uploads the attiny84a `firmware.hex`/`firmware.elf` as `firmware-tinydecoders` and the promicro ones as `firmware-tinydecoders-promicro`, and `release` also needs it. Cache keys hash `tinyDecoders/platformio.ini` too. `.pre-commit-config.yaml` clang-format `files` becomes `^(src|lib|include|test|tinyDecoders/(src|lib|test))/`. Verified by a green CI run.
+**Dependencies:** CONF-DECODE-003, CONF-DECODE-004, TECH-DECODE-001
+**Description:** In `.github/workflows/main.yml`, the `lint` job runs the `.rbd/config.yml` linter command (adds `tinyDecoders`, prunes `*/.pio`); `test-native` also runs `pio test -d tinyDecoders -e native`; a `build-tinydecoders` job runs `pio run -d tinyDecoders -e promini` and `pio run -d tinyDecoders -e promicro`, uploads the promini `firmware.hex`/`firmware.elf` as `firmware-tinydecoders` and the promicro ones as `firmware-tinydecoders-promicro`, and `release` also needs it. Cache keys hash `tinyDecoders/platformio.ini` too. `.pre-commit-config.yaml` clang-format `files` becomes `^(src|lib|include|test|tinyDecoders/(src|lib|test))/`. Verified by a green CI run.
 
 ### CONF-DECODE-003
 **Title:** tinyDecoders promicro env builds the receiver firmware for the Pro Micro 5 V / 16 MHz breadboard prototype with the Arduino framework
