@@ -7,6 +7,9 @@
  *   void ReadGlyph(char c, uint8_t glyph[16]);
  * reading a PROGMEM table (on native, PROGMEM is empty and reads are plain
  * loads), generated from Spleen 8x16 by tinyDecoders/scripts/gen_font8x16.py.
+ * UI-DECODE-003 adds, in the same header:
+ *   void ReadBigGlyphPage(char c, uint8_t page, uint8_t bytes[16]);
+ * page 0-3 of the 16x32 glyph, computed from ReadGlyph (no extra table).
  */
 
 #include <stdint.h>
@@ -87,6 +90,58 @@ void ReadGlyph_gives_a_blank_glyph_outside_the_set() {
   }
 }
 
+// UI-DECODE-001 characters drawn in 16x32 cells, space included
+static const char bigSet[] = " 0123456789.-%\x7FVlxLXabcdef";
+
+// @req UI-DECODE-003
+void ReadBigGlyphPage_doubles_the_8x16_glyph() {
+  for (size_t k = 0; k < strlen(bigSet); k++) {
+    // Given
+    char c = bigSet[k];
+    char id[] = {c, '\0'};
+    uint8_t pages[4][16];
+    memset(pages, 0xA5, sizeof pages);
+
+    // When
+    for (uint8_t page = 0; page < 4; page++)
+      ReadBigGlyphPage(c, page, pages[page]);
+
+    // Then
+    uint8_t rebuilt[16] = {0};
+    for (uint8_t page = 0; page < 4; page++) {
+      for (uint8_t x = 0; x < 16; x += 2) {
+        uint8_t b = pages[page][x];
+        TEST_ASSERT_EQUAL_HEX8_MESSAGE(b, pages[page][x + 1], id);
+        uint8_t nibble = 0;
+        for (uint8_t i = 0; i < 4; i++) {
+          uint8_t lo = (b >> (2 * i)) & 1;
+          TEST_ASSERT_EQUAL_UINT8_MESSAGE(lo, (b >> (2 * i + 1)) & 1, id);
+          nibble |= lo << i;
+        }
+        rebuilt[(page / 2) * 8 + x / 2] |= nibble << ((page % 2) * 4);
+      }
+    }
+    Glyph glyph = read(c);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(glyph.bytes, rebuilt, 16, id);
+  }
+}
+
+// @req UI-DECODE-003
+void ReadBigGlyphPage_gives_blank_pages_for_space() {
+  static const uint8_t blank[16] = {0};
+  for (uint8_t page = 0; page < 4; page++) {
+    // Given
+    uint8_t bytes[16];
+    memset(bytes, 0xA5, sizeof bytes);
+
+    // When
+    ReadBigGlyphPage(' ', page, bytes);
+
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(blank, bytes, 16);
+  }
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -94,5 +149,7 @@ int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(ReadGlyph_draws_every_character_of_the_page_set_distinctly);
   RUN_TEST(ReadGlyph_gives_a_blank_glyph_outside_the_set);
+  RUN_TEST(ReadBigGlyphPage_doubles_the_8x16_glyph);
+  RUN_TEST(ReadBigGlyphPage_gives_blank_pages_for_space);
   return UNITY_END();
 }
