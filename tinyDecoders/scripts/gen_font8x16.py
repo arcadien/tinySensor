@@ -3,15 +3,16 @@
 
 Usage: gen_font8x16.py <spleen-8x16.bdf> > lib/Font8x16/Font8x16Glyphs.h
 
-Keeps the 32 non-space characters of the UI-DECODE-001 set, in SSD1306 page
-byte order: bytes 0-7 are columns 0-7 of the top 8 pixel rows, bytes 8-15 the
-bottom 8 rows, bit 0 the top pixel. '\\x7F' is drawn with U+00B0 (degree).
+Keeps the 32 non-space characters of the UI-DECODE-001 set and of the
+FUNC-DECODE-007 waiting text, in SSD1306 page byte order: bytes 0-7 are
+columns 0-7 of the top 8 pixel rows, bytes 8-15 the bottom 8 rows, bit 0 the
+top pixel. '\\x7F' is drawn with U+00B0 (degree).
 """
 
 import sys
 
-# Character set of FormatPage, mapped to the font code point drawing it
-CHARACTERS = "0123456789.-%\x7f" "COreLabcfXhPlxVsmd"
+# FormatPage set plus the "Waiting for data" letters, mapped to their font code point
+CHARACTERS = "0123456789.-%\x7f" "VlxLXabcdef" "Wginort"
 DEGREE = 0x00B0
 
 LICENSE = """\
