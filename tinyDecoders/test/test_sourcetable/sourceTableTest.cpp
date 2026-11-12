@@ -24,6 +24,8 @@
  *     void Update(const X10Decoder &, uint32_t nowSeconds);
  *     uint8_t Count() const;
  *     const SourceRecord &At(uint8_t index) const;
+ *     // FUNC-DECODE-010: removes records with now - lastSeenSeconds >= 1800
+ *     void Expire(uint32_t nowSeconds);
  *   };
  * Kind and field bits are nested in SourceRecord (SourceRecord::Oregon,
  * SourceRecord::Temperature...).
@@ -368,6 +370,84 @@ void SourceTable_replaces_least_recently_seen_source_when_full() {
   }
 }
 
+struct BoundaryCase {
+  const char *id;
+  uint32_t now;
+  uint8_t count;
+};
+
+// Source seen at 100: age 1799 s is kept, 1800 s is removed
+static const BoundaryCase boundaryCases[] = {
+    {"age-1799-kept", 1899, 1},
+    {"age-1800-removed", 1900, 0},
+};
+
+// @req FUNC-DECODE-010
+void SourceTable_expires_a_source_after_30_minutes() {
+  for (const BoundaryCase &c : boundaryCases) {
+    // Given
+    SourceTable table;
+    transmit(table, {RFXMETER, 1, 0, 0, 0, 0, 0, 0x3300}, 100);
+
+    // When
+    table.Expire(c.now);
+
+    // Then
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(c.count, table.Count(), c.id);
+    if (c.count == 1) {
+      TEST_ASSERT_EQUAL_UINT8_MESSAGE(1, table.At(0).id, c.id);
+      TEST_ASSERT_EQUAL_UINT32_MESSAGE(100, table.At(0).lastSeenSeconds, c.id);
+    }
+  }
+}
+
+// @req FUNC-DECODE-010
+void SourceTable_expire_keeps_first_seen_order_of_the_others() {
+  // Given
+  SourceTable table;
+  transmit(table, {RFXMETER, 1, 0, 0, 0, 0, 0, 0x3300}, 0);
+  transmit(table, {RFXMETER, 2, 0, 0, 0, 0, 0, 0x3300}, 500);
+  transmit(table, {RFXMETER, 3, 0, 0, 0, 0, 0, 0x3300}, 1000);
+
+  // When
+  table.Expire(1800);
+
+  // Then
+  TEST_ASSERT_EQUAL_UINT8(2, table.Count());
+  assertRecord("second", {SourceRecord::X10, 2, 0, MV, 0, 0, 0, 0, 3300, 500},
+               table.At(0));
+  assertRecord("third", {SourceRecord::X10, 3, 0, MV, 0, 0, 0, 0, 3300, 1000},
+               table.At(1));
+}
+
+// @req FUNC-DECODE-010
+void SourceTable_expire_keeps_a_source_updated_since_first_seen() {
+  // Given
+  SourceTable table;
+  transmit(table, {RFXMETER, 1, 0, 0, 0, 0, 0, 0x3300}, 0);
+  transmit(table, {RFXMETER, 1, 0, 0, 0, 0, 0, 0x3300}, 1000);
+
+  // When
+  table.Expire(1800);
+
+  // Then
+  TEST_ASSERT_EQUAL_UINT8(1, table.Count());
+  assertRecord("updated", {SourceRecord::X10, 1, 0, MV, 0, 0, 0, 0, 3300, 1000},
+               table.At(0));
+}
+
+// @req FUNC-DECODE-010
+void SourceTable_expire_on_an_empty_table_keeps_it_empty() {
+  // Given
+  SourceTable table;
+
+  // When
+  table.Expire(1800);
+
+  // Then
+  TEST_ASSERT_EQUAL_UINT8(0, table.Count());
+}
+
 void setUp(void) {
   TestHal.ClearOrders();
 }
@@ -380,5 +460,9 @@ int main(int, char **) {
   RUN_TEST(SourceTable_updates_a_known_source_in_place);
   RUN_TEST(SourceTable_keeps_other_kind_or_code_as_another_source);
   RUN_TEST(SourceTable_replaces_least_recently_seen_source_when_full);
+  RUN_TEST(SourceTable_expires_a_source_after_30_minutes);
+  RUN_TEST(SourceTable_expire_keeps_first_seen_order_of_the_others);
+  RUN_TEST(SourceTable_expire_keeps_a_source_updated_since_first_seen);
+  RUN_TEST(SourceTable_expire_on_an_empty_table_keeps_it_empty);
   return UNITY_END();
 }
