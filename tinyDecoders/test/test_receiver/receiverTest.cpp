@@ -79,7 +79,8 @@ static void settle(Receiver &receiver, TestReceiverHal &hal) {
 static void assertScreen(const char *id, const char *row0, const char *row1,
                          const TestReceiverHal &hal) {
   TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(row0, hal.Row(0), 16, id);
-  TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(row1, hal.Row(1), 16, id);
+  // text row 1 starts at display page 2 (TECH-DECODE-002)
+  TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(row1, hal.Row(2), 16, id);
 }
 
 struct WaitingCase {

@@ -14,11 +14,15 @@
  *      public:
  *       bool PopPulse(bool &high, uint16_t &durationUs);  // oldest, FIFO
  *       uint32_t NowSeconds() const;
- *       void DrawChar(uint8_t row, uint8_t col, char c);  // row 0-1, col 0-15
+ *       void DrawChar(uint8_t page, uint8_t col, char c);  // start page 0-2,
+ *                                                          // col 0-15
+ *       void DrawBigChar(uint8_t col, char c);             // col 0-5
  *       void PushPulse(bool high, uint16_t durationUs);
  *       void SetNowSeconds(uint32_t s);
- *       const char *Row(uint8_t row) const;  // 16 chars, initially spaces
- *       uint16_t DrawCount() const;          // DrawChar calls so far
+ *       const char *Row(uint8_t page) const;  // page 0-2, 16 chars,
+ *                                             // initially spaces
+ *       const char *Big() const;     // 6 chars, initially spaces
+ *       uint16_t DrawCount() const;  // DrawChar + DrawBigChar calls so far
  *       static const bool HasLineOutput;     // true
  *       void WriteLine(const char *line);    // appends to Lines()
  *       const std::vector<std::string> &Lines() const;
@@ -85,28 +89,83 @@ void TestReceiverHal_reports_the_set_clock() {
   TEST_ASSERT_EQUAL_UINT32(86400, hal.NowSeconds());
 }
 
+// big: DrawBigChar(col, c), page unused; else DrawChar(page, col, c)
 struct Draw {
-  uint8_t row, col;
+  bool big;
+  uint8_t page, col;
   char c;
 };
 
 struct DrawCase {
   const char *id;
-  Draw draws[3];
+  Draw draws[4];
   uint8_t count;
-  const char *row0;
-  const char *row1;
+  const char *page0;
+  const char *page1;
+  const char *page2;
+  const char *big;
 };
 
 static const DrawCase drawCases[] = {
-    {"blank-screen", {}, 0, "                ", "                "},
-    {"top-left", {{0, 0, 'O'}}, 1, "O               ", "                "},
-    {"bottom-right", {{1, 15, 's'}}, 1, "                ", "               s"},
+    {"blank-screen",
+     {},
+     0,
+     "                ",
+     "                ",
+     "                ",
+     "      "},
+    {"page0-left",
+     {{false, 0, 0, 'O'}},
+     1,
+     "O               ",
+     "                ",
+     "                ",
+     "      "},
+    {"page1-centre",
+     {{false, 1, 7, 'W'}},
+     1,
+     "                ",
+     "       W        ",
+     "                ",
+     "      "},
+    {"page2-right",
+     {{false, 2, 15, 's'}},
+     1,
+     "                ",
+     "                ",
+     "               s",
+     "      "},
+    {"big-col0",
+     {{true, 0, 0, '2'}},
+     1,
+     "                ",
+     "                ",
+     "                ",
+     "2     "},
+    {"big-col5",
+     {{true, 0, 5, '%'}},
+     1,
+     "                ",
+     "                ",
+     "                ",
+     "     %"},
+    {"one-of-each",
+     {{false, 2, 12, 'h'}, {true, 0, 3, '-'}},
+     2,
+     "                ",
+     "                ",
+     "            h   ",
+     "   -  "},
     {"overwrite",
-     {{0, 3, 'a'}, {0, 3, 'b'}, {1, 0, '\x7F'}},
-     3,
+     {{false, 0, 3, 'a'},
+      {false, 0, 3, 'b'},
+      {true, 0, 0, '1'},
+      {true, 0, 0, '\x7F'}},
+     4,
      "   b            ",
-     "\x7F               "},
+     "                ",
+     "                ",
+     "\x7F     "},
 };
 
 // @req TECH-DECODE-002
@@ -117,12 +176,18 @@ void TestReceiverHal_keeps_the_drawn_screen() {
 
     // When
     for (uint8_t i = 0; i < c.count; i++) {
-      hal.DrawChar(c.draws[i].row, c.draws[i].col, c.draws[i].c);
+      const Draw &d = c.draws[i];
+      if (d.big)
+        hal.DrawBigChar(d.col, d.c);
+      else
+        hal.DrawChar(d.page, d.col, d.c);
     }
 
     // Then
-    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.row0, hal.Row(0), 16, c.id);
-    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.row1, hal.Row(1), 16, c.id);
+    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.page0, hal.Row(0), 16, c.id);
+    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.page1, hal.Row(1), 16, c.id);
+    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.page2, hal.Row(2), 16, c.id);
+    TEST_ASSERT_EQUAL_STRING_LEN_MESSAGE(c.big, hal.Big(), 6, c.id);
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.count, hal.DrawCount(), c.id);
   }
 }
