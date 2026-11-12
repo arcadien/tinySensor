@@ -34,7 +34,7 @@ struct SourceRecord {
 // When full, the least recently seen source is replaced.
 class SourceTable {
  public:
-#ifdef __AVR_ATmega32U4__
+#ifdef AVR
   static const uint8_t kCapacity = 16;
 #else
   static const uint8_t kCapacity = 8;
