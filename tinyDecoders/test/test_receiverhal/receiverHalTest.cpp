@@ -5,8 +5,10 @@
  *
  * Production side must provide (code-builder handles this):
  *   tinyDecoders/lib/ReceiverHal/ReceiverHal.h:
- *     typedef Attiny84aReceiverHal ReceiverHal;  // when AVR is defined
- *     typedef TestReceiverHal ReceiverHal;       // otherwise
+ *     typedef AtmegaReceiverHal ReceiverHal;  // __AVR_ATmega328P__ or
+ *                                             // __AVR_ATmega32U4__
+ *     typedef TestReceiverHal ReceiverHal;    // when AVR is not defined
+ *     #error                                  // any other MCU
  *   tinyDecoders/lib/ReceiverHal/TestReceiverHal.h (native only):
  *     class TestReceiverHal {
  *      public:
