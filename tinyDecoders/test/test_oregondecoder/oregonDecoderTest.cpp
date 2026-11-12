@@ -312,13 +312,13 @@ struct WindowCase {
   int expectedFrames;
 };
 
-// Short 150-599 µs, long 600-1199 µs
+// Short 150-731 µs, long 732-1199 µs
 static const WindowCase windowCases[] = {
     {"short-min-150", 150, 1024, 1},   {"short-below-149", 149, 1024, 0},
-    {"short-max-599", 599, 1024, 1},   {"short-600-is-long", 600, 1024, 0},
-    {"long-min-600", 512, 600, 1},     {"long-599-is-short", 512, 599, 0},
+    {"short-max-731", 731, 1024, 1},   {"short-732-is-long", 732, 1024, 0},
+    {"long-min-732", 512, 732, 1},     {"long-731-is-short", 512, 731, 0},
     {"long-max-1199", 512, 1199, 1},   {"long-above-1200", 512, 1200, 0},
-    {"both-min-150-600", 150, 600, 1}, {"both-max-599-1199", 599, 1199, 1},
+    {"both-min-150-732", 150, 732, 1}, {"both-max-731-1199", 731, 1199, 1},
 };
 
 // @req FUNC-DECODE-004
@@ -334,6 +334,38 @@ void OregonDecoder_accepts_pulses_within_rflink_windows() {
     // Then
     TEST_ASSERT_EQUAL_INT_MESSAGE(c.expectedFrames, frames, c.id);
   }
+}
+
+// Encoder output with level-dependent durations, as a weak sensor on the
+// RXB6 gives (highs short, lows long)
+static std::vector<Pulse> retimedByLevel(std::vector<Pulse> pulses,
+                                         uint16_t shortHighUs,
+                                         uint16_t shortLowUs,
+                                         uint16_t longHighUs,
+                                         uint16_t longLowUs) {
+  for (Pulse &p : pulses) {
+    bool isShort = p.durationUs == 512;
+    p.durationUs = p.high ? (isShort ? shortHighUs : longHighUs)
+                          : (isShort ? shortLowUs : longLowUs);
+  }
+  return pulses;
+}
+
+// @req FUNC-DECODE-004
+void OregonDecoder_decodes_asymmetric_weak_sensor_frame() {
+  // Given
+  std::vector<Pulse> pulses =
+      retimedByLevel(framePulses(thgr228nBytes), 400, 620, 880, 1060);
+  OregonDecoder decoder;
+
+  // When
+  int frames = countFrames(decoder, pulses);
+
+  // Then
+  TEST_ASSERT_EQUAL_INT(1, frames);
+  TEST_ASSERT_EQUAL_HEX16(0x1A2D, decoder.DeviceId());
+  TEST_ASSERT_EQUAL_UINT8(3, decoder.Channel());
+  TEST_ASSERT_EQUAL_HEX8(0xC4, decoder.RollingCode());
 }
 
 struct CorruptionCase {
@@ -592,6 +624,7 @@ int main(int, char **) {
   RUN_TEST(OregonDecoder_maps_channel_nibble_to_channel);
   RUN_TEST(OregonDecoder_reads_battery_low_from_flags_bits_2_and_3);
   RUN_TEST(OregonDecoder_accepts_pulses_within_rflink_windows);
+  RUN_TEST(OregonDecoder_decodes_asymmetric_weak_sensor_frame);
   RUN_TEST(OregonDecoder_rejects_corrupted_frames);
   RUN_TEST(OregonDecoder_requires_at_least_12_sync_ones);
   RUN_TEST(OregonDecoder_recovers_from_noise_and_partial_frames);
