@@ -14,3 +14,9 @@
 **Status:** validated
 **Dependencies:** UI-DECODE-001
 **Description:** Free function `void ReadGlyph(char c, uint8_t glyph[16])` in `tinyDecoders/lib/Font8x16/Font8x16.h` copies the glyph of `c` from a `PROGMEM` table (on native, `PROGMEM` is empty and reads are plain loads). Bytes 0–7 are columns 0–7 of the top 8 pixel rows, bytes 8–15 the bottom 8 rows, bit 0 the top pixel: the SSD1306 page layout. The table holds only the 32 non-space characters of the UI-DECODE-001 set (`'\x7F'` drawn as `°`). Space and any other character give 16 zero bytes. Bitmaps come from Spleen 8x16 (BSD-2-Clause, licence text in the generated file header), produced by `tinyDecoders/scripts/gen_font8x16.py <spleen-8x16.bdf>`. Test: each of the 32 glyphs has a set bit and they are pairwise distinct; space, `A`, `\0` give zeros.
+
+### UI-DECODE-003
+**Title:** Font8x16 reads a 16x32 glyph page by doubling the 8x16 glyph in both directions
+**Status:** validated
+**Dependencies:** UI-DECODE-002
+**Description:** Free function `void ReadBigGlyphPage(char c, uint8_t page, uint8_t bytes[16])` in `tinyDecoders/lib/Font8x16/Font8x16.h` writes page `page` (0–3, top to bottom) of the 16x32 glyph of `c`, computed from `ReadGlyph(c)` without any RAM or flash table: with `s` = glyph byte `(page / 2) * 8 + x / 2` and `n` = its low nibble (even page) or high nibble (odd page), bits `2i` and `2i+1` of `bytes[x]` are both bit `i` of `n` (bit 0 the top pixel, SSD1306 page layout). Test: for each UI-DECODE-001 character and page, `bytes[2k] == bytes[2k+1]`, bits `2i` and `2i+1` are equal, and keeping one of each pair rebuilds `ReadGlyph(c)`; space gives zeros on the 4 pages.
