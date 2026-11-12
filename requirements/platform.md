@@ -57,15 +57,6 @@
 
 ---
 
-### PLAT-DECODE-001
-**Title:** Attiny84aReceiverHal captures radio pulses on ICP1 (PA7) with Timer1 at 1 µs and counts seconds from its overflow
-**Status:** validated
-**Dependencies:** TECH-DECODE-002, CONF-DECODE-001
-**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** In `tinyDecoders/lib/ReceiverHal/Attiny84aReceiverHal.{h,cpp}` (AVR only), `Init()` makes PA7 an input without pull-up, runs Timer1 in normal mode with prescaler 8 (1 µs ticks at 8 MHz), noise canceller on, capture edge opposite to the current PA7 level, capture and overflow interrupts on. `TIM1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture, 65535 if a full timer period has elapsed, toggles the edge, into a 16-pulse ring buffer; when full the pulse is dropped. `TIM1_OVF` adds 65536 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench (AVR only).
-
----
-
 ### PLAT-DECODE-002
 **Title:** Attiny84aReceiverHal drives an SSD1306 128x32 OLED at I2C 0x3C, one 8x16 character per DrawChar, without framebuffer
 **Status:** validated
@@ -76,11 +67,11 @@
 ---
 
 ### PLAT-DECODE-003
-**Title:** ProMicroReceiverHal captures radio pulses on ICP1 (PD4, Pro Micro pin 4) with Timer1 at 0.5 µs and counts seconds from its overflow
+**Title:** AtmegaReceiverHal captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, CONF-DECODE-003
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
-**Description:** In `tinyDecoders/lib/ReceiverHal/ProMicroReceiverHal.{h,cpp}` (ATmega32U4 only, Pro Micro 5 V / 16 MHz), `Init()` makes PD4 an input without pull-up (the RXB6 receiver is powered at 5 V and drives PD4 directly, no level shifting) and fully reconfigures Timer1 (Arduino uses only Timer0 for `millis`): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture edge opposite to the current PD4 level, capture and overflow interrupts on. `TIMER1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture / 2, 65535 if a full timer period has elapsed, toggles the edge, into a 64-pulse ring buffer (absorbs I2C and USB waits); when full the pulse is dropped. `TIMER1_OVF` adds 32768 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench.
+**Description:** `tinyDecoders/lib/ReceiverHal/AtmegaReceiverHal.{h,cpp}` is compiled only when `__AVR_ATmega328P__` (Pro Mini 5 V / 16 MHz) or `__AVR_ATmega32U4__` (Pro Micro 5 V / 16 MHz) is defined. The only difference between the two MCUs here is the ICP1 pin, chosen by these macros: PB0 (Pro Mini D8) or PD4 (Pro Micro pin 4). `Init()` makes ICP1 an input without pull-up (the RXB6 is powered at 5 V and drives it directly, no level shifting) and fully reconfigures Timer1 (Arduino uses only Timer0 for `millis`): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture edge opposite to the current ICP1 level, capture and overflow interrupts on. `TIMER1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture / 2, 65535 if a full timer period has elapsed, toggles the edge, into a 64-pulse ring buffer (absorbs I2C and serial waits); when full the pulse is dropped. `TIMER1_OVF` adds 32768 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench on both boards.
 
 ---
 
