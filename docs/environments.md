@@ -47,3 +47,15 @@ When the measured battery voltage falls below the threshold, the X10 battery met
 3. Set `BATTERY_VOLTAGE_X10_ID` to a unique integer not used by any other board.
 4. Set `INTERNAL_1v1=1100` as a starting value, then calibrate as above.
 5. Assign the next `S_XX` label, write it on the PCB.
+
+## tinyDecoders receiver (`tinyDecoders/platformio.ini`)
+
+The 433 MHz receiver is a separate PlatformIO project (`pio run -d tinyDecoders -e <env>`). It needs no per-board calibration.
+
+| Env | Board | Purpose |
+|-----|-------|---------|
+| `promini` | Arduino Pro Mini 5 V / 16 MHz (ATmega328P) | Production receiver, a standalone OLED viewer: RXB6 DATA on D8 (ICP1/PB0), SSD1306 on A4 (SDA) / A5 (SCL), debug UART TX on D1 at 57600 baud. Uploaded with the `arduino` protocol through a USB-serial adapter on the programming header (CONF-DECODE-004) |
+| `promicro` | SparkFun Pro Micro 5 V / 16 MHz (ATmega32U4) | Breadboard prototype: RXB6 on pin 4 (ICP1/PD4), SSD1306 on D2 / D3, RFLink lines on USB CDC (CONF-DECODE-003) |
+| `native` | host | Unity tests of the decoders, `Receiver` and the formatters against the repository encoders |
+
+Both boards share `AtmegaReceiverHal` and `src/main.cpp`.
