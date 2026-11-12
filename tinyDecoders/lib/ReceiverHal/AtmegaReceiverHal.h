@@ -16,6 +16,7 @@ class AtmegaReceiverHal {
 
   bool PopPulse(bool &high, uint16_t &durationUs);
   uint32_t NowSeconds() const;
-  void DrawChar(uint8_t row, uint8_t col, char c);
+  void DrawChar(uint8_t page, uint8_t col, char c);  // pages page, page+1
+  void DrawBigChar(uint8_t col, char c);  // 16x32 at x = 16*col, pages 0-3
   void WriteLine(const char *line);
 };

@@ -7,13 +7,16 @@
 #include <string>
 #include <vector>
 
-// Native ReceiverHal double: queued pulses, settable clock, drawn 2 x 16
-// screen, recorded RFLink lines (TECH-DECODE-002)
+// Native ReceiverHal double: queued pulses, settable clock, drawn 3 x 16
+// text pages and 6-character big line, recorded RFLink lines (TECH-DECODE-002)
 class TestReceiverHal {
  public:
   static const bool HasLineOutput = true;
 
-  TestReceiverHal() { memset(screen, ' ', sizeof screen); }
+  TestReceiverHal() {
+    memset(screen, ' ', sizeof screen);
+    memset(big, ' ', sizeof big);
+  }
 
   bool PopPulse(bool &high, uint16_t &durationUs) {
     if (pulses.empty())
@@ -24,8 +27,12 @@ class TestReceiverHal {
     return true;
   }
   uint32_t NowSeconds() const { return nowSeconds; }
-  void DrawChar(uint8_t row, uint8_t col, char c) {
-    screen[row][col] = c;
+  void DrawChar(uint8_t page, uint8_t col, char c) {
+    screen[page][col] = c;
+    drawCount++;
+  }
+  void DrawBigChar(uint8_t col, char c) {
+    big[col] = c;
     drawCount++;
   }
   void WriteLine(const char *line) { lines.push_back(line); }
@@ -35,7 +42,8 @@ class TestReceiverHal {
   }
   void SetNowSeconds(uint32_t s) { nowSeconds = s; }
   // 16 characters, not '\0'-terminated
-  const char *Row(uint8_t row) const { return screen[row]; }
+  const char *Row(uint8_t page) const { return screen[page]; }
+  const char *Big() const { return big; }
   uint16_t DrawCount() const { return drawCount; }
   const std::vector<std::string> &Lines() const { return lines; }
 
@@ -47,7 +55,8 @@ class TestReceiverHal {
 
   std::deque<QueuedPulse> pulses;
   uint32_t nowSeconds = 0;
-  char screen[2][16];
+  char screen[3][16];  // by start page
+  char big[6];
   uint16_t drawCount = 0;
   std::vector<std::string> lines;
 };

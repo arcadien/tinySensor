@@ -52,7 +52,8 @@ const uint8_t OledCommands = 0x00;  // control byte: command stream follows
 const uint8_t OledData = 0x40;      // control byte: data stream follows
 const uint8_t OledPages = 4;
 const uint8_t OledColumns = 128;
-const uint8_t OledBytesPerWrite = 8;  // within the 32-byte Wire buffer
+const uint8_t OledBytesPerWrite = 8;
+const uint8_t OledBigBytes = 16;  // + control byte, within the 32-byte buffer
 const uint8_t OledDisplayOn = 0xAF;
 const uint32_t OledClockHz = 400000;
 
@@ -82,10 +83,10 @@ void Locate(uint8_t page, uint8_t column) {
   Wire.endTransmission();
 }
 
-void SendData(const uint8_t *bytes) {
+void SendData(const uint8_t *bytes, uint8_t count = OledBytesPerWrite) {
   Wire.beginTransmission(OledAddress);
   Wire.write(OledData);
-  Wire.write(bytes, OledBytesPerWrite);
+  Wire.write(bytes, count);
   Wire.endTransmission();
 }
 
@@ -149,12 +150,21 @@ uint32_t AtmegaReceiverHal::NowSeconds() const {
   return now;
 }
 
-void AtmegaReceiverHal::DrawChar(uint8_t row, uint8_t col, char c) {
+void AtmegaReceiverHal::DrawChar(uint8_t page, uint8_t col, char c) {
   uint8_t glyph[16];
   ReadGlyph(c, glyph);
   for (uint8_t half = 0; half < 2; half++) {
-    Locate(2 * row + half, col * 8);
+    Locate(page + half, col * 8);
     SendData(&glyph[half * OledBytesPerWrite]);
+  }
+}
+
+void AtmegaReceiverHal::DrawBigChar(uint8_t col, char c) {
+  uint8_t bytes[OledBigBytes];
+  for (uint8_t page = 0; page < OledPages; page++) {
+    ReadBigGlyphPage(c, page, bytes);
+    Locate(page, col * 16);
+    SendData(bytes, OledBigBytes);
   }
 }
 

@@ -76,7 +76,7 @@ void Receiver::DrawFirstChange() {
       toDraw &= ~((uint32_t)1 << bit);
       uint8_t row = bit / Columns;
       uint8_t col = bit % Columns;
-      hal->DrawChar(row, col, lines[row][col]);
+      hal->DrawChar(2 * row, col, lines[row][col]);
       return;
     }
   }
