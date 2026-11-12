@@ -1,8 +1,8 @@
 #include "OregonDecoder.h"
 
-// RFLink OregonDecoderV2 windows (Plugin_048.c lines 322-324)
+// Windows from RFLink; long threshold at the 488/976 us midpoint
 static const uint16_t MinShortUs = 150;
-static const uint16_t MinLongUs = 600;
+static const uint16_t MinLongUs = 732;
 static const uint16_t MaxLongUs = 1199;
 static const uint8_t MinSyncOnes = 12;
 static const uint16_t Thn132nId = 0xEA4C;
