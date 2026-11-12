@@ -286,3 +286,9 @@
 **Status:** validated
 **Dependencies:** FUNC-DECODE-007, FUNC-DECODE-008, TECH-DECODE-002
 **Description:** When `ReceiverHal::HasLineOutput` is true (compile-time constant, so the formatter is not linked when false), each decoder `Feed` returning true in `Receiver::Poll` makes `Receiver`, after `SourceTable::Update`, call `FormatRflink` on that decoder and pass the line to `hal->WriteLine(line)`. `Receiver` keeps a `uint8_t` line counter starting at 0, passed to `FormatRflink` and incremented (wrapping) after each line. No deduplication: a frame sent twice gives two lines. The OLED behaviour of FUNC-DECODE-007 is unchanged. Test: loopback Oregon then Lacrosse frames, each sent twice, give 4 lines in reception order with counters `00` to `03` in `TestReceiverHal::Lines()`.
+
+### FUNC-DECODE-010
+**Title:** SourceTable removes a source not received for 30 minutes
+**Status:** validated
+**Dependencies:** FUNC-DECODE-006
+**Description:** `SourceTable` (`tinyDecoders/lib/SourceTable/SourceTable.h`) exposes `void Expire(uint32_t nowSeconds)`, which removes every record with `nowSeconds - lastSeenSeconds >= 1800`. The remaining records keep their first-seen order in `At` and `Count()` drops by the number removed; nothing else removes a record (the FUNC-DECODE-006 replacement when full is unchanged). A removed source received again is appended as a new source. `Receiver` calls it before each page computation (FUNC-DECODE-007), so an expired source leaves the rotation and an empty table shows the waiting page. Test (native): a source seen at 100 is kept by `Expire(1899)` and removed by `Expire(1900)`; sources seen at 0, 500 and 1000 leave, after `Expire(1800)`, the second then the third; a source first seen at 0 and updated at 1000 survives `Expire(1800)`; `Expire` on an empty table keeps `Count()` at 0.
