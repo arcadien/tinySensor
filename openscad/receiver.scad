@@ -8,7 +8,7 @@
 //
 // Pièces (imprimables sans support) :
 //   shell : coque, dessus sur le plateau (face inclinée à 35° de la verticale)   x1
-//   plate : fond vissé (3 vis), logement du module USB/série, rainures du RXB6   x1
+//   plate : fond vissé (4 vis), logement du module USB/série, appuis du RXB6    x1
 // Export :
 //   openscad -D 'part="shell"' -o receiver_shell.stl receiver.scad
 //   openscad -D 'part="plate"' -o receiver_plate.stl receiver.scad
@@ -21,7 +21,7 @@ part = "assembly"; // [assembly, open, cutaway, shell, plate]
 /* [Coque] */
 box_w = 48;        // largeur : l'écran (38 mm) + parois et jeu
 box_d = 52;        // profondeur : Pro Mini devant, module USB/série derrière
-box_h = 24;        // hauteur à l'arrière : RXB6 debout (14) + antenne hélicoïdale couchée au-dessus
+box_h = 26;        // hauteur à l'arrière : module USB/série, RXB6 au-dessus, antenne hélicoïdale couchée
 front_h = 10;      // hauteur du bas de la façade
 face_tilt = 40;    // façade : inclinaison depuis la verticale (40° : se lit assis, imprimable à l'envers)
 wall = 2;
@@ -29,7 +29,7 @@ corner_r = 2;      // arrondi du profil
 
 /* [Fond] */
 plate_t = 2;
-boss_d = 6;        // 3 colonnes de vis (coin avant droit pris par le RXB6)
+boss_d = 6;        // 4 colonnes de vis dans les coins
 boss_h = 8;
 screw_pilot = 2.5; // M3 auto-taraudeuse dans la colonne
 screw_clear = 3.4;
@@ -47,17 +47,19 @@ pm_pos = [21, 19]; // centre sur le fond, devant le module USB/série
 usb_l = 20;        // À MESURER
 usb_w = 20;        // À MESURER
 usb_t = 1.6;       // épaisseur de la carte
-usb_x = 24;        // centre en X ; la prise est au bord arrière de la carte, contre la paroi
+usb_x = 26;        // centre en X ; la prise est au bord arrière de la carte, contre la paroi
 usb_port = [8, 3]; // prise micro-USB (largeur, hauteur), dessus de la carte
 usb_plug = [12, 8]; // ouverture dans la paroi pour la fiche surmoulée
 
 /* [RXB6] */
-rx_l = 30;         // RXB6 : carte debout le long de la paroi droite, broches en bas — À MESURER
-rx_h = 14;
+rx_l = 30;         // RXB6 : à plat au-dessus du module USB/série, composants en haut — À MESURER
+rx_w = 14;
 rx_t = 1.6;
-rx_y = 11;         // début de la carte (côté façade)
-slot_w = 2.2;      // rainures de maintien de la carte debout
-slot_h = 6;
+rx_h = 5;          // composants compris
+rx_y = 29.5;       // bord avant de la carte (son bord arrière s'arrête devant les colonnes du fond)
+rx_gap = 1.5;      // jeu au-dessus de la prise micro-USB
+rx_sup = 2.5;      // appuis : blocs aux deux bouts de la carte, de part et d'autre du module USB/série
+rx_lip = 1.5;      // rebord de l'appui sous la carte
 
 /* [OLED 0,91" 128x32] */
 oled_l = 38;       // carte — À MESURER
@@ -73,7 +75,7 @@ oled_pad = 3;      // surépaisseur de la façade autour du logement de l'écran
 sma_d = 6.5;       // perçage de l'embase (méplat à 5.9) — À VÉRIFIER
 sma_flat = 5.9;
 sma_skin = 0.4;    // pellicule laissée côté extérieur : percer pour passer au fouet
-sma_pos = [36, 14]; // X, Z sur la paroi arrière (entre la prise USB et le RXB6)
+sma_pos = [38, 20]; // X, Z sur la paroi arrière (au-dessus du RXB6)
 
 $fn = 48;
 eps = 0.01;
@@ -83,10 +85,11 @@ face_dy = (box_h - front_h) * tan(face_tilt);   // recul du haut de la façade
 face_a = 90 - face_tilt;                          // angle de la façade depuis l'horizontale
 face_len = (box_h - front_h) / cos(face_tilt);
 profile = [[0, 0], [box_d, 0], [box_d, box_h], [face_dy, box_h], [0, front_h]];
-bosses = [[wall + boss_d / 2, wall + boss_d / 2 + 1.5], [wall + boss_d / 2, box_d - wall - boss_d / 2], [box_w - wall - boss_d / 2, box_d - wall - boss_d / 2]];
+bosses = [for (x = [wall + boss_d / 2, box_w - wall - boss_d / 2], y = [wall + boss_d / 2 + 1.5, box_d - wall - boss_d / 2]) [x, y]];
 usb_y = box_d - wall - usb_l / 2 - 0.3;           // carte contre la paroi arrière
 usb_port_z = pocket_h + usb_t + usb_port[1] / 2;
-rx_x = box_w - wall - 3.5;                        // plan de la carte RXB6
+rx_x = usb_x;                                     // RXB6 centré au-dessus du module USB/série
+rx_z = pocket_h + usb_t + usb_port[1] + rx_gap;    // dessous de la carte RXB6
 
 // repère de la façade : origine au bas de la face extérieure, Y le long de la pente, Z sortant
 module face_xf() { translate([0, 0, front_h]) rotate([face_a, 0, 0]) children(); }
@@ -130,6 +133,7 @@ module shell() {
 }
 
 // ---------- fond ----------
+module mirror_x(sx) { if (sx > 0) children(); else rotate([0, 0, 180]) translate([0, -rx_w, 0]) children(); }   // symétrie du bout de carte (rotation, pas de miroir)
 module pocket(c, l, w) {   // rebord autour d'une carte posée, centre c, l en X, w en Y
   translate([c[0], c[1], 0]) difference() {
     translate([-l / 2 - pocket_clr - 1.2, -w / 2 - pocket_clr - 1.2, 0]) cube([l + 2 * pocket_clr + 2.4, w + 2 * pocket_clr + 2.4, pocket_h]);
@@ -147,8 +151,11 @@ module plate() {
         translate([wall + 0.2, wall + 0.2, 0]) cube([box_w - 2 * wall - 0.4, box_d - 2 * wall - 0.4, pocket_h]);
       }
       // rainures de la carte RXB6 debout (deux blocs, carte entre les deux)
-      for (y = [rx_y, rx_y + rx_l - 6]) translate([rx_x - rx_t / 2 - 2.5, y, 0])
-        difference() { cube([rx_t + 5, 6, slot_h]); translate([2.5 - (slot_w - rx_t) / 2, -1, 1]) cube([slot_w, 8, slot_h]); }
+      // appuis du RXB6 : carte posée sur un rebord à chaque bout, tenue par un épaulement (+ point de colle)
+      for (sx = [-1, 1]) translate([rx_x, rx_y, 0]) mirror_x(sx) {
+        translate([rx_l / 2 - rx_lip, 0, 0]) cube([rx_lip + 0.3 + rx_sup, rx_w, rx_z]);        // rebord sous la carte
+        translate([rx_l / 2 + 0.3, 0, 0]) cube([rx_sup, rx_w, rx_z + rx_t + 1]);              // épaulement au bout
+      }
     }
     for (p = bosses) translate([p[0], p[1], -plate_t - 1]) {
       cylinder(d = screw_clear, h = plate_t + 2);
@@ -164,8 +171,8 @@ module usbserial() {
     color("Silver") translate([usb_w / 2 - usb_port[0] / 2, usb_l - 5, usb_t]) cube([usb_port[0], 5.3, usb_port[1]]); }
 }
 module rxb6() {
-  color("#2a7a3a") translate([rx_x - rx_t / 2, rx_y, 1]) cube([rx_t, rx_l, rx_h]);
-  color("Gold") translate([rx_x - 3, rx_y + 2, 1 + rx_h + 3]) rotate([-90, 0, 0]) cylinder(d = 5, h = 30);   // hélicoïdale couchée au-dessus du RXB6
+  translate([rx_x - rx_l / 2, rx_y, rx_z]) { color("#2a7a3a") cube([rx_l, rx_w, rx_t]); color("#888") translate([8, 3, rx_t]) cube([12, 8, rx_h - rx_t]); }
+  color("Gold") translate([rx_x - rx_l / 2 - 2, rx_y + rx_w / 2, rx_z + rx_h + 3]) rotate([0, 90, 0]) cylinder(d = 5, h = 30);   // hélicoïdale couchée au-dessus du RXB6
 }
 module oled() {
   face_xf() translate([box_w / 2 - oled_l / 2, face_len / 2 - oled_w / 2, -wall - oled_t - oled_glass]) {
