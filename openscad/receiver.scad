@@ -140,8 +140,11 @@ module plate() {
   difference() {
     union() {
       translate([0, 0, -plate_t]) linear_extrude(plate_t) offset(r = corner_r) offset(delta = -corner_r) square([box_w, box_d]);
-      pocket(pm_pos, pm_l, pm_w);
-      pocket([usb_x, usb_y], usb_w, usb_l);
+      // logements : rognés à l'intérieur des parois (la carte USB/série est plaquée contre la paroi arrière)
+      intersection() {
+        union() { pocket(pm_pos, pm_l, pm_w); pocket([usb_x, usb_y], usb_w, usb_l); }
+        translate([wall + 0.2, wall + 0.2, 0]) cube([box_w - 2 * wall - 0.4, box_d - 2 * wall - 0.4, pocket_h]);
+      }
       // rainures de la carte RXB6 debout (deux blocs, carte entre les deux)
       for (y = [rx_y, rx_y + rx_l - 6]) translate([rx_x - rx_t / 2 - 2.5, y, 0])
         difference() { cube([rx_t + 5, 6, slot_h]); translate([2.5 - (slot_w - rx_t) / 2, -1, 1]) cube([slot_w, 8, slot_h]); }
