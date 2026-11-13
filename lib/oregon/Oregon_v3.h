@@ -5,27 +5,29 @@
 #include <stdint.h>
 
 /*
- * Emulation of environment sensors using Oregon v3 protocol
+ * Emulation of environment sensors using the Oregon v2.1 layout decoded by
+ * RFLink Plugins/Plugin_048.c (couin3)
  *
- *
- *  - Temperature:                     emulates THN132N    (id 0xEC, 0x40)
- *  - Temperature, humidity:           emulates THGN123N   (id 0x1D, 0x20)
+ *  - Temperature:                     emulates THN132N    (id 0xEA, 0x4C)
+ *  - Temperature, humidity:           emulates THGR228N   (id 0x1A, 0x2D)
  *  - Temperature, humidity, pressure: emulates BTHR918    (id 0x5A, 0x5D)
  *
  * Payload data is stored in the `message` property. Payload is made of
- * 'nibbles' which are 4 bits long.
+ * 'nibbles' which are 4 bits long; nibble 2i is the low nibble of byte i.
  *
  * byte:      0    1    2    3    4     5      6      7      8      9    10
  * nibbles: [0 1][2 3][4 5][6 7][8 9][10 11][12 13][14 15][16 17][18 19][20 21]
  *
- * nibbles 0..3    : sensor ID
- * nibble  4       : channel
- * nibbles 5..6    : rolling code
- * nibble  7       : battery state (0x4 is low battery)
- * nibbles 8..13   : temperature
- * nibble 12,14,15 : humidity (or-ed with temperature)
- * nibbles 16..19  : pressure
- * nibbles 20..21  : checksum
+ * bytes 0-1 : device ID, nibble 0 being the sync nibble 0xA
+ * byte  2   : channel in the high nibble
+ * byte  3   : rolling code
+ * byte  4   : flags (bit 2 battery low) | temperature tenths << 4
+ * byte  5   : temperature units | tens << 4
+ * byte  6   : sign (bit 3) | humidity units << 4
+ * byte  7   : humidity tens
+ * byte  8   : pressure hPa - 795, clamped 0-255
+ * byte  9   : weather prediction
+ * checksum  : nibbles 13-14 (THN132N), byte 8 (THGR228N), byte 10 (BTHR918)
  *
  */
 class OregonV3 {
@@ -45,9 +47,6 @@ class OregonV3 {
 
   void SetChannel(unsigned char channel);
 
-  /*
-   * \param rollingCode must be less than MAX_ROLLING_CODE_VALUE
-   */
   void SetRollingCode(unsigned char rollingCode);
 
   void SetBatteryLow(bool batteryIsLow);
@@ -60,8 +59,7 @@ class OregonV3 {
    *
    * Pressure is set using hPa
    *
-   * Values out of possible ones on earth (less that 850, more than 1099) are
-   * ignored.
+   * Stored as hPa - 795, clamped to 0-255 (795-1050 hPa).
    */
   void SetPressure(uint16_t pressure);
 

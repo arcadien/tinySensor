@@ -28,28 +28,28 @@
 **Description:** Every `Send()` call first transmits three `0xFF` preamble bytes (24 one-bits total via `SendData`), then the 11-byte message payload, then one `0x00` postamble byte (8 zero-bits, equivalent to two zero nibbles).
 
 ### FUNC-OREGON-005
-**Title:** Positive temperature encoded as decimal, unit, and dozen nibbles in bytes 4–5
+**Title:** Positive temperature encoded as tenths, units and tens nibbles 9–11 in bytes 4–5
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 4, and the dozens digit into the high nibble of byte 5. The low nibble of byte 5 is reserved for the sign flag.
+**Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 5 and the tens digit into the high nibble of byte 5 (frame nibbles 9, 10, 11 counting the sync nibble as 0: Oregon v2.1 layout as decoded by RFLink `Plugins/Plugin_048.c` (couin3) lines 733-734). The low nibble of byte 4 is the flags nibble (FUNC-OREGON-011).
 
 ### FUNC-OREGON-006
-**Title:** Negative temperature sets sign bit in byte 5 and encodes absolute value
+**Title:** Negative temperature sets bit 3 of byte 6 and encodes the absolute value
 **Status:** validated
 **Dependencies:** FUNC-OREGON-005
-**Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 5 (`0x08`) as a negative sign flag, then encodes the absolute value using the same decimal/unit/dozen layout as for positive temperatures.
+**Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 6 (`0x08`, low nibble of byte 6 = frame nibble 12, RFLink `Plugins/Plugin_048.c` (couin3) line 734) as the negative sign flag, then encodes the absolute value with the FUNC-OREGON-005 layout.
 
 ### FUNC-OREGON-007
-**Title:** Humidity encoded in byte 6 with units and dozens nibbles swapped
+**Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the dozens digit in the low nibble of byte 6, reversing the conventional tens-before-units order.
+**Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the tens digit in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink `Plugins/Plugin_048.c` (couin3) line 737). The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
-**Title:** Pressure encoded with 795 hPa offset in bytes 7–8; weather prediction byte at byte 9
+**Title:** Pressure stored as hPa − 795 in byte 8; weather prediction byte at byte 9
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetPressure()` subtracts 795 from the hPa value and stores the result across bytes 7 and 8. Byte 9 holds a weather-prediction code: 0x30 (rain, <1000 hPa), 0x20 (cloudy, <1010), 0x60 (partly cloudy, <1025), or 0xC0 (sunny, ≥1025).
+**Description:** `SetPressure()` stores the hPa value minus 795, clamped to 0–255, in byte 8 (frame nibbles 16–17). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a weather-prediction code: 0x30 (rain, <1000 hPa), 0x20 (cloudy, <1010), 0x60 (partly cloudy, <1025), or 0xC0 (sunny, ≥1025).
 
 ### FUNC-OREGON-009
 **Title:** Channel (1–3) encoded as 1-bit mask in high nibble of byte 2; out-of-range silently ignored
@@ -58,22 +58,22 @@
 **Description:** `SetChannel()` accepts values 1, 2, or 3 and sets bit `(4 + channel - 1)` of byte 2, producing 0x10, 0x20, or 0x40 respectively. Any value outside the range 1–3 is silently ignored and the message byte is left unchanged.
 
 ### FUNC-OREGON-010
-**Title:** Rolling code (≤ 0xA5) stored across low nibble of byte 2 and high nibble of byte 3
+**Title:** Rolling code stored as byte 3
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetRollingCode()` writes the high nibble of the rolling code byte into the low nibble of byte 2 and the low nibble of the rolling code byte into the high nibble of byte 3. Values greater than `0xA5` are accepted without validation.
+**Description:** `SetRollingCode()` writes the rolling code byte as byte 3 (frame nibbles 6–7, RFLink `osdata[3]`, RFLink `Plugins/Plugin_048.c` (couin3) line 711). The low nibble of byte 2 (last device ID nibble) stays 0. Any value 0x00–0xFF is accepted.
 
 ### FUNC-OREGON-011
-**Title:** Battery-low flag is bit 2 of byte 3; cleared when battery is OK
+**Title:** Battery-low flag is bit 2 of byte 4; cleared when battery is OK
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetBatteryLow(true)` sets bit 2 of byte 3 (`message[3] |= 0x04`). `SetBatteryLow(false)` clears bit 2 (`message[3] &= 0xFB`). All other bits of byte 3 are unaffected.
+**Description:** `SetBatteryLow(true)` sets bit 2 of byte 4 (`message[4] |= 0x04`, flags nibble 8, read by RFLink `Plugins/Plugin_048.c` (couin3) line 714). `SetBatteryLow(false)` clears it (`message[4] &= 0xFB`). All other bits of byte 4 are unaffected.
 
 ### FUNC-OREGON-012
-**Title:** Device ID auto-selected at Send() based on which fields are populated
+**Title:** Device ID, sync nibble included, auto-selected at Send() based on which fields are populated
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** `FinalizeMessage()` writes the Oregon Scientific device ID into bytes 0–1 based on `messageStatus`: temperature-only sets `0xEC40` (THN132N); temperature and humidity sets `0x1D20` (THGN123N); temperature, humidity, and pressure sets `0x5A5D` (BTHR918). The checksum is computed and appended accordingly.
+**Description:** `FinalizeMessage()` writes bytes 0–1 as transmitted, the low nibble of byte 0 being the sync nibble 0xA, based on `messageStatus`: temperature only gives `0xEA 0x4C` (THN132N); temperature and humidity give `0x1A 0x2D` (THGR228N); temperature, humidity and pressure give `0x5A 0x5D` (BTHR918) (RFLink `Plugins/Plugin_048.c` (couin3) lines 650, 696, 730). The checksum is (sum of all preceding nibbles − 0xA) & 0xFF, low nibble first: nibbles 13–14 (high nibble of byte 6, low nibble of byte 7) for THN132N, byte 8 for THGR228N, byte 10 for BTHR918 (RFLink `Plugins/Plugin_048.c` (couin3) lines 465, 654, 698).
 
 ### FUNC-OREGON-013
 **Title:** messageStatus bit-field tracks which fields are set (bit 0=temp, bit 1=humi, bit 2=press)
@@ -82,10 +82,16 @@
 **Description:** The private `messageStatus` byte is initialised to 0. `SetTemperature()` sets bit 0, `SetHumidity()` sets bit 1, and `SetPressure()` sets bit 2. The field is readable via `GetMessageStatus()` and governs device-ID selection in `FinalizeMessage()`.
 
 ### FUNC-OREGON-014
-**Title:** Full frame byte sequence matches Oregon Scientific v3 reference decoding samples
+**Title:** Full frame byte sequence matches the Oregon v2.1 reference payloads decoded by RFLink
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, FUNC-OREGON-013
-**Description:** The 11-byte payload produced by `FinalizeMessage()` for known channel, rolling code, battery, temperature, humidity, and pressure inputs must match the reference hex strings from the Oregon Scientific v3 protocol document (e.g., `5A5D423448088209603054`, `1D20485448088200390000`, `1D2016B0091073002C0000`).
+**Description:** The 11-byte payload produced by `FinalizeMessage()` matches: THN132N channel 1, rolling code 0x3C, battery low, −10.2 °C gives `EA4C103C2410D803000000`; THGR228N channel 3, rolling code 0xC4, 21.5 °C, 67 % gives `1A2D40C450217006390000`; BTHR918 channel 3, rolling code 0x7E, battery low, 21.5 °C, 60 %, 1013 hPa gives `5A5D407E54210006DA605F`. Read with the RFLink `Plugins/Plugin_048.c` (couin3) field formulas and the 795 hPa offset (FUNC-OREGON-008), these payloads give back their inputs.
+
+### FUNC-OREGON-015
+**Title:** A reused `OregonV3` instance carries no field bits over from a previous frame
+**Status:** validated
+**Dependencies:** FUNC-OREGON-006, FUNC-OREGON-009, FUNC-OREGON-012, FUNC-OREGON-013, FUNC-OREGON-014
+**Description:** Every setter overwrites all bits of its field, never OR-ing into a previous value: `SetTemperature()` with a non-negative value clears the sign bit (bit 3 of byte 6); `SetChannel()` with 1, 2 or 3 sets the high nibble of byte 2 to 0x1, 0x2 or 0x4, clearing the previous channel; `FinalizeMessage()` rewrites the checksum nibbles. `messageStatus` stays cumulative (FUNC-OREGON-013). Test: one instance sends the FUNC-OREGON-014 THN132N frame, then the THGR228N inputs, then the BTHR918 inputs; each payload equals its FUNC-OREGON-014 reference.
 
 ### FUNC-LACROSSE-001
 **Title:** Preamble is exactly 10 consecutive zero bits
@@ -224,3 +230,65 @@
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-001
 **Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` calls `hal.GetRawAnalogSensor()` (PA0 ADC reading) and converts it to millivolts via `hal.ConvertAnalogValueToMv(rawAdc, vccMv)`, where `vccMv` was computed by `ComputeVccMv(INTERNAL_1v1)`.
+
+---
+
+### FUNC-DECODE-001
+**Title:** X10Decoder rebuilds RFXmeter frames (address, raw value) from level/duration pulses
+**Status:** validated
+**Dependencies:** FUNC-X10-001, TECH-DECODE-001
+**Description:** Class `X10Decoder` (`tinyDecoders/lib/X10Decoder/X10Decoder.h`, default constructor, depends only on `<stdint.h>`: no `Hal`, no AVR register) exposes `bool Feed(bool high, uint16_t durationUs)`, `uint8_t Address() const`, `uint32_t Value() const`. Each window is nominal ±30 %: preamble high 8960 then low 4500 µs, then 48 bits MSB-first, each high 560 then low 560 (`0`) or 1680 (`1`). `Feed` returns true on the low pulse of bit 48 if the 6 bytes `b0..b5` satisfy: `b1 == (~b0 & 0xF0) | (b0 & 0x0F)`, `b5 >> 4 == 0`, `b5 & 0x0F` equals the low nibble of the bitwise complement of the sum of all nibbles of `b0..b4` plus `b5 >> 4`. Then `Address()` is `b0` and `Value()` is `(b4 << 16) | (b2 << 8) | b3` until the next true. A failed check or a pulse of unexpected level or duration resets the decoder and that pulse is re-checked as a preamble high. Test: pulses from `OrdersToPulses()` of `x10rf` with 2 repeats sending `RFXmeter(address, 0, value)` make `Feed` return true exactly twice, each time with that address and value.
+
+### FUNC-DECODE-002
+**Title:** LacrosseDecoder rebuilds WS7000 frames (type, address) from level/duration pulses
+**Status:** validated
+**Dependencies:** FUNC-LACROSSE-001, FUNC-LACROSSE-002, FUNC-LACROSSE-003, FUNC-LACROSSE-008, FUNC-LACROSSE-009, TECH-DECODE-001
+**Description:** Class `LacrosseDecoder` (`tinyDecoders/lib/LacrosseDecoder/LacrosseDecoder.h`, default constructor, `<stdint.h>` only) exposes `bool Feed(bool high, uint16_t durationUs)`, `uint8_t Type() const`, `uint8_t Address() const`. Windows are nominal ±30 %: bit `1` is high 400 then low 800 µs, `0` is high 800 then low 400. Sync is at least 6 zero bits then a one. Then nibbles, each 4 bits LSB-first plus a `1` separator. Nibble 1 is the type: 0, 1, 4, 5 give 3, 6, 10, 7 data nibbles after the address nibble, others fail. Then XOR and sum nibbles are checked per FUNC-LACROSSE-008. `Feed` returns true on the high pulse of the last separator; then `Type()` is the type and `Address()` is address-nibble bits 0–2. A pulse of unexpected level or duration, a `0` separator or a failed check resets the decoder; that pulse is re-checked as a sync high. Test: `OrdersToPulses()` of `LacrosseWS7000` sending each type twice returns true exactly twice, with that type and address.
+
+### FUNC-DECODE-003
+**Title:** LacrosseDecoder exposes decoded measurements in integer tenths and lux
+**Status:** validated
+**Dependencies:** FUNC-DECODE-002, FUNC-LACROSSE-003, FUNC-LACROSSE-004, FUNC-LACROSSE-005, FUNC-LACROSSE-006, FUNC-LACROSSE-007
+**Description:** After `LacrosseDecoder::Feed` returns true, and until its next true, with `d1..dn` the data nibbles after the address nibble in transmission order: `int16_t TemperatureTenths() const` is `d3*100 + d2*10 + d1`, negated when address-nibble bit 3 is set (types 0, 1, 4); `uint16_t HumidityTenths() const` is `d6*100 + d5*10 + d4` (types 1, 4); `uint16_t PressureTenths() const` is hPa tenths `d9*1000 + d8*100 + d7*10 + d10 + 2000` (type 4); `uint16_t Lux() const` is `d3*100 + d2*10 + d1` (type 5, `d4..d7` ignored). A value the frame type does not carry reads 0. Test: loopback of `LacrosseWS7000` with −10.2 °C, 42.5 %, 1013.4 hPa and 1000 lux reads −102, 425, 10134 and 1000.
+
+### FUNC-DECODE-004
+**Title:** OregonDecoder rebuilds Oregon v2.1 frames (device ID, channel, rolling code, battery) from level/duration pulses
+**Status:** validated
+**Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, TECH-DECODE-001
+**Description:** Class `OregonDecoder` (`tinyDecoders/lib/OregonDecoder/OregonDecoder.h`, default constructor, `<stdint.h>` only) exposes `bool Feed(bool high, uint16_t durationUs)`, `uint16_t DeviceId() const`, `uint8_t Channel() const`, `uint8_t RollingCode() const`, `bool BatteryLow() const`. Windows: short 150–731 µs, long 732–1199 µs (origin: RFLink `OregonDecoderV2`, `Plugins/Plugin_048.c` (couin3) lines 322-324, threshold moved from 600 µs). 732 µs is the midpoint of the nominal half-bit (488 µs) and bit (976 µs) at 1024 Hz: a weak commercial THGN132N on the RXB6 (bench, 2026-11-12) gives highs ~80 µs short and lows ~80 µs long (short lows up to 649 µs, long highs from 800 µs), which the 600 µs threshold rejected (5 frames decoded vs 203 by an RFLink gateway over 2 h). Each bit is a long pulse whose level is the bit value; between two bits comes either one long pulse of the opposite level (next bit equal) or two short pulses, opposite then same level (next bit inverted). Sync: a high long pulse starts a run of at least 12 one bits (RFLink's 24 long pulses, line 333), ended by a zero bit where `b0` starts (its low nibble is the sync nibble 0xA). Bytes `b0..b10` are LSB-first; nibble `2i` is the low nibble of `b(i)`. `b0 b1` must be `0xEA 0x4C` (c = 13), `0x1A 0x2D` or `0x1A 0x3D` (c = 16), or `0x5A 0x5D` (c = 20); nibbles `c` and `c+1` are the low and high nibbles of (sum of nibbles `0..c-1` − 0xA) & 0xFF (lines 465, 654, 698); later nibbles are ignored. `Feed` returns true on the long pulse of the last checksum bit (frame bit 60, 72 or 88); then, until the next true, `DeviceId()` is `(b0 << 8) | b1`, `Channel()` is 1, 2 or 3 when `b2 >> 4` is 1, 2 or 4 (else 0), `RollingCode()` is `b3`, `BatteryLow()` is `(b4 & 0x0C) != 0` (lines 711-714). A pulse of unexpected level or duration, an unknown ID or a failed checksum resets the decoder; that pulse is re-checked as a sync high. Test: `OrdersToPulses()` of `OregonV3` sending each FUNC-OREGON-014 device twice returns true exactly twice with its ID, channel, code and battery flag; bit pulses of the RFLink captures `EA4C20725C21D083`, `EA4C101360193023`, `1A2D40C4512170463E`, `1A2D1072512080E73F` (lines 644-645, 685-686) give channel/code/battery 2/0x72/low, 1/0x13/ok, 3/0xC4/ok, 1/0x72/ok; a `0x1A3D` copy with recomputed checksum is accepted; 11 sync ones or one flipped data bit are rejected; a valid frame with short lows 620 µs, short highs 400 µs, long highs 880 µs, long lows 1060 µs decodes; window bounds 149/150, 731/732, 1199/1200 µs.
+
+### FUNC-DECODE-005
+**Title:** OregonDecoder exposes the measurements its device ID carries in integer tenths, % and hPa
+**Status:** validated
+**Dependencies:** FUNC-DECODE-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-012
+**Description:** After `OregonDecoder::Feed` returns true, and until its next true, with `b0..b10` the frame bytes: `int16_t TemperatureTenths() const` is `(b5 >> 4)*100 + (b5 & 0x0F)*10 + (b4 >> 4)`, negated when bit 3 of `b6` is set (all IDs); `uint8_t HumidityPercent() const` is `(b7 & 0x0F)*10 + (b6 >> 4)` (IDs `0x1A2D`, `0x1A3D`, `0x5A5D`); `uint16_t PressureHpa() const` is `b8 + 795` (ID `0x5A5D`) (RFLink `Plugins/Plugin_048.c` (couin3) lines 733-751; offset 795 per FUNC-OREGON-008). Forecast and comfort nibbles are ignored. A value the device ID does not carry reads 0. Test: loopback of `OregonV3` reads THN132N −10.2 °C as −102 (humidity and pressure 0); THGR228N 21.5 °C, 67 % as 215, 67 (pressure 0); BTHR918 21.5 °C, 60 %, 1013 hPa as 215, 60, 1013; the FUNC-DECODE-004 RFLink captures read 215; 196; 215 and 67; 205 and 78.
+
+### FUNC-DECODE-006
+**Title:** SourceTable keeps the last decoded record of each radio source, one page per source
+**Status:** validated
+**Dependencies:** FUNC-DECODE-001, FUNC-DECODE-003, FUNC-DECODE-005
+**Description:** `tinyDecoders/lib/SourceTable/SourceTable.h` (`<stdint.h>` and the three decoder headers only, no dynamic allocation) defines `struct SourceRecord { Kind kind; uint8_t id; uint8_t code; uint8_t fields; int16_t temperatureTenths; uint16_t humidityTenths; uint16_t pressureTenths; uint16_t lux; uint16_t millivolts; uint32_t lastSeenSeconds; }` (18 B) with `enum Kind : uint8_t { Oregon, Lacrosse, LacrosseLux, X10 }` and `fields` a bitmask of `Temperature=1, Humidity=2, Pressure=4, Lux=8, Millivolts=16`; values whose bit is clear are 0. Class `SourceTable` (default constructor, empty, `kCapacity` = 16 when `AVR` is defined, else 8) exposes `void Update(const OregonDecoder&, uint32_t nowSeconds)`, `void Update(const LacrosseDecoder&, uint32_t nowSeconds)`, `void Update(const X10Decoder&, uint32_t nowSeconds)`, called after that decoder's `Feed` returned true, `uint8_t Count() const` and `const SourceRecord& At(uint8_t index) const`. A source is the triple `(kind, id, code)`. Mapping: Oregon gives `id = Channel()`, `code = RollingCode()`, Temperature always, Humidity (`HumidityPercent()*10`) for IDs `0x1A2D`, `0x1A3D`, `0x5A5D`, Pressure (`PressureHpa()*10`) for `0x5A5D`. Lacrosse and X10 give `code = 0`. Lacrosse type 5 gives `LacrosseLux`, `id = Address()`, Lux; types 0, 1, 4 give `Lacrosse`, `id = Address()`, Temperature, plus Humidity (types 1, 4), plus Pressure (type 4), in tenths as decoded. X10 gives `id = Address()`, Millivolts as the BCD `Value()` read in decimal when `Value() <= 0x9999` and every nibble is ≤ 9, else no field. `Update` overwrites the whole record of a known source in place (`lastSeenSeconds = nowSeconds`), else appends it; when full, the record with the smallest `lastSeenSeconds` is replaced in place. `At` follows first-seen order. Table RAM on the Pro Mini and the Pro Micro: 16 × 18 = 288 B. Test (native, capacity 8): loopback frames from each encoder update or append the expected records; two Oregon frames on channel 2 with codes 0xB8 and 0x36 give two records; a 9th source replaces the oldest; X10 value 0x2950 gives 2950 mV, 0x2A50 gives no field.
+
+### FUNC-DECODE-007
+**Title:** Receiver feeds pulses to the decoders, cycles one page per source every 10 s and redraws only changed cells
+**Status:** validated
+**Dependencies:** FUNC-DECODE-006, FUNC-DECODE-010, UI-DECODE-001, TECH-DECODE-002
+**Description:** Class `Receiver` (`tinyDecoders/lib/Receiver/Receiver.h`, `explicit Receiver(ReceiverHal* hal)`, owns the three decoders and a `SourceTable`) exposes `void Poll()`. `Poll` pops every available pulse and feeds it to `X10Decoder`, `LacrosseDecoder`, `OregonDecoder`; each `Feed` returning true calls `SourceTable::Update` with `NowSeconds()`. The page is recomputed only when `now = NowSeconds()` changed or a frame was decoded; recomputing first calls `SourceTable::Expire(now)`. Only while the table is empty (at start, or once `Expire` removed the last source), the waiting page is shown: `Waiting for data`, vertically centred (`DrawChar` page 1, cols 0–15, pixel rows 8–23); it is never one of the rotated pages. Else `FormatPage(At(i), (now / 2) % 2 == 1, big, top, bottom)` with `i = (now / 10) % Count()`. A source page is 6 big cells (`DrawBigChar` col 0–5) and a side column of 2 × 4 characters (`DrawChar` col 12–15, `top` at page 0, `bottom` at page 2); its 14 cells cover the whole screen. The screen is blank at start, so the first waiting page draws only its 16 text cells. Entering a source page draws all 14 of its cells, spaces included. Entering the waiting page from a source page first draws the 14 source cells as spaces (blanking pages 0–3), then the 16 text cells. Each `Poll` draws at most one pending cell (differing from what was drawn, or forced by a switch), the first in the order big 0–5, `top` 12–15, `bottom` 12–15, then waiting text 0–15. Test: waiting page at 12 s (`Row(1)` is `Waiting for data`, 16 draws); the first decoded frame then draws all 14 source cells; loopback Oregon and Lacrosse frames give their pages alternating every 10 s; a BTHR918 alone shows its humidity at 0–1 s and its pressure at 2–3 s in `bottom`; no draw when nothing changed; a single source last seen 1800 s ago gives the waiting page, after 14 blank source cells (`Big()` and `Row(0)`, `Row(2)` cols 12–15 are spaces).
+
+### FUNC-DECODE-008
+**Title:** RflinkFormatter renders one decoded frame as an RFLink text line
+**Status:** validated
+**Dependencies:** FUNC-DECODE-001, FUNC-DECODE-003, FUNC-DECODE-005
+**Description:** `tinyDecoders/lib/RflinkFormatter/RflinkFormatter.h` (`<stdint.h>` and the decoder headers only, no `printf`, no dynamic allocation) defines `const uint8_t RflinkLineSize = 64` and three overloads `uint8_t FormatRflink(const X10Decoder&|const LacrosseDecoder&|const OregonDecoder&, uint8_t counter, char line[RflinkLineSize])`, called after that decoder's `Feed` returned true; each writes the line plus `'\0'` (no `\r\n`) and returns its length. Line: `20;`, `counter` as 2 uppercase hex digits, `;`, name, `;`, then `KEY=value;` fields. `ID` is 4 uppercase hex digits; hex values are lowercase. `TEMP` is the absolute temperature in tenths as 4 hex digits, `| 0x8000` when negative. Oregon: name `Oregon Temp` (`0xEA4C`), `Oregon TempHygro` (`0x1A2D`, `0x1A3D`), `Oregon BTHR` (`0x5A5D`); `ID = (RollingCode() << 8) | Channel()`; `TEMP`; `HUM` decimal (`0x1A2D`, `0x1A3D`, `0x5A5D`); `BARO` hPa as 4 hex digits (`0x5A5D`); `BAT=OK` or `BAT=LOW`. Lacrosse: name `LaCrosse WS7000`; `ID = (Type() << 8) | Address()`; `TEMP` (types 0, 1, 4); `HUM = (h+5)/10` decimal (types 1, 4); `BARO = (p+5)/10` as 4 hex digits (type 4); `LUX` as 4 hex digits (type 5). X10: name `X10Meter`; `ID = Address()`; `METER` = millivolts in decimal when `Value()` is valid BCD (FUNC-DECODE-006 rule), else the line ends after `ID`. Test: THGR228N ch 3, code 0xC4, 21.5 °C, 67 %, counter 0x0A gives `20;0A;Oregon TempHygro;ID=C403;TEMP=00d7;HUM=67;BAT=OK;`; THN132N ch 1, code 0x3C, −10.2 °C, battery low, counter 0 gives `20;00;Oregon Temp;ID=3C01;TEMP=8066;BAT=LOW;`; BTHR918 ch 3, code 0x7E, 21.5 °C, 60 %, 1013 hPa, battery low, counter 0xFF gives `20;FF;Oregon BTHR;ID=7E03;TEMP=00d7;HUM=60;BARO=03f5;BAT=LOW;`; Lacrosse type 4 address 3, −10.2 °C, 42.5 %, 1013.4 hPa, counter 1 gives `20;01;LaCrosse WS7000;ID=0403;TEMP=8066;HUM=43;BARO=03f5;`; Lacrosse type 5 address 2, 1000 lux, counter 1 gives `20;01;LaCrosse WS7000;ID=0502;LUX=03e8;`; X10 address 10, value 0x2950, counter 2 gives `20;02;X10Meter;ID=000A;METER=2950;`; value 0x2A50, counter 3 gives `20;03;X10Meter;ID=000A;`.
+
+### FUNC-DECODE-009
+**Title:** Receiver writes one RFLink line per decoded frame through ReceiverHal
+**Status:** validated
+**Dependencies:** FUNC-DECODE-007, FUNC-DECODE-008, TECH-DECODE-002
+**Description:** When `ReceiverHal::HasLineOutput` is true (compile-time constant, so the formatter is not linked when false), each decoder `Feed` returning true in `Receiver::Poll` makes `Receiver`, after `SourceTable::Update`, call `FormatRflink` on that decoder and pass the line to `hal->WriteLine(line)`. `Receiver` keeps a `uint8_t` line counter starting at 0, passed to `FormatRflink` and incremented (wrapping) after each line. No deduplication: a frame sent twice gives two lines. The OLED behaviour of FUNC-DECODE-007 is unchanged. Test: loopback Oregon then Lacrosse frames, each sent twice, give 4 lines in reception order with counters `00` to `03` in `TestReceiverHal::Lines()`.
+
+### FUNC-DECODE-010
+**Title:** SourceTable removes a source not received for 30 minutes
+**Status:** validated
+**Dependencies:** FUNC-DECODE-006
+**Description:** `SourceTable` (`tinyDecoders/lib/SourceTable/SourceTable.h`) exposes `void Expire(uint32_t nowSeconds)`, which removes every record with `nowSeconds - lastSeenSeconds >= 1800`. The remaining records keep their first-seen order in `At` and `Count()` drops by the number removed; nothing else removes a record (the FUNC-DECODE-006 replacement when full is unchanged). A removed source received again is appended as a new source. `Receiver` calls it before each page computation (FUNC-DECODE-007), so an expired source leaves the rotation and an empty table shows the waiting page. Test (native): a source seen at 100 is kept by `Expire(1899)` and removed by `Expire(1900)`; sources seen at 0, 500 and 1000 leave, after `Expire(1800)`, the second then the third; a source first seen at 0 and updated at 1000 survives `Expire(1800)`; `Expire` on an empty table keeps `Count()` at 0.

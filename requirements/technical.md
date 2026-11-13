@@ -15,7 +15,7 @@
 **Title:** TestHal_ records each HAL call as a single-character token in the Orders vector
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** `TestHal_` appends one character per call to its `Orders` vector: `H`=`RadioGoHigh`, `L`=`RadioGoLow`, `D`=`Delay512Us`, `P`=`Delay1024Us`, `A`=`Delay400Us`, `S`=`SerialGoHigh`, `W`=`SerialGoLow`. Protocol tests verify correctness by asserting against expected `Orders` sequences.
+**Description:** `TestHal_` appends one character per call to its `Orders` vector: `H`=`RadioGoHigh`, `L`=`RadioGoLow`, `D`=`Delay512Us`, `P`=`Delay1024Us`, `A`=`Delay400Us`, `S`=`SerialGoHigh`, `W`=`SerialGoLow`, `Q`=`DelayX10PreambleHigh`, `R`=`DelayX10PreambleLow`, `T`=`DelayX10BitShort`, `U`=`DelayX10BitLong`, `G`=`DelayX10Gap`. Protocol tests verify correctness by asserting against expected `Orders` sequences.
 
 ---
 
@@ -128,3 +128,17 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-001
 **Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence. `main()` only initialises the HAL and calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
+
+---
+
+### TECH-DECODE-001
+**Title:** Loopback helper converts TestHal_ Orders into level/duration pulses for decoder tests
+**Status:** validated
+**Dependencies:** TECH-HAL-002, TECH-X10-001
+**Description:** A native-only function `OrdersToPulses()` in `tinyDecoders/lib/Loopback/` converts a `TestHal_::Orders` token sequence into an ordered list of pulses `{bool high; uint16_t durationUs}`. The line starts low. `H` and `L` set the level; each delay token adds its nominal duration to the current level: `A`=400, `D`=512, `P`=1024, `T`=560, `U`=1120, `Q`=8960, `R`=4500, `G`=40000 µs (saturating at 65535). A pulse is emitted at each level change and after the last token; zero-duration pulses are not emitted. Other tokens are ignored. It runs in the `native` env of `tinyDecoders/platformio.ini`, which builds the repository `lib/` encoders.
+
+### TECH-DECODE-002
+**Title:** Receiver hardware is a compile-time ReceiverHal alias injected by pointer, with a native test double
+**Status:** validated
+**Dependencies:** TECH-DECODE-001
+**Description:** `tinyDecoders/lib/ReceiverHal/ReceiverHal.h` defines `typedef AtmegaReceiverHal ReceiverHal` when `__AVR_ATmega328P__` or `__AVR_ATmega32U4__` is defined, `typedef TestReceiverHal ReceiverHal` when `AVR` is not defined, and an `#error` otherwise (no virtual call, as `EnvironmentEncoder`); `AtmegaReceiverHal.cpp` is guarded by these two MCU macros. Both classes expose `bool PopPulse(bool& high, uint16_t& durationUs)` (oldest ended pulse, false when none), `uint32_t NowSeconds() const`, `void DrawChar(uint8_t page, uint8_t col, char c)` (8x16 cell on display pages `page` and `page + 1`, page 0–2, col 0–15), `void DrawBigChar(uint8_t col, char c)` (16x32 cell spanning both rows at pixel column `16*col`, col 0–5), `static const bool HasLineOutput` and `void WriteLine(const char* line)` (one text line without terminator). `AtmegaReceiverHal`: `HasLineOutput = true`. Native-only `TestReceiverHal` (`TestReceiverHal.h`, `HasLineOutput = true`) adds `PushPulse(high, durationUs)` (FIFO), `SetNowSeconds(s)`, `const char* Row(uint8_t page) const` (page 0–2, 16 characters, initially spaces, updated by `DrawChar` at that start page), `const char* Big() const` (6 characters, initially spaces, updated by `DrawBigChar`), `uint16_t DrawCount() const` (counts both draws) and `const std::vector<std::string>& Lines() const` (each `WriteLine` appends its line). Components needing the hardware receive a `ReceiverHal*` at construction and touch no AVR register. Test: double FIFO order, `Row` and `Big` after draws, `DrawCount` after one draw of each, `Lines` after two `WriteLine`.

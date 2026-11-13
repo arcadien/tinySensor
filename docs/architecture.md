@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-07 — PLAT-POWER-006 (switched 5 V module on PB2); TECH-HAL-001 / TECH-MAIN-001 (BMx280 takes no Hal*, file-scope object), see [Main loop structure](#main-loop-structure)_
+_Last updated: 2026-11-12 — FUNC-DECODE-007 (big-value OLED page: 16x32 main value + 4-character side column, 10 s source rotation, 2 s secondary alternation, centred waiting page; `DrawBigChar` / `ReadBigGlyphPage`; 30-min source expiry FUNC-DECODE-010), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
 ## Component Diagram
 
@@ -38,7 +38,7 @@ graph TD
 | `Hal` | Pure-virtual interface isolating all hardware I/O | — |
 | `Attiny84aHal` | ATtiny84a production implementation of Hal | — |
 | `TestHal_` | Host-native stub; records HAL calls as char tokens in `Orders` vector | — |
-| `OregonV3` | Encodes temperature/humidity/pressure into Oregon Scientific v3 frames | — |
+| `OregonV3` | Encodes temperature/humidity/pressure into Oregon Scientific v2.1 frames (bit doubling, despite the class name) in the layout RFLink `Plugin_048.c` decodes: sync nibble in byte 0, IDs `EA4C`/`1A2D`/`5A5D`, rolling code byte 3, flags nibble 8, pressure byte 8 = hPa − 795 | — |
 | `LacrosseWS7000` | Encodes temperature/humidity/pressure/luminosity into Lacrosse WS7000 frames | — |
 | `x10rf` | Encodes meter readings into X10 RF frames (battery voltage, analog sensors); routes all timing through Hal X10 delay methods | TECH-X10-001, TECH-X10-002 |
 | `BMx280` | Abstracts BMP280/BME280 I2C sensor behind a common interface; no `Hal*`, hardware access delegated to SparkFun BME280 over TinyI2C; file-scope object in `main.cpp` | FUNC-SENSOR-001, TECH-HAL-001 |
@@ -65,6 +65,7 @@ graph TD
 | `SoftSerial` | `Hal*` | constructor |
 | `LightSensor` | `Hal*` | constructor |
 | `runCycle` (`main.cpp`) | `Hal*` | function parameter; forwarded to every encoder and wrapper it constructs |
+| `Receiver` (tinyDecoders) | `ReceiverHal*` (compile-time alias: `AtmegaReceiverHal` on ATmega328P and ATmega32U4, `TestReceiverHal` on native) | constructor |
 
 Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at construction; a wrapper whose bus access is delegated to a third-party driver (`BMx280`) receives none. None accesses AVR registers directly, except register addresses passed to a third-party bus driver (`Ds18b20`).
 
@@ -98,6 +99,78 @@ Design choices:
 - **Targets without a radio protocol** (`S_05`, `devmodule`) still read their environment sensor but only transmit X10 meters: this is intended (test modules).
 - Equivalence with the former `main.cpp` is checked by `test_environment`, which compares the HAL orders produced through `ApplyMeasurements()` with direct encoder calls.
 
+## tinyDecoders sub-project
+
+`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED; it also writes one RFLink line per frame on `Serial` (a debug UART on the Pro Mini, USB CDC on the Pro Micro). The production receiver is a standalone viewer on a Pro Mini 5 V / 16 MHz (ATmega328P); the Pro Micro (ATmega32U4) is a breadboard prototype. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
+
+```mermaid
+graph TD
+  subgraph tinyDecoders
+    Loopback["Loopback: OrdersToPulses() (native only)"]
+    X10Decoder["X10Decoder: Feed(high, durationUs)"]
+    LacrosseDecoder["LacrosseDecoder: Feed(high, durationUs)"]
+    OregonDecoder["OregonDecoder: Feed(high, durationUs)"]
+    SourceTable["SourceTable: Update(decoder, nowSeconds) / Expire(nowSeconds)"]
+    PageFormatter["PageFormatter: FormatPage(record, alternate, big, top, bottom)"]
+    RflinkFormatter["RflinkFormatter: FormatRflink(decoder, counter, line)"]
+    Font8x16["Font8x16: ReadGlyph(c, glyph) (PROGMEM) / ReadBigGlyphPage(c, page, bytes)"]
+    Receiver["Receiver: Poll()"]
+    ReceiverHal["ReceiverHal (alias): PopPulse / NowSeconds / DrawChar / DrawBigChar / WriteLine"]
+    TestReceiverHal["TestReceiverHal (native only)"]
+    AtmegaReceiverHal["AtmegaReceiverHal (ATmega328P / ATmega32U4): Timer1 ICP1 PB0 / PD4, SSD1306 0x3C, Serial"]
+    Main["src/main.cpp (Arduino): setup Init, loop Poll"]
+  end
+  ReceiverHal -.->|"typedef on ATmega328P / ATmega32U4"| AtmegaReceiverHal
+  AtmegaReceiverHal -->|"ReadGlyph / ReadBigGlyphPage"| Font8x16
+  AtmegaReceiverHal -->|"TWI I2C"| Wire["Wire (Arduino core)"]
+  AtmegaReceiverHal -->|"UART TX D1 / USB CDC"| Serial["Serial (Arduino core)"]
+  Main -->|"&hal"| Receiver
+  Receiver -->|"ReceiverHal* (constructor)"| ReceiverHal
+  ReceiverHal -.->|"typedef on native"| TestReceiverHal
+  Receiver -->|"pulses"| X10Decoder
+  Receiver -->|"pulses"| LacrosseDecoder
+  Receiver -->|"pulses"| OregonDecoder
+  Receiver -->|"Update / Expire / At"| SourceTable
+  Receiver -->|"FormatPage"| PageFormatter
+  Receiver -->|"FormatRflink, then WriteLine"| RflinkFormatter
+  X10Decoder -->|"const& after Feed true"| SourceTable
+  LacrosseDecoder -->|"const& after Feed true"| SourceTable
+  OregonDecoder -->|"const& after Feed true"| SourceTable
+  SourceTable -->|"SourceRecord"| PageFormatter
+  Loopback -.->|"pulses (tests)"| X10Decoder
+  Loopback -.->|"pulses (tests)"| LacrosseDecoder
+  Loopback -.->|"pulses (tests)"| OregonDecoder
+  Encoders["OregonV3 / LacrosseWS7000 / x10rf (repo lib/)"] -->|Hal*| TestHal["TestHal_ (repo lib/hal)"]
+  Loopback -->|"reads Orders tokens"| TestHal
+```
+
+| Component | Responsibility | Requirement(s) |
+|-----------|----------------|----------------|
+| `Loopback` (`tinyDecoders/lib/Loopback/`) | Native-only test helper: converts a `TestHal_::Orders` token sequence into `{high, durationUs}` pulses using each delay token's nominal duration, so decoder tests can be fed with real encoder output | TECH-DECODE-001 |
+| `X10Decoder` (`tinyDecoders/lib/X10Decoder/`) | Rebuilds X10 RFXmeter frames from `(high, durationUs)` pulses; checks byte1 complement, packet type 0 and parity nibble; exposes `Address()` and raw `Value()` | FUNC-DECODE-001 |
+| `LacrosseDecoder` (`tinyDecoders/lib/LacrosseDecoder/`) | Rebuilds Lacrosse WS7000 frames from `(high, durationUs)` pulses; sync, `1` separators, frame length from the type nibble, XOR and sum checks; exposes `Type()`, `Address()` and measurements as integer tenths (temperature, humidity, pressure) or lux | FUNC-DECODE-002, FUNC-DECODE-003 |
+| `OregonDecoder` (`tinyDecoders/lib/OregonDecoder/`) | Rebuilds Oregon v2.1 frames (tinySensor `OregonV3` and commercial THN132N `EA4C`, THGR122N/228N `1A2D`, THGR918 `1A3D`, BTHR918 `5A5D`) from `(high, durationUs)` pulses; bit = level of each long pulse, windows short 150–731, long 732–1199 µs (RFLink origin, threshold at the 1024 Hz half-bit/bit midpoint), ≥ 12 one-bit preamble, LSB-first bytes from the sync nibble, frame length and checksum position from the device ID; exposes `DeviceId()`, `Channel()`, `RollingCode()`, `BatteryLow()` and the measurements the ID carries (temperature tenths, humidity %, pressure hPa) | FUNC-DECODE-004, FUNC-DECODE-005 |
+| `SourceTable` (`tinyDecoders/lib/SourceTable/`) | Keeps the last `SourceRecord` per source `(kind, id, code)` (Oregon channel and rolling code, Lacrosse address, Lacrosse lux address, X10 address), max 16 on AVR (8 on native), oldest replaced when full; `Expire(now)` removes sources not received for 1800 s, keeping first-seen order; maps each decoder's values into common units (tenths, lux, mV from X10 BCD) with a presence bitmask | FUNC-DECODE-006, FUNC-DECODE-010 |
+| `PageFormatter` (`tinyDecoders/lib/PageFormatter/`) | Pure function: one `SourceRecord` + an `alternate` flag to a 6-character big main value (temperature `23.5°`, lux `1000lx` or volts `3.96V`), a 4-character identifier (`1-01`, `L3`, `X204`) and a 4-character secondary value (` 67%` or pressure ` 969`, alternating when both are present); no age, no protocol name | UI-DECODE-001 |
+| `Font8x16` (`tinyDecoders/lib/Font8x16/`) | `ReadGlyph(c, glyph[16])`: 8x16 bitmaps of the 32 non-space characters of the UI-DECODE-001 set and the `Waiting for data` text in `PROGMEM` (about 544 B flash), SSD1306 page byte order; other characters blank. `ReadBigGlyphPage(c, page, bytes[16])`: page 0–3 of the 16x32 glyph, computed by doubling each nibble bit and each column, no table. Generated from Spleen 8x16 (BSD-2-Clause) by `tinyDecoders/scripts/gen_font8x16.py` | UI-DECODE-002, UI-DECODE-003 |
+| `RflinkFormatter` (`tinyDecoders/lib/RflinkFormatter/`) | Pure functions, one overload per decoder: a decoded frame and a counter to one RFLink line `20;NN;Name;ID=XXXX;KEY=value;` (`Oregon Temp`/`TempHygro`/`BTHR`, `LaCrosse WS7000`, `X10Meter`; `TEMP`, `HUM`, `BARO`, `LUX`, `METER`, `BAT`), at most 63 characters, no `printf` | FUNC-DECODE-008 |
+| `ReceiverHal` (`tinyDecoders/lib/ReceiverHal/`) | Compile-time alias of the receiver hardware: `AtmegaReceiverHal` on ATmega328P and ATmega32U4, `TestReceiverHal` on native. Static interface `PopPulse(high, durationUs)`, `NowSeconds()`, `DrawChar(page, col, c)` (8x16 cell at start page 0–2), `DrawBigChar(col, c)` (16x32 cell, col 0–5), `HasLineOutput`, `WriteLine(line)`. The test double queues pulses, sets the clock, keeps the characters drawn per start page (`Row`) and in big cells (`Big`) and records written lines | TECH-DECODE-002 |
+| `Receiver` (`tinyDecoders/lib/Receiver/`) | Owns the three decoders and the `SourceTable`. `Poll()` drains pulses into every decoder and updates the table on each decoded frame. On each new second or frame it calls `Expire`, then picks the page: source `(now / 10) % Count()` with secondary alternation `(now / 2) % 2`, or, only while the table is empty, the centred `Waiting for data` (page 1). It draws at most one pending cell per call (6 big cells + 2 × 4 column cells, or 16 text cells; a layout switch forces a full redraw, blanking the source cells before the waiting text), so the pulse ring buffer never waits long. When `ReceiverHal::HasLineOutput`, writes one RFLink line per decoded frame with a wrapping counter | FUNC-DECODE-007, FUNC-DECODE-009, FUNC-DECODE-010 |
+| `AtmegaReceiverHal` (`tinyDecoders/lib/ReceiverHal/`, ATmega328P and ATmega32U4 only) | One implementation for the Pro Mini and the Pro Micro, both 5 V / 16 MHz; only the ICP1 pin differs (PB0/D8 or PD4), chosen by MCU macro. Timer1 at 0.5 µs (16 MHz / 8): input capture on both edges of ICP1 (RXB6 at 5 V) into a 64-pulse ring buffer; seconds from overflows. SSD1306 128×32 at 0x3C over `Wire` (hardware TWI, 400 kHz, OLED module 5 V tolerant): init sequence and screen clear in `Init()`, then one 8×16 glyph (2 pages × 8 columns from any start page 0–2) per `DrawChar` or one 16×32 glyph (4 pages × 16 columns) per `DrawBigChar`, no framebuffer. `WriteLine` to `Serial` (debug UART TX D1 at 57600 on the Pro Mini, USB CDC on the Pro Micro) plus `\r\n`, dropped when the TX buffer lacks room | PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005 |
+| `main.cpp` (`tinyDecoders/src/`, AVR only) | Arduino `setup()` calls `hal.Init()`, `loop()` calls `receiver.Poll()`; shared by envs `promini` and `promicro` (the Arduino `main` keeps the USB stack running on the Pro Micro) | CONF-DECODE-003, CONF-DECODE-004 |
+
+`OrdersToPulses()` is a free function over a token sequence: no injected dependency. The `native` env of `tinyDecoders/platformio.ini` reaches the repository `lib/` (encoders, `Hal`, `TestHal_`) so tests run encoders and decoders side by side.
+
+Decoders are pure logic: their only input is a pulse `(bool high, uint16_t durationUs)`; they take no `Hal*` and touch no AVR register. On the receiver, hardware access (radio input capture, seconds clock, OLED) goes through `ReceiverHal`, a small interface dedicated to tinyDecoders, not the repository `Hal` (TECH-DECODE-002). Like `EnvironmentEncoder`, it is a `typedef` chosen at build time, not a virtual base: there is a single implementation per build, so no vtable. `Receiver` receives a `ReceiverHal*` at construction and touches no AVR register, so its whole loop is host-tested through `TestReceiverHal`.
+
+The RFLink line output is selected by the compile-time constant `ReceiverHal::HasLineOutput`, true on both AVR boards. `Wire` and `Serial` are Arduino core singletons used only inside `AtmegaReceiverHal`, which stays the only hardware boundary: no new injected dependency. The same `Serial` API covers both boards (`HardwareSerial` on the ATmega328P, USB CDC on the ATmega32U4), so `WriteLine` has a single body. On the Pro Mini the UART is a debug output: nothing needs to be connected, and the TX interrupt drains the 128-byte buffer (`-DSERIAL_TX_BUFFER_SIZE=128`, room for two of the longest 61 + 2 character lines, about 11 ms each at 57600 baud) faster than radio frames arrive, so a line is not dropped in normal use.
+
+Drawing one cell per `Poll()` (≈ 1 ms of I2C for an 8x16 cell, ≈ 2 ms for a 16x32 cell) keeps the pulse latency well within the 64-pulse ring buffer.
+
+Firmware build: env `promini` of `tinyDecoders/platformio.ini` is the production receiver, a Pro Mini 5 V / 16 MHz (ATmega328P, 2 KB SRAM) with the Arduino framework (CONF-DECODE-004). Env `promicro` builds the Pro Micro 5 V / 16 MHz (ATmega32U4) breadboard prototype (CONF-DECODE-003). Both build the same `src/main.cpp`, the only file in `src/`, so no `build_src_filter`. CI lints `tinyDecoders/`, runs its `native` tests and builds `promini` and `promicro`. The pre-commit clang-format hook covers `tinyDecoders/{src,lib,test}` (CONF-DECODE-002).
+
+`SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls (same choice as `EnvironmentEncoder`). RAM: the table is 16 × 18 B = 288 B on AVR (8 on native, `kCapacity` chosen by `AVR`); the 128×32 OLED is written cell by cell from the page texts (6 + 4 + 4 characters), never from a 512 B framebuffer; 16x32 glyphs are doubled on the fly from the 8x16 font, one 16-byte page at a time.
+
 ## Build-time Configuration
 
 Every physical board is a separate PlatformIO environment with its own `build_flags`. There is no runtime configuration. See `docs/environments.md` for the full table.
@@ -110,16 +183,17 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-OREGON-002 | `OregonV3` | One bit HAL call sequence (L-D512-H-D1024-L-D512) |
 | FUNC-OREGON-003 | `OregonV3` | Byte serialisation: LSB nibble before MSB nibble |
 | FUNC-OREGON-004 | `OregonV3` | Frame structure: 3-byte preamble + payload + 1-byte postamble |
-| FUNC-OREGON-005 | `OregonV3` | Positive temperature encoding in bytes 4–5 |
-| FUNC-OREGON-006 | `OregonV3` | Negative temperature sign flag in byte 5 |
-| FUNC-OREGON-007 | `OregonV3` | Humidity encoding with swapped nibbles in byte 6 |
-| FUNC-OREGON-008 | `OregonV3` | Pressure encoding with 795 hPa offset; weather prediction in byte 9 |
+| FUNC-OREGON-005 | `OregonV3` | Positive temperature: tenths byte 4 high, units byte 5 low, tens byte 5 high (nibbles 9–11) |
+| FUNC-OREGON-006 | `OregonV3` | Negative temperature sign flag is bit 3 of byte 6 (nibble 12) |
+| FUNC-OREGON-007 | `OregonV3` | Humidity units byte 6 high, tens byte 7 low (nibbles 13–14) |
+| FUNC-OREGON-008 | `OregonV3` | Pressure byte 8 = hPa − 795 clamped 0–255 (offset from HA `sensor.oregonbth_5a23`); weather prediction in byte 9 |
 | FUNC-OREGON-009 | `OregonV3` | Channel 1–3 encoded as bitmask in byte 2; out-of-range ignored |
-| FUNC-OREGON-010 | `OregonV3` | Rolling code stored in low nibble of byte 2 and high nibble of byte 3 |
-| FUNC-OREGON-011 | `OregonV3` | Battery-low flag is bit 2 of byte 3 |
-| FUNC-OREGON-012 | `OregonV3` | Device ID auto-selected by FinalizeMessage() based on messageStatus |
+| FUNC-OREGON-010 | `OregonV3` | Rolling code is byte 3 |
+| FUNC-OREGON-011 | `OregonV3` | Battery-low flag is bit 2 of byte 4 |
+| FUNC-OREGON-012 | `OregonV3` | Device ID with sync nibble (`EA4C`/`1A2D`/`5A5D`) selected by FinalizeMessage() from messageStatus; checksum at nibbles 13, 16 or 20 |
 | FUNC-OREGON-013 | `OregonV3` | messageStatus bit-field (bit0=temp, bit1=humi, bit2=press) |
-| FUNC-OREGON-014 | `OregonV3` | Full frame matches Oregon Scientific v3 reference decoding samples |
+| FUNC-OREGON-014 | `OregonV3` | Full frame matches the Oregon v2.1 reference payloads decoded by RFLink |
+| FUNC-OREGON-015 | `OregonV3` | Reused instance: setters replace their field (sign bit, channel nibble), checksum rewritten |
 | FUNC-LACROSSE-001 | `LacrosseWS7000` | Preamble is exactly 10 consecutive zero bits |
 | FUNC-LACROSSE-002 | `LacrosseWS7000` | Sensor-type nibble encoding: 0=temp, 1=T+H, 4=T+H+P, 5=lux, F=unknown |
 | FUNC-LACROSSE-003 | `LacrosseWS7000` | Address (0–7) in bits 0–2; negative temperature sign in bit 3 of second nibble |
@@ -176,3 +250,24 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
+| TECH-DECODE-001 | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
+| FUNC-DECODE-001 | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
+| FUNC-DECODE-002 | `LacrosseDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the high pulse of the last separator of a valid WS7000 frame; bit 1 = 400/800, 0 = 800/400 µs ±30 %; ≥ 6 zero bits sync; types 0/1/4/5 → 3/6/10/7 data nibbles; `Type()`, `Address()` |
+| FUNC-DECODE-003 | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()`; 0 when the type does not carry the value |
+| FUNC-DECODE-004 | `OregonDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the long pulse of the last checksum bit (frame bit 60/72/88 for `EA4C`/`1A2D`,`1A3D`/`5A5D`); short 150–731, long 732–1199 µs; ≥ 12 ones sync, `b0` from the first zero (sync nibble); checksum = nibble sum − 0xA; `DeviceId()`, `Channel()`, `RollingCode()` = b3, `BatteryLow()` = b4 & 0x0C |
+| FUNC-DECODE-005 | `OregonDecoder` (tinyDecoders) | `TemperatureTenths()` (b5 high/low, b4 high; signed by b6 bit 3), `HumidityPercent()` (`1A2D`, `1A3D`, `5A5D`), `PressureHpa()` = b8 + 795 (`5A5D`); 0 when the ID does not carry the value |
+| FUNC-DECODE-006 | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id, code), Oregon code = rolling code, kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 16 on AVR (8 on native), oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
+| UI-DECODE-001 | `PageFormatter` (tinyDecoders) | `FormatPage(record, alternate, big[7], top[5], bottom[5])`; big = first of temperature `[-]I.T°`, lux `Nlx`, volts `I.FFV`; top = Oregon `ch-code` (2 lowercase hex), `L` + Lacrosse id, `X` + X10 id, right-aligned; bottom = humidity `NN%` (capped 99) or pressure hPa without unit, `alternate` picks pressure when both; no age, no protocol name |
+| UI-DECODE-002 | `Font8x16` (tinyDecoders) | `ReadGlyph(c, glyph[16])` from `PROGMEM`; 32 glyphs (UI-DECODE-001 set + `Waiting for data`); bytes 0–7 top page, 8–15 bottom page, bit 0 = top pixel; `'\x7F'` drawn as `°`; unknown and space give zeros; Spleen 8x16, BSD-2-Clause |
+| UI-DECODE-003 | `Font8x16` (tinyDecoders) | `ReadBigGlyphPage(c, page 0–3, bytes[16])`: glyph byte `(page/2)*8 + x/2`, low nibble on even pages, high on odd, each bit doubled; no table |
+| TECH-DECODE-002 | `ReceiverHal` / `TestReceiverHal` (tinyDecoders) | `typedef` per MCU (`__AVR_ATmega328P__` or `__AVR_ATmega32U4__` to `AtmegaReceiverHal`, native), `#error` otherwise; `PopPulse`, `NowSeconds`, `DrawChar(page 0–2, col, c)`, `DrawBigChar(col 0–5, c)`, `HasLineOutput`, `WriteLine`; double adds `PushPulse`, `SetNowSeconds`, `Row(page)`, `Big`, `DrawCount`, `Lines`; consumers take `ReceiverHal*` at construction |
+| FUNC-DECODE-007 | `Receiver` (tinyDecoders) | `Poll()`: pulses to X10, Lacrosse, Oregon decoders, `Update` on true; on new second or frame `Expire` then page `(now / 10) % Count()`, `alternate = (now / 2) % 2`; waiting page `Waiting for data` at page 1 only while the table is empty; source layout 6 big cells + column cols 12–15 at pages 0 and 2; layout switch redraws all cells (blank source cells before the waiting text); at most one draw per call |
+| CONF-DECODE-002 | `.github/workflows/main.yml` / `.pre-commit-config.yaml` | Lint includes `tinyDecoders` (prune `.pio`); `pio test -d tinyDecoders -e native`; `build-tinydecoders` job builds `promini` and `promicro`, artifacts `firmware-tinydecoders` (promini) and `firmware-tinydecoders-promicro`, needed by `release`; pre-commit `files` includes `tinyDecoders/(src\|lib\|test)` |
+| FUNC-DECODE-008 | `RflinkFormatter` (tinyDecoders) | `FormatRflink(decoder, counter, line[64])` per decoder; `20;NN;`; Oregon names `Oregon Temp` (`EA4C`), `Oregon TempHygro` (`1A2D`, `1A3D`), `Oregon BTHR` (`5A5D`); Oregon `ID=(rc<<8)\|ch`, Lacrosse `ID=(type<<8)\|addr`, X10 `ID=addr`; `TEMP` hex with 0x8000 sign, `HUM` decimal, `BARO`/`LUX` hex, `METER` mV decimal (valid BCD only), `BAT=OK/LOW` (Oregon) |
+| FUNC-DECODE-009 | `Receiver` (tinyDecoders) | When `HasLineOutput`: `FormatRflink` + `WriteLine` after each `SourceTable::Update`; `uint8_t` counter from 0, wrapping; no deduplication |
+| FUNC-DECODE-010 | `SourceTable` (tinyDecoders) | `Expire(now)` removes records with `now - lastSeenSeconds >= 1800`, keeps first-seen order; LRU replacement when full unchanged; called by `Receiver` before each page computation |
+| PLAT-DECODE-003 | `AtmegaReceiverHal` (tinyDecoders) | ICP1 = PB0/D8 (ATmega328P) or PD4 (ATmega32U4), input without pull-up (RXB6 at 5 V); Timer1 normal mode, prescaler 8, ICNC1, edge toggled per capture; duration ticks/2, 65535 after a full period; 64-pulse ring, drop when full; overflow adds 32768 µs; atomic reads |
+| PLAT-DECODE-004 | `AtmegaReceiverHal` (tinyDecoders) | `Wire` at 400 kHz, SDA/SCL A4/A5 (Pro Mini) or D2/D3 (Pro Micro); SSD1306 0x3C, fixed init sequence, 4 × 128 zero bytes, `AF`; `DrawChar` = pages `page` and `page+1`, column col·8, 8 glyph bytes each; `DrawBigChar` = pages 0–3, column col·16, 16 bytes of `ReadBigGlyphPage` each; no level shifting (OLED module regulated, 5 V I2C) |
+| PLAT-DECODE-005 | `AtmegaReceiverHal` (tinyDecoders) | `Serial.begin(57600)`: debug UART TX D1 (Pro Mini, adapter optional) or USB CDC (Pro Micro); `WriteLine` drops the line when `availableForWrite() < len + 2`, else line + `\r\n`; no `operator bool`; input ignored, no banner |
+| CONF-DECODE-003 | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promicro` (breadboard prototype): `sparkfun_promicro16`, Arduino framework, avr109 upload; shared `src/main.cpp`, no `build_src_filter` |
+| CONF-DECODE-004 | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promini` (production): `pro16MHzatmega328`, Arduino framework, default `arduino` upload through a USB-serial adapter, no `lib_deps`, `-DSERIAL_TX_BUFFER_SIZE=128`, USB 5 V on VCC; shared `src/main.cpp` |

@@ -6,4 +6,4 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c, c++]
-        files: ^(src|lib|include|test)/
+        files: ^(src|lib|include|test|tinyDecoders/(src|lib|test))/

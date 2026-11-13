@@ -20,7 +20,8 @@ jobs:
       - name: Install clang-format
         run: pip install clang-format==18.1.8
       - name: Check formatting
-        run: find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+        # same command as the .rbd/config.yml linter (tinyDecoders included, .pio skipped)
+        run: find src lib include test tinyDecoders -path '*/.pio' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run --Werror
 
   # Native Unity tests (Oregon / Lacrosse / X10 encoders, analog filter, ...)
   test-native:
@@ -36,12 +37,14 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
         run: pio test -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
+      - name: Run tinyDecoders native tests
+        run: pio test -d tinyDecoders -e native
       - name: Compile-fail checks
         run: |
           bash test/compile_fail/check_both_protocols.sh
@@ -67,7 +70,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
@@ -83,10 +86,51 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # 433 MHz receiver firmware: promini (production), promicro (prototype)
+  build-tinydecoders:
+    name: Build tinyDecoders
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - name: Build firmware
+        run: |
+          pio run -d tinyDecoders -e promini
+          pio run -d tinyDecoders -e promicro
+      - name: Upload promini firmware artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-tinydecoders
+          path: |
+            tinyDecoders/.pio/build/promini/firmware.hex
+            tinyDecoders/.pio/build/promini/firmware.elf
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload promicro firmware artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-tinydecoders-promicro
+          path: |
+            tinyDecoders/.pio/build/promicro/firmware.hex
+            tinyDecoders/.pio/build/promicro/firmware.elf
+          if-no-files-found: error
+          retention-days: 30
+
   # Publish a GitHub Release with all firmware artifacts when a vX.Y.Z tag is pushed
   release:
     name: Release
-    needs: [test-native, build-avr]
+    needs: [test-native, build-avr, build-tinydecoders]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

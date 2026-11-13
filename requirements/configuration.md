@@ -68,3 +68,22 @@
 **Status:** validated
 **Dependencies:** —
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
+
+### CONF-DECODE-002
+**Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
+**Status:** validated
+**Dependencies:** CONF-DECODE-003, CONF-DECODE-004, TECH-DECODE-001
+**Description:** In `.github/workflows/main.yml`, the `lint` job runs the `.rbd/config.yml` linter command (adds `tinyDecoders`, prunes `*/.pio`); `test-native` also runs `pio test -d tinyDecoders -e native`; a `build-tinydecoders` job runs `pio run -d tinyDecoders -e promini` and `pio run -d tinyDecoders -e promicro`, uploads the promini `firmware.hex`/`firmware.elf` as `firmware-tinydecoders` and the promicro ones as `firmware-tinydecoders-promicro`, and `release` also needs it. Cache keys hash `tinyDecoders/platformio.ini` too. `.pre-commit-config.yaml` clang-format `files` becomes `^(src|lib|include|test|tinyDecoders/(src|lib|test))/`. Verified by a green CI run.
+
+### CONF-DECODE-003
+**Title:** tinyDecoders promicro env builds the receiver firmware for the Pro Micro 5 V / 16 MHz breadboard prototype with the Arduino framework
+**Status:** validated
+**Dependencies:** FUNC-DECODE-009, PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005
+**Description:** The Pro Micro is a breadboard prototype only; the production receiver is the Pro Mini (CONF-DECODE-004). `tinyDecoders/platformio.ini` has `[env:promicro]`: `platform = atmelavr`, `board = sparkfun_promicro16`, `framework = arduino`, default upload (`avr109`, Caterina bootloader over USB), no `lib_deps` (`Wire` is in the core). It builds the shared entry point `tinyDecoders/src/main.cpp`, the only file in `src/`, so no env sets `build_src_filter`: `main.cpp` defines `hal` (`ReceiverHal`) and `receiver` (`Receiver`, built on `&hal`) at file scope; `setup()` calls `hal.Init()`, `loop()` calls `receiver.Poll()` (the Arduino `main` keeps the USB stack running on the Pro Micro). Verified by `pio run -d tinyDecoders -e promicro`.
+
+### CONF-DECODE-004
+**Title:** tinyDecoders promini env builds the production receiver firmware for the Pro Mini 5 V / 16 MHz (ATmega328P) with the Arduino framework
+**Status:** validated
+**Dependencies:** FUNC-DECODE-007, FUNC-DECODE-009, PLAT-DECODE-003, PLAT-DECODE-004, PLAT-DECODE-005
+**Description:** The production tinyDecoders receiver is a standalone viewer on an Arduino Pro Mini 5 V / 16 MHz (ATmega328P): RXB6 DATA on D8 (PB0), SSD1306 OLED on A4/A5, debug UART TX on D1, all wired at 5 V. The board is fed USB 5 V on its VCC pin, bypassing the onboard regulator. `tinyDecoders/platformio.ini` has `[env:promini]`: `platform = atmelavr`, `board = pro16MHzatmega328`, `framework = arduino`, default upload (`arduino` protocol through the Pro Mini bootloader, over a USB-serial adapter on the programming header), no `lib_deps`, `build_flags = -DSERIAL_TX_BUFFER_SIZE=128` (the core default of 64 B leaves 63 free bytes, exactly the longest RFLink line plus `
+`; 128 B gives room for a second line). It builds the same `tinyDecoders/src/main.cpp` as CONF-DECODE-003. Verified by `pio run -d tinyDecoders -e promini`.

@@ -54,3 +54,30 @@
 **Dependencies:** PLAT-POWER-002, PLAT-POWER-003, TECH-HAL-004
 **derives_from:** [FUNC-ANALOG-001](functional.md#func-analog-001)
 **Description:** When `USE_SWITCHED_5V` is defined (AVR build), PB2 (J8) switches the off-board 5 V module through a PNP (`hardware/tinysensor/VARIANTE_LM35.md`). `Attiny84aHal()` clears `PORTB.2` (no pull-up) and it stays 0. `PowerOnSensors()` makes PB2 an output (`DDRB.2 = 1`), hence driven low; `PowerOffSensors()` makes it an input again (`DDRB.2 = 0`, high impedance). PB2 is never driven high. During hibernate, PB2 is an input without pull-up. Without the flag, PB2 behaviour is unchanged. Verified by inspection and on the bench (AVR-only, no native test).
+
+---
+
+### PLAT-DECODE-003
+**Title:** AtmegaReceiverHal captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** `tinyDecoders/lib/ReceiverHal/AtmegaReceiverHal.{h,cpp}` is compiled only when `__AVR_ATmega328P__` (Pro Mini 5 V / 16 MHz) or `__AVR_ATmega32U4__` (Pro Micro 5 V / 16 MHz) is defined. The only difference between the two MCUs here is the ICP1 pin, chosen by these macros: PB0 (Pro Mini D8) or PD4 (Pro Micro pin 4). `Init()` makes ICP1 an input without pull-up (the RXB6 is powered at 5 V and drives it directly, no level shifting) and fully reconfigures Timer1 (Arduino uses only Timer0 for `millis`): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture edge opposite to the current ICP1 level, capture and overflow interrupts on. `TIMER1_CAPT` pushes the ended pulse (low if the captured edge rose), duration = ticks since the previous capture / 2, 65535 if a full timer period has elapsed, toggles the edge, into a 64-pulse ring buffer (absorbs I2C and serial waits); when full the pulse is dropped. `TIMER1_OVF` adds 32768 µs to an accumulator and increments seconds per 1 000 000 µs. `PopPulse` and `NowSeconds` read with interrupts briefly disabled. Verified by inspection and on the bench on both boards.
+
+---
+
+### PLAT-DECODE-004
+**Title:** AtmegaReceiverHal drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI with Wire, one 8x16 cell per DrawChar or one 16x32 cell per DrawBigChar, without framebuffer
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, UI-DECODE-003, CONF-DECODE-003, CONF-DECODE-004
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** The OLED is on the hardware TWI: SDA A4 (PC4) and SCL A5 (PC5) on the Pro Mini, SDA D2 (PD1) and SCL D3 (PD0) on the Pro Micro. `AtmegaReceiverHal::Init()` calls `Wire.begin()` then `Wire.setClock(400000)` and sends, in one transaction after control byte `0x00`: `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then `AF`. `DrawChar(page, col, c)` reads the glyph with `ReadGlyph(c)` and, for page `page` then `page + 1`, sends commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)` in one transaction, then `0x40` and the 8 glyph bytes in another. `DrawBigChar(col, c)`, for page 0 to 3, sends commands `B0+page`, `col*16 & 0x0F`, `0x10 | (col*16 >> 4)`, then `0x40` and the 16 bytes of `ReadBigGlyphPage(c, page)` (17 bytes, within the 32-byte `Wire` buffer); about 2 ms at 400 kHz, short against the 64-pulse ring of PLAT-DECODE-003. No display buffer is kept in RAM. The OLED module has its own regulator and accepts 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V board, no level shifting. Verified by inspection and on the bench on both boards.
+
+---
+
+### PLAT-DECODE-005
+**Title:** AtmegaReceiverHal writes RFLink lines to Serial (debug UART TX D1 on the Pro Mini, USB CDC on the Pro Micro) without blocking the pulse capture
+**Status:** validated
+**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
+**derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
+**Description:** `AtmegaReceiverHal::Init()` calls `Serial.begin(57600)`. On the Pro Mini, `Serial` is the hardware USART (TX D1/PD1, 57600 baud 8N1, interrupt-driven 128-byte TX buffer set by CONF-DECODE-004): a debug output only, which works with or without a USB-serial adapter connected. On the Pro Micro it is the native USB CDC serial (the rate is ignored). `WriteLine(line)` drops the line when `Serial.availableForWrite()` is below its length + 2; otherwise it writes the line then `\r\n`, so it never waits for the serial to drain. `Serial`'s `operator bool` is never used (it waits 10 ms on the Pro Micro). Incoming bytes are ignored and no startup banner is sent. Verified on the bench with `pio device monitor -b 57600` (through a USB-serial adapter on the Pro Mini).
