@@ -149,7 +149,13 @@ module shell() {
         union() { body(wall); translate([wall, wall, -plate_t - 1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + plate_t + 1]); }
       }
       // colonnes de vis
-      for (p = bosses) translate([p[0], p[1], pad_h]) cylinder(d = boss_d, h = boss_h - pad_h);   // posée sur le plot du fond
+      for (p = bosses) {   // posée sur le plot du fond, pleine jusqu'aux deux parois de son coin (pas de colonne en l'air)
+        c = [p[0] < box_w / 2 ? wall - 0.5 : box_w - wall + 0.5, p[1] < box_d / 2 ? wall - 0.5 : box_d - wall + 0.5];
+        hull() {
+          translate([p[0], p[1], pad_h]) cylinder(d = boss_d, h = boss_h - pad_h);
+          translate([min(c[0], p[0]), min(c[1], p[1]), pad_h]) cube([abs(p[0] - c[0]), abs(p[1] - c[1]), boss_h - pad_h]);
+        }
+      }
       // cônes de raccord : chaque colonne monte vers son coin de parois à 45°, plus de surplomb à l'impression (coque à l'envers)
       for (p = bosses) {
         c = [p[0] < box_w / 2 ? wall : box_w - wall, p[1] < box_d / 2 ? wall : box_d - wall];   // coin intérieur
