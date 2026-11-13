@@ -109,7 +109,9 @@ profile = [[0, -plate_t], [box_d, -plate_t], [box_d, box_h], [face_dy, box_h], [
 cb_h = screw_head[1] + 0.2;                       // lamage de la tête depuis le dessous du fond
 pad_h = cb_h + pad_floor - plate_t;               // plot du fond sous chaque colonne
 pilot_top = -plate_t + cb_h + screw_l + 0.5;      // bout de la vis + 0.5
-bosses = [for (x = [wall + boss_d / 2, box_w - wall - boss_d / 2], y = [wall + boss_d / 2 + 1.5, box_d - wall - boss_d / 2]) [x, y]];
+pad_d = screw_head[0] + 0.4 + 2.4;                // plot du fond : lamage + 1.2 de paroi
+boss_in = wall + plate_clr + pad_d / 2;           // colonnes rentrées : plots du fond entiers, pas rognés par les parois
+bosses = [for (x = [boss_in, box_w - boss_in], y = [max(boss_in, wall + boss_d / 2 + 1.5), box_d - boss_in]) [x, y]];
 rx_x = box_w / 2;                                 // RXB6 centré entre les parois
 rx_x0 = rx_x - rx_l / 2;                          // bout DATA
 sh_x0 = rx_x0 + rx_sh_x0;                         // début du capot
@@ -200,7 +202,7 @@ module plate() {
         cube([rail_w, (pm_pins - 1) * pm_pitch + rail_w, rail_h]);
       // plots sous les colonnes : la tête de vis s'y noie
       intersection() {
-        for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = screw_head[0] + 0.4 + 2.4, h = pad_h);
+        for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = pad_d, h = pad_h);
         translate([wall + plate_clr, wall + plate_clr, 0]) cube([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr), pad_h]);
       }
       // supports du RXB6 : le capot repose dessus, un ergot au-delà de chaque bout du capot (+ point de colle)
