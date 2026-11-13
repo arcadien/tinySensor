@@ -32,7 +32,7 @@ Les pièces prêtes à trancher sont dans `print/`, **un projet OrcaSlicer par m
 | `box.3mf` | Fond extérieur, Fond intérieur, Couvercle | n'imprimer qu'un des deux fonds : `ext` (presse-étoupe, extérieur) ou `int` (aérations, intérieur) |
 | `shield.3mf` | Abri, Assiettes | Chapeau, Fond, Clip (optionnel) ; 4 assiettes |
 | `stand.3mf` | Mât, Pied | pied de table, optionnel |
-| `receiver.3mf` | Pupitre | Coque, Fond : pupitre du récepteur tinyDecoders (Pro Micro, RXB6, OLED), vis M3×6 à tête cylindrique |
+| `receiver.3mf` | Pupitre | Coque, Fond : pupitre du récepteur tinyDecoders (Pro Micro, RXB6, OLED), vis M3×6 à tête cylindrique ; câblage : [`hardware/receiver/WIRING.md`](../hardware/receiver/WIRING.md) |
 | `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois Ø6 / Ø8 / Ø10 |
 
 `mushroom_cap.3mf` : chapeau du champignon tel qu'imprimé (réglages Orca de l'impression). Snapshot figé, hors de `export.sh`.
