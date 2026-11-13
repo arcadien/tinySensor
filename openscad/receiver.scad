@@ -35,9 +35,11 @@ plate_t = 2;
 plate_clr = 0.2;   // jeu du fond encastré dans la coque
 boss_d = 6;        // 4 colonnes de vis dans les coins
 boss_h = 8;
-screw_pilot = 2.5; // M3 auto-taraudeuse dans la colonne
+screw_pilot = 2.5; // vis M3 à métaux taraudant la colonne (repercer à 2.8 si elle force)
 screw_clear = 3.4;
-screw_head = 6;    // fraisage sous le fond
+screw_head = [5.4, 3.1]; // tête cylindrique (diamètre, hauteur) mesurée, noyée dans le fond
+screw_l = 6;       // M3x6 : une M3x8 demanderait des colonnes plus hautes, qui toucheraient l'écran
+pad_floor = 1.2;   // matière sous la tête
 pocket_clr = 0.4;  // jeu autour de l'écran dans son logement
 
 /* [Pro Micro] */
@@ -101,6 +103,9 @@ face_dy = (box_h - front_h) * tan(face_tilt);   // recul du haut de la façade
 face_a = 90 - face_tilt;                          // angle de la façade depuis l'horizontale
 face_len = (box_h - front_h) / cos(face_tilt);
 profile = [[0, -plate_t], [box_d, -plate_t], [box_d, box_h], [face_dy, box_h], [0, front_h]];   // parois prolongées sous Z = 0 : le fond s'y encastre
+cb_h = screw_head[1] + 0.2;                       // lamage de la tête depuis le dessous du fond
+pad_h = cb_h + pad_floor - plate_t;               // plot du fond sous chaque colonne
+pilot_top = -plate_t + cb_h + screw_l + 0.5;      // bout de la vis + 0.5
 bosses = [for (x = [wall + boss_d / 2, box_w - wall - boss_d / 2], y = [wall + boss_d / 2 + 1.5, box_d - wall - boss_d / 2]) [x, y]];
 rx_x = box_w / 2;                                 // RXB6 centré entre les parois
 rx_x0 = rx_x - rx_l / 2;                          // bout DATA
@@ -135,7 +140,7 @@ module shell() {
         union() { body(wall); translate([wall, wall, -plate_t - 1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + plate_t + 1]); }
       }
       // colonnes de vis
-      for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = boss_d, h = boss_h);
+      for (p = bosses) translate([p[0], p[1], pad_h]) cylinder(d = boss_d, h = boss_h - pad_h);   // posée sur le plot du fond
       // cônes de raccord : chaque colonne monte vers son coin de parois à 45°, plus de surplomb à l'impression (coque à l'envers)
       for (p = bosses) {
         c = [p[0] < box_w / 2 ? wall : box_w - wall, p[1] < box_d / 2 ? wall : box_d - wall];   // coin intérieur
@@ -154,7 +159,7 @@ module shell() {
         face_xf() translate([box_w / 2 - oled_l / 2 - 2, face_len / 2 - oled_w / 2 - 2, -wall - oled_pad]) cube([oled_l + 4, oled_w + 4, oled_pad + 1]);
       }
     }
-    for (p = bosses) translate([p[0], p[1], -eps]) cylinder(d = screw_pilot, h = boss_h - 1);
+    for (p = bosses) translate([p[0], p[1], pad_h - eps]) cylinder(d = screw_pilot, h = pilot_top - pad_h);
     // fenêtre de l'écran et logement de la carte (verre affleurant sous la face)
     face_xf() {
       translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 1]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, wall + 2]);
@@ -179,6 +184,11 @@ module plate() {
       // rails : les broches de la Pro Micro s'y plantent, leur plastique repose dessus
       for (sx = [-1, 1]) translate([pm_x + sx * pm_row / 2 - rail_w / 2, pm_y + pm_pin_off - (pm_pins - 1) * pm_pitch / 2 - rail_w / 2, 0])
         cube([rail_w, (pm_pins - 1) * pm_pitch + rail_w, rail_h]);
+      // plots sous les colonnes : la tête de vis s'y noie
+      intersection() {
+        for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = screw_head[0] + 0.4 + 2.4, h = pad_h);
+        translate([wall + plate_clr, wall + plate_clr, 0]) cube([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr), pad_h]);
+      }
       // supports du RXB6 : le capot repose dessus, un ergot au-delà de chaque bout du capot (+ point de colle)
       // gauche : dans la bande sans quartz (avant de la carte)
       translate([sup_l[0], rx_y + 0.5, 0]) cube([sup_l[1] - sup_l[0], rx_w - rx_q[1] - 1, rx_z]);
@@ -189,8 +199,8 @@ module plate() {
     for (sx = [-1, 1], i = [0 : pm_pins - 1])
       translate([pm_x + sx * pm_row / 2, pm_y + pm_pin_off + (i - (pm_pins - 1) / 2) * pm_pitch, -rail_sink]) cylinder(d = rail_hole, h = rail_h + rail_sink + 1, $fn = 12);
     for (p = bosses) translate([p[0], p[1], -plate_t - 1]) {
-      cylinder(d = screw_clear, h = plate_t + 2);
-      cylinder(d1 = screw_head, d2 = screw_clear, h = (screw_head - screw_clear) / 2);   // fraisage 90°
+      cylinder(d = screw_clear, h = plate_t + pad_h + 2);
+      cylinder(d = screw_head[0] + 0.4, h = cb_h + 1);   // lamage : tête noyée
     }
   }
 }
@@ -228,6 +238,7 @@ assert(pm_pin - pm_spacer <= rail_h + rail_sink, "Trous des rails trop courts po
 assert(sup_l[1] - sh_x0 >= sup_bite && sh_x1 - sup_r[0] >= sup_bite, "Supports du RXB6 hors du capot : Pro Micro plus large que le capot");
 assert(rx_bz - rx_q[2] > 0, "Quartz sur le fond");
 assert(ant_z + ant[1] / 2 < box_h - wall, "Antenne contre le dessus");
+assert(pilot_top <= boss_h, "Vis trop longue pour la colonne");
 assert(usb_port_z + usb_plug[1] / 2 < box_h - wall, "Prise USB trop haute");
 echo(str("Pupitre ", box_w, " x ", box_d, " x ", box_h + plate_t, " mm ; façade à ", face_a, "° de l'horizontale, ", round(face_len), " mm de long"));
 
