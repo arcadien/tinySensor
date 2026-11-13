@@ -19,7 +19,7 @@
 // Repère : X largeur (gauche -> droite), Y profondeur (façade Y = 0 -> arrière), Z haut, dessus du fond en Z = 0.
 
 /* [Rendu] */
-part = "cutaway"; // [assembly, open, cutaway, shell, plate]
+part = "shell"; // [assembly, open, cutaway, shell, plate]
 
 /* [Coque] */
 box_w = 48;        // largeur : l'écran (38 mm) + parois et jeu
@@ -32,6 +32,7 @@ corner_r = 2;      // arrondi du profil
 
 /* [Fond] */
 plate_t = 2;
+plate_clr = 0.2;   // jeu du fond encastré dans la coque
 boss_d = 6;        // 4 colonnes de vis dans les coins
 boss_h = 8;
 screw_pilot = 2.5; // M3 auto-taraudeuse dans la colonne
@@ -99,7 +100,7 @@ eps = 0.01;
 face_dy = (box_h - front_h) * tan(face_tilt);   // recul du haut de la façade
 face_a = 90 - face_tilt;                          // angle de la façade depuis l'horizontale
 face_len = (box_h - front_h) / cos(face_tilt);
-profile = [[0, 0], [box_d, 0], [box_d, box_h], [face_dy, box_h], [0, front_h]];
+profile = [[0, -plate_t], [box_d, -plate_t], [box_d, box_h], [face_dy, box_h], [0, front_h]];   // parois prolongées sous Z = 0 : le fond s'y encastre
 bosses = [for (x = [wall + boss_d / 2, box_w - wall - boss_d / 2], y = [wall + boss_d / 2 + 1.5, box_d - wall - boss_d / 2]) [x, y]];
 rx_x = box_w / 2;                                 // RXB6 centré entre les parois
 rx_x0 = rx_x - rx_l / 2;                          // bout DATA
@@ -131,10 +132,22 @@ module shell() {
       difference() {
         body();
         // intérieur ouvert en bas
-        union() { body(wall); translate([wall, wall, -1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + 1]); }
+        union() { body(wall); translate([wall, wall, -plate_t - 1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + plate_t + 1]); }
       }
       // colonnes de vis
       for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = boss_d, h = boss_h);
+      // cônes de raccord : chaque colonne monte vers son coin de parois à 45°, plus de surplomb à l'impression (coque à l'envers)
+      for (p = bosses) {
+        c = [p[0] < box_w / 2 ? wall : box_w - wall, p[1] < box_d / 2 ? wall : box_d - wall];   // coin intérieur
+        intersection() {
+          body();
+          hull() {
+            translate([p[0], p[1], boss_h - eps]) cylinder(d = boss_d, h = eps);
+            translate([c[0] - (c[0] == wall ? wall : 0.5), c[1] - (c[1] == wall ? wall : 0.5), boss_h + norm([p[0] - c[0], p[1] - c[1]]) + boss_d / 2])
+              cube([wall + 0.5, wall + 0.5, eps]);
+          }
+        }
+      }
       // surépaisseur de façade autour du logement de l'écran
       intersection() {
         body();
@@ -161,7 +174,8 @@ module shell() {
 module plate() {
   difference() {
     union() {
-      translate([0, 0, -plate_t]) linear_extrude(plate_t) offset(r = corner_r) offset(delta = -corner_r) square([box_w, box_d]);
+      // fond encastré entre les parois, affleurant le bas de la coque
+      translate([wall + plate_clr, wall + plate_clr, -plate_t]) linear_extrude(plate_t) offset(r = 0.5) offset(delta = -0.5) square([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr)]);
       // rails : les broches de la Pro Micro s'y plantent, leur plastique repose dessus
       for (sx = [-1, 1]) translate([pm_x + sx * pm_row / 2 - rail_w / 2, pm_y + pm_pin_off - (pm_pins - 1) * pm_pitch / 2 - rail_w / 2, 0])
         cube([rail_w, (pm_pins - 1) * pm_pitch + rail_w, rail_h]);
