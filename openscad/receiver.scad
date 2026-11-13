@@ -88,7 +88,8 @@ oled_aa_off = 0.56; // décalage de la zone active vers la droite (côté sans b
 oled_aa_off_y = 0.78; // décalage vers le haut de la façade (broches à gauche) : zone active à 2.43 du bord haut de la carte (plan)
 oled_pin_band = 3.5; // bande des soudures des broches depuis le bord gauche de la carte (broches à 1.5 du bord)
 oled_pin_relief = 1; // creux supplémentaire au-dessus des soudures
-win_m = 1;         // marge de la fenêtre autour de la zone active
+win_m = 1;
+win_bevel = wall + 0.8; // biseau à 45° de la fenêtre : toute l'épaisseur au-dessus du verre         // marge de la fenêtre autour de la zone active
 oled_pad = 3;      // surépaisseur de la façade autour du logement de l'écran
 
 /* [Embase SMA] */
@@ -165,6 +166,11 @@ module shell() {
     // fenêtre de l'écran et logement de la carte (verre affleurant sous la face)
     face_xf() {
       translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 1]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, wall + 2]);
+      // biseau à 45° sur les côtés et le haut ; bord bas droit : biseauté, il deviendrait un plafond à l'impression (coque à l'envers)
+      hull() {
+        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 0.8]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, eps]);
+        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m - win_bevel, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, 0]) cube([oled_aa[0] + 2 * win_m + 2 * win_bevel, oled_aa[1] + 2 * win_m + win_bevel, 1]);
+      }
       translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - oled_pad - 1]) cube([oled_l + 2 * pocket_clr, oled_w + 2 * pocket_clr, oled_pad + 1 - 0.8 + eps]);
       // rainure des soudures des broches (à gauche, presque à hauteur du verre) : 1 mm de plus que le logement
       translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - 0.8 - eps]) cube([oled_pin_band + pocket_clr, oled_w + 2 * pocket_clr, oled_pin_relief + eps]);
