@@ -19,7 +19,7 @@
 // Repère : X largeur (gauche -> droite), Y profondeur (façade Y = 0 -> arrière), Z haut, dessus du fond en Z = 0.
 
 /* [Rendu] */
-part = "shell"; // [assembly, open, cutaway, shell, plate]
+part = "assembly"; // [assembly, open, cutaway, shell, plate]
 
 /* [Coque] */
 box_w = 48;        // largeur : l'écran (38 mm) + parois et jeu
@@ -86,6 +86,8 @@ oled_glass = 1.9;  // verre + film de protection au-dessus de la carte (épaisse
 oled_aa = [22.38, 5.58]; // zone active (plan du fabricant)
 oled_aa_off = 0.56; // décalage de la zone active vers la droite (côté sans broches) : verre mesuré à 6.27 du bord côté broches, zone active à 2.1 du bord du verre (plan)
 oled_aa_off_y = 0.78; // décalage vers le haut de la façade (broches à gauche) : zone active à 2.43 du bord haut de la carte (plan)
+oled_pin_band = 3.5; // bande des soudures des broches depuis le bord gauche de la carte (broches à 1.5 du bord)
+oled_pin_relief = 1; // creux supplémentaire au-dessus des soudures
 win_m = 1;         // marge de la fenêtre autour de la zone active
 oled_pad = 3;      // surépaisseur de la façade autour du logement de l'écran
 
@@ -164,6 +166,8 @@ module shell() {
     face_xf() {
       translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 1]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, wall + 2]);
       translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - oled_pad - 1]) cube([oled_l + 2 * pocket_clr, oled_w + 2 * pocket_clr, oled_pad + 1 - 0.8 + eps]);
+      // rainure des soudures des broches (à gauche, presque à hauteur du verre) : 1 mm de plus que le logement
+      translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - 0.8 - eps]) cube([oled_pin_band + pocket_clr, oled_w + 2 * pocket_clr, oled_pin_relief + eps]);
     }
     // prise micro-USB
     translate([pm_x - usb_plug[0] / 2, box_d - wall - 1, usb_port_z - usb_plug[1] / 2]) cube([usb_plug[0], wall + 2, usb_plug[1]]);
