@@ -129,9 +129,13 @@ sup_r = [pm_x + pm_w / 2 + 0.3, sh_x1 + 0.3 + ergot[0]];   // support droit (X)
 module face_xf() { translate([0, 0, front_h]) rotate([face_a, 0, 0]) children(); }
 
 // ---------- coque ----------
-module body(off = 0) {   // off : retrait (intérieur)
-  translate([off, 0, 0]) rotate([90, 0, 90])
-    linear_extrude(box_w - 2 * off) offset(r = max(corner_r - off, 0.5)) offset(delta = -corner_r - off) polygon(profile);
+module body(off = 0) {   // off : retrait (intérieur) ; toutes les arêtes arrondies (profil convexe : minkowski rapide)
+  r = max(corner_r - off, 0.5);
+  a = off + r;           // noyau rentré de a, regonflé de r : retrait net off
+  translate([a, 0, 0]) minkowski() {
+    rotate([90, 0, 90]) linear_extrude(box_w - 2 * a) offset(delta = -a) polygon(profile);
+    sphere(r, $fn = 24);
+  }
 }
 
 module shell() {
