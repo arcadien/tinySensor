@@ -1,27 +1,27 @@
-# Debug pas-à-pas (debugWIRE)
+# Step debugging (debugWIRE)
 
-L'ancien projet Atmel Studio (`TinySensor/`) a été supprimé. Le debug passe désormais par PlatformIO + AVaRICE + AVR Dragon, en debugWIRE.
+The old Atmel Studio project (`TinySensor/`) was removed. Debugging now goes through PlatformIO + AVaRICE + AVR Dragon, over debugWIRE.
 
-> Statut : **non validé sur banc**. Procédure à confirmer au premier essai.
+> Status: **not validated on the bench**. Procedure to confirm on the first try.
 
-## Chaîne d'outils
+## Toolchain
 
-| Élément | Rôle |
+| Item | Role |
 |---|---|
-| AVR Dragon | Sonde (USB) — debugWIRE, ISP, HVSP |
-| [AVaRICE](https://avarice.sourceforge.io/) | Serveur GDB pour le Dragon (`--dragon --debugwire`) |
-| PlatformIO | `debug_tool = custom`, se connecte au serveur GDB |
-| avrdude | Fusibles (activation/désactivation DWEN) |
+| AVR Dragon | Probe (USB) — debugWIRE, ISP, HVSP |
+| [AVaRICE](https://avarice.sourceforge.io/) | GDB server for the Dragon (`--dragon --debugwire`) |
+| PlatformIO | `debug_tool = custom`, connects to the GDB server |
+| avrdude | Fuses (enable/disable DWEN) |
 
-Bloom n'est pas une option : il cible les sondes EDBG (Atmel-ICE, Snap, PICkit 4), pas le Dragon. `avr-stub` (débogueur natif PlatformIO) ne supporte que les ATmega.
+Bloom is not an option: it targets EDBG probes (Atmel-ICE, Snap, PICkit 4), not the Dragon. `avr-stub` (PlatformIO native debugger) only supports ATmega parts.
 
-À vérifier : présence de l'ATtiny84 dans la liste des cibles debugWIRE d'AVaRICE (`avarice --known-devices`, marqueur `+`).
+To check: the ATtiny84 is in AVaRICE's debugWIRE target list (`avarice --known-devices`, `+` marker).
 
-## Environnement PlatformIO (proposition)
+## PlatformIO environment (proposal)
 
 ```ini
 [env:debug]
-extends = env:devmodule      ; env de base à choisir
+extends = env:devmodule      ; base env to choose
 build_type = debug
 debug_tool = custom
 debug_port = :4242
@@ -32,33 +32,33 @@ debug_init_cmds =
   load
 ```
 
-Lancer AVaRICE manuellement si besoin : `avarice --dragon --debugwire --part attiny84 :4242`.
+Start AVaRICE by hand if needed: `avarice --dragon --debugwire --part attiny84 :4242`.
 
-## Fusible DWEN
+## DWEN fuse
 
-### Activer debugWIRE
-Programmer DWEN (= 0) dans le hfuse via ISP (`-c dragon_isp`). Une fois actif, **/RESET n'est plus une broche de reset et l'ISP ne fonctionne plus**.
+### Enable debugWIRE
+Program DWEN (= 0) in the hfuse over ISP (`-c dragon_isp`). Once active, **/RESET is no longer a reset pin and ISP no longer works**.
 
-### Revenir en ISP (sans haute tension)
-1. `avrdude -c dragon_dw -P usb -p t84` — avrdude se connecte en debugWIRE et bascule la cible en mode ISP, **sans coupure d'alimentation**.
-2. `avrdude -c dragon_isp -P usb -p t84 -U hfuse:w:0xXX:m` — réécrire le hfuse avec DWEN = 1 (partir de la valeur actuelle).
+### Back to ISP (no high voltage)
+1. `avrdude -c dragon_dw -P usb -p t84` — avrdude connects over debugWIRE and switches the target to ISP mode, **without a power cycle**.
+2. `avrdude -c dragon_isp -P usb -p t84 -U hfuse:w:0xXX:m` — rewrite the hfuse with DWEN = 1 (start from the current value).
 
-AVaRICE ne sait pas désactiver DWEN lui-même. Séquence avrdude à valider selon la version.
+AVaRICE cannot disable DWEN itself. avrdude sequence to validate depending on the version.
 
-### Recours : haute tension (HVSP)
-Si debugWIRE ne répond plus : HVSP à 12 V (tolérance ~11,5–12,5 V), supporté par le Dragon, câblage dédié.
+### Fallback: high voltage (HVSP)
+If debugWIRE no longer answers: HVSP at 12 V (tolerance ~11.5–12.5 V), supported by the Dragon, dedicated wiring.
 
-## Limites debugWIRE
+## debugWIRE limits
 
-- Pas de breakpoint matériel : breakpoints logiciels par réécriture de pages flash (usure).
-- Fusibles et lock bits inaccessibles pendant la session.
-- Effacement puce (`-e`) impossible en mode debugWIRE.
+- No hardware breakpoint: software breakpoints by rewriting flash pages (wear).
+- Fuses and lock bits unreachable during the session.
+- Chip erase (`-e`) impossible in debugWIRE mode.
 
-## Contraintes matérielles — carte de debug dédiée
+## Hardware constraints — dedicated debug board
 
-Les cartes de production ne sont pas prévues pour debugWIRE. Une carte de debug dédiée est à prévoir avec :
+Production boards are not designed for debugWIRE. A dedicated debug board is needed with:
 
-- **/RESET sans condensateur** (la ligne porte le signal debugWIRE).
-- **Pull-up /RESET ≥ 10 kΩ** (ou aucune résistance externe ; ne pas utiliser de valeur plus faible).
-- Connecteur ISP 6 broches accessible (activation/désactivation DWEN).
-- Idéalement : accès au câblage HVSP pour récupération.
+- **/RESET without a capacitor** (the line carries the debugWIRE signal).
+- **/RESET pull-up ≥ 10 kΩ** (or no external resistor; do not use a lower value).
+- Reachable 6-pin ISP connector (enable/disable DWEN).
+- Ideally: access to the HVSP wiring for recovery.
