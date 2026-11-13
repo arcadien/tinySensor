@@ -69,6 +69,11 @@ PROJECTS = {
                   "Clip": ['part="clip"']},
         "plates": [("Abri", ["Chapeau", "Fond", "Clip"]), ("Assiettes", ["Assiette"] * 4)],
     },
+    "receiver.3mf": {   # pupitre du récepteur tinyDecoders
+        "scad": "receiver.scad",
+        "parts": {"Coque": ['part="shell"'], "Fond": ['part="plate"']},
+        "plates": [("Pupitre", ["Coque", "Fond"])],
+    },
     "stand.3mf": {   # pied de table
         "scad": "stand.scad",
         "parts": {"Mât": ['part="mast"'], "Pied": ['part="foot"']},
