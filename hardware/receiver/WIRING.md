@@ -32,7 +32,7 @@ Parts on the wires:
 | R1 | 3.3 kΩ | SDA – VCC | in line, at the Pro Micro end, in the free zone in front of the RXB6 (validated on the bench: ~4.3 V high, ~160 ns rise) |
 | R2 | 3.3 kΩ | SCL – VCC | same |
 | C1 | 100 nF ceramic | RXB6 +5V – GND | soldered on the RXB6 DATA-end pin stubs |
-| C2 | 10 µF ceramic (X5R/X7R) | RXB6 +5V – GND | same, next to C1 |
+| C2 | 10 µF: ceramic (X5R/X7R), or tantalum 16 V (**+ on +5V**: a reversed tantalum fails short), or electrolytic laid flat | RXB6 +5V – GND | same, next to C1; a standing electrolytic (11 mm) would hit the antenna |
 | R3 (optional) | 10–47 Ω | in series in the RXB6 +5V, before C2 | RC filter against USB and OLED charge-pump noise |
 
 Not connected: RXB6 DER, the second +5V and both GND pins of the RXB6 ANT end, every other Pro Micro pin.
@@ -59,7 +59,7 @@ The RXB6 shield sits 1 mm above the Pro Micro components, 2.7 mm above its board
 
 ## Assembly order
 
-1. Pro Micro: solder SDA, SCL, DATA, VCC and GND wires flat, sideways. Plug its 8 mm header pins into the plate rails (1.2 mm holes; drill them if the pins bind).
+1. Pro Micro: solder SDA, SCL, DATA, VCC and GND wires flat, sideways. Plug its 8 mm header pins into the plate rails (the 1.2 mm holes print closed up: drill them to 0.8 mm).
 2. RXB6: cut the pins to 2–3 mm stubs, solder C1, C2 (and R3) on the DATA-end stubs, then the DATA, +5V, GND wires and the helical antenna on ANT. Kapton under the shield, flip the board onto its two supports (shield on the supports, ergots at its ends), drop of glue.
 3. OLED: glue it in the face pocket, pins on the left (text upright), solder SDA, SCL, VCC, GND.
 4. Make the VCC and GND splices with R1 and R2, heat-shrink.
