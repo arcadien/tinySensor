@@ -47,7 +47,7 @@ After changing a `.scad` (about 30 s, close the projects in Orca first):
 ./export.sh print/box.3mf    # or just one
 ```
 
-`export.sh` runs `update_3mf.py`, which re-exports each part and replaces its mesh in the project: plates, positions, rotations and Orca settings are kept, the previous project stays as `print/<project>.3mf.bak`. A missing project is recreated, with the printer and filament settings of `mushroom.3mf` (Ender 3). Parts may only be rotated about Z in Orca, otherwise the script refuses to update them; a part deleted in Orca is reported, not put back. Per-object settings set when missing: mushroom cap outer brim 10 mm, 10 % infill; mushroom stem 6 walls. The dot counts are the project's: the "Pois" echo of `mushroom.scad` gives the count to place if the seed or `dot_gap` change.
+`export.sh` runs `update_3mf.py`, which re-exports each part and replaces its mesh in the project: plates, positions, rotations and Orca settings are kept, the previous project stays as `print/<project>.3mf.bak`. A missing project is recreated, with the printer and filament settings of `mushroom.3mf` (Ender 3). Parts may only be rotated about Z in Orca, otherwise the script refuses to update them; a part deleted in Orca is reported, not put back. Per-object settings set when missing: mushroom cap outer brim 10 mm, 10 % infill; mushroom stem 6 walls. The dot counts are the project's: the "Dots" echo of `mushroom.scad` gives the count to place if the seed or `dot_gap` change.
 
 Exporting a single part outside a project (STL, another format): `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_box.scad` (see each `.scad` header).
 

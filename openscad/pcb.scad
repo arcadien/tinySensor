@@ -1,28 +1,28 @@
-// Représentation simplifiée de la carte TinySensor v2.2 et de son accu 18650, pour les rendus.
-// Positions relevées dans hardware/tinysensor/tinySensorv1.kicad_pcb (coordonnées KiCad absolues),
-// volumes approximatifs (boîtes et cylindres), pas destinés à l'impression.
+// Simplified TinySensor v2.2 board and its 18650 cell, for the renders.
+// Positions read from hardware/tinysensor/tinySensorv1.kicad_pcb (absolute KiCad coordinates),
+// approximate volumes (boxes and cylinders), not meant for printing.
 //
-// Repère : coin bas-gauche du PCB, Y vers le haut (KiCad : Y vers le bas), dessous du PCB en Z = 0.
+// Frame: bottom-left corner of the PCB, Y up (KiCad: Y down), PCB underside at Z = 0.
 
 pcb_w = 93.98;
 pcb_h = 63.754;
 pcb_t = 1.6;
-k_origin = [113.04016, 48.02632];   // coin haut-gauche du contour Edge.Cuts
+k_origin = [113.04016, 48.02632];   // top-left corner of the Edge.Cuts outline
 k_holes = [[203.75016, 105.51032], [118.04904, 52.81676], [117.61216, 105.43032], [203, 52], [150.88616, 51.83632]];
 
 show_battery = true;
-// découpe le long des pointillés de sérigraphie (x = 147, y = 87 en KiCad) : on ne garde que
-// la partie sans support 18650 ni support CR2032 ; l'accu arrive alors sur J13 « RAW IN »
+// cut along the silkscreen dotted lines (x = 147, y = 87 in KiCad): only the part without
+// the 18650 and CR2032 holders is kept; the cell then arrives on J13 "RAW IN"
 k_crop = [[147, 48.02632], [207.02016, 87]];
 crop_w = k_crop[1][0] - k_crop[0][0];
 crop_h = k_crop[1][1] - k_crop[0][1];
-// trous restants sur la carte découpée (MH5 et MH1 du haut), coordonnées KiCad
+// holes left on the cut board (MH5 and top MH1), KiCad coordinates
 k_crop_holes = [[150.88616, 51.83632], [203, 52]];
 
 $fn = 32;
 
-// Place une empreinte KiCad (position absolue, angle) sur le dessus du PCB.
-// Les enfants sont décrits en coordonnées locales de l'empreinte, Y vers le haut (= -Y KiCad).
+// Places a KiCad footprint (absolute position, angle) on top of the PCB.
+// Children are given in the footprint's local coordinates, Y up (= -Y KiCad).
 module kfp(x, y, a = 0) {
   translate([x - k_origin[0], pcb_h - (y - k_origin[1]), pcb_t]) rotate([0, 0, a]) children();
 }
@@ -36,7 +36,7 @@ module radial(d, h, p, c = "#1b3d8f") { color(c) translate([p / 2, 0, 0]) cylind
 module axial(l = 3.6, d = 1.6, p = 7.62, c = "Tan") { color(c) translate([p / 2 - l / 2, 0, d / 2 + 0.3]) rotate([0, 90, 0]) cylinder(d = d, h = l); }
 
 module holder_18650() {
-  // MPD BH-18650-PC2 : fab -2.8..74.8 x -9.85..9.85, bornes à 0 et 72
+  // MPD BH-18650-PC2: fab -2.8..74.8 x -9.85..9.85, terminals at 0 and 72
   color("#202020") {
     translate([-2.8, -9.85, 0]) cube([77.6, 19.7, 1.5]);
     for (y = [-9.85, 9.85 - 1.5]) translate([-2.8, y, 0]) cube([77.6, 1.5, 7]);
@@ -50,23 +50,23 @@ module holder_18650() {
   }
 }
 
-// carte découpée, centrée sur l'origine (dessous du PCB en Z = 0)
-module pcb_v22_cropped(jst_eh = true) {   // jst_eh = false : JST « I2C » et « I2C_SPI » non posés (champignon)
+// cut board, centred on the origin (PCB underside at Z = 0)
+module pcb_v22_cropped(jst_eh = true) {   // jst_eh = false: "I2C" and "I2C_SPI" JSTs not fitted (mushroom)
   translate([-(k_crop[0][0] - k_origin[0]) - crop_w / 2, -(pcb_h - (k_crop[1][1] - k_origin[1])) - crop_h / 2, 0])
     intersection() {
       pcb_v22(holder = false, jst_eh = jst_eh);
       translate([k_crop[0][0] - k_origin[0], pcb_h - (k_crop[1][1] - k_origin[1]), -1]) cube([crop_w, crop_h, 60]);
     }
 }
-// trous de la carte découpée dans le repère de pcb_v22_cropped()
+// holes of the cut board in the pcb_v22_cropped() frame
 function crop_holes() = [for (h = k_crop_holes) [h[0] - (k_crop[0][0] + k_crop[1][0]) / 2, (k_crop[0][1] + k_crop[1][1]) / 2 - h[1]]];
 
-module pcb_v22(holder = true, jst_eh = true) {   // holder = false : support 18650 non peuplé
+module pcb_v22(holder = true, jst_eh = true) {   // holder = false: 18650 holder not fitted
   color("#1f7a3a") difference() {
     cube([pcb_w, pcb_h, pcb_t]);
     for (h = k_holes) translate([h[0] - k_origin[0], pcb_h - (h[1] - k_origin[1]), -1]) cylinder(d = 2.7, h = pcb_t + 2);
   }
-  // alimentation : support 18650 et convertisseur DC/DC
+  // power: 18650 holder and DC/DC converter
   if (holder) kfp(124.72416, 99.08032) holder_18650();
   kfp(147.56966, 58.78882) {
     pins([[1.96, 1.54], [4.5, 1.54], [7.04, 1.54]], 6);
@@ -75,7 +75,7 @@ module pcb_v22(holder = true, jst_eh = true) {   // holder = false : support 186
   }
   // ATtiny84A (DIP-14)
   kfp(168.92, 70.12, 90) color("#111") translate([0.6, -16.5, 0.5]) cube([6.4, 17.8, 3.3]);
-  // bouton, condensateurs
+  // button, capacitors
   kfp(153.53016, 68.09232) {
     color("#444") translate([0.25, -5.25, 0]) cube([6, 6, 3.5]);
     color("#111") translate([3.25, -2.25, 0]) cylinder(d = 3.5, h = 4.3);
@@ -86,12 +86,12 @@ module pcb_v22(holder = true, jst_eh = true) {   // holder = false : support 186
   kfp(155.92044, 61.60008, 180) radial(4.5, 8, 2.5, "Orange");
   kfp(164.09416, 54.63032, -90) radial(4.5, 8, 2.5, "Orange");
   kfp(165.5, 64, -90) color("#c8a000") translate([-1, -1, 0]) cube([7, 2, 6]);
-  // résistances, diodes, LED
+  // resistors, diodes, LED
   for (r = [[179.96444, 75.3934, -90], [182.36444, 75.3934, -90], [162.06216, 84.60232, 90], [185.78068, 57.99836, 90], [175.47336, 55.45836, 180]])
     kfp(r[0], r[1], r[2]) axial();
   for (d = [[182.58028, 58.07456, 90], [180.01996, 50.49012, -90]]) kfp(d[0], d[1], d[2]) axial(3.8, 1.9, 7.62, "#8a1c1c");
   kfp(157.99816, 81.55932, 90) color("Red") translate([1.27, 0, 0]) cylinder(d = 1.8, h = 3);
-  // connecteurs
+  // connectors
   if (jst_eh) for (y = [83.91032, 77.11032]) kfp(199.35016, y, 180) {
     color("WhiteSmoke") translate([-2.5, -2.3, 0]) cube([17.5, 4.0, 6]);
     pins([for (i = [0 : 5]) [i * 2.5, 0]], 3);
