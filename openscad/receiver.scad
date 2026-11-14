@@ -40,6 +40,7 @@ screw_clear = 3.4;
 screw_head = [5.4, 3.1]; // cylinder head (diameter, height) measured, recessed in the plate
 screw_l = 6;       // M3x6: an M3x8 would need taller bosses, which would reach the screen
 pad_floor = 1.2;   // material under the head
+plate_rim = 4;     // band along the walls, as high as the pads, tying them into one frame (fewer islands to print)
 pocket_clr = 0.4;  // clearance around the screen in its pocket
 
 /* [Pro Micro] */
@@ -210,10 +211,23 @@ module plate() {
       // rails: the Pro Micro pins plug in, their plastic rests on top
       for (sx = [-1, 1]) translate([pm_x + sx * pm_row / 2 - rail_w / 2, pm_y + pm_pin_off - (pm_pins - 1) * pm_pitch / 2 - rail_w / 2, 0])
         cube([rail_w, (pm_pins - 1) * pm_pitch + rail_w, rail_h]);
-      // pads under the bosses: the screw head sinks into them
+      // pads under the bosses (the screw head sinks into them), each filled out to its corner,
+      // all tied together by a band along the walls: one frame instead of four islands
       intersection() {
-        for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = pad_d, h = pad_h);
-        translate([wall + plate_clr, wall + plate_clr, 0]) cube([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr), pad_h]);
+        union() {
+          for (p = bosses) {
+            c = [p[0] < box_w / 2 ? 0 : box_w, p[1] < box_d / 2 ? 0 : box_d];
+            hull() {
+              translate([p[0], p[1], 0]) cylinder(d = pad_d, h = pad_h);
+              translate([min(c[0], p[0]), min(c[1], p[1]), 0]) cube([abs(p[0] - c[0]), abs(p[1] - c[1]), pad_h]);
+            }
+          }
+          difference() {
+            cube([box_w, box_d, pad_h]);
+            translate([wall + plate_clr + plate_rim, wall + plate_clr + plate_rim, -1]) cube([box_w - 2 * (wall + plate_clr + plate_rim), box_d - 2 * (wall + plate_clr + plate_rim), pad_h + 2]);
+          }
+        }
+        translate([wall + plate_clr, wall + plate_clr, 0]) linear_extrude(pad_h) offset(r = 0.5) offset(delta = -0.5) square([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr)]);
       }
       // RXB6 supports: the shield rests on them, an ergot beyond each end of the shield (+ a drop of glue)
       // left: in the crystal-free band (front of the board)
