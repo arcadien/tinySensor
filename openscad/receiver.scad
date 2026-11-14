@@ -19,7 +19,7 @@
 // Frame: X width (left -> right), Y depth (face Y = 0 -> rear), Z up, top of the plate at Z = 0.
 
 /* [Render] */
-part = "assembly"; // [assembly, open, cutaway, shell, plate]
+part = "open"; // [assembly, open, cutaway, shell, plate]
 
 /* [Shell] */
 box_w = 48;        // width: the screen (38 mm) + walls and clearance
@@ -124,6 +124,7 @@ pm_y1 = box_d - usb_skin - usb_over;              // rear edge of the board: soc
 pm_y = pm_y1 - pm_l / 2;
 pm_z = rail_h + pm_spacer;                        // underside of the board
 usb_port_z = pm_z + pm_t + usb_port[1] / 2;
+oled_back = oled_recess + oled_t + oled_glass + 3;  // depth behind the face kept free for the OLED and its wires
 win_drop = win_bevel * tan(face_tilt);            // bottom window edge horizontal (world): prints as a flat bridge, opens outwards like the others
 rx_z = pm_z + pm_t + pm_comp + rx_gap;            // underside of the RXB6 shield
 rx_bz = rx_z + rx_sh[2];                          // component face of the RXB6 board
@@ -133,6 +134,13 @@ sup_r = [pm_x + pm_w / 2 + 0.3, sh_x1 + 0.3 + ergot[0]];   // right support (X)
 
 // face frame: origin at the bottom of the outer face, Y along the slope, Z outwards
 module face_xf() { translate([0, 0, front_h]) rotate([face_a, 0, 0]) children(); }
+
+// square block from the inner corner of the walls (0.5 into them) to boss_d / 2 beyond the boss axis
+module boss_block(p, z, h) {
+  c = [p[0] < box_w / 2 ? wall - 0.5 : box_w - wall + 0.5, p[1] < box_d / 2 ? wall - 0.5 : box_d - wall + 0.5];
+  e = [p[0] < box_w / 2 ? p[0] + boss_d / 2 : p[0] - boss_d / 2, p[1] < box_d / 2 ? p[1] + boss_d / 2 : p[1] - boss_d / 2];
+  translate([min(c[0], e[0]), min(c[1], e[1]), z]) cube([abs(e[0] - c[0]), abs(e[1] - c[1]), h]);
+}
 
 // ---------- shell ----------
 module body(off = 0) {   // off: inset (inside); every edge rounded (convex profile: fast minkowski)
@@ -153,20 +161,20 @@ module shell() {
         union() { body(wall); translate([wall, wall, -plate_t - 1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + plate_t + 1]); }
       }
       // screw bosses
-      for (p = bosses) {   // resting on the plate pad, solid up to both walls of its corner (no free-standing boss)
-        c = [p[0] < box_w / 2 ? wall - 0.5 : box_w - wall + 0.5, p[1] < box_d / 2 ? wall - 0.5 : box_d - wall + 0.5];
-        hull() {
-          translate([p[0], p[1], pad_h]) cylinder(d = boss_d, h = boss_h - pad_h);
-          translate([min(c[0], p[0]), min(c[1], p[1]), pad_h]) cube([abs(p[0] - c[0]), abs(p[1] - c[1]), boss_h - pad_h]);
-        }
+      for (p = bosses) boss_block(p, pad_h, boss_h - pad_h);   // resting on the plate pad, a solid square block filling its corner
+      // front bosses (under the screen): solid up to the face, except a keep-out behind the OLED and its wires
+      // (from 2 mm below the board edge, oled_back deep): no air pocket under the screen, no gusset needed
+      for (p = bosses) if (p[1] < box_d / 2) difference() {
+        intersection() { body(); boss_block(p, pad_h, box_h); }
+        face_xf() translate([-100, face_len / 2 - oled_w / 2 - 2, -oled_back]) cube([300, 100, oled_back + 1]);
       }
       // blending cones: each boss rises to its wall corner at 45°, no overhang when printing (shell upside down)
-      for (p = bosses) {
+      for (p = bosses) if (p[1] > box_d / 2) {   // rear bosses only: the front ones rise to the face plane
         c = [p[0] < box_w / 2 ? wall : box_w - wall, p[1] < box_d / 2 ? wall : box_d - wall];   // inner corner
         intersection() {
           body();
           hull() {
-            translate([p[0], p[1], boss_h - eps]) cylinder(d = boss_d, h = eps);
+            boss_block(p, boss_h - eps, eps);
             translate([c[0] - (c[0] == wall ? wall : 0.5), c[1] - (c[1] == wall ? wall : 0.5), boss_h + norm([p[0] - c[0], p[1] - c[1]]) + boss_d / 2])
               cube([wall + 0.5, wall + 0.5, eps]);
           }
@@ -215,12 +223,10 @@ module plate() {
       // all tied together by a band along the walls: one frame instead of four islands
       intersection() {
         union() {
-          for (p = bosses) {
+          for (p = bosses) {   // square pad from the corner to pad_d / 2 beyond the screw axis
             c = [p[0] < box_w / 2 ? 0 : box_w, p[1] < box_d / 2 ? 0 : box_d];
-            hull() {
-              translate([p[0], p[1], 0]) cylinder(d = pad_d, h = pad_h);
-              translate([min(c[0], p[0]), min(c[1], p[1]), 0]) cube([abs(p[0] - c[0]), abs(p[1] - c[1]), pad_h]);
-            }
+            e = [p[0] < box_w / 2 ? p[0] + pad_d / 2 : p[0] - pad_d / 2, p[1] < box_d / 2 ? p[1] + pad_d / 2 : p[1] - pad_d / 2];
+            translate([min(c[0], e[0]), min(c[1], e[1]), 0]) cube([abs(e[0] - c[0]), abs(e[1] - c[1]), pad_h]);
           }
           difference() {
             cube([box_w, box_d, pad_h]);
