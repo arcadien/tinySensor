@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Faisceau accu du champignon TinySensor -> faisceau_champignon.pdf (A4 portrait, 300 dpi).
+"""TinySensor mushroom cell harness -> faisceau_champignon.pdf (A4 portrait, 300 dpi).
 
-Usage : python3 harness.py [sortie.pdf]
-Dépendance : Pillow seulement. Police : DejaVu Sans (fc-list | grep DejaVuSans).
-Les données sont dans WIRES (une ligne par fil) : modifier là, puis relancer.
+Usage: python3 harness.py [output.pdf]
+Dependency: Pillow only. Font: DejaVu Sans (fc-list | grep DejaVuSans).
+The data is in WIRES (one line per wire): edit it there, then rerun.
+The printed texts (WIRES, NOTES, labels) are in French: the plan is printed for the bench.
 """
 import sys
 from pathlib import Path
@@ -12,9 +13,9 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = Path(__file__).resolve().parent
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "faisceau_champignon.pdf"
 
-# --- Données -----------------------------------------------------------------------------
-# id, couleur, signal, de (repère schéma, texte), extrémité de départ, vers (repère, texte),
-# extrémité d'arrivée, longueur (mm), section
+# --- Data --------------------------------------------------------------------------------
+# id, colour, signal, from (schematic mark, text), start end type, to (mark, text),
+# arrival end type, length (mm), gauge
 WIRES = [
     ("W1", "rouge", "B+",    "bat+",  "languette « + » du berceau (haut)", "soudé",
      "jstF1", "JST-XH 2p, broche 1", "JST-XH F (côté berceau)", 40, "22–24 AWG"),
@@ -51,10 +52,10 @@ NOTES = [
     "Longueurs : calculées sur le modèle, chapeau soulevé de 50 mm, avec 15 à 25 mm de marge ; à ajuster au montage.",
 ]
 
-# --- Mise en page ------------------------------------------------------------------------
+# --- Layout ------------------------------------------------------------------------------
 DPI = 300
-W, H = 2480, 3508          # A4 à 300 dpi
-M = 150                    # marge
+W, H = 2480, 3508          # A4 at 300 dpi
+M = 150                    # margin
 FONT_DIR = next((d for d in (Path("/usr/share/fonts/truetype/dejavu"), Path("C:/Windows/Fonts"))
                  if (d / "DejaVuSans.ttf").exists()), Path("/usr/share/fonts/truetype/dejavu"))
 
@@ -64,7 +65,7 @@ def font(size, bold=False):
 
 
 F_TITLE, F_H2, F_TXT, F_SMALL, F_BOLD = font(64, True), font(44, True), font(32), font(30), font(32, True)
-# 30 px à 300 dpi = 7,2 pt : plus petite police utilisée
+# 30 px at 300 dpi = 7.2 pt: smallest font used
 
 
 def wrap(d, text, f, width):
@@ -105,8 +106,8 @@ class Doc:
 def diagram(doc):
     d = doc.d
     y0 = doc.y
-    P1, P2 = y0 + 360, y0 + 650           # lignes des fils + et −
-    # zones pied / chapeau
+    P1, P2 = y0 + 360, y0 + 650           # lines of the + and − wires
+    # stem / cap areas
     xs = 1080
     d.rectangle([M, y0, xs - 20, y0 + 1000], outline=(120, 120, 120), width=3)
     d.rectangle([xs + 20, y0, W - M, y0 + 1000], outline=(120, 120, 120), width=3)
@@ -114,7 +115,7 @@ def diagram(doc):
     d.text((xs + 40, y0 + 15), "CHAPEAU (au-dessus du disque à lamelles)", font=F_BOLD, fill=(90, 90, 90))
 
     pts = {}
-    # berceau 18650 (vertical, + en haut)
+    # 18650 cradle (upright, + at the top)
     cx0, cx1, cy0, cy1 = 230, 390, P1 - 90, P2 + 150
     d.rounded_rectangle([cx0, cy0, cx1, cy1], radius=30, outline="black", width=5, fill=(235, 235, 225))
     d.text(((cx0 + cx1) / 2, (cy0 + cy1) / 2), "18650", font=F_BOLD, fill="black", anchor="mm")
@@ -125,7 +126,7 @@ def diagram(doc):
     d.text(((cx0 + cx1) / 2, cy0 - 35), "(languettes)", font=F_SMALL, fill="black", anchor="mb")
     pts["bat+"], pts["bat-"] = (cx1 + 40, P1), (cx1 + 40, P2 + 60)
 
-    # paire JST-XH 2 broches : F (côté berceau) | M (côté chapeau)
+    # 2-pin JST-XH pair: F (cradle side) | M (cap side)
     jx = 880
     d.rectangle([jx - 70, P1 - 50, jx, P2 + 50], outline="black", width=4, fill=(250, 250, 250))
     d.rectangle([jx, P1 - 50, jx + 70, P2 + 50], outline="black", width=4, fill=(220, 220, 220))
@@ -150,7 +151,7 @@ def diagram(doc):
         d.text((x + (22 if anc == "lm" else -22), y), name, font=F_SMALL, fill="white", anchor=anc)
         pts[key] = (x, y)
 
-    # carte v2.2 et bornier J13
+    # v2.2 board and J13 terminal block
     bx0, bx1 = 2020, W - M - 30
     d.rectangle([bx0, P1 - 120, bx1, P2 + 160], outline="black", width=4, fill=(30, 110, 60))
     d.text(((bx0 + bx1) / 2, P2 + 140), "carte v2.2", font=F_BOLD, fill="white", anchor="mb")
@@ -164,14 +165,14 @@ def diagram(doc):
     d.text(((bx0 + bx1) / 2, P1 - 70), "J13 RAW IN", font=F_BOLD, fill="white", anchor="mb")
     d.text(((bx0 + bx1) / 2, P2 + 175), "J13 : bornier à vis 5,08", font=F_SMALL, fill="black", anchor="mt")
 
-    # fils + étiquettes
+    # wires + labels
     for wid, col, sig, a, _, a_end, b, _, b_end, length, awg in WIRES:
         (xa, ya), (xb, yb) = pts[a], pts[b]
         rgb = COLORS[col]
         if ya == yb:
             d.line([xa, ya, xb, yb], fill=rgb, width=10)
             xm, ym = (xa + xb) / 2, ya
-        else:                                   # W2 : horizontal en bas, puis remonte à la broche
+        else:                                   # W2: horizontal at the bottom, then up to the pin
             xk = xb - 60
             d.line([(xa, ya), (xk, ya), (xk, yb), (xb, yb)], fill=rgb, width=10, joint="curve")
             xm, ym = (xa + xk) / 2, ya
@@ -246,7 +247,7 @@ def main():
     notes(doc)
     doc.pages[0].save(OUT, "PDF", resolution=DPI, save_all=True, append_images=doc.pages[1:],
                       title="Faisceau accu — TinySensor champignon",
-                      creationDate=None, modDate=None)   # pas de date : sortie reproductible
+                      creationDate=None, modDate=None)   # no date: reproducible output
     print("%s : %d page(s)" % (OUT, len(doc.pages)))
 
 

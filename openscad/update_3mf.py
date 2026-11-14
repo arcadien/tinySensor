@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Projets Orca de print/ (un par modèle) mis à jour depuis les .scad, sans toucher aux plaques.
+"""Orca projects of print/ (one per model) updated from the .scad files, without touching the plates.
 
-Usage : python3 update_3mf.py [projet.3mf ...]   (par défaut : tous les projets de PROJECTS)
+Usage: python3 update_3mf.py [project.3mf ...]   (default: every project in PROJECTS)
 
-Projet existant : chaque objet est reconnu par son nom (parts) ; son maillage est réexporté par OpenSCAD et
-remplacé sur place, recentré comme le fait Orca, en gardant sa position et son orientation (le bas reste sur
-le plateau). Les réglages Orca sont gardés ; ceux de settings ne sont posés que s'ils manquent.
-Projet absent : il est créé avec une plaque par entrée de plates, réglages d'imprimante et de filament repris
-de TEMPLATE (le projet du champignon, réglé pour l'Ender 3).
+Existing project: each object is matched by its name (parts); its mesh is re-exported by OpenSCAD and
+replaced in place, re-centred the way Orca does, keeping its position and orientation (the bottom stays on
+the bed). Orca settings are kept; the ones in settings are only set when missing.
+Missing project: it is created with one plate per entry of plates, printer and filament settings taken
+from TEMPLATE (the mushroom project, set up for the Ender 3).
 """
 import math
 import re
@@ -22,7 +22,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-if not sys.flags.utf8_mode:   # Windows : read_text/write_text en cp1252 sinon (noms accentués)
+if not sys.flags.utf8_mode:   # Windows: read_text/write_text in cp1252 otherwise (accented names)
     sys.exit(subprocess.call([sys.executable, "-X", "utf8", *sys.argv]))
 
 HERE = Path(__file__).resolve().parent
@@ -30,11 +30,11 @@ PRINT = HERE / "print"
 OPENSCAD = (os.environ.get("OPENSCAD") or shutil.which("openscad")
             or sorted(Path.home().glob("bin/OpenSCAD-*.AppImage"))[-1])
 TEMPLATE = PRINT / "mushroom.3mf"
-BED = 220      # plateau de l'Ender 3 ; Orca espace ses plaques de 1,2 plateau
-GAP = 10       # entre deux pièces d'une même plaque
+BED = 220      # Ender 3 bed; Orca spaces its plates by 1.2 beds
+GAP = 10       # between two parts on the same plate
 
-# parts : nom dans Orca -> arguments OpenSCAD (pièce dans son sens d'impression)
-# plates : [(nom de plaque, [pièces, une entrée par exemplaire])], pour créer le projet
+# parts: name in Orca -> OpenSCAD arguments (part in its print orientation)
+# plates: [(plate name, [parts, one entry per copy])], to create the project
 PROJECTS = {
     "mushroom.3mf": {
         "scad": "mushroom.scad",
@@ -45,36 +45,36 @@ PROJECTS = {
             "Pois Ø6": ['part="dot"', "dot_d=6"], "Pois Ø8": ['part="dot"', "dot_d=8"],
             "Pois Ø10": ['part="dot"', "dot_d=10"],
         },
-        # chapeau très haut : bord de 6 mm + brim ; sans support (les faces des consoles passent en pont en PETG,
-        # vérifié à l'impression du 2026-11)
+        # very tall cap: 6 mm edge + brim; no support (the corbel faces bridge in PETG,
+        # checked on the 2026-11 print)
         "settings": {"Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
                      "Pied": {"wall_loops": "6"}},
-        "add": {"Bouchon": ("Divers", (300.0, -154.0))},   # ajouté s'il manque, à gauche du plancher et du berceau
-        # objets d'avant le renommage (« OpenSCAD Model »), reconnus par leur fichier d'origine
+        "add": {"Bouchon": ("Divers", (300.0, -154.0))},   # added if missing, left of the deck and the cradle
+        # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
                       "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",
                       "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon", "mushroom_dot6": "Pois Ø6",
                       "mushroom_dot8": "Pois Ø8", "mushroom_dot10": "Pois Ø10"},
     },
-    "box.3mf": {   # boîtier mural : n'imprimer qu'un des deux fonds
+    "box.3mf": {   # wall box: print only one of the two bases
         "scad": "tinysensor_box.scad",
         "parts": {"Fond extérieur": ['part="base"', 'usage="ext"'], "Fond intérieur": ['part="base"', 'usage="int"'],
                   "Couvercle": ['part="lid"']},
         "plates": [("Fond extérieur", ["Fond extérieur"]), ("Fond intérieur", ["Fond intérieur"]),
                    ("Couvercle", ["Couvercle"])],
     },
-    "shield.3mf": {   # abri de sonde
+    "shield.3mf": {   # radiation shield
         "scad": "sensor_shield.scad",
         "parts": {"Chapeau": ['part="cap"'], "Assiette": ['part="plate"'], "Fond": ['part="base"'],
                   "Clip": ['part="clip"']},
         "plates": [("Abri", ["Chapeau", "Fond", "Clip"]), ("Assiettes", ["Assiette"] * 4)],
     },
-    "receiver.3mf": {   # pupitre du récepteur tinyDecoders
+    "receiver.3mf": {   # tinyDecoders receiver desk enclosure
         "scad": "receiver.scad",
         "parts": {"Coque": ['part="shell"'], "Fond": ['part="plate"']},
         "plates": [("Pupitre", ["Coque", "Fond"])],
     },
-    "stand.3mf": {   # pied de table
+    "stand.3mf": {   # table stand
         "scad": "stand.scad",
         "parts": {"Mât": ['part="mast"'], "Pied": ['part="foot"']},
         "plates": [("Mât", ["Mât"]), ("Pied", ["Pied"])],
@@ -99,7 +99,7 @@ def export(scad, args, out):
     v = [tuple(map(float, m)) for m in re.findall(r'<vertex x="([^"]+)" y="([^"]+)" z="([^"]+)"', t)]
     f = re.findall(r'<triangle v1="(\d+)" v2="(\d+)" v3="(\d+)"', t)
     lo, hi = [min(c) for c in zip(*v)], [max(c) for c in zip(*v)]
-    c = [(a + b) / 2 for a, b in zip(lo, hi)]   # Orca centre le maillage sur sa boîte
+    c = [(a + b) / 2 for a, b in zip(lo, hi)]   # Orca centres the mesh on its bounding box
     mesh = "<mesh>\n    <vertices>\n" + "".join(
         f'     <vertex x="{x - c[0]:.6g}" y="{y - c[1]:.6g}" z="{z - c[2]:.6g}"/>\n' for x, y, z in v) + \
         "    </vertices>\n    <triangles>\n" + "".join(
@@ -111,14 +111,14 @@ def meta(el, key, value=None):
     m = el.find(f"metadata[@key='{key}']")
     if value is None:
         return None if m is None else m.get("value")
-    if m is None:   # avec les autres métadonnées, avant les <part>, <model_instance>
+    if m is None:   # with the other metadata, before the <part>, <model_instance>
         m = ET.Element("metadata", key=key)
         el.insert(len(el.findall("metadata")), m)
     m.set("value", value)
 
 
 def skeleton(src, plate_names):
-    """Projet vide : réglages d'imprimante et de filament du TEMPLATE, une plaque par nom."""
+    """Empty project: printer and filament settings of the TEMPLATE, one plate per name."""
     tpl = zipfile.ZipFile(TEMPLATE)
     for n in ("[Content_Types].xml", "Metadata/project_settings.config", "Metadata/slice_info.config"):
         (src / n).parent.mkdir(parents=True, exist_ok=True)
@@ -150,7 +150,7 @@ def plate_origin(k, n):
 
 
 def layout(sizes):
-    """Pièces en rangées, bloc centré sur la plaque ; centres [(x, y)] relatifs au coin de la plaque."""
+    """Parts in rows, block centred on the plate; centres [(x, y)] relative to the plate corner."""
     rows, row, w = [], [], 0
     for s in sizes:
         if row and w + GAP + s[0] > BED - 2 * GAP:
@@ -163,7 +163,7 @@ def layout(sizes):
     total = sum(heights) + GAP * (len(rows) - 1)
     width = max(sum(s[0] for s in r) + GAP * (len(r) - 1) for r in rows)
     if total > BED or width > BED:
-        sys.exit(f"Pièces trop grandes pour une plaque de {BED} mm : {sizes}")
+        sys.exit(f"Parts too large for a {BED} mm plate: {sizes}")
     out, y = [], (BED + total) / 2
     for r, h in zip(rows, heights):
         x = (BED - (sum(s[0] for s in r) + GAP * (len(r) - 1))) / 2
@@ -189,12 +189,12 @@ def update(path, spec):
     model = model_path.read_text()
     parts = spec["parts"]
 
-    # maillages : un export par pièce, en parallèle
+    # meshes: one export per part, in parallel
     with ThreadPoolExecutor() as ex:
         new = dict(zip(parts, ex.map(lambda ia: export(spec["scad"], ia[1], work / f"part{ia[0]}.3mf"),
                                      enumerate(parts.values()))))
 
-    # identification et renommage
+    # matching and renaming
     objs = {}
     for o in root.findall("object"):
         part = o.find("part")
@@ -254,7 +254,7 @@ def update(path, spec):
             add_object(name, plate_name, xy)
     missing = set(parts) - {nm for nm, _, _ in objs.values()}
     if missing:
-        print(f"{path.name} : absent du projet, à ajouter dans Orca : {', '.join(sorted(missing))}")
+        print(f"{path.name}: missing from the project, add in Orca: {', '.join(sorted(missing))}")
 
     for name, o, _ in objs.values():
         for k, v in spec.get("settings", {}).get(name, {}).items():
@@ -268,15 +268,15 @@ def update(path, spec):
         t = f.read_text()
         old = re.search(rf'(<object id="{mid}"[^>]*>\s*)(<mesh>.*?</mesh>|<mesh/>)', t, re.S)
         lo_old = min((float(z) for z in re.findall(r'z="([^"]+)"', old.group(2))), default=None)
-        if (f, mid) not in done:   # des exemplaires peuvent partager un maillage (pois du champignon)
+        if (f, mid) not in done:   # copies may share a mesh (mushroom dots)
             f.write_text(t[:old.start(2)] + new[name]["mesh"] + t[old.end(2):])
             done.add((f, mid))
-        # le bas de la pièce reste sur le plateau ; rotations autour de Z seulement
+        # the bottom of the part stays on the bed; rotations about Z only
         item = re.search(rf'(<item objectid="{oid}" [^>]*transform=")([^"]+)(")', model)
         m = [float(a) for a in item.group(2).split()]
         if max(abs(m[2]), abs(m[5]), abs(m[6]), abs(m[7])) > 1e-6 or abs(m[8] - 1) > 1e-6:
-            sys.exit(f"{path.name} : {name} basculé dans Orca, mise à jour refusée")
-        m[11] = -new[name]["lo_z"] if lo_old is None else m[11] + lo_old - new[name]["lo_z"]   # objet neuf : posé
+            sys.exit(f"{path.name}: {name} tilted in Orca, update refused")
+        m[11] = -new[name]["lo_z"] if lo_old is None else m[11] + lo_old - new[name]["lo_z"]   # new object: placed on the bed
         model = model[:item.start(2)] + " ".join(f"{a:.9g}" for a in m) + model[item.end(2):]
         for k, v in zip("xyz", new[name]["center"]):
             meta(part, "source_offset_" + k, repr(v))
@@ -285,7 +285,7 @@ def update(path, spec):
     cfg.write(cfg_path, encoding="UTF-8", xml_declaration=True)
     out = work / "out.3mf"
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-        for p in sorted(src.rglob("*"), key=lambda p: p.name != "[Content_Types].xml"):   # en tête de l'archive
+        for p in sorted(src.rglob("*"), key=lambda p: p.name != "[Content_Types].xml"):   # first in the archive
             if p.is_file():
                 z.write(p, p.relative_to(src).as_posix())
     if not created:
@@ -295,8 +295,8 @@ def update(path, spec):
     counts = {}
     for nm, _, _ in objs.values():
         counts[nm] = counts.get(nm, 0) + 1
-    print(f"{path.name} : {'créé' if created else 'mis à jour'}, {len(objs)} objets {counts}"
-          + ("" if created else f" ; ancien fichier : {path.name}.bak"))
+    print(f"{path.name}: {'created' if created else 'updated'}, {len(objs)} objects {counts}"
+          + ("" if created else f"; previous file: {path.name}.bak"))
 
 
 targets = [Path(a) for a in sys.argv[1:]] or [PRINT / n for n in PROJECTS]
