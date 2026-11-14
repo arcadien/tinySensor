@@ -1,6 +1,6 @@
-# Revue du PCB — tinySensor v2.2, 2026-11-06
+# PCB review — tinySensor v2.2, 2026-11-06
 
-Rapport brut de l'agent de revue (KiCad 10.0.7). Les chemins `scratchpad/` renvoient à des fichiers temporaires ; les rapports utiles sont copiés à côté.
+Raw report from the review agent (KiCad 10.0.7). The `scratchpad/` paths point to temporary files; the useful reports are copied alongside.
 
 ### 1. Summary
 
@@ -163,6 +163,6 @@ All under ``:
   - `F.Cu-1.png`, `B.Cu-1.png`, `F.Silkscreen-1.png`
   - `B.Cu_i2c_zoom-1.png` (shows the isolated island)
   - `.svg` and `.pdf` versions of the same layers
-- Scripts: `(outils non conservés) ` (`sx.py`, `fps.py`, `trk.py`, `gr.py`, `sch.py`, `crop.py`)
+- Scripts: (tools not kept) (`sx.py`, `fps.py`, `trk.py`, `gr.py`, `sch.py`, `crop.py`)
 
 **Not checked:** I did not open the GUI or export Gerbers or a drill file. I did not look at the 3D clash between real module models and the headers. The radio module's dimensions and the J13 wire-entry side are inferred, not verified.
