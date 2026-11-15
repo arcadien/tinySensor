@@ -40,7 +40,7 @@ SENSOR_VCC is PA2: J3, J14, J5 and J7 are powered only while the firmware measur
 
 - I2C pull-ups R2/R3 4.7 kΩ and 1-Wire pull-up R6 4.7 kΩ, all to SENSOR_VCC: no resistor in the harness.
 - Battery sense: R7/R8 1 MΩ divider with C7 100 nF, PA1 reads Vbatt / 2 (firmware scaling: BACKLOG F1).
-- Q1 AO3401A: reverse-polarity protection on J13 and BT1. **Not on J10** (CR2032).
+- Q1 AO3401A: reverse-polarity protection on J13 and BT1 (P-MOSFET, drain on RAW_IN, source on +BATT, gate tied straight to GND: no gate resistor needed). **Not on J10** (CR2032).
 - R9 10 kΩ RESET pull-up, SW1 reset button, C8 100 nF at the radio.
 
 ## Off-board modules
