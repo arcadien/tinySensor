@@ -6,42 +6,55 @@
 
   <!-- ================= board ================= -->
   <rect x="340" y="80" width="320" height="560" rx="8" fill="#eef3ea" stroke="#3d6b2f" stroke-width="2"/>
-  <text x="500" y="104" text-anchor="middle" font-weight="bold" fill="#3d6b2f">tinySensor v3.0 — ATtiny84A</text>
+  <text x="500" y="104" text-anchor="middle" font-weight="bold" fill="#3d6b2f">tinySensor v3.0 PCB</text>
+  <text x="500" y="118" text-anchor="middle" font-size="10" fill="#3d6b2f">wires land on the connectors (dark headers), never on the MCU</text>
+  <!-- MCU: reached only through PCB traces -->
+  <rect x="450" y="400" width="80" height="120" rx="3" fill="#2b2b2b"/>
+  <circle cx="460" cy="410" r="3" fill="#777"/>
+  <text x="490" y="456" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">ATtiny84A</text>
+  <text x="490" y="472" text-anchor="middle" font-size="9" fill="#ccc">U1, soldered</text>
+  <text x="490" y="538" text-anchor="middle" font-size="9" fill="#3d6b2f">PB0/PA4… = MCU port</text>
+  <text x="490" y="550" text-anchor="middle" font-size="9" fill="#3d6b2f">behind each pin (PCB trace)</text>
+  <!-- connector bodies -->
+  <g fill="#333">
+    <rect x="332" y="138" width="16" height="40" rx="2"/><rect x="332" y="218" width="16" height="60" rx="2"/><rect x="332" y="328" width="16" height="40" rx="2"/>
+    <rect x="652" y="138" width="16" height="60" rx="2"/><rect x="652" y="238" width="16" height="120" rx="2"/><rect x="652" y="408" width="16" height="60" rx="2"/><rect x="652" y="518" width="16" height="60" rx="2"/>
+  </g>
 
   <!-- left connectors: pin dots at x=340 -->
   <g font-size="11" fill="#222">
-    <text x="350" y="134" font-weight="bold">J13 RAW IN</text>
-    <text x="350" y="152">1 +RAW (□)</text><text x="350" y="172">2 GND</text>
-    <text x="350" y="214" font-weight="bold">J2 3.3 V module</text>
-    <text x="350" y="232">1 +BATT</text><text x="350" y="252">2 GND</text><text x="350" y="272">3 VCC</text>
-    <text x="350" y="324" font-weight="bold">J8 EXT. INT0</text>
-    <text x="350" y="342">1 PB2</text><text x="350" y="362">2 GND</text>
-    <text x="350" y="604" font-weight="bold">J4 Digital out</text>
-    <text x="350" y="622">1 PA7 · 2 GND</text>
+    <text x="356" y="134" font-weight="bold">J13 RAW IN</text>
+    <text x="356" y="152">1 +RAW (□)</text><text x="356" y="172">2 GND</text>
+    <text x="356" y="214" font-weight="bold">J2 3.3 V module</text>
+    <text x="356" y="232">1 +BATT</text><text x="356" y="252">2 GND</text><text x="356" y="272">3 VCC</text>
+    <text x="356" y="324" font-weight="bold">J8 EXT. INT0</text>
+    <text x="356" y="342">1 <tspan fill="#999">(PB2)</tspan></text><text x="356" y="362">2 GND</text>
+    <text x="356" y="604" font-weight="bold">J4 Digital out</text>
+    <text x="356" y="622">1 <tspan fill="#999">(PA7)</tspan> · 2 GND</text>
   </g>
-  <g fill="#fff" stroke="#222" stroke-width="1.5">
-    <circle cx="340" cy="148" r="4"/><circle cx="340" cy="168" r="4"/>
-    <circle cx="340" cy="228" r="4"/><circle cx="340" cy="248" r="4"/><circle cx="340" cy="268" r="4"/>
-    <circle cx="340" cy="338" r="4"/><circle cx="340" cy="358" r="4"/>
+  <g fill="#d4a017" stroke="#222" stroke-width="1">
+    <rect x="336" y="144" width="8" height="8"/><rect x="336" y="164" width="8" height="8"/>
+    <rect x="336" y="224" width="8" height="8"/><rect x="336" y="244" width="8" height="8"/><rect x="336" y="264" width="8" height="8"/>
+    <rect x="336" y="334" width="8" height="8"/><rect x="336" y="354" width="8" height="8"/>
   </g>
 
   <!-- right connectors: pin dots at x=660 -->
   <g font-size="11" fill="#222" text-anchor="end">
-    <text x="650" y="134" font-weight="bold">J1 RADIO</text>
-    <text x="650" y="152">1 GND</text><text x="650" y="172">2 VCC</text><text x="650" y="192">3 DATA PB0</text>
-    <text x="650" y="234" font-weight="bold">J3 I2C 1 (or J14 I2C 2)</text>
-    <text x="650" y="252">1 SENSOR_VCC</text><text x="650" y="272">2 GND</text><text x="650" y="292">3 SCL PA4</text>
-    <text x="650" y="312">4 SDA PA6</text><text x="650" y="332">5 n.c.</text><text x="650" y="352">6 SDO (JP6)</text>
-    <text x="650" y="404" font-weight="bold">J5 OneWire</text>
-    <text x="650" y="422">1 SENSOR_VCC</text><text x="650" y="442">2 GND</text><text x="650" y="462">3 DQ PA3</text>
-    <text x="650" y="514" font-weight="bold">J7 Analog</text>
-    <text x="650" y="532">1 SENSOR_VCC</text><text x="650" y="552">2 AIN PA0</text><text x="650" y="572">3 GND (JP4 2-3)</text>
+    <text x="644" y="134" font-weight="bold">J1 RADIO</text>
+    <text x="644" y="152">1 GND</text><text x="644" y="172">2 VCC</text><text x="644" y="192">3 DATA <tspan fill="#999">(PB0)</tspan></text>
+    <text x="644" y="234" font-weight="bold">J3 I2C 1 (or J14 I2C 2)</text>
+    <text x="644" y="252">1 SENSOR_VCC</text><text x="644" y="272">2 GND</text><text x="644" y="292">3 SCL <tspan fill="#999">(PA4)</tspan></text>
+    <text x="644" y="312">4 SDA <tspan fill="#999">(PA6)</tspan></text><text x="644" y="332">5 n.c.</text><text x="644" y="352">6 SDO (JP6)</text>
+    <text x="644" y="404" font-weight="bold">J5 OneWire</text>
+    <text x="644" y="422">1 SENSOR_VCC</text><text x="644" y="442">2 GND</text><text x="644" y="462">3 DQ <tspan fill="#999">(PA3)</tspan></text>
+    <text x="644" y="514" font-weight="bold">J7 Analog</text>
+    <text x="644" y="532">1 SENSOR_VCC</text><text x="644" y="552">2 AIN <tspan fill="#999">(PA0)</tspan></text><text x="644" y="572">3 GND (JP4 2-3)</text>
   </g>
-  <g fill="#fff" stroke="#222" stroke-width="1.5">
-    <circle cx="660" cy="148" r="4"/><circle cx="660" cy="168" r="4"/><circle cx="660" cy="188" r="4"/>
-    <circle cx="660" cy="248" r="4"/><circle cx="660" cy="268" r="4"/><circle cx="660" cy="288" r="4"/><circle cx="660" cy="308" r="4"/><circle cx="660" cy="328" r="4"/><circle cx="660" cy="348" r="4"/>
-    <circle cx="660" cy="418" r="4"/><circle cx="660" cy="438" r="4"/><circle cx="660" cy="458" r="4"/>
-    <circle cx="660" cy="528" r="4"/><circle cx="660" cy="548" r="4"/><circle cx="660" cy="568" r="4"/>
+  <g fill="#d4a017" stroke="#222" stroke-width="1">
+    <rect x="656" y="144" width="8" height="8"/><rect x="656" y="164" width="8" height="8"/><rect x="656" y="184" width="8" height="8"/>
+    <rect x="656" y="244" width="8" height="8"/><rect x="656" y="264" width="8" height="8"/><rect x="656" y="284" width="8" height="8"/><rect x="656" y="304" width="8" height="8"/><rect x="656" y="324" width="8" height="8"/><rect x="656" y="344" width="8" height="8"/>
+    <rect x="656" y="414" width="8" height="8"/><rect x="656" y="434" width="8" height="8"/><rect x="656" y="454" width="8" height="8"/>
+    <rect x="656" y="524" width="8" height="8"/><rect x="656" y="544" width="8" height="8"/><rect x="656" y="564" width="8" height="8"/>
   </g>
 
   <!-- ================= left modules ================= -->
