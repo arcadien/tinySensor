@@ -19,7 +19,7 @@
 // Frame: X width (left -> right), Y depth (face Y = 0 -> rear), Z up, top of the plate at Z = 0.
 
 /* [Render] */
-part = "assembly"; // [assembly, open, cutaway, shell, plate]
+part = "open"; // [assembly, open, cutaway, shell, plate]
 
 /* [Shell] */
 box_w = 48;        // width: the screen (38 mm) + walls and clearance
@@ -40,6 +40,7 @@ screw_clear = 3.4;
 screw_head = [5.4, 3.1]; // cylinder head (diameter, height) measured, recessed in the plate
 screw_l = 6;       // M3x6: an M3x8 would need taller bosses, which would reach the screen
 pad_floor = 1.2;   // material under the head
+plate_rim = 4;     // band along the walls, as high as the pads, tying them into one frame (fewer islands to print)
 pocket_clr = 0.4;  // clearance around the screen in its pocket
 
 /* [Pro Micro] */
@@ -55,19 +56,20 @@ pm_pins = 12;      // pins per row
 pm_pin_off = 1.5 + (12 - 1) * 2.54 / 2 - 33.4 / 2; // offset of the rows towards the rear (+Y) / board centre: 1st pin 1.5 from the front end (measured)
 usb_port = [8, 3]; // micro-USB socket (width, measured height), on top of the board
 usb_over = 1.7;    // socket overhang beyond the board edge (measured)
-usb_plug = [12, 8]; // opening in the wall for the overmoulded plug
+usb_skin = 0.5;    // wall left in front of the socket face: the plug metal goes through, the overmould stays outside
+usb_hole = [9, 4]; // opening around the socket (usb_port + clearance)
 
 /* [Pro Micro rails] */
 rail_h = 4;        // the pin plastic rests on the rail
 rail_w = 3;
-rail_hole = 1.2;   // 0.64 square pins
+rail_hole = 1.2;   // 0.64 square pins; prints closed up: drill to 0.8 (1st print, 2026-11-14)
 rail_sink = 1.5;   // holes continued into the plate
 
 /* [RXB6] */
 rx_l = 43.1;       // measured; flipped, components underneath, DATA end on the left (low X), ANT end on the right
 rx_w = 11.7;
 rx_t = 1.0;
-rx_y = 29.5;       // front edge of the board
+rx_y = 31.3;       // front edge of the board: same place over the Pro Micro pins as v1 (29.5 + the 1.8 the board moved back)
 rx_gap = 1;        // clearance between the Pro Micro components and the shield
 rx_sh = [21, 10, 3.7]; // shield (measured)
 rx_sh_y0 = 0.8;    // front edge of the board -> shield (measured)
@@ -87,9 +89,10 @@ oled_aa = [22.38, 5.58]; // active area (maker drawing)
 oled_aa_off = 0.56; // active area offset to the right (side without pins): glass measured 6.27 from the pin-side edge, active area 2.1 from the glass edge (drawing)
 oled_aa_off_y = 0.78; // offset towards the top of the face (pins on the left): active area 2.43 from the top edge of the board (drawing)
 oled_pin_band = 3.5; // band of the pin solder joints from the left edge of the board (pins 1.5 from the edge)
-oled_pin_relief = 1; // extra recess above the solder joints
+oled_pin_relief = 0.5; // extra recess above the solder joints
+oled_recess = 1.2; // glass below the outer face (1st print: 2.8, the screen looked sunk)
 win_m = 1;         // window margin around the active area
-win_bevel = wall + 0.8; // 45° window bevel: the whole thickness above the glass
+win_bevel = oled_recess; // 45° window bevel on the sides and top: the whole thickness above the glass
 oled_pad = 3;      // face thickening around the screen pocket
 
 /* [SMA socket] */
@@ -117,10 +120,12 @@ rx_x0 = rx_x - rx_l / 2;                          // DATA end
 sh_x0 = rx_x0 + rx_sh_x0;                         // start of the shield
 sh_x1 = sh_x0 + rx_sh[0];                         // end of the shield
 pm_x = (sh_x0 + sh_x1) / 2;                       // Pro Micro centred under the shield: supports on either side
-pm_y1 = box_d - wall - 0.3 - usb_over;            // rear edge of the board, socket against the wall
+pm_y1 = box_d - usb_skin - usb_over;              // rear edge of the board: socket face usb_skin from the outer face
 pm_y = pm_y1 - pm_l / 2;
 pm_z = rail_h + pm_spacer;                        // underside of the board
 usb_port_z = pm_z + pm_t + usb_port[1] / 2;
+oled_back = oled_recess + oled_t + oled_glass + 3;  // depth behind the face kept free for the OLED and its wires
+win_drop = win_bevel * tan(face_tilt);            // bottom window edge horizontal (world): prints as a flat bridge, opens outwards like the others
 rx_z = pm_z + pm_t + pm_comp + rx_gap;            // underside of the RXB6 shield
 rx_bz = rx_z + rx_sh[2];                          // component face of the RXB6 board
 ant_z = rx_bz + rx_t + 2.5 + ant[1] / 2;          // antenna axis: 2.5 of stubs + wires under it
@@ -129,6 +134,13 @@ sup_r = [pm_x + pm_w / 2 + 0.3, sh_x1 + 0.3 + ergot[0]];   // right support (X)
 
 // face frame: origin at the bottom of the outer face, Y along the slope, Z outwards
 module face_xf() { translate([0, 0, front_h]) rotate([face_a, 0, 0]) children(); }
+
+// square block from the inner corner of the walls (0.5 into them) to boss_d / 2 beyond the boss axis
+module boss_block(p, z, h) {
+  c = [p[0] < box_w / 2 ? wall - 0.5 : box_w - wall + 0.5, p[1] < box_d / 2 ? wall - 0.5 : box_d - wall + 0.5];
+  e = [p[0] < box_w / 2 ? p[0] + boss_d / 2 : p[0] - boss_d / 2, p[1] < box_d / 2 ? p[1] + boss_d / 2 : p[1] - boss_d / 2];
+  translate([min(c[0], e[0]), min(c[1], e[1]), z]) cube([abs(e[0] - c[0]), abs(e[1] - c[1]), h]);
+}
 
 // ---------- shell ----------
 module body(off = 0) {   // off: inset (inside); every edge rounded (convex profile: fast minkowski)
@@ -149,20 +161,20 @@ module shell() {
         union() { body(wall); translate([wall, wall, -plate_t - 1]) cube([box_w - 2 * wall, box_d - 2 * wall, front_h / 2 + plate_t + 1]); }
       }
       // screw bosses
-      for (p = bosses) {   // resting on the plate pad, solid up to both walls of its corner (no free-standing boss)
-        c = [p[0] < box_w / 2 ? wall - 0.5 : box_w - wall + 0.5, p[1] < box_d / 2 ? wall - 0.5 : box_d - wall + 0.5];
-        hull() {
-          translate([p[0], p[1], pad_h]) cylinder(d = boss_d, h = boss_h - pad_h);
-          translate([min(c[0], p[0]), min(c[1], p[1]), pad_h]) cube([abs(p[0] - c[0]), abs(p[1] - c[1]), boss_h - pad_h]);
-        }
+      for (p = bosses) boss_block(p, pad_h, boss_h - pad_h);   // resting on the plate pad, a solid square block filling its corner
+      // front bosses (under the screen): solid up to the face, except a keep-out behind the OLED and its wires
+      // (from 2 mm below the board edge, oled_back deep): no air pocket under the screen, no gusset needed
+      for (p = bosses) if (p[1] < box_d / 2) difference() {
+        intersection() { body(); boss_block(p, pad_h, box_h); }
+        face_xf() translate([-100, face_len / 2 - oled_w / 2 - 2, -oled_back]) cube([300, 100, oled_back + 1]);
       }
       // blending cones: each boss rises to its wall corner at 45°, no overhang when printing (shell upside down)
-      for (p = bosses) {
+      for (p = bosses) if (p[1] > box_d / 2) {   // rear bosses only: the front ones rise to the face plane
         c = [p[0] < box_w / 2 ? wall : box_w - wall, p[1] < box_d / 2 ? wall : box_d - wall];   // inner corner
         intersection() {
           body();
           hull() {
-            translate([p[0], p[1], boss_h - eps]) cylinder(d = boss_d, h = eps);
+            boss_block(p, boss_h - eps, eps);
             translate([c[0] - (c[0] == wall ? wall : 0.5), c[1] - (c[1] == wall ? wall : 0.5), boss_h + norm([p[0] - c[0], p[1] - c[1]]) + boss_d / 2])
               cube([wall + 0.5, wall + 0.5, eps]);
           }
@@ -178,17 +190,18 @@ module shell() {
     // screen window and board pocket (glass flush under the face)
     face_xf() {
       translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 1]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, wall + 2]);
-      // 45° bevel on the sides and the top; bottom edge square: bevelled, it would become a ceiling when printing (shell upside down)
+      // 45° bevel on the sides and the top; bottom edge horizontal in the world (win_drop): a flat bridge when
+      // printing upside down, where a 45° bevel would be a near-flat sagging ceiling
       hull() {
-        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -wall - 0.8]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, eps]);
-        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m - win_bevel, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, 0]) cube([oled_aa[0] + 2 * win_m + 2 * win_bevel, oled_aa[1] + 2 * win_m + win_bevel, 1]);
+        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m, -oled_recess]) cube([oled_aa[0] + 2 * win_m, oled_aa[1] + 2 * win_m, eps]);
+        translate([box_w / 2 + oled_aa_off - oled_aa[0] / 2 - win_m - win_bevel, face_len / 2 + oled_aa_off_y - oled_aa[1] / 2 - win_m - win_drop, 0]) cube([oled_aa[0] + 2 * win_m + 2 * win_bevel, oled_aa[1] + 2 * win_m + win_bevel + win_drop, 1]);
       }
-      translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - oled_pad - 1]) cube([oled_l + 2 * pocket_clr, oled_w + 2 * pocket_clr, oled_pad + 1 - 0.8 + eps]);
-      // groove for the pin solder joints (on the left, almost as high as the glass): 1 mm deeper than the pocket
-      translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - 0.8 - eps]) cube([oled_pin_band + pocket_clr, oled_w + 2 * pocket_clr, oled_pin_relief + eps]);
+      translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -wall - oled_pad - 1]) cube([oled_l + 2 * pocket_clr, oled_w + 2 * pocket_clr, wall + oled_pad + 1 - oled_recess + eps]);
+      // groove for the pin solder joints (on the left, almost as high as the glass): deeper than the pocket
+      translate([box_w / 2 - oled_l / 2 - pocket_clr, face_len / 2 - oled_w / 2 - pocket_clr, -oled_recess - eps]) cube([oled_pin_band + pocket_clr, oled_w + 2 * pocket_clr, oled_pin_relief + eps]);
     }
-    // micro-USB socket
-    translate([pm_x - usb_plug[0] / 2, box_d - wall - 1, usb_port_z - usb_plug[1] / 2]) cube([usb_plug[0], wall + 2, usb_plug[1]]);
+    // micro-USB socket: opening fitted to the socket
+    translate([pm_x - usb_hole[0] / 2, box_d - wall - 1, usb_port_z - usb_hole[1] / 2]) cube([usb_hole[0], wall + 2, usb_hole[1]]);
     // knock-out SMA socket: hole with a flat, skin on the outside
     translate([sma_pos[0], box_d - wall - 1, sma_pos[1]]) rotate([-90, 0, 0]) intersection() {
       cylinder(d = sma_d, h = wall + 1 - sma_skin);
@@ -206,10 +219,21 @@ module plate() {
       // rails: the Pro Micro pins plug in, their plastic rests on top
       for (sx = [-1, 1]) translate([pm_x + sx * pm_row / 2 - rail_w / 2, pm_y + pm_pin_off - (pm_pins - 1) * pm_pitch / 2 - rail_w / 2, 0])
         cube([rail_w, (pm_pins - 1) * pm_pitch + rail_w, rail_h]);
-      // pads under the bosses: the screw head sinks into them
+      // pads under the bosses (the screw head sinks into them), each filled out to its corner,
+      // all tied together by a band along the walls: one frame instead of four islands
       intersection() {
-        for (p = bosses) translate([p[0], p[1], 0]) cylinder(d = pad_d, h = pad_h);
-        translate([wall + plate_clr, wall + plate_clr, 0]) cube([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr), pad_h]);
+        union() {
+          for (p = bosses) {   // square pad from the corner to pad_d / 2 beyond the screw axis
+            c = [p[0] < box_w / 2 ? 0 : box_w, p[1] < box_d / 2 ? 0 : box_d];
+            e = [p[0] < box_w / 2 ? p[0] + pad_d / 2 : p[0] - pad_d / 2, p[1] < box_d / 2 ? p[1] + pad_d / 2 : p[1] - pad_d / 2];
+            translate([min(c[0], e[0]), min(c[1], e[1]), 0]) cube([abs(e[0] - c[0]), abs(e[1] - c[1]), pad_h]);
+          }
+          difference() {
+            cube([box_w, box_d, pad_h]);
+            translate([wall + plate_clr + plate_rim, wall + plate_clr + plate_rim, -1]) cube([box_w - 2 * (wall + plate_clr + plate_rim), box_d - 2 * (wall + plate_clr + plate_rim), pad_h + 2]);
+          }
+        }
+        translate([wall + plate_clr, wall + plate_clr, 0]) linear_extrude(pad_h) offset(r = 0.5) offset(delta = -0.5) square([box_w - 2 * (wall + plate_clr), box_d - 2 * (wall + plate_clr)]);
       }
       // RXB6 supports: the shield rests on them, an ergot beyond each end of the shield (+ a drop of glue)
       // left: in the crystal-free band (front of the board)
@@ -243,7 +267,7 @@ module rxb6() {
   color("Gold") translate([rx_x + rx_l / 2 - ant[0], rx_y + rx_w / 2, ant_z]) rotate([0, 90, 0]) cylinder(d = ant[1], h = ant[0]);   // helical lying down, ANT side
 }
 module oled() {
-  face_xf() translate([box_w / 2 - oled_l / 2, face_len / 2 - oled_w / 2, -wall - oled_t - oled_glass]) {
+  face_xf() translate([box_w / 2 - oled_l / 2, face_len / 2 - oled_w / 2, -oled_recess - oled_t - oled_glass]) {
     color("#1a1a1a") cube([oled_l, oled_w, oled_t]);
     color("#203060") translate([oled_l / 2 + oled_aa_off - oled_aa[0] / 2 - 3, 0.5, oled_t]) cube([oled_aa[0] + 6, oled_w - 1, oled_glass]);
   }
@@ -261,7 +285,9 @@ assert(sup_l[1] - sh_x0 >= sup_bite && sh_x1 - sup_r[0] >= sup_bite, "RXB6 suppo
 assert(rx_bz - rx_q[2] > 0, "Crystal on the plate");
 assert(ant_z + ant[1] / 2 < box_h - wall, "Antenna against the top");
 assert(pilot_top <= boss_h, "Screw too long for the boss");
-assert(usb_port_z + usb_plug[1] / 2 < box_h - wall, "USB socket too high");
+assert(usb_port_z + usb_hole[1] / 2 < box_h - wall, "USB socket too high");
+assert(pm_y1 < box_d - wall - 0.1, "Pro Micro board into the rear wall");
+assert(oled_recess - oled_pin_relief >= 0.6, "Face skin too thin over the OLED pin joints");
 echo(str("Enclosure ", box_w, " x ", box_d, " x ", box_h + plate_t, " mm; face at ", face_a, "° from horizontal, ", round(face_len), " mm long"));
 
 if (part == "shell") translate([0, 0, box_h]) rotate([180, 0, 0]) shell();   // top on the bed
