@@ -281,7 +281,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~Doc3~~ | ~~Undocumented flashing workflow: `scripts/flash_tinySensor` (AVR Dragon ISP + fuses) is explained nowhere.~~ — ✅ **Resolved 2026-11-16** (`docs/debugging.md`, *Flashing (ISP)*: both ways, fuse values, variables) | 2 | 2 | 2 | ~~16~~ |
 | ~~Doc4~~ | ~~Oregon and Lacrosse specifications referenced in comments but not in the repo.~~ — ✅ **Resolved 2026-11-16** (external references in the `Oregon_v3.h`, `LacrosseWS7000.h` and `x10rf.h` headers: Oregon RF protocols PDF, f6fbb WS7000 page, rtl_433 decoders, original x10rf) | 2 | 2 | 2 | ~~16~~ |
 | ~~Doc5~~ | ~~Missing: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`.~~ — ⛔ **Closed 2026-11-16** (won't do: personal project) | 2 | 1 | 2 | ~~12~~ |
-| Doc6 | Hardware: no consolidated BOM. Partly addressed: `hardware/tinysensor/WIRING.md` (connectors, jumpers, module wiring), `REWORK_v2.2.md`, `VARIANTE_LM35.md`; the old `doc/` images were removed 2026-11-16. | 2 | 1 | 3 | 9 |
+| ~~Doc6~~ | ~~Hardware: no consolidated BOM.~~ — ✅ **Resolved 2026-11-16** (`hardware/tinysensor/BOM.md`, generated from the v3.0 schematic with `kicad-cli`; assembly in `WIRING.md`, `REWORK_v2.2.md`, `VARIANTE_LM35.md`) | 2 | 1 | 3 | ~~9~~ |
 | ~~Doc7~~ | ~~Broken Travis badge in the README (duplicate of D8, handled on the deps side).~~ — ✅ **Resolved 2026-06-16** (badge replaced by GitHub Actions in `README.md`) | 1 | 1 | 1 | ~~10~~ |
 
 ### 3.6 Infrastructure debt
@@ -306,8 +306,7 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
 | 1 | T3 | No test of the `BMx280` wrapper | Test | 15 |
-| 2 | I8 | No `v*` tag yet, `v1.0.0` decided | Infra | 12 |
-| 3 | Doc6 | No consolidated hardware BOM | Doc | 9 |
+| 2 | I8 | No `v*` tag yet: `v1.0.0` once the product is tested | Infra | 12 |
 
 ---
 
@@ -320,8 +319,8 @@ One item at a time, in this order (cheapest first):
 3. ~~**A6** — decide on `feat/328p_hal`.~~ ⛔ branch deleted 2026-11-16
 4. ~~**T7** — give `test_busses` a real check.~~ ✅ 2026-11-16 (TECH-HAL-006)
 5. **T3** — `BMx280` wrapper test, through the RBD workflow (requirement, test, code).
-6. **I8** — tag `v1.0.0` on `master` once this series is merged (the `release` job publishes every firmware).
-7. **Doc6** — hardware BOM from the KiCad schematic.
+6. **I8** — tag `v1.0.0` on `master` once the product is tested on real hardware (the `release` job publishes every firmware).
+7. ~~**Doc6** — hardware BOM from the KiCad schematic.~~ ✅ 2026-11-16
 
 ---
 
