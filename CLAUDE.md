@@ -45,13 +45,13 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 | `lib/x10` | `x10rf` | X10 RF | same — used for battery/analog reporting |
 | `lib/softSerial` | `SoftSerial` | UART (debug only) | via `SerialWriteBit` |
 
-`OregonV3` encodes temperature/humidity/pressure into an 11-byte `message[]` private buffer and selects the emulated device ID (THN132N / THGN123N / BTHR918) based on which fields are set at `Send()` time.
+`OregonV3` encodes temperature/humidity/pressure into an 11-byte `message[]` private buffer and selects the emulated device ID (THN132N / THGR228N / BTHR918) based on which fields are set at `Send()` time.
 
 ### Test approach
 
 Tests run on the host (`-e native_debug`, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`.
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle`.
 
 ### `src/main.cpp`
 

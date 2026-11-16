@@ -231,11 +231,11 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | FUNC-SENSOR-001 | `BMx280` | Wraps BMP280/BME280 at I2C 0x76; Begin/GetTemperature/GetPressure/GetHumidity/Shutdown interface |
 | FUNC-SENSOR-002 | `Ds18b20` | ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
 | TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
-| FUNC-SENSOR-003 | `main.cpp` (BH1750) / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
+| FUNC-SENSOR-003 | `LightSensor` / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
 | CONF-BUILD-001 | `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | At most one of USE_OREGON / USE_LACROSSE; neither → no EnvironmentEncoder (HAS_ENVIRONMENT_ENCODER unset), no environment frame; both → #error |
 | CONF-BUILD-002 | `main.cpp` / `include/config.h` | USE_BMP280/BME280 → BMx280 (BME280 adds humidity/pressure, wins if both); USE_DS18B20 → Ds18b20, overrides BMx280 temperature when combined; no temperature sensor → no environment frame; USE_BH1750 independent of temperature sensor and protocol; USE_I2C auto-derived |
-| CONF-BUILD-003 | `main.cpp` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 in main() |
+| CONF-BUILD-003 | `EnvironmentEncoder.h` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 by ConfigureEncoder() |
 | CONF-BUILD-004 | `config.h` / `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | LACROSSE_ID applied to the Lacrosse environment encoder and to the luminosity encoder; USE_LACROSSE or USE_BH1750 without LACROSSE_ID → #error |
 | CONF-BUILD-005 | `Hal` / `platformio.ini` | INTERNAL_1v1 (mV) chip-calibrated constant consumed by Hal::ComputeVccMv() |
 | CONF-BUILD-006 | `main.cpp` / `include/config.h` | SLEEP_TIME_IN_SECONDS passed to Hal::Hibernate(); default 32 s from config.h |
