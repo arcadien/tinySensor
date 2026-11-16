@@ -244,7 +244,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~A3~~ | ~~The BH1750 block in `main.cpp:155-168` instantiates a `LacrosseWS7000 lightEncoder(&hal)` inline — sensor logic mixed with transmission logic.~~ — ✅ **Resolved 2026-10-25** (`LightSensor` wrapper, light encoder created once) | 3 | 2 | 2 | ~~20~~ |
 | ~~A4~~ | ~~Web firmware builder (`web/build.php`): `shell_exec` with no input sanitisation.~~ — ✅ **Resolved 2026-06-18** (decision: remove `web/`; builder never finished, never used in production — `web/build.php` + `web/index.html` removed) | 2 | 3 | 3 | ~~15~~ |
 | ~~A5~~ | ~~100 % build-time configuration: each physical sensor = one PIO env + one rebuild.~~ — ⛔ **Closed 2026-11-16** (accepted: deliberate choice for a handful of boards) | 3 | 2 | 4 | ~~10~~ |
-| A6 | ATmega328p HAL missing despite the README mention. Branch `feat/328p_hal` (last commit 2023-09) is not merged — parallel code that will drift. | 2 | 1 | 4 | 6 |
+| ~~A6~~ | ~~ATmega328p HAL missing despite the README mention; branch `feat/328p_hal` (last commit 2023-09) not merged.~~ — ⛔ **Closed 2026-11-16** (branch deleted, tip `4a99e08`; README line removed) | 2 | 1 | 4 | ~~6~~ |
 
 ### 3.3 Test debt
 
@@ -309,7 +309,6 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 | 4 | T7 | `test_busses` has no regression value | Test | 12 |
 | 4 | I8 | No `v*` tag, the `release` job never ran | Infra | 12 |
 | 6 | Doc6 | No consolidated hardware BOM | Doc | 9 |
-| 7 | A6 | Stale `feat/328p_hal` branch, README mention | Archi | 6 |
 
 ---
 
@@ -319,7 +318,7 @@ One item at a time, in this order (cheapest first):
 
 1. ~~**Doc3** — describe `scripts/flash_tinySensor` in `docs/debugging.md`.~~ ✅ 2026-11-16
 2. ~~**Doc4** — reference the protocol documents.~~ ✅ 2026-11-16
-3. **A6** — decide on `feat/328p_hal`: delete the branch and the README line, or revive it.
+3. ~~**A6** — decide on `feat/328p_hal`.~~ ⛔ branch deleted 2026-11-16
 4. **T7** — drop `test_busses` or give it a real check.
 5. **T3** — `BMx280` wrapper test, through the RBD workflow (requirement, test, code).
 6. **I8** — decide on `v*` tags (the `release` job is ready) or close.

@@ -10,7 +10,6 @@ Large part of the code, especially wireless encoders, are unit-tested.
 
 ## Supported MCUs
 * ATTiny84a
-* ATMega328p: started on branch `feat/328p_hal`, not merged
 
 ## Supported sensors
 * I2C sensors (eg. [Bosch BME/BMP280](https://www.bosch-sensortec.com/bst/products/all_products/bme280))
