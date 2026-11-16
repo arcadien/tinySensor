@@ -196,10 +196,10 @@
 **Description:** `Hal::ComputeVccMv(known11refValue)` reads the raw ADC value of the internal 1.1 V reference via `GetRawInternal11Ref()` and returns `(uint16_t)(known11refValue * 1024.0 / rawAnalog11ref)`. The calibrated reference value is supplied as `INTERNAL_1v1` at build time.
 
 ### FUNC-BATTERY-002
-**Title:** Battery voltage derived from VCC directly or resistor-divider on PA1
+**Title:** Battery voltage is VCC, or the PA1 divider reading multiplied by the board's divider ratio
 **Status:** validated
-**Dependencies:** FUNC-BATTERY-001
-**Description:** When `BATTERY_IS_VCC` is defined, `batteryVoltageInMv` equals `vccMv`. Otherwise, `main()` reads PA1 via `hal.GetRawBattery()` and calls `hal.ConvertAnalogValueToMv(rawBattery, vccMv)` to obtain the battery voltage in millivolts from the external resistor divider.
+**Dependencies:** FUNC-BATTERY-001, CONF-BUILD-012
+**Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
 
 ### FUNC-BATTERY-003
 **Title:** Low-battery flag suppresses X10 meter transmissions and sets Oregon battery-low bit
