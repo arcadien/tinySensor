@@ -82,7 +82,9 @@ static Measurements ReadEnvironment(Hal *hal) {
   m.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
   m.SetHumidity(bmx280.GetHumidity());
+#if !defined(OREGON_NO_PRESSURE)  // CONF-BUILD-013: THGR228N frame
   m.SetPressure(bmx280.GetPressure() / 100);
+#endif
 #endif
   bmx280.Shutdown();
 #endif

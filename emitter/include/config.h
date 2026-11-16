@@ -32,6 +32,10 @@
 #define BATTERY_DIVIDER 1
 #endif
 
+#if defined(OREGON_NO_PRESSURE) && !defined(USE_OREGON)
+#error "CONF-BUILD-013: OREGON_NO_PRESSURE requires USE_OREGON"
+#endif
+
 #if !defined(USE_I2C) and \
     (defined(USE_BMP280) or defined(USE_BME280) or defined(USE_BH1750))
 #define USE_I2C
