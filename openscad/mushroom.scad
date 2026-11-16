@@ -23,7 +23,7 @@
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # ground + grass, in green; stem glued on it
 //   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # flat, flat face on the bed
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
-//   openscad -D 'part="dots"'    -o mushroom_dots.3mf    mushroom.scad   # every dot, numbered, convex face up (supports under)
+//   openscad -D 'part="dots"'    -o mushroom_dots.3mf    mushroom.scad   # every dot, numbered, standing on its edge (supports under)
 // Renders:
 //   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
@@ -82,6 +82,7 @@ dot_bag = [24, 24, 24, 32, 32, 32, 40, 40, 40, 40, 40];  // dot size draw: large
 dot_pocket = 0.8;  // the dot sinks this deep into the dome
 dot_h = 1.2;       // the dot stands this high above the dome
 dot_gap = 22;      // minimum gap between two dots
+dot_row = 20;      // printed dots: distance between two rows of standing dots, brim included
 dot_num = [5, 0.4]; // number engraved under each dot and in its pocket: text size, depth
 
 /* [Cap outline: ellipse] */
@@ -334,10 +335,11 @@ module cap() {
   }
 }
 
-// every dot in print orientation (normal up), numbered, on a 4-column grid
+// every dot in print orientation, numbered, on a 4-column grid: standing on its edge (normal horizontal), the
+// shell leans less than 35° from vertical; only the bottom of the disc needs supports
 module dots_print() {
   for (i = [0 : len(dots) - 1]) let(d = dots[i], n = cap_normal(d[0], d[1]), g = max(dot_sizes) + 6)
-    translate([(i % 4) * g, -floor(i / 4) * g, 0])
+    translate([(i % 4) * g, -floor(i / 4) * dot_row, d[2] / 2]) rotate([90, 0, 0])
       rotate([0, -acos(n[2]), 0]) rotate([0, 0, -atan2(n[1], n[0])]) translate(-cap_pt(d[0], d[1])) dot_shell(i);
 }
 
