@@ -155,6 +155,9 @@ static std::vector<unsigned char> ReferenceCycleOrders() {
   uint16_t batteryMv = vccMv;
 #else
   uint16_t batteryMv = ref.ConvertAnalogValueToMv(ref.GetRawBattery(), vccMv);
+#if defined(BATTERY_DIVIDER)
+  batteryMv *= BATTERY_DIVIDER;  // FUNC-BATTERY-002: PA1 reads battery / ratio
+#endif
 #endif
   x10.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
                ConversionTools::dec16ToHex(batteryMv));
@@ -182,7 +185,9 @@ static std::vector<unsigned char> ReferenceCycleOrders() {
   m.SetTemperature(0);  // native BMx280 stub values
 #if defined(USE_BME280)
   m.SetHumidity(0);
-  m.SetPressure(0);
+#if !defined(OREGON_NO_PRESSURE)
+  m.SetPressure(0);  // CONF-BUILD-013: without pressure -> THGR228N frame
+#endif
 #endif
   EnvironmentEncoder environment(&ref);
   ConfigureEncoder(environment);
@@ -285,6 +290,9 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
 // @req TECH-MAIN-001
 // @req CONF-BUILD-002 (BMP280: temperature only; BME280: + humidity,
 // pressure)
+// @req FUNC-BATTERY-002 (battery meter = PA1 voltage x divider ratio)
+// @req CONF-BUILD-012 (native_cycle_oregon_divider: BATTERY_DIVIDER=2)
+// @req CONF-BUILD-013 (OREGON_NO_PRESSURE: THGR228N temperature+humidity)
 void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   // Given
   CycleSpyHal spy;
