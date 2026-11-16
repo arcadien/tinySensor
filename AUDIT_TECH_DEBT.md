@@ -4,13 +4,15 @@
 
 **Auditor**: Claude (opus 4.7 model) — static review
 
-**Date**: 19 April 2026 — updated 19 June 2026 (see §1bis)
+**Date**: 19 April 2026 — updated 19 June and 16 November 2026 (see §1bis)
 
-**Scope**: whole repository at commit `aa53a83` (branch `master`) — firmware code (`src/`, `lib/`, `include/`), tests (`test/`), legacy Atmel Studio project (`TinySensor/`), tooling (`scripts/`, `shared/`), web builder (`web/`), hardware (`hardware/`), CI (`.github/workflows/`), Docker/devcontainer.
+**Scope** (initial audit; the tree has changed since, see §1bis 2026-11-16): whole repository at commit `aa53a83` (branch `master`) — firmware code (`src/`, `lib/`, `include/`), tests (`test/`), legacy Atmel Studio project (`TinySensor/`), tooling (`scripts/`, `shared/`), web builder (`web/`), hardware (`hardware/`), CI (`.github/workflows/`), Docker/devcontainer.
 
 ---
 
 ## 1. Executive summary
+
+> Initial summary of April 2026, kept as is. Every point it names is resolved; what is still open is in §4.
 
 TinySensor is a functionally mature embedded firmware project (tested radio protocols, clean HAL, native unit tests with Unity, PlatformIO port). The "core" code (`lib/oregon`, `lib/LacrosseWS7000`, `lib/x10`, HAL) is clean, well abstracted and tested. The debt is concentrated in three areas that weigh on maintainability and operational risk:
 
@@ -167,6 +169,24 @@ Impact 2026-10-25: **104 points** resolved (C6:20 + T4:16 + C9:16 + C8:16 + C12:
 Impact 2026-10-25 (b): **35 points** resolved (A2:15 + A3:20). Cumulated score: **757 points** (722 + 35).
 
 
+### 2026-11-16 — Review of the remaining items, repository layout
+
+Repository changes since the last entry (PRs #69, #70): the emitter firmware is its own PlatformIO project in `emitter/` (`src/`, `include/`, `test/`, `platformio.ini`; `lib/` stays at the root, shared with the receiver `tinyDecoders/`), the 3D models moved from `openscad/` to `enclosing/`, the old `doc/` images, `docs/analysis-2026-06-18.md`, the root `Dockerfile`, the docker scripts, `waitForUpload` and the CMake scripts were removed, and the unread `SENSOR_ID` / `SENSOR_CHANNEL` / `OREGON_MODE` flags left `platformio.ini`.
+
+Each open item was checked against the code:
+
+- **T2 — closed**: the `COVERALLS_REPO_TOKEN` secret is gone (`gh secret list` is empty).
+- **C13 (10) — closed, accepted**: `SerialGoHigh/Low` is now `SerialWriteBit`; `RadioGoHigh/Low` stays, no port to another MCU is planned.
+- **A5 (10) — closed, accepted**: build-time configuration is a deliberate choice for a handful of boards.
+- **T5 (12) — closed, won't do**: running simavr in CI is not worth it here; `SOLAR_TEST` is built only.
+- **T6 (12) — closed, partly covered**: the `tinyDecoders` native tests decode the frames of the repository encoders with a decoder modelled on RFLink (Plugin_048); no RTL_433 run.
+- **Doc2 (20) — closed, partly covered**: the README *Development* section and `CLAUDE.md` give the stack and the commands.
+- **Doc5 (12) — closed, won't do**: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md` add nothing to a personal project.
+- **I5 (20) — closed, won't do**: a matrix of Python / PlatformIO versions has no value here.
+- **Doc6** — text updated: `doc/` no longer exists.
+
+Still open, to handle one after the other: Doc3, Doc4, T3, T7, I8, Doc6, A6 (§4, §5).
+
 ---
 
 ## 2. Methodology
@@ -208,7 +228,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~C10~~ | ~~`USE_BMP280=1` declared **twice** in `env:S_03` (lines 88 and 90) — leftover copy-paste.~~ — ✅ **Resolved 2026-06-16** (subsumed by C7; the `extends` refactoring removed the duplicate) | `platformio.ini:88,90` | 2 | 1 | 1 | ~~15~~ |
 | ~~C11~~ | ~~Dead branch in `LacrosseWS7000::SetPressure`: `if (pressure < 200) pressure = 200;` is immediately overwritten by `if (pressure < 850) pressure = 850;`.~~ — ✅ **Resolved 2026-06-18** (dead branch removed) | `lib/LacrosseWS7000/LacrosseWS7000.cpp:24-25` | 1 | 2 | 1 | ~~15~~ |
 | ~~C12~~ | ~~`BITREAD` macro redefined in 4 files (`Oregon_v3.cpp`, `LacrosseWS7000.cpp`, `x10rf.cpp`, `x10rf.h`) with variants (`bitRead`, `BITREAD`).~~ — ✅ **Resolved 2026-10-25** (`lib/utils/include/bitOps.h`) | (multiple) | 2 | 1 | 2 | ~~12~~ |
-| C13 | "Leaky" HAL: methods named `RadioGoHigh/Low`, `SerialGoHigh/Low` — semantic IO driving, not a real radio bus abstraction. A port to an MCU without similarly configurable GPIO will require touching the HAL. | `lib/hal/Hal.h` | 3 | 2 | 4 | **10** |
+| ~~C13~~ | ~~"Leaky" HAL: methods named `RadioGoHigh/Low`, `SerialGoHigh/Low` — semantic IO driving, not a real radio bus abstraction.~~ — ⛔ **Closed 2026-11-16** (accepted: `SerialWriteBit` replaced the serial pair, no port planned) | `lib/hal/Hal.h` | 3 | 2 | 4 | ~~10~~ |
 | ~~C14~~ | ~~Lone TODO: `// TODO: tests for other modes`~~ — ✅ **Resolved 2026-10-25** (TODO replaced by a scope note) | `test/test_x10/x10LibTest.cpp:130` | 2 | 2 | 3 | ~~12~~ |
 | ~~C15~~ | ~~`TestHal::Delay400Us/Delay1024Us/Delay512Us` lack `override`.~~ — ✅ **Resolved 2026-06-18** (`override` added on the three methods) | `lib/hal/TestHal.h:41-44` | 2 | 1 | 1 | ~~15~~ |
 | ~~M1~~ | ~~`PRR &= ~_BV(PRTIM1/PRADC)` inverted logic in `UseLessPowerAsPossible()`: the peripherals stayed on (wasted battery power).~~ — ✅ **Resolved 2026-06-16** (found by the MAGI review, fixed to `\|=`) | `lib/hal/Attiny84aHal.cpp` | 3 | 3 | 1 | ~~30~~ |
@@ -223,20 +243,20 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~A2~~ | ~~No common `EnvironmentEncoder` interface: `main.cpp` dispatches Oregon vs Lacrosse with `#if defined(USE_OREGON)/USE_LACROSSE` repeated 4× in the same function. Adding a 3rd protocol will mean a pass through the whole `main()`.~~ — ✅ **Resolved 2026-10-25** (`EnvironmentEncoder` alias + `ApplyMeasurements()`, no virtual) | 3 | 2 | 3 | ~~15~~ |
 | ~~A3~~ | ~~The BH1750 block in `main.cpp:155-168` instantiates a `LacrosseWS7000 lightEncoder(&hal)` inline — sensor logic mixed with transmission logic.~~ — ✅ **Resolved 2026-10-25** (`LightSensor` wrapper, light encoder created once) | 3 | 2 | 2 | ~~20~~ |
 | ~~A4~~ | ~~Web firmware builder (`web/build.php`): `shell_exec` with no input sanitisation.~~ — ✅ **Resolved 2026-06-18** (decision: remove `web/`; builder never finished, never used in production — `web/build.php` + `web/index.html` removed) | 2 | 3 | 3 | ~~15~~ |
-| A5 | 100 % build-time configuration: each physical sensor = one PIO env + one rebuild. No runtime config, so no field update without manual reflashing. Acceptable architecture for a hobby / very small production run; limiting if it has to scale. | 3 | 2 | 4 | 10 |
-| A6 | ATmega328p HAL missing despite the README mention. Branch `feat/328p_hal` exists but is not merged — parallel code that will drift. | 2 | 1 | 4 | 6 |
+| ~~A5~~ | ~~100 % build-time configuration: each physical sensor = one PIO env + one rebuild.~~ — ⛔ **Closed 2026-11-16** (accepted: deliberate choice for a handful of boards) | 3 | 2 | 4 | ~~10~~ |
+| A6 | ATmega328p HAL missing despite the README mention. Branch `feat/328p_hal` (last commit 2023-09) is not merged — parallel code that will drift. | 2 | 1 | 4 | 6 |
 
 ### 3.3 Test debt
 
 | ID | Item | Impact | Risk | Effort | Priority |
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~T1~~ | ~~**The CI builds no AVR target**. The workflow only runs `pio test -e native_debug`. A refactoring can break `S_02`..`SOLAR_TEST` without warning. The "prod" project is never checked.~~ — ✅ **Resolved 2026-04-19** (two-job workflow, AVR matrix) | 5 | 4 | 2 | ~~36~~ |
-| ~~T2~~ | ~~No active coverage report. `.coveralls.yml` exists (and is compromised, see C1), but no CI step generates/uploads coverage.~~ — ⛔ **Dropped 2026-10-25** (Coveralls removed from the project) | 2 | 1 | 2 | ~~12~~ |
+| ~~T2~~ | ~~No active coverage report. `.coveralls.yml` exists (and is compromised, see C1), but no CI step generates/uploads coverage.~~ — ⛔ **Dropped 2026-10-25** (Coveralls removed from the project; secret gone, checked 2026-11-16) | 2 | 1 | 2 | ~~12~~ |
 | T3 | No test for the `BMx280` wrapper (the header exposes `GetTemperature/GetHumidity/GetPressure`, no test checks the bridges). | 3 | 2 | 3 | 15 |
 | ~~T4~~ | ~~No test for `SoftSerial` — blocked by C6 (dependency on `_delay_us`).~~ — ✅ **Resolved 2026-10-25** (`test_softSerial` suite, 6 tests) | 2 | 2 | 2 | ~~16~~ |
-| T5 | No HW-in-the-loop or simavr-based test run in CI, although `[env:SOLAR_TEST]` is configured for simavr. Infrastructure ready but unused. | 3 | 3 | 4 | 12 |
-| T6 | The Oregon/Lacrosse timing tests check a *string of orders* (`"LDH PLD"` = 1, `"HDL PHD"` = 0) through `TestHal.Orders`. Elegant, but it checks neither the real timings nor the interop with RTL_433/RFLink that the README cites as a reference. | 3 | 3 | 4 | 12 |
-| T7 | `test_busses/bussesTest.cpp` only tests an `I2CIsConfigured` boolean after `Init()` — no regression value. | 2 | 1 | 2 | 12 |
+| ~~T5~~ | ~~No HW-in-the-loop or simavr-based test run in CI, although `[env:SOLAR_TEST]` is configured for simavr.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 3 | 4 | ~~12~~ |
+| ~~T6~~ | ~~The Oregon/Lacrosse timing tests check a *string of orders* through `TestHal.Orders`; neither real timings nor interop with RTL_433/RFLink are checked.~~ — ◐ **Closed 2026-11-16, partly covered** (`tinyDecoders` native tests decode the repository encoders' frames with an RFLink-modelled decoder) | 3 | 3 | 4 | ~~12~~ |
+| T7 | `emitter/test/test_busses/bussesTest.cpp` only tests an `I2CIsConfigured` boolean after `Init()` — no regression value. | 2 | 1 | 2 | 12 |
 
 ### 3.4 Dependency debt
 
@@ -257,11 +277,11 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ID | Item | Impact | Risk | Effort | Priority |
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~Doc1~~ | ~~Semantics of the `S_02`..`S_05` environments undocumented.~~ — ✅ **Resolved 2026-06-18** (`docs/environments.md` created: PCB naming convention, `INTERNAL_1v1` calibration guide, table of physical boards and special envs, battery thresholds) | 3 | 2 | 2 | ~~20~~ |
-| Doc2 | No onboarding guide (required stack, local setup, first build). The README targets users/hardware, not contributors. | 3 | 2 | 2 | **20** |
-| Doc3 | Undocumented flashing workflow: `scripts/flash_tinySensor` + `waitForUpload` assume a specific NAS layout (`/var/services/homes/aurelien/…`). | 2 | 2 | 2 | 16 |
+| ~~Doc2~~ | ~~No onboarding guide (required stack, local setup, first build).~~ — ◐ **Closed 2026-11-16, partly covered** (README *Development* section, `CLAUDE.md` commands) | 3 | 2 | 2 | ~~20~~ |
+| Doc3 | Undocumented flashing workflow: `scripts/flash_tinySensor` (AVR Dragon ISP + fuses) is explained nowhere (`waitForUpload` removed 2026-11-16). | 2 | 2 | 2 | 16 |
 | Doc4 | Oregon and Lacrosse specifications referenced in comments (*"A copy of the document should be provided along the implementation"*) but the PDF docs are not in the repo. External link or embedded file needed. | 2 | 2 | 2 | 16 |
-| Doc5 | Missing: `CONTRIBUTING.md`, `SECURITY.md` (especially relevant given C1), `CODE_OF_CONDUCT.md`, `CHANGELOG.md`. | 2 | 1 | 2 | 12 |
-| Doc6 | Hardware: no consolidated BOM, no assembly guide in `doc/` (only 3 images: `boardv2.png`, `boardv2_copper.png`, `schematic.png`). Partly addressed 2026-11-14: `hardware/tinysensor/WIRING.md` (connectors, jumpers, module wiring). | 2 | 1 | 3 | 9 |
+| ~~Doc5~~ | ~~Missing: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`.~~ — ⛔ **Closed 2026-11-16** (won't do: personal project) | 2 | 1 | 2 | ~~12~~ |
+| Doc6 | Hardware: no consolidated BOM. Partly addressed: `hardware/tinysensor/WIRING.md` (connectors, jumpers, module wiring), `REWORK_v2.2.md`, `VARIANTE_LM35.md`; the old `doc/` images were removed 2026-11-16. | 2 | 1 | 3 | 9 |
 | ~~Doc7~~ | ~~Broken Travis badge in the README (duplicate of D8, handled on the deps side).~~ — ✅ **Resolved 2026-06-16** (badge replaced by GitHub Actions in `README.md`) | 1 | 1 | 1 | ~~10~~ |
 
 ### 3.6 Infrastructure debt
@@ -272,121 +292,40 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~I2~~ | ~~Author-specific absolute paths in `Makefile` and `scripts/flash_tinySensor`.~~ — ✅ **Resolved 2026-06-18** (`PIO ?= $(HOME)/.platformio/penv/bin/pio`, `TARGET ?= S_03` in `Makefile`; `PIO_HOME` and `PROJECT_DIR` with defaults `${HOME}/.platformio` and `$(dirname $0)/..` in the script) | 3 | 2 | 1 | ~~25~~ |
 | ~~I3~~ | ~~KiCAD backup archive committed (`tinySensorv1-2025-05-01_183922.zip`).~~ — ✅ **Resolved 2026-06-18** (audit revisited: the ZIP was not tracked by git — on disk only; `*.zip` already covered by `.gitignore`) | 2 | 2 | 1 | ~~20~~ |
 | ~~I4~~ | ~~The CI produces no artefact (downloadable `.hex` firmware).~~ — ✅ **Resolved 2026-06-16** (`release` job added on `v*` tags: downloads every artefact and publishes a GitHub Release with auto-generated notes — completes the partial resolution of 2026-04-19) | 2 | 1 | 2 | ~~12~~ |
-| I5 | Single-runner, single-python, single-env CI. No matrix to test different tooling versions. | 3 | 2 | 2 | **20** |
+| ~~I5~~ | ~~Single-runner, single-python, single-env CI. No matrix to test different tooling versions.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 2 | 2 | ~~20~~ |
 | ~~I6~~ | ~~No pre-commit or `.editorconfig`. `clang-format` is installed in the devcontainer but not applied automatically (commit `68cefb8 chore: clang-format` suggests a one-off manual pass).~~ — ✅ **Resolved 2026-10-25** (`.editorconfig`, clang-format 18.1.8 pre-commit, CI `lint` job) | 2 | 1 | 2 | ~~12~~ |
 | ~~I7~~ | ~~Minimal `.gitignore` (12 lines): does not exclude `Debug/` (hence I1), nor `*.o`, `*.d`, `*.hex` at the root.~~ — ✅ **Resolved 2026-04-19** (buggy line 1 removed, artefact patterns added, commented structure). | 2 | 2 | 1 | ~~20~~ |
-| I8 | No release / git tag visible over the last 30 commits. No versioning. | 2 | 1 | 2 | 12 |
+| I8 | No versioning: tags exist (`late_otpim`, `second_pcb_batch`, …) and one release (2026-06), but no `v*` tag, so the CI `release` job never ran. | 2 | 1 | 2 | 12 |
 
 ---
 
-## 4. Priority ranking (top 20)
+## 4. Open items (2026-11-16)
 
-> Struck-out items were handled after the initial publication (see §1bis). They stay listed to trace the effort spent.
+Every other item is resolved or closed (§1bis, §3). The April top 20 is in the git history.
 
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
-| — | ~~T1~~ | ~~CI builds no AVR target~~ ✅ | Test | ~~36~~ |
-| — | ~~D1~~ | ~~EOL PHP 7.4 Docker image~~ ✅ | Dep | ~~36~~ |
-| — | ~~C1~~ | ~~Coveralls token in clear in the repo~~ ✅ | Code | ~~35~~ |
-| — | ~~A1~~ | ~~Duplicated `TinySensor/` source tree~~ → requalified, accepted risk (score 20, see §3.2) | Archi | ~~32~~ |
-| — | ~~D2~~ | ~~Outdated GitHub Actions + EOL Python 3.9~~ ✅ | Dep | ~~30~~ |
-| — | ~~C2~~ | ~~`OREGON_DELAY_US` macro refers to a non-existent method~~ ✅ | Code | ~~30~~ |
-| — | ~~M1~~ | ~~Inverted PRR bit in `UseLessPowerAsPossible()`~~ ✅ | Code | ~~30~~ |
-| — | ~~M2~~ | ~~`SetChannel()` with no bounds check~~ ✅ | Code | ~~30~~ |
-| — | ~~D9~~ | ~~No Dependabot/Renovate~~ ✅ | Dep | ~~25~~ |
-| — | ~~I1~~ | ~~Build artefacts committed (`Debug/`)~~ ✅ | Infra | ~~25~~ |
-| — | ~~I2~~ | ~~Author absolute paths in Makefile/scripts~~ ✅ | Infra | ~~25~~ |
-| — | ~~D3~~ | ~~Deps point to unpinned personal forks~~ ✅ | Dep | ~~24~~ |
-| — | ~~D4~~ | ~~`bh1750` pinned to a branch instead of a tag/SHA~~ ✅ | Dep | ~~24~~ |
-| — | ~~C3~~ | ~~Orphan `Init()` in `Attiny84aHal.cpp`~~ ✅ | Code | ~~20~~ |
-| — | ~~C4~~ | ~~Dead code `if (int(count) != count)` in `Sum`~~ ✅ | Code | ~~20~~ |
-| 8 | C5 | `main.cpp` accesses registers without going through the HAL | Code | 20 |
-| 8 | C6 | `SoftSerial` uses `_delay_us` directly (untestable) | Code | 20 |
-| 8 | A3 | BH1750 logic mixed into `main.cpp` | Archi | 20 |
-| — | ~~D5~~ | ~~`avrdude.conf` (534 KB) committed~~ ✅ | Dep | ~~20~~ |
-| — | ~~Doc1~~ | ~~`S_0x` envs undocumented (tribal knowledge)~~ ✅ | Doc | ~~20~~ |
-| 8 | Doc2 | No onboarding guide | Doc | 20 |
-| — | ~~I3~~ | ~~KiCAD backup ZIP committed~~ → not tracked by git ✅ | Infra | ~~20~~ |
-| 8 | I5 | No CI matrix | Infra | 20 |
-| — | ~~I7~~ | ~~Minimal `.gitignore`~~ ✅ | Infra | ~~20~~ |
-| — | ~~M3~~ | ~~`message[]` global shared between instances~~ ✅ | Code | ~~16~~ |
-| — | ~~C7~~ | ~~Massive `platformio.ini` duplication~~ ✅ | Code | ~~18~~ |
-| — | ~~C10~~ | ~~`USE_BMP280=1` duplicated in `env:S_03`~~ ✅ | Code | ~~15~~ |
-| — | ~~I4~~ | ~~No release automation on tag~~ ✅ | Infra | ~~12~~ |
-| — | ~~D8~~ | ~~Dead Travis badge~~ ✅ | Dep | ~~10~~ |
+| 1 | Doc3 | `scripts/flash_tinySensor` (Dragon ISP + fuses) undocumented | Doc | 16 |
+| 1 | Doc4 | Oregon / Lacrosse specifications not referenced | Doc | 16 |
+| 3 | T3 | No test of the `BMx280` wrapper | Test | 15 |
+| 4 | T7 | `test_busses` has no regression value | Test | 12 |
+| 4 | I8 | No `v*` tag, the `release` job never ran | Infra | 12 |
+| 6 | Doc6 | No consolidated hardware BOM | Doc | 9 |
+| 7 | A6 | Stale `feat/328p_hal` branch, README mention | Archi | 6 |
 
 ---
 
-## 5. Phased remediation plan
+## 5. Remaining plan
 
-Plan sized for 1 developer at ~20 % of their time. Each phase interleaves with feature work; none blocks the others.
+One item at a time, in this order (cheapest first):
 
-### Phase 0 — Immediate security (day 0–1, < 2 h)
-
-A single, non-negotiable item: **revoke the Coveralls token** (`C1`). Revoke it on coveralls.io, remove the token from the file, move it to a GitHub Actions secret `COVERALLS_REPO_TOKEN`, and adapt the workflow. Even though the repo is public and the exposure already happened, rotation is mandatory.
-
-### Phase 1 — CI & tooling stabilisation (week 1–2, ~1 day) — **partly done 2026-04-19**
-
-Goal: no longer be able to break the production firmware without the CI showing it, and bring the tooling up to date.
-
-Actions, by value:
-
-1. ~~**T1 — Add the AVR build to the CI**. Extend `.github/workflows/main.yml` with a matrix running `pio run -e S_02 -e S_03 -e S_04 -e S_05 -e robot -e devmodule` alongside `pio test -e native_debug`. Cost: 30 min.~~ ✅ **Done 2026-04-19** (matrix over 7 envs, `fail-fast: false`).
-2. ~~**D2 — Update the Actions**: `checkout@v4`, `cache@v4`, `setup-python@v5`, Python `3.12`. Cost: 15 min.~~ ✅ **Done 2026-04-19**.
-3. ~~**I1, I7 — Clean the versioned artefacts**. Add to `.gitignore`: `Debug/`, `Release/`, `*.o`, `*.d`, `*.elf`, `*.hex` (root only), `*.lss`, `*.map`, `*.srec`, `TinySensor/Debug/`. Then `git rm -r --cached TinySensor/Debug/` and commit.~~ ✅ **Done 2026-04-19** (see §1bis; `git rm --cached` turned out a no-op, no artefact was actually tracked).
-4. **I2 — Parameterise the scripts**. Replace the absolute paths of the `Makefile` and `scripts/flash_tinySensor` with environment variables (`PIO_HOME`, `PROJECT_DIR`). Document in the README. Cost: 1 h.
-5. **D9 — Enable Dependabot** (`.github/dependabot.yml`) for `github-actions`, `docker`, `pip` (the Python used in the scripts). Cost: 10 min.
-6. **D8 + Doc7 — Remove the Travis badge**, add the GitHub Actions badge. Cost: 5 min.
-7. **I4 (remaining part) — Release automation on tag**: an `on: push: tags: ['v*']` workflow that replays the matrix and publishes the `.hex` / `.elf` as a GitHub Release. Cost: 1 h. *Moved here from phase 4 since the artefact base is now in place.*
-
-End-of-phase deliverable: green CI on **every AVR target + native** (reached), no change can silently break a production firmware any more (reached), downloadable artefacts per build (reached), and automatic tagged releases (to do).
-
-### Phase 2 — Source tree consolidation (week 3–5, ~3 days in total)
-
-Goal: a single source of truth for each file, reproducible dependencies.
-
-1. **A1 — Decision on `TinySensor/` (legacy Atmel Studio)**. Two options:
-    - (a) Remove the folder entirely. This is the recommendation: the PlatformIO project covers every use, Atmel Studio is no longer maintained (Microchip Studio 7.0 is also at end of support). Cost: 10 min + an audit of what would be lost.
-    - (b) Keep it as a separate branch or submodule, outside `master`.
-    Action: open a "remove legacy Atmel Studio tree" PR with a one-week confirmation window.
-2. **D3, D4 — Pin the PlatformIO dependencies**. Move from `url.git#branch` to `url.git#<SHA>` (or better, create `v1.0.0` tags on each fork and use `#v1.0.0`). Cost: 1 h.
-3. **D5 — Take `avrdude.conf` out** of the repo. The config comes from PlatformIO's `tool-avrdude` package; document it in the README and add it to `.gitignore`. Cost: 15 min.
-4. **I3 — Delete the KiCAD backup ZIP**. The git history is enough. Cost: 5 min.
-5. **D1 — Migrate the Dockerfile** from `php:7.4-apache` to `php:8.3-apache` (or newer). Test the build. Cost: 2 h + test.
-
-Deliverable: a single source tree, reproducible deps, up-to-date Docker image.
-
-### Phase 3 — Firmware code quality (week 6–9, ~3 days in total)
-
-Goal: remove the identified code debt, strengthen the tests.
-
-Quick wins (1 h each):
-
-1. **C2** — Fix the `OREGON_DELAY_US` macro in `TestHal.h`.
-2. **C3** — Remove the orphan free function `Init()`.
-3. **C4** — Remove the dead `if` in `OregonV3::Sum`.
-4. **C10** — Deduplicate `USE_BMP280=1` in `env:S_03`.
-5. **C11** — Remove the dead `if (pressure < 200)`.
-6. **C15** — Add `override` on every virtual method of `TestHal`.
-
-Medium refactorings (1 day each):
-
-7. **C5 + A3** — Wrap the DS18B20 and BH1750 accesses behind sensor classes (`Ds18b20Sensor`, `Bh1750Sensor`) using the HAL. Would align with the `BMx280` pattern.
-8. **C6 + T4** — Refactor `SoftSerial` so that every delay goes through the HAL (`hal->DelayBitPeriod()` or similar). Add a native `SoftSerial` test checking the `SerialGoHigh/Low` sequence for a known character.
-9. **C7 — Deduplicate `platformio.ini`**: use an `[env:base_avr]` inherited by `[env:S_02]`, etc. (native PlatformIO feature through `extends = env:base_avr`). Cost: 2 h + test.
-10. **C12** — Centralise `BITREAD` in `lib/utils/include/bitops.h` and remove the redefinitions.
-11. **T3** — Add a unit test for `BMx280` in non-AVR mode (checks that the stubs return 0 without crashing).
-12. **C8** — Document the magic numbers (comment with datasheet reference + link).
-
-### Phase 4 — Architecture & documentation (Q2/Q3, as it comes)
-
-1. **A2** — Introduce an `IEnvironmentEncoder` interface shared by `OregonV3` and `LacrosseWS7000`, injected into `main()`. Simplifies adding future protocols.
-2. **A4** — Decide on `web/`: (a) finish it (form + sanitisation) or (b) remove it and document a local builder. (b) is recommended given its state.
-3. **Doc1, Doc2** — Write `docs/environments.md` (which env for which physical board) and `docs/CONTRIBUTING.md` (stack, first build, HAL/encoder architecture).
-4. **Doc5** — Create `SECURITY.md` (reporting process) and `CHANGELOG.md` (kept up to date over the next releases).
-5. **I5 — Tooling matrix**: extend the existing matrix to several Pythons (`3.11`, `3.12`, `3.13`) and/or several PlatformIO Core versions. (The release automation part of I4 moved up to Phase 1.)
-6. **T5, T6 — Raise the test bar**: integrate `simavr` in the CI for at least one env (`SOLAR_TEST` is ready), and add an integration test that feeds the Oregon frame to the RTL_433 decoder (binary installable in CI) to validate real interop.
-7. **A5 — Assessment**: runtime config through EEPROM? Relevant only when aiming at more than 5 units in production. Do not do it before the need arises.
+1. **Doc3** — describe `scripts/flash_tinySensor` in `docs/debugging.md`: programmer, fuses it writes, `PIO_HOME` / `PROJECT_DIR`.
+2. **Doc4** — reference the protocol documents (links in the encoder headers or under `docs/`).
+3. **A6** — decide on `feat/328p_hal`: delete the branch and the README line, or revive it.
+4. **T7** — drop `test_busses` or give it a real check.
+5. **T3** — `BMx280` wrapper test, through the RBD workflow (requirement, test, code).
+6. **I8** — decide on `v*` tags (the `release` job is ready) or close.
+7. **Doc6** — hardware BOM from the KiCad schematic.
 
 ---
 
@@ -410,17 +349,18 @@ For balance, here are the project's strengths not to break during refactorings:
 
 ### 7.1 Metrics
 
-| Metric | Value |
-|---|---|
-| Lines of code (lib + src + include) | 1,543 |
-| Lines of tests | 1,835 |
-| Test/code ratio | 1.19 |
-| `.cpp`/`.h` files audited (excluding legacy) | 19 |
-| Remaining TODO/FIXME/HACK | 1 |
-| PlatformIO environments | 8 (1 native + 7 AVR) |
-| External dependencies | 5 (all personal forks) |
-| CI workflows | 1 (2 jobs: native + 7-env AVR matrix, updated 2026-04-19) |
-| Exposed secrets | 0 (C1 revoked) |
+| Metric | April 2026 | 2026-11-16 |
+|---|---|---|
+| Lines of code (`lib/` + emitter `src/` + `include/`) | 1,543 | 2,126 |
+| Lines of emitter tests | 1,835 | 3,045 |
+| Emitter test suites | 8 | 13 (+ compile-fail and variant scripts) |
+| `.cpp`/`.h` files (`lib/` + emitter) | 19 | 26 |
+| Remaining TODO/FIXME/HACK | 1 | 0 |
+| PlatformIO environments (emitter) | 8 (1 native + 7 AVR) | 13 (1 base, 5 native, 7 AVR) |
+| `tinyDecoders` receiver (code / tests) | — | 1,621 / 3,281 lines |
+| External dependencies | 5 (unpinned forks) | 5 (forks pinned to a SHA) |
+| CI | 1 workflow, native tests only | 1 workflow: lint, native tests, 7 AVR builds, receiver builds, release on `v*` |
+| Exposed secrets | 1 | 0 |
 
 ### 7.2 Items not retained (out of scope)
 
@@ -430,30 +370,6 @@ The following were seen but do not justify immediate action:
 - *Language choice* (C++ on ATtiny): suited to the memory/resource context. No debt.
 - *`float` format for the temperature* (`Oregon_v3.cpp`): acceptable given the available room; to reconsider only if flash size becomes critical.
 
-### 7.3 Useful commands for the remediation
-
-```bash
-# Phase 1 — check that the CI covers every AVR target
-pio run -e S_02 -e S_03 -e S_04 -e S_05 -e robot -e devmodule -e SOLAR_TEST
-
-# Phase 2 — purge the legacy tree (after decision)
-git rm -r TinySensor/
-git rm avrdude.conf
-git rm hardware/tinysensor/tinySensorv1-backups/
-
-# Phase 3 — deduplicate platformio.ini with extends
-# [env:base_avr]
-#   platform = atmelavr
-#   board = attiny84
-#   framework = arduino
-#   board_build.f_cpu = 1000000L
-#   board_build.mcu = attiny84a
-#   build_type = release
-# [env:S_02]
-#   extends = env:base_avr
-#   build_flags = -DUSE_OREGON -DOREGON_RCODE=0x20 …
-```
-
 ---
 
-*End of report. Author: Claude. Date: 19 April 2026. This report reflects the repository state at commit `aa53a83`. Scores are indicative and must be recalibrated to team capacity and product priorities.*
+*End of report. Author: Claude. Date: 19 April 2026, last update 16 November 2026. The initial audit reflects commit `aa53a83`; §1bis, §4, §5 and §7.1 reflect the 2026-11-16 state. Scores are indicative and must be recalibrated to team capacity and product priorities.*
