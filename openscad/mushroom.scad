@@ -34,7 +34,7 @@
 //   openscad --preview -D 'part="cradle_view"' --camera=40,20,10,55,0,30,230 --imgsize=1200,800 -o rendu_champignon_berceau.png mushroom.scad
 //   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
 //   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
-//   openscad --preview -D 'part="console"'  --camera=56,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
+//   openscad --preview -D 'part="console"'  --camera=41,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Frames: world = Z up, stem axis at X = Y = 0, Z = 0 on the table.
 // Cap (cap_xf): Z = 0 under the gill disc, axis tilted by cap_tilt towards +X.
