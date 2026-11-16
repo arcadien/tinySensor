@@ -8,6 +8,12 @@
  * Emulation of environment sensors using the Oregon v2.1 layout decoded by
  * RFLink Plugins/Plugin_048.c (couin3)
  *
+ * References:
+ *  - Oregon Scientific RF protocols (v1, v2.1, v3), frame and sensor IDs:
+ *    http://wmrx00.sourceforge.net/Arduino/OregonScientific-RF-Protocols.pdf
+ *  - rtl_433 decoder:
+ *    https://github.com/merbanan/rtl_433/blob/master/src/devices/oregon_scientific.c
+ *
  *  - Temperature:                     emulates THN132N    (id 0xEA, 0x4C)
  *  - Temperature, humidity:           emulates THGR228N   (id 0x1A, 0x2D)
  *  - Temperature, humidity, pressure: emulates BTHR918    (id 0x5A, 0x5D)
