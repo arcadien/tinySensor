@@ -48,7 +48,8 @@ PROJECTS = {
         # checked on the 2026-11 print)
         "settings": {"Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
                      "Pied": {"wall_loops": "6"},
-                     "Pois": {"enable_support": "1", "brim_type": "outer_only", "brim_width": "5"}},   # dots standing on their edge
+                     "Pois": {"enable_support": "1", "support_threshold_angle": "45",   # dots standing on their edge
+                              "brim_type": "outer_only", "brim_width": "5"}},
         # added if missing: plug left of the cradle; dots centred on their plate (3rd of 7)
         "add": {"Bouchon": ("Divers", (300.0, -154.0)), "Pois": ("White buttons", (638.0, 110.0))},
         # objects of parts removed from the model, deleted from the project
