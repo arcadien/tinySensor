@@ -131,10 +131,10 @@ ballast_wall = 2.4; // wall between the chamber and the outside of the stem
 fill_d = 15;       // filling hole in the bottom
 plug_d = 21;       // counterbore of the glued plug
 plug_t = 1.2;      // = counterbore depth (6 layers of 0.2)
-stem_r = 15;       // shaft radius at the bottom, it widens steadily up to the sleeve (collar_r)
+stem_r = 9;        // shaft radius at the bottom, it widens steadily up to the sleeve (collar_r)
 stem_amp = 0.1;    // shaft lobes (only add material: the wall around the cell never gets thinner)
 stem_twist = 1.2;  // lobe rotation along the shaft (°/mm)
-bulb_r = [13, 30];   // bulbous base (sketch): bulge, short side then long side
+bulb_r = [19, 36];   // bulbous base (sketch): bulge, short side then long side
 bulb_z = [28, 17];   // belly height: short side, long side (lopsided bulb, sagging towards the long side)
 bulb_up = [16, 26];  // upward spread of the bulb: short side, long side (shoulder)
 bulb_dn = 34;        // downward spread: rounded base, slope < 45° for printing
