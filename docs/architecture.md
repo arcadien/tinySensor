@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-16 — CONF-BUILD-014 (`mushroom` env; BATTERY_DIVIDER and OREGON_NO_PRESSURE flags; `native_cycle_oregon_divider`)_
+_Last updated: 2026-11-16 — FUNC-MAIN-001 (environment frame sent twice, separated by a silence at least one frame long)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -51,7 +51,7 @@ graph TD
 | `LightSensor` | Wrapper for BH1750 (`include/LightSensor.h`); `Read()` starts a one-shot measurement, waits 150 ms through the HAL, returns lux; stub on non-AVR | FUNC-SENSOR-003 |
 | `Measurements` | Values of one cycle (`include/Measurements.h`): temperature, humidity, pressure, luminosity, each with a "present" flag | — |
 | `EnvironmentEncoder` | Build-time alias to `OregonV3` or `LacrosseWS7000` (`include/EnvironmentEncoder.h`) + `ConfigureEncoder()` and `ApplyMeasurements()` overloads | FUNC-OREGON-012, FUNC-LACROSSE-002, FUNC-BATTERY-003 |
-| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, `hal->Init()` (TECH-HAL-006) → power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*` (except the file-scope `BMx280`); `main()` (excluded under `UNIT_TEST`) = endless `runCycle(&hal)` loop | TECH-MAIN-001, TECH-HAL-006 |
+| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, `hal->Init()` (TECH-HAL-006) → power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*` (except the file-scope `BMx280`); `main()` (excluded under `UNIT_TEST`) = endless `runCycle(&hal)` loop | TECH-MAIN-001, TECH-HAL-006, FUNC-MAIN-001 |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
@@ -79,7 +79,7 @@ Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at constru
 2. `ReadEnvironment()` fills a `Measurements` from the fitted sensors (`BMx280`, `Ds18b20`). A field is flagged present only if its sensor is fitted and read correctly (DS18B20: `0` means read error).
 3. Battery and analog X10 meters (`BATTERY_VOLTAGE_X10_ID`, `ANALOG1_X10_ID`), suppressed when the battery is low. VCC is computed once when either is enabled.
 4. Luminosity (`USE_BH1750`, battery not low): `LightSensor::Read()`, then a dedicated Lacrosse encoder sends a type-5 frame `LIGHT_FRAME_REPEAT` (2) times.
-5. Environment frame (`USE_OREGON` / `USE_LACROSSE`): `ApplyMeasurements()` loads the present fields into the encoder and returns whether to send (only when a temperature is present). Oregon also gets the battery-low flag.
+5. Environment frame (`USE_OREGON` / `USE_LACROSSE`): `ApplyMeasurements()` loads the present fields into the encoder and returns whether to send (only when a temperature is present). Oregon also gets the battery-low flag. The frame is sent twice, with the radio low between the two copies for at least one frame length: 246 ms for Oregon, 98 ms for Lacrosse (FUNC-MAIN-001).
 6. `hal->PowerOffSensors()`, `hal->Hibernate(SLEEP_TIME_IN_SECONDS)`.
 
 Design choices:
@@ -236,6 +236,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-SENSOR-001 | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
 | FUNC-SENSOR-003 | `LightSensor` / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | FUNC-ANALOG-001 | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from FUNC-BATTERY-001 |
+| FUNC-MAIN-001 | `main.cpp` | Environment frame sent twice per cycle; radio low between the copies for at least one frame length (Oregon ≥ 246 ms, Lacrosse ≥ 98 ms); X10 and luminosity frames unchanged |
 | CONF-BUILD-001 | `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | At most one of USE_OREGON / USE_LACROSSE; neither → no EnvironmentEncoder (HAS_ENVIRONMENT_ENCODER unset), no environment frame; both → #error |
 | CONF-BUILD-002 | `main.cpp` / `include/config.h` | USE_BMP280/BME280 → BMx280 (BME280 adds humidity/pressure, wins if both); USE_DS18B20 → Ds18b20, overrides BMx280 temperature when combined; no temperature sensor → no environment frame; USE_BH1750 independent of temperature sensor and protocol; USE_I2C auto-derived |
 | CONF-BUILD-003 | `EnvironmentEncoder.h` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 by ConfigureEncoder() |
