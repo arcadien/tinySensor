@@ -278,7 +278,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~Doc1~~ | ~~Semantics of the `S_02`..`S_05` environments undocumented.~~ — ✅ **Resolved 2026-06-18** (`docs/environments.md` created: PCB naming convention, `INTERNAL_1v1` calibration guide, table of physical boards and special envs, battery thresholds) | 3 | 2 | 2 | ~~20~~ |
 | ~~Doc2~~ | ~~No onboarding guide (required stack, local setup, first build).~~ — ◐ **Closed 2026-11-16, partly covered** (README *Development* section, `CLAUDE.md` commands) | 3 | 2 | 2 | ~~20~~ |
-| Doc3 | Undocumented flashing workflow: `scripts/flash_tinySensor` (AVR Dragon ISP + fuses) is explained nowhere (`waitForUpload` removed 2026-11-16). | 2 | 2 | 2 | 16 |
+| ~~Doc3~~ | ~~Undocumented flashing workflow: `scripts/flash_tinySensor` (AVR Dragon ISP + fuses) is explained nowhere.~~ — ✅ **Resolved 2026-11-16** (`docs/debugging.md`, *Flashing (ISP)*: both ways, fuse values, variables) | 2 | 2 | 2 | ~~16~~ |
 | Doc4 | Oregon and Lacrosse specifications referenced in comments (*"A copy of the document should be provided along the implementation"*) but the PDF docs are not in the repo. External link or embedded file needed. | 2 | 2 | 2 | 16 |
 | ~~Doc5~~ | ~~Missing: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`.~~ — ⛔ **Closed 2026-11-16** (won't do: personal project) | 2 | 1 | 2 | ~~12~~ |
 | Doc6 | Hardware: no consolidated BOM. Partly addressed: `hardware/tinysensor/WIRING.md` (connectors, jumpers, module wiring), `REWORK_v2.2.md`, `VARIANTE_LM35.md`; the old `doc/` images were removed 2026-11-16. | 2 | 1 | 3 | 9 |
@@ -305,7 +305,6 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
-| 1 | Doc3 | `scripts/flash_tinySensor` (Dragon ISP + fuses) undocumented | Doc | 16 |
 | 1 | Doc4 | Oregon / Lacrosse specifications not referenced | Doc | 16 |
 | 3 | T3 | No test of the `BMx280` wrapper | Test | 15 |
 | 4 | T7 | `test_busses` has no regression value | Test | 12 |
@@ -319,7 +318,7 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 
 One item at a time, in this order (cheapest first):
 
-1. **Doc3** — describe `scripts/flash_tinySensor` in `docs/debugging.md`: programmer, fuses it writes, `PIO_HOME` / `PROJECT_DIR`.
+1. ~~**Doc3** — describe `scripts/flash_tinySensor` in `docs/debugging.md`.~~ ✅ 2026-11-16
 2. **Doc4** — reference the protocol documents (links in the encoder headers or under `docs/`).
 3. **A6** — decide on `feat/328p_hal`: delete the branch and the README line, or revive it.
 4. **T7** — drop `test_busses` or give it a real check.

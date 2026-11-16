@@ -4,6 +4,17 @@ The old Atmel Studio project (`TinySensor/`) was removed. Debugging now goes thr
 
 > Status: **not validated on the bench**. Procedure to confirm on the first try.
 
+## Flashing (ISP)
+
+Two ways, both over the 6-pin ISP connector:
+
+| Command | Programmer | Writes |
+|---|---|---|
+| `pio run -d emitter -e S_02 -t upload` | AVRISP mkII (`-c avrisp2`, system `avrdude`) | flash only |
+| `scripts/flash_tinySensor S_02` | AVR Dragon (`-c dragon_isp`, PlatformIO's `tool-avrdude`) | flash + fuses |
+
+`scripts/flash_tinySensor <env>` writes `emitter/.pio/build/<env>/firmware.hex` (build it first with `pio run -d emitter -e <env>`), then sets the ATtiny84 factory fuses: lfuse `0x62` (internal 8 MHz RC, CKDIV8 → 1 MHz, matches `F_CPU = 1000000L`), hfuse `0xDF` (SPIEN on, DWEN off, brown-out detector off), efuse `0xFF`. Use it on a new chip or to restore the fuses; with debugWIRE active, ISP must be brought back first (see *DWEN fuse* below). Variables: `PIO_HOME` (default `~/.platformio`), `PROJECT_DIR` (default `emitter/`). PlatformIO installs `tool-avrdude` on the first `-t upload`, or with `pio pkg install -g -t platformio/tool-avrdude`.
+
 ## Toolchain
 
 | Item | Role |
