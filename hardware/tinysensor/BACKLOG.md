@@ -78,7 +78,7 @@ Not checked: nothing was opened in the GUI, Gerbers and the drill file were not 
 
 | ID | Sev. | Finding | Fix | Effort |
 |---|---|---|---|---|
-| F1 | Major | With the divider added by the v2.2 rework (R1), and in v3.0, PA1 only gets half the battery voltage. | Add a divider-ratio setting (for example `BATTERY_DIVIDER`) in `main.cpp`, or in `ConvertAnalogValueToMv`, through the RBD workflow. | S |
+| F1 | ✅ CONF-BUILD-012 (Major) | With the divider added by the v2.2 rework (R1), and in v3.0, PA1 only gets half the battery voltage. | Done: build flag `BATTERY_DIVIDER` (2 for this divider) multiplies the PA1 reading in `main.cpp` (FUNC-BATTERY-002). | S |
 
 ## Revision 3.0 (2026-11-06)
 
@@ -113,4 +113,4 @@ DRC with schematic parity: 0 footprint errors, 0 unconnected pads. The only rema
 - **Hygiene:** 28 footprints no longer match their library version, and the inherited (rescue) symbols are to replace.
 - **Manufacturing:** GUI review, Gerber and drill file export. Neither has been done.
 - **Schematic:** a few power symbols overlap texts (readability only).
-- **F1:** the firmware must multiply the PA1 reading by 2.
+- **F1:** closed, build with `-DBATTERY_DIVIDER=2` (CONF-BUILD-012).
