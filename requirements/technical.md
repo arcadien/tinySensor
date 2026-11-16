@@ -44,10 +44,10 @@
 ---
 
 ### TECH-HAL-006
-**Title:** Hal::Init initialises the I2C bus when USE_I2C is defined, and sets I2CIsConfigured in TestHal_
+**Title:** runCycle calls Hal::Init (I2C bus set-up) once, as its first HAL call, before sensor power-on
 **Status:** validated
-**Dependencies:** —
-**Description:** `Attiny84aHal::Init()` calls `TinyI2C.init()` when compiled with `USE_I2C`; it is a no-op otherwise. `TestHal_::Init()` sets `I2CIsConfigured = true`. The `test_busses` suite verifies that `Init()` results in `I2CIsConfigured` being `true`.
+**Dependencies:** TECH-MAIN-001, PLAT-POWER-003
+**Description:** `runCycle(Hal*)` calls `hal->Init()` exactly once per cycle, as its first `Hal` call, before `PowerOnSensors()` and so before any sensor access. `main()` does not call `Init()`. `Attiny84aHal::Init()` calls `TinyI2C.init()` when compiled with `USE_I2C` and is a no-op otherwise. Running it every cycle re-initialises the USI after `Hibernate()` stopped its clock with `PRUSI` (PLAT-POWER-003). `TestHal_::Init()` appends `'I'` to `Orders`; `I2CIsConfigured` is removed. In every `native_cycle_*` env, `test_main_cycle` checks that `'I'` is the first token of the cycle and appears exactly once.
 
 ---
 
@@ -127,7 +127,7 @@
 **Title:** One measurement/transmission cycle is a standalone runCycle(Hal*) callable from native tests
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `emitter/include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence. `main()` only initialises the HAL and calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
+**Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `emitter/include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence, apart from the leading `Init()` (TECH-HAL-006). `main()` only calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
 
 ---
 

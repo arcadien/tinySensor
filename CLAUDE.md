@@ -53,7 +53,7 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 Tests run on the host (`-e native_debug`, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_busses`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle`.
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle`.
 
 ### `src/main.cpp`
 

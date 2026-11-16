@@ -10,6 +10,8 @@
  * protocol
  *
  * Information about protocol from https://www.f6fbb.org/domo/sensors/
+ * rtl_433 decoder:
+ * https://github.com/merbanan/rtl_433/blob/master/src/devices/lacrosse_ws7000.c
  *
  *
  *  - Temperature:                      emulates WS7000-27/28 (sensor type 0)

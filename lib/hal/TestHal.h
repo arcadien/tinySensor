@@ -22,8 +22,6 @@ class TestHal_ : public Hal {
   uint16_t rawInternal11ref;
   uint16_t rawAnalogSensor;
 
-  mutable bool I2CIsConfigured;
-
   TestHal_() {
     rawBattery = 4200;
     rawInternal11ref = 1095;
@@ -74,7 +72,7 @@ class TestHal_ : public Hal {
     std::this_thread::sleep_for(std::chrono::seconds(seconds));
   }
 
-  void Init() override { I2CIsConfigured = true; }
+  void Init() override { Orders.push_back('I'); }
 };
 
 extern TestHal_ TestHal;

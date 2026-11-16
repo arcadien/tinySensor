@@ -50,6 +50,9 @@
 #define LIGHT_FRAMES 2  // luminosity frame is sent twice
 #endif
 
+// Recorded by TestHal_::Init() (TECH-HAL-006).
+static const unsigned char INIT = 'I';
+
 // Extra tokens, on top of TestHal_'s radio/delay tokens.
 static const unsigned char POWER_ON = '+';
 static const unsigned char POWER_OFF = '-';
@@ -140,6 +143,7 @@ static int CountTransmissions(const std::vector<unsigned char> &orders) {
 static std::vector<unsigned char> ReferenceCycleOrders() {
   CycleSpyHal ref;
   std::vector<unsigned char> expected;
+  expected.push_back(INIT);  // TECH-HAL-006
   expected.push_back(POWER_ON);
 #if defined(USE_BMP280) || defined(USE_BME280)
   expected.push_back(DELAY_30MS);  // BMx280 settle delay in ReadEnvironment
@@ -210,8 +214,8 @@ void Expect_cycle_powers_sensors_first_then_powers_off_and_hibernates_last() {
 
   // Then
   const std::vector<unsigned char> &orders = spy.Orders;
-  TEST_ASSERT_TRUE(orders.size() >= 3);
-  TEST_ASSERT_EQUAL_CHAR(POWER_ON, orders.front());
+  TEST_ASSERT_TRUE(orders.size() >= 4);
+  TEST_ASSERT_EQUAL_CHAR(POWER_ON, orders[1]);  // orders[0] is Init()
   TEST_ASSERT_EQUAL_CHAR(POWER_OFF, orders[orders.size() - 2]);
   TEST_ASSERT_EQUAL_CHAR(HIBERNATE, orders.back());
   TEST_ASSERT_EQUAL_INT(1, Count(orders, POWER_ON));
@@ -219,6 +223,20 @@ void Expect_cycle_powers_sensors_first_then_powers_off_and_hibernates_last() {
   TEST_ASSERT_EQUAL_INT(1, spy.hibernateCalls);
   TEST_ASSERT_EQUAL_UINT16(SLEEP_TIME_IN_SECONDS, spy.hibernateSeconds);
   TEST_ASSERT_FALSE(spy.SensorIsPowered);
+}
+
+// @req TECH-HAL-006
+void Expect_cycle_initialises_hal_once_before_any_other_hal_call() {
+  // Given
+  CycleSpyHal spy;
+
+  // When
+  runCycle(&spy);
+
+  // Then
+  TEST_ASSERT_TRUE(spy.Orders.size() > 0);
+  TEST_ASSERT_EQUAL_CHAR(INIT, spy.Orders.front());
+  TEST_ASSERT_EQUAL_INT(1, Count(spy.Orders, INIT));
 }
 
 // @req TECH-MAIN-001
@@ -309,6 +327,7 @@ int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(
       Expect_cycle_powers_sensors_first_then_powers_off_and_hibernates_last);
+  RUN_TEST(Expect_cycle_initialises_hal_once_before_any_other_hal_call);
   RUN_TEST(Expect_cycle_drives_io_through_the_injected_hal_only);
   RUN_TEST(Expect_cycle_on_TestHal_records_orders_on_TestHal);
   RUN_TEST(Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant);

@@ -100,6 +100,7 @@ static Measurements ReadEnvironment(Hal *hal) {
 }
 
 void runCycle(Hal *hal) {
+  hal->Init();
   bool lowBattery = false;
 
   hal->PowerOnSensors();
@@ -190,7 +191,6 @@ TestHal_ hal;
 #endif
 
 int main(void) {
-  hal.Init();
   while (1) {
     runCycle(&hal);
   }
