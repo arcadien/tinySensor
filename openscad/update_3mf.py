@@ -40,7 +40,7 @@ PROJECTS = {
         "scad": "mushroom.scad",
         "parts": {
             "Chapeau": ['part="cap"'], "Lamelles": ['part="gills"'], "Châssis": ['part="chassis"'],
-            "Plancher": ['part="deck"'], "Pied": ['part="stem"'], "Sol": ['part="ground"'],
+            "Pied": ['part="stem"'], "Sol": ['part="ground"'],
             "Berceau": ['part="cradle"'], "Bouchon": ['part="plug"'],
             "Pois": ['part="dots"'],   # every dot, each fitted to its own spot, numbered
         },
@@ -49,11 +49,11 @@ PROJECTS = {
         "settings": {"Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
                      "Pied": {"wall_loops": "6"},
                      "Pois": {"enable_support": "1"}},   # curved dots, convex face up: hollow underside
-        # added if missing: plug left of the deck and the cradle; dots centred on their plate (3rd of 7)
+        # added if missing: plug left of the cradle; dots centred on their plate (3rd of 7)
         "add": {"Bouchon": ("Divers", (300.0, -154.0)), "Pois": ("White buttons", (638.0, 110.0))},
         # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
-                      "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",
+                      "mushroom_stem": "Pied", "mushroom_ground": "Sol",
                       "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon"},
     },
     "box.3mf": {   # wall box: print only one of the two bases

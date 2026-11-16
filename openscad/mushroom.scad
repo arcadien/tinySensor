@@ -7,8 +7,7 @@
 //   cap     : gourd-shaped dome (sketch), wavy edge; 3 inner corbels above the disc, M3 screws from below (self-tapping)
 //   gills   : gill disc = underside of the cap; vent slots, USB socket, sleeve on the stem
 //   chassis : frame printed upright, screwed onto the disc: ventilated lower chamber (BME280 plugged under the board),
-//             deck, cut-down v2.2 board, charge module slide (socket facing down, between two gills)
-//   deck    : perforated deck between the chamber and the board, I2C connector window (female header through it)
+//             cut-down v2.2 board, charge module slide (socket facing down, between two gills)
 //   stem    : hollow stem (upright 18650 cradle), lobed, bulbous base, cup ring, tilted tenon at the top
 //   ground  : 1 mm disc under the stem, with grass tufts (stability + decoration)
 //   cradle  : removable cell cradle, slid into the stem; two tab contacts (cell not soldered)
@@ -20,7 +19,6 @@
 //   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # edge on the bed, no support
 //   openscad -D 'part="gills"'   -o mushroom_gills.3mf   mushroom.scad   # gills up
 //   openscad -D 'part="chassis"' -o mushroom_chassis.3mf mushroom.scad
-//   openscad -D 'part="deck"'    -o mushroom_deck.3mf    mushroom.scad
 //   openscad -D 'part="stem"'    -o mushroom_stem.3mf    mushroom.scad
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # ground + grass, in green; stem glued on it
 //   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # flat, flat face on the bed
@@ -44,7 +42,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Render] */
-part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dots]
+part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, stem, ground, cradle, plug, dots]
 explode = 40;      // exploded view: gap between levels (part = "exploded")
 cap_color = "#c0392b"; // render only (fly agaric; panther cap: "#8b5a2b")
 
@@ -105,8 +103,7 @@ gill_depth = [17, 3];  // gill depth near the stem / at the edge
 
 /* [Chassis] */
 chamber_h = 48;    // lower chamber: BME280 hanging under the board, top of the cradle and JST-XH pair
-deck_t = 1.6;
-pcb_gap = 5;       // deck -> underside of the board (through-hole pins)
+pcb_lift = 6.6;   // top of the chamber -> underside of the board (through-hole pins, C6 standing)
 ch_wall = 2;
 bme_w = 15;        // BMx280 breakout 15 x 11, 6 pins VIN GND SCL SDA CSB SDO centred on the width
 bme_d = 11;
@@ -118,7 +115,6 @@ fh_n = 6;          // female header under the board: 1 SENSOR_VCC, 2 GND, 3 SCL,
 fh_h = 8.5;        // height of the female header under the board
 mh_h = 2.5;        // plastic of the breakout's male header
 mh_pin = 6;        // male pins above the plastic (drawn if fh_n < bme_pins)
-fh_clr = 1;        // clearance of the deck window around the headers
 chg_w = 17.15;     // protected TP4056 charge module, measured (Tars): 28.7 including socket and break-off tabs
 chg_l = 28.7;
 chg_t = 0.9;
@@ -194,8 +190,7 @@ ballast_top = foot_t + ballast_h + bore_r;  // top of the ceiling
 ix = crop_w / 2 + 0.4;              // inner half-dimensions of the chassis
 iy = crop_h / 2 + 0.4;
 ch_z = disc_t;                      // bottom of the chassis
-deck_z = ch_z + chamber_h;          // top of the deck ledges
-pcb_z = deck_z + deck_t + pcb_gap;  // underside of the board
+pcb_z = ch_z + chamber_h + pcb_lift;  // underside of the board
 ch_h = pcb_z - ch_z;
 // board turned 180° in the chassis: J1 moves to the -X side, under the leaning top of the cap
 i2c_p1 = [k_crop_c[0] - i2c_k[0], i2c_k[1] - k_crop_c[1]];   // pin 1 in the cap frame
@@ -411,8 +406,8 @@ module chassis() {
         for (x = [-20, -6, 8, 22]) translate([x - 4, -iy - ch_wall - 1, chamber_h - 1 - win_h]) cube([8, 2 * (iy + ch_wall) + 2, win_h]);
         for (y = [-8, 8]) translate([-ix - ch_wall - 1, y - 4, chamber_h - 1 - win_h]) cube([ch_wall + 2, 8, win_h]);
       }
-      // deck and board ledges along the long sides (45° chamfer underneath)
-      for (s = [-1, 1], z = [chamber_h, ch_h]) mirror([0, s < 0 ? 1 : 0, 0]) translate([-ix, iy, z])
+      // board ledges along the long sides (45° chamfer underneath)
+      for (s = [-1, 1]) mirror([0, s < 0 ? 1 : 0, 0]) translate([-ix, iy, ch_h])
         rotate([0, 90, 0]) linear_extrude(2 * ix) polygon([[0, 0], [1.5, 0], [0, -1.5]]);
       // corners: chassis screw bosses (bottom); top corners solid up to the board (board M2.5 screws)
       for (p = ch_screws) translate([p[0] > 0 ? ix - 7 : -ix, p[1] > 0 ? iy - 7 : -iy, 0])
@@ -432,18 +427,6 @@ module rails(w, t, h) {
   for (s = [-1, 1]) translate([-1.5, s > 0 ? w / 2 - 1 : -w / 2 - 2, 0]) difference() {
     cube([t + 3, 3, h]);
     translate([1.5 - 0.15, s > 0 ? -eps : 2 - eps, -eps]) cube([t + 0.3, 1 + eps, h + 2 * eps]);
-  }
-}
-
-// ---------- perforated deck ----------
-module deck() {
-  difference() {
-    translate([-ix + 0.3, -iy + 0.3, 0]) cube([2 * ix - 0.6, 2 * iy - 0.6, deck_t]);
-    for (p = ch_screws) translate([p[0] - 4.6, p[1] - 4.6, -1]) cube([9.2, 9.2, deck_t + 2]);
-    for (x = [-24 : 6 : 24], y = [-15 : 6 : 15]) translate([x + (round(y / 6) % 2) * 3, y, -1]) cylinder(d = 4, h = deck_t + 2, $fn = 6);
-    // I2C female header window
-    translate([i2c_p1[0], i2c_p1[1], -1]) rotate(180) translate([-(bme_pins - 0.5) * hdr_p - fh_clr, -hdr_p / 2 - fh_clr, 0])
-      cube([bme_pins * hdr_p + 2 * fh_clr, hdr_p + 2 * fh_clr, deck_t + 2]);
   }
 }
 
@@ -653,7 +636,6 @@ module assembled() {
     color("Beige") chassis();
     translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
     translate([chg_x + 0.15, 0, ch_z]) charger();
-    color("WhiteSmoke") translate([0, 0, deck_z]) deck();
     translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
     translate([0, 0, -cap_skirt]) {
       color(cap_color) cap();
@@ -663,7 +645,7 @@ module assembled() {
 }
 
 // exploded view, assembly order: cell out of the stem, cap lifted; in the cap, bottom to top:
-// disc, chassis + charger, deck, board + BME280, dome
+// disc, chassis + charger, board + BME280, dome
 module exploded(e = explode) {
   color("Ivory") stem();
   color("#4a8f3c") translate([0, 0, -ground_t]) ground();
@@ -671,8 +653,7 @@ module exploded(e = explode) {
   translate([0, 0, 4 * e]) cap_xf() {
     color("Ivory") gills();
     translate([0, 0, e]) { color("Beige") chassis(); translate([chg_x + 0.15, 0, ch_z]) charger(); }
-    translate([0, 0, 2 * e + 15]) color("WhiteSmoke") translate([0, 0, deck_z]) deck();
-    translate([0, 0, 3 * e + 30]) {
+    translate([0, 0, 2 * e + 15]) {
       translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
       translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
     }
@@ -692,7 +673,6 @@ echo(str("Height ~", round(stem_h - apex[0] * sin(cap_tilt) + (apex[2] - cap_ski
 if (part == "cap") cap();
 else if (part == "gills") translate([0, 0, disc_t]) rotate([180, 0, 0]) gills();   // gills up
 else if (part == "chassis") translate([0, 0, -ch_z]) chassis();
-else if (part == "deck") deck();
 else if (part == "stem") stem();
 else if (part == "ground") ground();
 else if (part == "cradle") cradle();

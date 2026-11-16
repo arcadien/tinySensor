@@ -34,7 +34,7 @@ Ready-to-slice parts are in `print/`, **one OrcaSlicer project per model**, one 
 | `shield.3mf` | Abri, Assiettes | Chapeau, Fond, Clip (optional); 4 plates |
 | `stand.3mf` | Mât, Pied | table stand, optional |
 | `receiver.3mf` | Pupitre | Coque, Fond: tinyDecoders receiver desk enclosure (Pro Micro, RXB6, OLED), M3×6 cylinder-head screws; wiring: [`hardware/receiver/WIRING.md`](../hardware/receiver/WIRING.md) |
-| `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Plancher, Pied, Sol, Berceau, Bouchon, Pois |
+| `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Pied, Sol, Berceau, Bouchon, Pois |
 
 Plate and object names are the ones in the Orca projects and in `update_3mf.py` (French, kept as identifiers).
 
@@ -117,7 +117,6 @@ Parts:
 - **Gills** (`gills`): disc closing the underside of the cap, following the narrowest outline of the dome skirt minus 0.4 mm (`disc_fit`) to clear the skirt, 48 radial blades deeper near the stem (`gill_depth`), cut short around the 7 screws driven from below (dome and chassis, `screw_clear` 4.5 mm for the head and the screwdriver) instead of being left out, vent slots between the blades under the sensor chamber (including on the +X side, at 0° and ±7.5°, flush with the +X edge of the BME280), USB socket opening, central sleeve taking the stem tenon. Prints blades up.
 - **Chassis** (`chassis`) screwed onto the disc (4 M3 screws from below), printed upright:
   - lower chamber (48 mm, `chamber_h`), ventilated: **BME280 plugged under the board**, no wire or slide (see *Wiring*); the breakout hangs parallel to the board, sensor towards the disc, 42 mm above the disc; chassis windows at the top of the chamber (`win_h`), so that air flows past the sensor. The top of the cradle goes 30 mm through the disc (Ø37 hole, `disc_bore`) and ends 12 mm below the breakout, with the JST-XH pair;
-  - **perforated deck** (`deck`) on supports, with a 17.2 × 4.5 mm window for the female header;
   - **cut-down v2.2 board** (60 × 39 mm, along the silkscreen dotted lines x = 147 / y = 87, without the 18650 and CR2032 holders): turned 180° (J1 on −X), 2 M2.5 screws (MH5, top MH1), the bottom edge rests on a ledge. The cell arrives on **J13 "RAW IN"** (`+BATT`/`GND`);
   - slide for the TP4056 **charge module**, upright on the side, **micro-USB facing down** between two gills.
 - **Stem** (`stem`) as a **fly-agaric pear** after a sketch: slender, lopsided bulbous base (~76 × 72 mm at the belly; on the table 22 mm from the axis on the short side, 39 mm on the long side), neck Ø41 to 45 at the ring, Ø45 under the sleeve, hollow (Ø29.4) to the top: takes the cell cradle, inserted from the top, sitting 72 mm above the ground. Underneath, a closed **ballast chamber** following the stem shape (2.4 mm wall, `ballast_wall`, bulb included), conical ceiling at 45° up to 70 mm (`ballast_h`): ~146 cm³, i.e. ~690 g of 1 mm steel shot if filled. Filled through a Ø15 hole in the bottom, closed by a **plug** (`plug`, Ø21 × 1.2 mm) glued into a counterbore, flush with the underside. Same spirit as the cap:
@@ -147,12 +146,12 @@ The top-view outline is a convex ellipse, `ell_ratio` = minor / major axis (0.8 
 
 ### Assembly, cell
 
-![Exploded view: ground and stem, cell, gill disc, chassis and charger, perforated deck, board + BME280, dome](rendu_champignon_eclate.png)
+![Exploded view: ground and stem, cell, gill disc, chassis and charger, board + BME280, dome](rendu_champignon_eclate.png)
 
 0. Stem upside down: shot through the bottom hole (a few drops of glue to freeze it and stop it rattling), plug glued into its counterbore (epoxy), then stem glued onto the ground.
 1. Board: solder a **2.54 mm 1×6 female header** on the **underside** of the board, in the "I2C" footprint; the "I2C" and "I2C_SPI" JSTs are not fitted (see *Wiring*). On the breakout, solder its male header so that the chip faces the disc once plugged in (breakout body towards the inside of the chassis, to check for your breakout model).
 2. Charge module: solder W5 / W6 (red / black, 70 mm, OUT+ / OUT− soldered → J13 screw terminal). W3 / W4 are soldered in step 3: the JST-XH housing (~7.4 × 5.8 mm) barely fits through the window of the +Y wall (8 mm wide), so the bare end is passed through.
-3. Deck placed in the chassis, board screwed on top (the female header goes through the deck window); chassis upside down, BME280 plugged in from the open underside of the chassis. Charge module in its slide; W5 / W6 (red / black, 70 mm, TP4056 soldered → screw terminal) screwed into J13; W3 / W4 (red / black, 100 mm, TP4056 soldered → JST-XH M): JST-XH M already crimped, chamber side; push the other, bare end from inside the chamber outwards through the +Y wall window (x = 22), then solder it to B+ / B− of the TP4056; the JST side stays in the chamber, above the cradle. Finally chassis onto the gill disc (4 screws from below).
+3. Board screwed on top of the chassis; chassis upside down, BME280 plugged in from the open underside of the chassis. Charge module in its slide; W5 / W6 (red / black, 70 mm, TP4056 soldered → screw terminal) screwed into J13; W3 / W4 (red / black, 100 mm, TP4056 soldered → JST-XH M): JST-XH M already crimped, chamber side; push the other, bare end from inside the chamber outwards through the +Y wall window (x = 22), then solder it to B+ / B− of the TP4056; the JST side stays in the chamber, above the cradle. Finally chassis onto the gill disc (4 screws from below).
 4. Gill disc pushed into the dome up to the 3 corbels, 3 M3 × 10 self-tapping screws from below (heads between the gills). The 433 MHz module antenna goes straight up from J1 into the top of the gourd.
 5. Cradle: contacts in the grooves, W1 red 40 mm / W2 black 110 mm soldered at the top of the tabs, out through the end notches (W2 runs along the cell in the top slot) → JST-XH F; cell clipped in; cradle into the stem from the top (spring at the bottom).
 6. Cap held ~50 mm above the stem, plug the JST-XH pair, tuck it into the chamber just above the cradle (central hole of the disc), cap fitted on the tenon, radial screw.
@@ -196,7 +195,7 @@ Routing:
 
 - Cradle (1st print): barely fitted into the stem and the "−" wire did not pass (notch cut with pliers). Fixed for the next print: `cr_fit` clearance 0.8, deeper contact grooves (`bt_sink`), tabs up, wire notch at each end (`wire_notch`).
 - Dimensions to measure: contacts (sheet thickness `bt_t`, compressed spring `spring_c`), position of the charge module socket (`usb_cut`), BME breakout (`bme_w/d`, `bme_edge`, female header height `fh_h`).
-- No air gap between the dome and the board: the sensor is under the deck, ventilated from below; solar heating to check by measurement.
+- No air gap between the dome and the board: the sensor is under the board, ventilated from below; solar heating to check by measurement.
 - Stability: set by the ballast and the glued ground, to check once printed. The 2026-11 estimate (~15° empty, ~28° full) was for the fatter stem (support radius ~38 mm, ~1 kg of ballast); the slender stem stands 22 mm from the axis on its short side (+X) and holds ~690 g, so it tips over sooner on that side without the ground. Partial filling is enough: freeze it with glue, stem upright.
 
 ## Screws and fixings
