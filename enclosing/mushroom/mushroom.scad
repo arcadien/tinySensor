@@ -14,7 +14,7 @@
 //   plug    : plug of the ballast chamber (under the cradle), glued into the counterbore of the bottom
 //   dot     : white dots added afterwards, glued into the dome recesses
 //
-// Export: python3 update_3mf.py updates the parts in the Orca project print/mushroom.3mf (plates kept).
+// Export: ../export.sh mushroom/mushroom.3mf updates the parts in the Orca project mushroom.3mf (plates kept).
 // By hand (every part in its print orientation):
 //   openscad -D 'part="cap"'     -o mushroom_cap.3mf     mushroom.scad   # edge on the bed, no support
 //   openscad -D 'part="gills"'   -o mushroom_gills.3mf   mushroom.scad   # gills up
@@ -39,8 +39,8 @@
 // Cap (cap_xf): Z = 0 under the gill disc, axis tilted by cap_tilt towards +X.
 // Dome: Z = 0 at its edge, cap_skirt below the disc. The top of the gourd is centred on J1.
 
-use <pcb.scad>
-use <euro2.scad>
+use <../pcb.scad>
+use <../euro2.scad>
 
 /* [Render] */
 part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, stem, ground, cradle, plug, dots]

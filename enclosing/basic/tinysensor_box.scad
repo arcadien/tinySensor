@@ -55,8 +55,8 @@ ear_l = 12;           // tab overhang beyond the flange
 shield_notch = true;  // notches to clip the radiation shield under the box
 shield_notch_y = 8;   // notch position from the end of the bottom tab
 
-use <pcb.scad>
-use <euro2.scad>
+use <../pcb.scad>
+use <../euro2.scad>
 
 $fn = 48;
 eps = 0.01;
