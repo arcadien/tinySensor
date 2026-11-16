@@ -27,6 +27,11 @@
 #define LOW_BATTERY_VOLTAGE 2000
 #endif
 
+// FUNC-BATTERY-002: battery / PA1 voltage ratio (1 = no divider)
+#if !defined(BATTERY_DIVIDER)
+#define BATTERY_DIVIDER 1
+#endif
+
 #if !defined(USE_I2C) and \
     (defined(USE_BMP280) or defined(USE_BME280) or defined(USE_BH1750))
 #define USE_I2C

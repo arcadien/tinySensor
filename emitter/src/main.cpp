@@ -117,7 +117,8 @@ void runCycle(Hal *hal) {
   uint16_t batteryVoltageInMv = vccMv;
 #else
   uint16_t rawBattery = hal->GetRawBattery();
-  uint16_t batteryVoltageInMv = hal->ConvertAnalogValueToMv(rawBattery, vccMv);
+  uint16_t batteryVoltageInMv =
+      hal->ConvertAnalogValueToMv(rawBattery, vccMv) * BATTERY_DIVIDER;
 #endif
   lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
   SerialPrintInfo(hal, "Vbatt", batteryVoltageInMv, " mV");
