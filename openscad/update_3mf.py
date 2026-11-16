@@ -40,21 +40,24 @@ PROJECTS = {
         "scad": "mushroom.scad",
         "parts": {
             "Chapeau": ['part="cap"'], "Lamelles": ['part="gills"'], "Châssis": ['part="chassis"'],
-            "Plancher": ['part="deck"'], "Pied": ['part="stem"'], "Sol": ['part="ground"'],
+            "Pied": ['part="stem"'], "Sol": ['part="ground"'],
             "Berceau": ['part="cradle"'], "Bouchon": ['part="plug"'],
-            "Pois Ø6": ['part="dot"', "dot_d=6"], "Pois Ø8": ['part="dot"', "dot_d=8"],
-            "Pois Ø10": ['part="dot"', "dot_d=10"],
+            "Pois": ['part="dots"'],   # every dot, each fitted to its own spot, numbered
         },
         # very tall cap: 6 mm edge + brim; no support (the corbel faces bridge in PETG,
         # checked on the 2026-11 print)
         "settings": {"Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
-                     "Pied": {"wall_loops": "6"}},
-        "add": {"Bouchon": ("Divers", (300.0, -154.0))},   # added if missing, left of the deck and the cradle
+                     "Pied": {"wall_loops": "6"},
+                     "Pois": {"enable_support": "1", "support_threshold_angle": "45",   # dots standing on their edge
+                              "brim_type": "outer_only", "brim_width": "5"}},
+        # added if missing: plug left of the cradle; dots centred on their plate (3rd of 7)
+        "add": {"Bouchon": ("Divers", (300.0, -154.0)), "Pois": ("White buttons", (638.0, 110.0))},
+        # objects of parts removed from the model, deleted from the project
+        "drop": ["Pois Ø6", "Pois Ø8", "Pois Ø10", "Plancher"],
         # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
-                      "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",
-                      "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon", "mushroom_dot6": "Pois Ø6",
-                      "mushroom_dot8": "Pois Ø8", "mushroom_dot10": "Pois Ø10"},
+                      "mushroom_stem": "Pied", "mushroom_ground": "Sol",
+                      "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon"},
     },
     "box.3mf": {   # wall box: print only one of the two bases
         "scad": "tinysensor_box.scad",
@@ -174,6 +177,22 @@ def layout(sizes):
     return out
 
 
+def drop_object(root, model, o):
+    """Object removed from the Orca settings (object, plate instances, assembly) and from the model; returns the model."""
+    oid = o.get("id")
+    root.remove(o)
+    for plate in root.findall("plate"):
+        for inst in plate.findall("model_instance"):
+            if meta(inst, "object_id") == oid:
+                plate.remove(inst)
+    for asm in root.iter("assemble"):
+        for it in asm.findall("assemble_item"):
+            if it.get("object_id") == oid:
+                asm.remove(it)
+    model = re.sub(rf' *<object id="{oid}" [^>]*>.*?</object>\n', "", model, count=1, flags=re.S)
+    return re.sub(rf' *<item objectid="{oid}" [^>]*/>\n', "", model, count=1)
+
+
 def update(path, spec):
     work = Path(tempfile.mkdtemp())
     src = work / "src"
@@ -199,6 +218,9 @@ def update(path, spec):
     for o in root.findall("object"):
         part = o.find("part")
         name = meta(o, "name")
+        if name in spec.get("drop", []):
+            model = drop_object(root, model, o)
+            continue
         if name not in parts:
             stem = Path(meta(part, "source_file") or "").stem
             name = next((v for k, v in spec.get("from_file", {}).items() if re.fullmatch(k + r"(_x\d+)?", stem)), None)
@@ -281,6 +303,13 @@ def update(path, spec):
         for k, v in zip("xyz", new[name]["center"]):
             meta(part, "source_offset_" + k, repr(v))
 
+    # meshes no longer used by any object (dropped ones)
+    rels = src / "3D" / "_rels" / "3dmodel.model.rels"
+    for f in (src / "3D" / "Objects").glob("*.model"):
+        target = "/" + f.relative_to(src).as_posix()
+        if f'p:path="{target}"' not in model:
+            f.unlink()
+            rels.write_text(re.sub(rf' *<Relationship Target="{re.escape(target)}"[^>]*/>\n?', "", rels.read_text()))
     model_path.write_text(model)
     cfg.write(cfg_path, encoding="UTF-8", xml_declaration=True)
     out = work / "out.3mf"
