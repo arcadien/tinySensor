@@ -1,6 +1,6 @@
 #!/bin/bash
 PIO_HOME="${PIO_HOME:-${HOME}/.platformio}"
-PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
+PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "$0")/../emitter" && pwd)}"
 
 "${PIO_HOME}/packages/tool-avrdude/avrdude" \
     -v  \
