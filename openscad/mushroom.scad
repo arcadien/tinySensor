@@ -26,6 +26,7 @@
 //   openscad -D 'part="dots"'    -o mushroom_dots.3mf    mushroom.scad   # every dot, numbered, standing on its edge (supports under)
 // Renders:
 //   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
+//   openscad --preview -D 'part="assembly"' --camera=0,0,150,90,0,0,900 --imgsize=1000,1300 -o rendu_champignon_cote.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
 //   openscad --preview -D 'part="exploded"' --camera=0,0,330,70,0,25,1950 --imgsize=1000,1800 -o rendu_champignon_eclate.png mushroom.scad

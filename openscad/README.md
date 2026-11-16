@@ -107,9 +107,9 @@ Board connectors and module wiring: [`hardware/tinysensor/WIRING.md`](../hardwar
 
 Decorative fly-agaric variant, which does not replace the wall box. The cap is one piece (dome + gills) sitting on the stem with a slight tilt; all the electronics are in the cap, the stem only carries the cell.
 
-| Overview | Stem | Underside | Section |
-|---|---|---|---|
-| ![Mushroom](rendu_champignon.png) | ![Mushroom, stem](rendu_champignon_pied.png) | ![Mushroom, underside](rendu_champignon_dessous.png) | ![Mushroom, section](rendu_champignon_coupe.png) |
+| Overview | Side | Stem | Underside | Section |
+|---|---|---|---|---|
+| ![Mushroom](rendu_champignon.png) | ![Mushroom, side](rendu_champignon_cote.png) | ![Mushroom, stem](rendu_champignon_pied.png) | ![Mushroom, underside](rendu_champignon_dessous.png) | ![Mushroom, section](rendu_champignon_coupe.png) |
 
 Parts:
 
