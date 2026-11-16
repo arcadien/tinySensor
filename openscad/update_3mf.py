@@ -51,6 +51,8 @@ PROJECTS = {
                      "Pois": {"enable_support": "1"}},   # curved dots, convex face up: hollow underside
         # added if missing: plug left of the cradle; dots centred on their plate (3rd of 7)
         "add": {"Bouchon": ("Divers", (300.0, -154.0)), "Pois": ("White buttons", (638.0, 110.0))},
+        # objects of parts removed from the model, deleted from the project
+        "drop": ["Pois Ø6", "Pois Ø8", "Pois Ø10", "Plancher"],
         # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
                       "mushroom_stem": "Pied", "mushroom_ground": "Sol",
@@ -174,6 +176,22 @@ def layout(sizes):
     return out
 
 
+def drop_object(root, model, o):
+    """Object removed from the Orca settings (object, plate instances, assembly) and from the model; returns the model."""
+    oid = o.get("id")
+    root.remove(o)
+    for plate in root.findall("plate"):
+        for inst in plate.findall("model_instance"):
+            if meta(inst, "object_id") == oid:
+                plate.remove(inst)
+    for asm in root.iter("assemble"):
+        for it in asm.findall("assemble_item"):
+            if it.get("object_id") == oid:
+                asm.remove(it)
+    model = re.sub(rf' *<object id="{oid}" [^>]*>.*?</object>\n', "", model, count=1, flags=re.S)
+    return re.sub(rf' *<item objectid="{oid}" [^>]*/>\n', "", model, count=1)
+
+
 def update(path, spec):
     work = Path(tempfile.mkdtemp())
     src = work / "src"
@@ -199,6 +217,9 @@ def update(path, spec):
     for o in root.findall("object"):
         part = o.find("part")
         name = meta(o, "name")
+        if name in spec.get("drop", []):
+            model = drop_object(root, model, o)
+            continue
         if name not in parts:
             stem = Path(meta(part, "source_file") or "").stem
             name = next((v for k, v in spec.get("from_file", {}).items() if re.fullmatch(k + r"(_x\d+)?", stem)), None)
@@ -281,6 +302,13 @@ def update(path, spec):
         for k, v in zip("xyz", new[name]["center"]):
             meta(part, "source_offset_" + k, repr(v))
 
+    # meshes no longer used by any object (dropped ones)
+    rels = src / "3D" / "_rels" / "3dmodel.model.rels"
+    for f in (src / "3D" / "Objects").glob("*.model"):
+        target = "/" + f.relative_to(src).as_posix()
+        if f'p:path="{target}"' not in model:
+            f.unlink()
+            rels.write_text(re.sub(rf' *<Relationship Target="{re.escape(target)}"[^>]*/>\n?', "", rels.read_text()))
     model_path.write_text(model)
     cfg.write(cfg_path, encoding="UTF-8", xml_declaration=True)
     out = work / "out.3mf"
