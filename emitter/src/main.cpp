@@ -49,6 +49,11 @@ static BMx280 bmx280;
 #include <x10rf.h>
 #endif
 
+// FUNC-MAIN-001: environment frame sent twice; 8 extra x 30 ms + the trailing
+// 30 ms = 270 ms of silence, longer than one Oregon frame (246 ms).
+#define ENVIRONMENT_FRAME_REPEAT 2
+#define ENVIRONMENT_GAP_EXTRA_30MS 8
+
 #define TRANSMIT_WITH_LED(code) \
   do {                          \
     hal->LedOn();               \
@@ -174,7 +179,12 @@ void runCycle(Hal *hal) {
   }
 
   if (sendEnvironment) {
-    TRANSMIT_WITH_LED(environmentEncoder.Send());
+    for (uint8_t i = 0; i < ENVIRONMENT_FRAME_REPEAT; i++) {
+      for (uint8_t d = 0; i > 0 && d < ENVIRONMENT_GAP_EXTRA_30MS; d++) {
+        hal->Delay30ms();
+      }
+      TRANSMIT_WITH_LED(environmentEncoder.Send());
+    }
   }
 #endif
 
