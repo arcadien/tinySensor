@@ -3,7 +3,7 @@
 This is the **receiver** (433 MHz decoder with OLED, `tinyDecoders/`), not a tinySensor emitter. Emitter boards are documented in `hardware/tinysensor/`.
 
 - Firmware: `tinyDecoders`, env `promicro` (`pio run -d tinyDecoders -e promicro -t upload`)
-- Enclosure: `openscad/receiver.scad`, Orca project `openscad/print/receiver.3mf`
+- Enclosure: `enclosing/receiver/receiver.scad`, Orca project `enclosing/receiver/receiver.3mf`
 - Boards: SparkFun-style Pro Micro 5 V / 16 MHz (ATmega32U4), RXB6 433 MHz superheterodyne receiver, 0.91" SSD1306 OLED 128×32 (I2C, 0x3C, onboard regulator)
 
 ![Receiver wiring](wiring.svg)

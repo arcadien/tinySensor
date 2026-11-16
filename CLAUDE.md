@@ -127,7 +127,7 @@ Current-limiting and pull resistors sit **at the board end**, never at the LED o
 Strip EXIF/GPS from every image before committing: `python3 ~/.claude/skills/hardware-change/scripts/strip_exif.py <paths>` (`--check` to verify).
 
 ### Commits
-No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`openscad/`, `hardware/`) and `docs:` for doc-only commits. Make granular commits, one per area, and push after each.
+No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`enclosing/`, `hardware/`) and `docs:` for doc-only commits. Make granular commits, one per area, and push after each.
 
 ## Modeling
 

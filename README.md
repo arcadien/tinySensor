@@ -57,7 +57,7 @@ CI runs the native tests, compile-fail checks for invalid flag combinations (`te
 ## Hardware and enclosure
 
 * KiCad board (v3.0) in `hardware/tinysensor/`, with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
-* OpenSCAD enclosures (wall box, radiation shield, mushroom) in `openscad/`, see [openscad/README.md](openscad/README.md).
+* OpenSCAD enclosures (wall box, radiation shield, mushroom, receiver) in `enclosing/`, see [enclosing/README.md](enclosing/README.md).
 
 ## Hardware options
 
