@@ -2,6 +2,8 @@
 
 _Last updated: 2026-11-12 — FUNC-DECODE-007 (big-value OLED page: 16x32 main value + 4-character side column, 10 s source rotation, 2 s secondary alternation, centred waiting page; `DrawBigChar` / `ReadBigGlyphPage`; 30-min source expiry FUNC-DECODE-010), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
 
+Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
+
 ## Component Diagram
 
 ```mermaid

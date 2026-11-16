@@ -4,24 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-PlatformIO is the build system. The `pio` binary lives at `~/.platformio/penv/bin/pio`.
+PlatformIO is the build system. The emitter firmware is the PlatformIO project in `emitter/` (`src/`, `include/`, `test/`, `platformio.ini`); `lib/` at the repository root is shared with the receiver `tinyDecoders/`. On this machine `pio` runs as `uvx --from platformio pio`. Run from the repository root:
 
 ```bash
 # Run all native tests (fast — runs on host, no hardware needed)
-~/.platformio/penv/bin/pio test -e native_debug
+pio test -d emitter -e native_debug
 
 # Run a single test suite
-~/.platformio/penv/bin/pio test -e native_debug -f test_oregon
+pio test -d emitter -e native_debug -f test_oregon
 
 # Build firmware for a specific physical target
-~/.platformio/penv/bin/pio run -e S_02
+pio run -d emitter -e S_02
 
 # Build all physical targets
-~/.platformio/penv/bin/pio run
+pio run -d emitter
 
 # Flash to connected hardware (requires avrdude + programmer)
-~/.platformio/penv/bin/pio run -e S_02 --target upload
+pio run -d emitter -e S_02 --target upload
 ```
+
+Paths below without a folder (`src/`, `include/`, `test/`, `platformio.ini`) are in `emitter/`.
 
 ## Architecture
 
@@ -73,12 +75,12 @@ This project uses Requirement-Based Development. **Every code change must origin
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
-**Linter**: `clang-format` **18.1.8** (`--dry-run --Werror`) on all `*.cpp`/`*.h` under `src/`, `lib/`, `include/`, `test/`. Must pass before every test or implementation commit; enforced by the CI `lint` job and by the pre-commit hook (`pip install pre-commit && pre-commit install`). Other clang-format versions may format macros differently. Run it with:
+**Linter**: `clang-format` **18.1.8** (`--dry-run --Werror`) on all `*.cpp`/`*.h` under `emitter/` (`src/`, `include/`, `test/`), `lib/` and `tinyDecoders/`. Must pass before every test or implementation commit; enforced by the CI `lint` job and by the pre-commit hook (`pip install pre-commit && pre-commit install`). Other clang-format versions may format macros differently. Run it with:
 
 ```bash
-find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+find emitter/src emitter/include emitter/test lib tinyDecoders -path '*/.pio' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run --Werror
 # Auto-fix:
-find src lib include test -name '*.cpp' -o -name '*.h' | xargs clang-format -i
+find emitter/src emitter/include emitter/test lib tinyDecoders -path '*/.pio' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -i
 ```
 
 ### Key `build_flags` per environment

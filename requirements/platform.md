@@ -35,7 +35,7 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-005
 **derives_from:** [TECH-HAL-005](technical.md#tech-hal-005)
-**Description:** The `TRANSMIT_WITH_LED(code)` macro defined in `src/main.cpp` expands to: call `hal.LedOn()`, execute `code` (the `Send()` call), call `hal.LedOff()`, then call `hal.Delay30ms()`. Every protocol `Send()` invocation in the measurement loop must be wrapped in this macro.
+**Description:** The `TRANSMIT_WITH_LED(code)` macro defined in `emitter/src/main.cpp` expands to: call `hal.LedOn()`, execute `code` (the `Send()` call), call `hal.LedOff()`, then call `hal.Delay30ms()`. Every protocol `Send()` invocation in the measurement loop must be wrapped in this macro.
 
 ---
 

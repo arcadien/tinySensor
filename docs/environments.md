@@ -43,7 +43,7 @@ When the measured battery voltage falls below the threshold, the X10 battery and
 
 ## Adding a new board
 
-1. Copy an existing `[env:S_XX]` block in `platformio.ini`.
+1. Copy an existing `[env:S_XX]` block in `emitter/platformio.ini`.
 2. Choose the protocol (`USE_OREGON` / `USE_LACROSSE`) and sensor (`USE_BMP280` / `USE_BME280` / `USE_BH1750` / `USE_DS18B20`).
    `USE_BH1750` needs `LACROSSE_ID` whatever the protocol (the luminosity always goes out as Lacrosse frames). `USE_SWITCHED_5V` powers an off-board 5 V module through PB2 during measurements (LM35 variant, PLAT-POWER-006).
 3. Set `BATTERY_VOLTAGE_X10_ID` to a unique integer not used by any other board.

@@ -41,14 +41,14 @@ Various libraries are used here, and some where tweaked to remove any Arduino de
 The firmware is built with [PlatformIO](https://platformio.org/) and configured entirely at build time: each physical sensor is one PlatformIO environment (`S_02`…`S_05`, `robot`, `devmodule`, `SOLAR_TEST`) whose `build_flags` select protocol, sensors and calibration. See [docs/environments.md](docs/environments.md) to calibrate or add a board.
 
 ```bash
-pio test -e native_debug        # encoder and library unit tests, on the host
-pio test -e native_cycle_oregon # one measurement cycle (runCycle) per build variant;
-                                # also native_cycle_oregon_vcc, _lacrosse, _x10
-pio run -e S_02                 # firmware for one board
-pio run -e S_02 -t upload       # flash it
+pio test -d emitter -e native_debug        # encoder and library unit tests, on the host
+pio test -d emitter -e native_cycle_oregon # one measurement cycle (runCycle) per build variant;
+                                           # also native_cycle_oregon_vcc, _lacrosse, _x10
+pio run -d emitter -e S_02                 # firmware for one board
+pio run -d emitter -e S_02 -t upload       # flash it
 ```
 
-CI runs the native tests, compile-fail checks for invalid flag combinations (`test/compile_fail/`), sensor-variant checks (`test/build_variants/`), `clang-format` and a build of every board.
+CI runs the native tests, compile-fail checks for invalid flag combinations (`emitter/test/compile_fail/`), sensor-variant checks (`emitter/test/build_variants/`), `clang-format` and a build of every board.
 
 * Architecture: [docs/architecture.md](docs/architecture.md)
 * Step debugging over debugWIRE: [docs/debugging.md](docs/debugging.md)
