@@ -42,14 +42,15 @@ PROJECTS = {
             "Chapeau": ['part="cap"'], "Lamelles": ['part="gills"'], "Châssis": ['part="chassis"'],
             "Plancher": ['part="deck"'], "Pied": ['part="stem"'], "Sol": ['part="ground"'],
             "Berceau": ['part="cradle"'], "Bouchon": ['part="plug"'],
-            "Pois Ø12": ['part="dot"', "dot_d=12"], "Pois Ø16": ['part="dot"', "dot_d=16"],
-            "Pois Ø20": ['part="dot"', "dot_d=20"],
+            "Pois": ['part="dots"'],   # every dot, each fitted to its own spot, numbered
         },
         # very tall cap: 6 mm edge + brim; no support (the corbel faces bridge in PETG,
         # checked on the 2026-11 print)
         "settings": {"Chapeau": {"brim_type": "outer_only", "brim_width": "10", "sparse_infill_density": "10%"},
-                     "Pied": {"wall_loops": "6"}},
-        "add": {"Bouchon": ("Divers", (300.0, -154.0))},   # added if missing, left of the deck and the cradle
+                     "Pied": {"wall_loops": "6"},
+                     "Pois": {"enable_support": "1"}},   # curved dots, convex face up: hollow underside
+        # added if missing: plug left of the deck and the cradle; dots centred on their plate (3rd of 7)
+        "add": {"Bouchon": ("Divers", (300.0, -154.0)), "Pois": ("White buttons", (638.0, 110.0))},
         # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
                       "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",

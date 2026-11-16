@@ -25,7 +25,7 @@
 //   openscad -D 'part="ground"'  -o mushroom_ground.3mf  mushroom.scad   # ground + grass, in green; stem glued on it
 //   openscad -D 'part="cradle"'  -o mushroom_cradle.3mf  mushroom.scad   # flat, flat face on the bed
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
-//   openscad -D 'part="dot"' -D 'dot_d=8' -o mushroom_dot8.3mf mushroom.scad   # x n, see the echo
+//   openscad -D 'part="dots"'    -o mushroom_dots.3mf    mushroom.scad   # every dot, numbered, convex face up (supports under)
 // Renders:
 //   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
 //   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
@@ -44,8 +44,7 @@ use <pcb.scad>
 use <euro2.scad>
 
 /* [Render] */
-part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
-dot_d = 16;        // diameter of the exported dot (part = "dot")
+part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dots]
 explode = 40;      // exploded view: gap between levels (part = "exploded")
 cap_color = "#c0392b"; // render only (fly agaric; panther cap: "#8b5a2b")
 
@@ -80,11 +79,12 @@ corbel_h = 10;     // height of the straight face, 45° chamfer above up to the 
 corbel_in = 5;     // corbel overhang beyond the screw axis, inwards
 corbel_pilot = 8;  // pilot hole depth (M3x10 self-tapping: 3 of disc + 7 engaged)
 tab_base = [90, 210, 330];  // dome screws (corbels), angles in the cap frame
-dot_sizes = [12, 16, 20];
-dot_bag = [12, 12, 12, 16, 16, 16, 20, 20, 20, 20, 20];  // dot size draw: large ones favoured
-dot_pocket = 0.8;
-dot_h = 1.2;       // lens height above the pocket (thin, whatever the diameter)
+dot_sizes = [24, 32, 40];
+dot_bag = [24, 24, 24, 32, 32, 32, 40, 40, 40, 40, 40];  // dot size draw: large ones favoured
+dot_pocket = 0.8;  // the dot sinks this deep into the dome
+dot_h = 1.2;       // the dot stands this high above the dome
 dot_gap = 22;      // minimum gap between two dots
+dot_num = [5, 0.4]; // number engraved under each dot and in its pocket: text size, depth
 
 /* [Cap outline: ellipse] */
 lobe_seed = 6;     // seed of the random draws (stem and ring lobes, dots)
@@ -206,10 +206,11 @@ bme_z = pcb_z - fh_h - mh_h;        // top of the breakout
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
 
 // ---------- dome ----------
-// meridian: Catmull-Rom through cap_shape; mirrored ghost points = vertical tangent at the edge, horizontal at the top
+// meridian: Catmull-Rom through cap_shape; edge ghost point extrapolated = the curve keeps turning inwards down to the
+// edge (no vertical skirt, no outer lip), mirrored ghost point at the top = horizontal tangent
 cap_prof = [for (p = cap_shape) [p[0] * cap_R, p[1] * cap_H]];
 prof_n = len(cap_prof) - 1;
-function ctrl(i) = i < 0 ? [cap_prof[1][0], -cap_prof[1][1]]
+function ctrl(i) = i < 0 ? 2 * cap_prof[0] - cap_prof[1]
   : i > prof_n ? [-cap_prof[prof_n - 1][0], cap_prof[prof_n - 1][1]] : cap_prof[i];
 // [point, derivative] of the meridian at u, from 0 (edge) to 1 (top)
 function prof(u) = let(x = u * prof_n, i = min(prof_n - 1, floor(x)), v = x - i,
@@ -255,7 +256,8 @@ vent_in = apex - [0, 0, cap_t + 3];   // under the tip of the conical ceiling
 vent_out = cap_pt(vent_at[0], vent_at[1]);
 assert(vent_out[2] < vent_in[2], "The vent must slope down towards the outside");
 
-function ring(j, off) = [for (i = [0 : na - 1]) cap_pt(i * 360 / na, j * 90 / nt, off)];
+// bottom ring kept on the bed plane: the inset of a wall slanting inwards would start above it and close the bottom
+function ring(j, off) = [for (i = [0 : na - 1]) let(p = cap_pt(i * 360 / na, j * 90 / nt, off)) j == 0 ? [p[0], p[1], min(p[2], 0)] : p];
 function surf(off) = concat([for (j = [0 : nt - 1]) each ring(j, off)], [cap_pt(0, 90, off)]);
 function o(i, j) = j * na + (i % na);
 module dome_solid(off = 0) {   // solid volume under the surface, closed by the edge plane
@@ -265,13 +267,16 @@ module dome_solid(off = 0) {   // solid volume under the surface, closed by the 
     [[for (i = [0 : na - 1]) o(i, 0)]]));
 }
 
+// a dot fits where the dome stays inside its prism (dot_prism) all around its edge: not across the concave waist
+function dot_fits(phi, t, d) = let(p0 = cap_pt(phi, t), n = cap_normal(phi, t), m = prof(t / 90),
+  dphi = (d / 2) / max(1, m[0][0] * wav(phi)) * 180 / PI, dt = (d / 2) / (norm(m[1]) * prof_n / 90))   // prof() derivative is per spline segment
+  t + dt <= 90 && min([for (a = [0 : 30 : 330]) let(q = cap_pt(phi + dphi * cos(a), t + dt * sin(a)) - p0) q * n]) > -7
+  && max([for (a = [0 : 30 : 330]) let(q = cap_pt(phi + dphi * cos(a), t + dt * sin(a)) - p0) q * n]) < 0.3;
 // dots: "Poisson disc" draw on the real surface: candidates on a dense, noisy (phi, t)
 // grid, visited in a pseudo-random order, kept if far enough from the others
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
   let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt), d = dot_bag[floor(q[2] * len(dot_bag) * 0.999)])
-  // flat dot on the curved dome: its edge lifts by (d/2)^2 / 2r, kept within the pocket depth
-  // shortcut: hoop curvature only (meridian ignored), fine while the gourd stays this smooth
-  if (p[2] > 9 && d * d / (8 * prof(tt / 90)[0][0] * wav(pp)) <= dot_pocket) [pp, tt, d, p]];
+  if (p[2] > d / 2 + 4 && dot_fits(pp, tt, d)) [pp, tt, d, p]];   // away from the edge on the bed
 function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
 function dot_pick(i, acc) = i >= len(dot_cand) ? acc
@@ -283,6 +288,21 @@ module at_dot(d) {
   n = cap_normal(d[0], d[1]);
   translate(cap_pt(d[0], d[1])) rotate([0, acos(n[2]), atan2(n[1], n[0])]) children();
 }
+// dot footprint in its local frame (normal = +Z): tall enough for the dome curvature under a large dot
+module dot_prism(d) translate([0, 0, -8]) cylinder(d = d, h = 8 + dot_h + 1, $fn = 64);
+module dot_number(i) translate([0, 0, -dot_pocket - dot_num[1]]) linear_extrude(2 * dot_num[1])
+  text(str(i + 1), size = dot_num[0], halign = "center", valign = "center");
+// dot i (dome frame): the dome shell between the pocket floor and dot_h above the surface, so it fits its own spot
+module dot_shell(i) {
+  difference() {
+    intersection() {
+      at_dot(dots[i]) dot_prism(dots[i][2]);
+      difference() { dome_solid(-dot_h); dome_solid(dot_pocket); }
+    }
+    at_dot(dots[i]) mirror([1, 0, 0]) dot_number(i);   // read from below
+  }
+}
+
 
 // dome screws: axis 5 mm from the wall at the edge (away from the electronics), in the corbels
 function tab_r(a) = inner_r(a, 2) - 5;
@@ -312,18 +332,18 @@ module cap() {
       }
       corbels();
     }
-    for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) cylinder(d = d[2] + 0.3, h = dot_pocket + 1, $fn = 32);
+    difference() { for (d = dots) at_dot(d) dot_prism(d[2] + 0.3); dome_solid(dot_pocket); }   // pockets
+    for (i = [0 : len(dots) - 1]) at_dot(dots[i]) dot_number(i);
     for (a = tab_a) rotate([0, 0, a]) translate([tab_r(a), 0, corbel_z - eps]) cylinder(d = m3_pilot, h = corbel_pilot + eps);
     let(v = vent_out - vent_in) translate(vent_in) rotate([0, acos(v[2] / norm(v)), atan2(v[1], v[0])]) cylinder(d = vent_d, h = norm(v) + 5, $fn = 32);
   }
 }
 
-module dot(d) {
-  cylinder(d = d, h = dot_pocket + eps, $fn = 48);   // overlap: a single solid with the lens
-  translate([0, 0, dot_pocket]) intersection() {
-    scale([1, 1, 2 * dot_h / d]) sphere(d = d, $fn = 48);
-    translate([-d, -d, 0]) cube([2 * d, 2 * d, d]);
-  }
+// every dot in print orientation (normal up), numbered, on a 4-column grid
+module dots_print() {
+  for (i = [0 : len(dots) - 1]) let(d = dots[i], n = cap_normal(d[0], d[1]), g = max(dot_sizes) + 6)
+    translate([(i % 4) * g, -floor(i / 4) * g, 0])
+      rotate([0, -acos(n[2]), 0]) rotate([0, 0, -atan2(n[1], n[0])]) translate(-cap_pt(d[0], d[1])) dot_shell(i);
 }
 
 // ---------- gill disc (cap frame) ----------
@@ -630,7 +650,7 @@ module assembled() {
     translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
     translate([0, 0, -cap_skirt]) {
       color(cap_color) cap();
-      for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
+      color("White") for (i = [0 : len(dots) - 1]) dot_shell(i);
     }
   }
 }
@@ -651,7 +671,7 @@ module exploded(e = explode) {
     }
     translate([0, 0, 5 * e + 60 - cap_skirt]) {
       color(cap_color) cap();
-      for (d = dots) at_dot(d) translate([0, 0, -dot_pocket]) color("White") dot(d[2]);
+      color("White") for (i = [0 : len(dots) - 1]) dot_shell(i);
     }
   }
 }
@@ -670,7 +690,7 @@ else if (part == "stem") stem();
 else if (part == "ground") ground();
 else if (part == "cradle") cradle();
 else if (part == "plug") cylinder(d = plug_d, h = plug_t);
-else if (part == "dot") dot(dot_d);
+else if (part == "dots") dots_print();
 else if (part == "sensor") difference() {   // close-up: BME280 plugged under the board
   assembled();
   translate([-100, -90.5, 70]) cube([200, 90, 150]);   // the camera must stay outside the removed volume
