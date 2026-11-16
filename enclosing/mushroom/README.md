@@ -1,109 +1,4 @@
-# 3D-printed enclosures — TinySensor v2.2
-
-Parametric OpenSCAD models (tested with OpenSCAD 2021.01). Target material: **PETG**.
-
-| On the wall | On a stand |
-|---|---|
-| ![Overview, on the wall](rendu.png) | ![Overview, on a stand](rendu_pied.png) |
-
-![Open box: board and 18650 cell](rendu_ouvert.png)
-
-A €2 coin (Ø25.75 mm) appears in the renders for scale.
-
-| File | Content |
-|---|---|
-| `tinysensor_box.scad` | Main wall box (base + lid) |
-| `sensor_shield.scad` | Outdoor radiation shield for a BMx280 breakout + optional clip |
-| `stand.scad` | Table stand: mast + foot, to stand the box + shield upright |
-| `pcb.scad` | Simplified v2.2 board and 18650 cell (renders only) |
-| `euro2.scad` | €2 coin for render scale |
-| `mushroom.scad` | Decorative "mushroom" enclosure (alongside the wall box) |
-| `receiver.scad` | Desk enclosure of the tinyDecoders receiver (Pro Micro, RXB6, OLED) |
-| `harness.py` | Printable mushroom wiring plan generator (`python3 harness.py` → `faisceau_champignon.pdf`, A4) |
-| `assembly.scad` | Overview (box + clipped shield, on the wall or on the stand), generates `rendu.png` and `rendu_pied.png` |
-
-> Status: **not printed, not validated** (wall box, shield, stand). Clearances and fits to confirm on the first print.
-
-## Export
-
-Ready-to-slice parts are in `print/`, **one OrcaSlicer project per model**, one plate per use and every object named:
-
-| Project | Plates | Objects |
-|---|---|---|
-| `box.3mf` | Fond extérieur, Fond intérieur, Couvercle | print only one of the two bases: `ext` (cable gland, outdoor) or `int` (vents, indoor) |
-| `shield.3mf` | Abri, Assiettes | Chapeau, Fond, Clip (optional); 4 plates |
-| `stand.3mf` | Mât, Pied | table stand, optional |
-| `receiver.3mf` | Pupitre | Coque, Fond: tinyDecoders receiver desk enclosure (Pro Micro, RXB6, OLED), M3×6 cylinder-head screws; wiring: [`hardware/receiver/WIRING.md`](../hardware/receiver/WIRING.md) |
-| `mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Pied, Sol, Berceau, Bouchon, Pois |
-
-Plate and object names are the ones in the Orca projects and in `update_3mf.py` (French, kept as identifiers).
-
-`mushroom_cap.3mf`: mushroom cap as printed (Orca settings of that print). Frozen snapshot, outside `export.sh`.
-
-After changing a `.scad` (about 30 s, close the projects in Orca first):
-
-```bash
-./export.sh                  # every project
-./export.sh print/box.3mf    # or just one
-```
-
-`export.sh` runs `update_3mf.py`, which re-exports each part and replaces its mesh in the project: plates, positions, rotations and Orca settings are kept, the previous project stays as `print/<project>.3mf.bak`. A missing project is recreated, with the printer and filament settings of `mushroom.3mf` (Ender 3). Parts may only be rotated about Z in Orca, otherwise the script refuses to update them; a part deleted in Orca is reported, not put back. Per-object settings set when missing: mushroom cap outer brim 10 mm, 10 % infill; mushroom stem 6 walls; mushroom dots supports on. All the dots are one object, "Pois", on the White buttons plate.
-
-Exporting a single part outside a project (STL, another format): `openscad -D 'part="lid"' -o out/lid.3mf tinysensor_box.scad` (see each `.scad` header).
-
-Open-box render: `openscad --preview -D 'part="open"' --camera=110,-230,420,110,30,0 --imgsize=1400,1000 -o rendu_ouvert.png tinysensor_box.scad`.
-
-Every part is exported in its print orientation and prints **without support**, the mushroom dome included. `out/` is ignored by git, `print/` is not.
-
-## Main box (`tinysensor_box.scad`)
-
-- Fitted to the v2.2 PCB (`hardware/tinysensor/tinySensorv1.kicad_pcb`): 93.98 × 63.75 mm, held by the 4 corner M2.5 holes on 5 mm standoffs.
-- Clearance above the PCB: 25 mm (large capacitors), parameter `comp_h`.
-- Free 14 mm bay on the bottom side (18650 holder side) for cables and antenna.
-- Overall size: ~117 × 101 × 39 mm (flange and lid included).
-- **Closure**: 6 M3 self-tapping screws, outside the seal area.
-- **Sealing**: 2.2 × 1.5 mm groove for a Ø2 cord (printed TPU or EPDM), squeezed by a lid rib.
-- **Wall mounting**: 2 tabs, Ø4 countersunk screws. The back stays solid.
-- Variants (`usage`):
-  - `ext`: Ø12.5 hole for a **PG7** cable gland (remote probe). By default in the **left side wall**, level with the bay, under the flange chamfer that keeps the rain off; `gland_side` = `left` / `right` / `bottom` (former position, bottom wall). The cable runs down along the box then up into the shield through its base: allow ~15 cm more and a drip loop.
-  - `int`: top and bottom vent slots (convection).
-- The bottom tab has two side notches for the shield clip (`shield_notch`).
-
-## Radiation shield (`sensor_shield.scad`)
-
-Stacked-plate shield (Stevenson type): outdoors, a BMx280 shut inside the sealed box would measure the box air, not the ambient air.
-
-- Solid cap + 4 louvred plates + base, Ø56 mm, 10 mm pitch, ~52 mm high.
-- Assembly: 3 **M3** threaded rods through the spacers, nuts under the base.
-- Base: vertical slide for the **15 × 11 mm, 6-pin** breakout (`BMx280_breakout` footprint), Ø6 cable pass underneath, 6 drain holes.
-- Print in **white** (limits solar heating). Place in the shade if possible.
-
-### Mounting (pick one)
-
-1. **Wall**: plate with 2 Ø4 countersunk screws on the probe side. Screw the cap to the wall **before** stacking the plates.
-2. **Clip under the box** (`part="clip"`): adapter bolted behind the plate (2 M4×8 countersunk screws + nuts sunk on the wall side). Its two prongs grip the bottom wall tab of the box (45° lips) and a bump snaps into each notch. Fitting: screw the box, slide the shield up until it clicks.
-   - Adjustable fit: `bump_r` (grip), `prong_w` (stiffness).
-
-3. **On the stand** (`stand.scad`): see below.
-
-## Table stand (`stand.scad`)
-
-To stand the box + shield upright on a table, with no wall.
-
-- **Mast** 30 × 6 × 212 mm: it stands in for the wall. The box screws onto it by its two wall tabs (M4 countersunk, nuts sunk in the back of the mast); the shield stays clipped under the bottom tab, as on the wall.
-- **Foot** 130 × 136 mm with a 25 mm socket and gussets: the mast fits in and is locked by a through M4 screw. It reaches 90 mm forward to balance the shield, which sticks out to ~72 mm from the mast.
-- 30 mm of clearance under the shield (`under_clr`) for the loop of the cable that comes up through the base.
-- The mast (212 mm) fits a 220 × 220 bed.
-- The box and shield dimensions are copied at the top of the file: realign them if the other models change.
-
-### Wiring
-
-- I2C link < 1 m: 4.7 kΩ pull-ups, twisted cable (SDA/GND, SCL/GND).
-- The cable leaves the cable gland and runs up into the shield through its base.
-
-Board connectors and module wiring: [`hardware/tinysensor/WIRING.md`](../hardware/tinysensor/WIRING.md).
-
-## Mushroom (`mushroom.scad`)
+# Mushroom enclosure (`mushroom.scad`)
 
 Decorative fly-agaric variant, which does not replace the wall box. The cap is one piece (dome + gills) sitting on the stem with a slight tilt; all the electronics are in the cap, the stem only carries the cell.
 
@@ -130,21 +25,21 @@ Parts:
 
 Total height ~300 mm.
 
-### Cap outline
+## Cap outline
 
 The top-view outline is a convex ellipse, `ell_ratio` = minor / major axis (0.8 by default, 1 = round), same area as a circle of radius `cap_R`, the same at every height. The edge stays flat (printed edge on the bed).
 
 - `ell_rot`: major axis orientation; `-1` (default): OpenSCAD picks the orientation that leaves the most clearance around the electronics (0°, along the board). The 3 dome screws stay at `tab_base`.
 - The console shows the **clearance index**: ≤ 1 = chassis, board (components ≤ 14 mm) and charge module ≥ 3 mm from the dome everywhere; otherwise a warning (raise `cap_R` / `cap_H` or `ell_ratio`). The console also shows the wire margin above the cradle; `stem_h` and `ballast_h` do not go below 5 mm of margin (assert).
 
-### Printing
+## Printing
 
 - Every part comes out in its print orientation. The **dome** (190 mm high, fits an Ender 3) prints edge on the bed, **without support**: printed in PETG (~20 h), the corbel bearing faces, 7 mm above the bed, bridge over more than 20 mm with two right angles. Low infill (~10 %): the top is solid in the model (~60 cm³, 76 g at 100 %, ~8 g at 10 %), only to avoid supports behind the neck, and it weighs in the wrong place. The other parts print without support (stem: 113 mm high).
 - Stem: **6 walls** (0.4 nozzle): the ballast chamber wall is 2.4 mm (`ballast_wall`), so it is solid without gap infill. 4 walls are enough for the other parts.
 - Dome in red (or brown: panther cap), dots in white, ground in green, the rest in white / ivory.
 - Ground: blades and fringe 0.9 mm thick, tips at 0.6 mm (0.4 nozzle); the slicer may truncate the finest tips.
 
-### Assembly, cell
+## Assembly, cell
 
 ![Exploded view: ground and stem, cell, gill disc, chassis and charger, board + BME280, dome](rendu_champignon_eclate.png)
 
@@ -157,9 +52,9 @@ The top-view outline is a convex ellipse, `ell_ratio` = minor / major axis (0.8 
 6. Cap held ~50 mm above the stem, plug the JST-XH pair, tuck it into the chamber just above the cradle (central hole of the disc), cap fitted on the tenon, radial screw.
 7. Changing the cell: remove the radial screw, lift the cap (~50 mm): the JST-XH pair shows, unplug it, pull the cradle out by the string.
 
-### Wiring (mushroom)
+## Wiring (mushroom)
 
-Printable A4 plan: [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (generated by `python3 harness.py`). Board connectors: [`hardware/tinysensor/WIRING.md`](../hardware/tinysensor/WIRING.md).
+Printable A4 plan: [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (generated by `python3 harness.py`). Board connectors: [`hardware/tinysensor/WIRING.md`](../../hardware/tinysensor/WIRING.md).
 
 **Sensor, no wire.** The BME280 breakout (6 pins VIN GND SCL SDA CSB SDO, ~15 × 11 mm) plugs its male header straight into a **2.54 mm 1×6 female header** soldered under the board, in the "I2C" footprint (6-pin JST-EH, 2.50 pitch: 0.2 mm cumulated offset over 6 positions, absorbed by the play of the Ø0.95 holes).
 
@@ -191,34 +86,23 @@ Routing:
 - Pre-crimped JST-XH: check red = pin 1 on both sides (M and F) before soldering.
 - 433 MHz antenna: straight, from J1 "RADIO" into the top of the gourd (top right above J1).
 
-### Open points
+## Open points
 
 - Cradle (1st print): barely fitted into the stem and the "−" wire did not pass (notch cut with pliers). Fixed for the next print: `cr_fit` clearance 0.8, deeper contact grooves (`bt_sink`), tabs up, wire notch at each end (`wire_notch`).
 - Dimensions to measure: contacts (sheet thickness `bt_t`, compressed spring `spring_c`), position of the charge module socket (`usb_cut`), BME breakout (`bme_w/d`, `bme_edge`, female header height `fh_h`).
 - No air gap between the dome and the board: the sensor is under the board, ventilated from below; solar heating to check by measurement.
-- Stability: set by the ballast and the glued ground, to check once printed. The 2026-11 estimate (~15° empty, ~28° full) was for the fatter stem (support radius ~38 mm, ~1 kg of ballast); the slender stem stands 22 mm from the axis on its short side (+X) and holds ~690 g, so it tips over sooner on that side without the ground. Partial filling is enough: freeze it with glue, stem upright.
+- Stability: set by the ballast and the glued ground, to check once printed. The 2026-11 estimate (~15° empty, ~28° full) was for the fatter stem (support radius ~38 mm, ~1 kg of ballast); the slender stem stands 19 mm from the axis on its short side (+X) and holds ~690 g, so it tips over sooner on that side without the ground. Partial filling is enough: freeze it with glue, stem upright.
 
 ## Screws and fixings
 
 | Use | Qty | Reference |
 |---|---|---|
-| PCB → standoffs | 4 | M2.5 × 6 self-tapping |
-| Lid | 6 | M3 × 8 self-tapping |
-| Box → wall | 2 | Ø4 countersunk + wall plugs |
-| Cable gland | 1 | PG7 |
-| Seal | ~45 cm | Ø2 TPU/EPDM cord |
-| Shield: assembly | 3 | M3 threaded rod ~60 mm + 6 nuts |
-| Shield → wall (option 1) | 2 | Ø4 countersunk |
-| Clip → shield (option 2) | 2 | M4 × 8 countersunk + nuts |
-| Box → mast (stand) | 2 | M4 × 10 countersunk + nuts |
-| Mast → foot (stand) | 1 | M4 × 20 + nut |
-| Mushroom: board → chassis | 2 | M2.5 × 6 self-tapping |
-| Mushroom: chassis → disc | 4 | M3 × 8 self-tapping |
-| Mushroom: dome → disc | 3 | M3 × 10 self-tapping (in the corbels) |
-| Mushroom: cap → stem | 1 | M3 × 8 self-tapping (radial) |
-| Receiver: plate → shell | 4 | M3 × 6 cylinder-head machine screw |
+| board → chassis | 2 | M2.5 × 6 self-tapping |
+| chassis → disc | 4 | M3 × 8 self-tapping |
+| dome → disc | 3 | M3 × 10 self-tapping (in the corbels) |
+| cap → stem | 1 | M3 × 8 self-tapping (radial) |
 
-## Connectors and electronics (mushroom)
+## Connectors and electronics
 
 | Use | Qty | Reference |
 |---|---|---|
@@ -231,8 +115,5 @@ Routing:
 | Cell | 1 | bare 18650, flat top, 65 mm |
 | Sensor | 1 | 6-pin BME280 breakout (address 0x76) |
 
-## Power (to decide)
-
-- 18650 holder on the PCB.
-- Available AA/AAA holders: to fit in the bay or in a separate compartment (dimensions to provide).
-- Solar: the TP4056 (linear charger, no MPPT) is a poor fit; prefer a CN3065 or a CN3791.
+Orca project: `mushroom.3mf` (see [export](../README.md#export)); `mushroom_cap.3mf`: the cap as printed, frozen snapshot outside `export.sh`.
+Wiring plan: `python3 harness.py` → `faisceau_champignon.pdf` (A4).

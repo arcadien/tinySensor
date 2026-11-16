@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Orca projects of print/ (one per model) updated from the .scad files, without touching the plates.
+"""Orca projects (one per model, next to its .scad) updated from the .scad files, without touching the plates.
 
-Usage: python3 update_3mf.py [project.3mf ...]   (default: every project in PROJECTS)
+Usage: python3 update_3mf.py [model/project.3mf ...]   (default: every project in PROJECTS)
 
 Existing project: each object is matched by its name (parts); its mesh is re-exported by OpenSCAD and
 replaced in place, re-centred the way Orca does, keeping its position and orientation (the bottom stays on
@@ -26,18 +26,18 @@ if not sys.flags.utf8_mode:   # Windows: read_text/write_text in cp1252 otherwis
     sys.exit(subprocess.call([sys.executable, "-X", "utf8", *sys.argv]))
 
 HERE = Path(__file__).resolve().parent
-PRINT = HERE / "print"
 OPENSCAD = (os.environ.get("OPENSCAD") or shutil.which("openscad")
             or sorted(Path.home().glob("bin/OpenSCAD-*.AppImage"))[-1])
-TEMPLATE = PRINT / "mushroom.3mf"
+TEMPLATE = HERE / "mushroom" / "mushroom.3mf"
 BED = 220      # Ender 3 bed; Orca spaces its plates by 1.2 beds
 GAP = 10       # between two parts on the same plate
 
+# scad: model, relative to this folder; the project sits next to it
 # parts: name in Orca -> OpenSCAD arguments (part in its print orientation)
 # plates: [(plate name, [parts, one entry per copy])], to create the project
 PROJECTS = {
     "mushroom.3mf": {
-        "scad": "mushroom.scad",
+        "scad": "mushroom/mushroom.scad",
         "parts": {
             "Chapeau": ['part="cap"'], "Lamelles": ['part="gills"'], "Châssis": ['part="chassis"'],
             "Pied": ['part="stem"'], "Sol": ['part="ground"'],
@@ -60,25 +60,25 @@ PROJECTS = {
                       "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon"},
     },
     "box.3mf": {   # wall box: print only one of the two bases
-        "scad": "tinysensor_box.scad",
+        "scad": "basic/tinysensor_box.scad",
         "parts": {"Fond extérieur": ['part="base"', 'usage="ext"'], "Fond intérieur": ['part="base"', 'usage="int"'],
                   "Couvercle": ['part="lid"']},
         "plates": [("Fond extérieur", ["Fond extérieur"]), ("Fond intérieur", ["Fond intérieur"]),
                    ("Couvercle", ["Couvercle"])],
     },
     "shield.3mf": {   # radiation shield
-        "scad": "sensor_shield.scad",
+        "scad": "basic/sensor_shield.scad",
         "parts": {"Chapeau": ['part="cap"'], "Assiette": ['part="plate"'], "Fond": ['part="base"'],
                   "Clip": ['part="clip"']},
         "plates": [("Abri", ["Chapeau", "Fond", "Clip"]), ("Assiettes", ["Assiette"] * 4)],
     },
     "receiver.3mf": {   # tinyDecoders receiver desk enclosure
-        "scad": "receiver.scad",
+        "scad": "receiver/receiver.scad",
         "parts": {"Coque": ['part="shell"'], "Fond": ['part="plate"']},
         "plates": [("Pupitre", ["Coque", "Fond"])],
     },
     "stand.3mf": {   # table stand
-        "scad": "stand.scad",
+        "scad": "basic/stand.scad",
         "parts": {"Mât": ['part="mast"'], "Pied": ['part="foot"']},
         "plates": [("Mât", ["Mât"]), ("Pied", ["Pied"])],
     },
@@ -328,6 +328,6 @@ def update(path, spec):
           + ("" if created else f"; previous file: {path.name}.bak"))
 
 
-targets = [Path(a) for a in sys.argv[1:]] or [PRINT / n for n in PROJECTS]
+targets = [Path(a) for a in sys.argv[1:]] or [(HERE / s["scad"]).parent / n for n, s in PROJECTS.items()]
 for p in targets:
     update(p, PROJECTS[p.name])

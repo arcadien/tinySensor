@@ -21,7 +21,7 @@ jobs:
         run: pip install clang-format==18.1.8
       - name: Check formatting
         # same command as the .rbd/config.yml linter (tinyDecoders included, .pio skipped)
-        run: find src lib include test tinyDecoders -path '*/.pio' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run --Werror
+        run: find emitter/src emitter/include emitter/test lib tinyDecoders -path '*/.pio' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run --Werror
 
   # Native Unity tests (Oregon / Lacrosse / X10 encoders, analog filter, ...)
   test-native:
@@ -37,20 +37,20 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles('emitter/platformio.ini', 'tinyDecoders/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
-        run: pio test -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
+        run: pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
       - name: Run tinyDecoders native tests
         run: pio test -d tinyDecoders -e native
       - name: Compile-fail checks
         run: |
-          bash test/compile_fail/check_both_protocols.sh
-          bash test/compile_fail/check_lacrosse_id_required.sh
+          bash emitter/test/compile_fail/check_both_protocols.sh
+          bash emitter/test/compile_fail/check_lacrosse_id_required.sh
       - name: Build variant checks
-        run: bash test/build_variants/check_sensor_selection.sh
+        run: bash emitter/test/build_variants/check_sensor_selection.sh
 
   # Firmware build for every physical target
   build-avr:
@@ -70,19 +70,19 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles('emitter/platformio.ini', 'tinyDecoders/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Build firmware
-        run: pio run -e ${{ matrix.env }}
+        run: pio run -d emitter -e ${{ matrix.env }}
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v7
         with:
           name: firmware-${{ matrix.env }}
           path: |
-            .pio/build/${{ matrix.env }}/firmware.hex
-            .pio/build/${{ matrix.env }}/firmware.elf
+            emitter/.pio/build/${{ matrix.env }}/firmware.hex
+            emitter/.pio/build/${{ matrix.env }}/firmware.elf
           if-no-files-found: error
           retention-days: 30
 
@@ -100,7 +100,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini', 'tinyDecoders/platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles('emitter/platformio.ini', 'tinyDecoders/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio

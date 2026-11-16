@@ -22,7 +22,7 @@
 /*
  * Loads the available measurements into the encoder.
  * Returns true when a frame must be sent, i.e. when a temperature is
- * available. Fields not present keep the value of a previous cycle.
+ * available. The encoder is built anew each cycle: absent fields are not sent.
  */
 inline bool ApplyMeasurements(OregonV3 &encoder, const Measurements &m,
                               bool lowBattery) {

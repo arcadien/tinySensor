@@ -8,7 +8,7 @@ updates:
       - "dependencies"
 
   - package-ecosystem: "docker"
-    directory: "/web"
+    directory: "/.devcontainer"
     schedule:
       interval: "monthly"
     labels:

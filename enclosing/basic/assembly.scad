@@ -9,7 +9,7 @@ mount = "wall"; // [wall, stand]
 use <tinysensor_box.scad>
 use <sensor_shield.scad>
 use <stand.scad>
-use <euro2.scad>
+use <../euro2.scad>
 // parameters copied from both files
 cav_w = 95.98; reach = 22.4; base_h = 2.4 + 5 + 1.6 + 25 + 2;
 gap = 10; plate_t = 1.6; n = 4; stack_h = (n + 1) * gap + plate_t;

@@ -14,36 +14,38 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 
 | Env | Protocol | Sensor | Battery | Notes |
 |-----|----------|--------|---------|-------|
-| `S_02` | Oregon v3, channel 1, rolling code `0x20` | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 2 |
+| `S_02` | Oregon, channel 1, rolling code `0x20` | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 2 |
 | `S_03` | Lacrosse WS7000, address THREE | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 3 |
-| `S_04` | Oregon v3, channel 3, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
-| `S_05` | Oregon v3, channel 2, mode 2 | BME280 (temp + humidity + pressure) | 18650 Li-ion | Prototype rev 5 — older HW design, higher `INTERNAL_1v1=1343` reflects this chip |
+| `S_04` | Oregon, channel 3, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
+| `S_05` | none: X10 battery meter only | BME280 (read, not transmitted) | 18650 Li-ion | Prototype rev 5 — older HW design, higher `INTERNAL_1v1=1343` reflects this chip |
 
 ## Special environments
 
 | Env | Purpose |
 |-----|---------|
 | `robot` | A robot device reworked to share the TinySensor PCB interface. Lacrosse WS7000 address FOUR, BME280. |
-| `devmodule` | Bench development board. `BATTERY_IS_VCC` — no battery divider, reports VCC directly. Lacrosse WS7000 address ONE, BME280. |
-| `SOLAR_TEST` | CI simulation target via `simavr`. Lacrosse WS7000 address TWO, BME280 + BH1750 light sensor. Not a physical board — used to run on-device tests in the AVR simulator. |
+| `devmodule` | Bench development board. `BATTERY_IS_VCC` — no battery divider, reports VCC directly. No radio protocol: BME280 read, only the X10 battery meter is sent. |
+| `SOLAR_TEST` | Solar test board: Lacrosse WS7000 address TWO, BH1750 light sensor, analog X10 meter (`ANALOG1_X10_ID=9`), no temperature sensor. Has a `simavr` test setup, but CI only builds it. |
 
 ## Battery voltage thresholds
 
-`LOW_BATTERY_VOLTAGE` is set per environment to match the chemistry:
+`LOW_BATTERY_VOLTAGE` (mV) is set per environment, from the battery and the way it is measured:
 
-| Chemistry | Typical threshold |
-|-----------|------------------|
-| 2× AA alkaline (via charge pump) | 2200 mV |
-| 2× AA alkaline (direct) | 2200 mV |
-| 18650 Li-ion | 3400 mV |
-| USB / bench (`BATTERY_IS_VCC`) | 3300 mV (informational) |
+| Env | Battery | Threshold |
+|-----|---------|-----------|
+| `S_02` | 2× AA via charge pump | 2200 mV |
+| `S_03` | 2× AA via charge pump | 1100 mV |
+| `S_04`, `robot` | 2× AA | 2200 mV |
+| `S_05` | 18650 Li-ion | 3400 mV |
+| `devmodule`, `SOLAR_TEST` | bench / solar (`BATTERY_IS_VCC` on `devmodule`) | 3300 mV |
 
-When the measured battery voltage falls below the threshold, the X10 battery meter frame is suppressed and `SetBatteryLow(true)` is sent in the Oregon frame.
+When the measured battery voltage falls below the threshold, the X10 battery and analog meter frames and the BH1750 luminosity frames are suppressed, and `SetBatteryLow(true)` is sent in the Oregon frame.
 
 ## Adding a new board
 
-1. Copy an existing `[env:S_XX]` block in `platformio.ini`.
+1. Copy an existing `[env:S_XX]` block in `emitter/platformio.ini`.
 2. Choose the protocol (`USE_OREGON` / `USE_LACROSSE`) and sensor (`USE_BMP280` / `USE_BME280` / `USE_BH1750` / `USE_DS18B20`).
+   `USE_BH1750` needs `LACROSSE_ID` whatever the protocol (the luminosity always goes out as Lacrosse frames). `USE_SWITCHED_5V` powers an off-board 5 V module through PB2 during measurements (LM35 variant, PLAT-POWER-006).
 3. Set `BATTERY_VOLTAGE_X10_ID` to a unique integer not used by any other board.
 4. Set `INTERNAL_1v1=1100` as a starting value, then calibrate as above.
 5. Assign the next `S_XX` label, write it on the PCB.
