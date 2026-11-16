@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-12 — FUNC-DECODE-007 (big-value OLED page: 16x32 main value + 4-character side column, 10 s source rotation, 2 s secondary alternation, centred waiting page; `DrawBigChar` / `ReadBigGlyphPage`; 30-min source expiry FUNC-DECODE-010), see [tinyDecoders sub-project](#tinydecoders-sub-project)_
+_Last updated: 2026-11-16 — TECH-HAL-006 (runCycle calls `hal->Init()` first, before sensor power-on; `main()` only loops)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -51,7 +51,7 @@ graph TD
 | `LightSensor` | Wrapper for BH1750 (`include/LightSensor.h`); `Read()` starts a one-shot measurement, waits 150 ms through the HAL, returns lux; stub on non-AVR | FUNC-SENSOR-003 |
 | `Measurements` | Values of one cycle (`include/Measurements.h`): temperature, humidity, pressure, luminosity, each with a "present" flag | — |
 | `EnvironmentEncoder` | Build-time alias to `OregonV3` or `LacrosseWS7000` (`include/EnvironmentEncoder.h`) + `ConfigureEncoder()` and `ApplyMeasurements()` overloads | FUNC-OREGON-012, FUNC-LACROSSE-002, FUNC-BATTERY-003 |
-| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*` (except the file-scope `BMx280`); `main()` (excluded under `UNIT_TEST`) = `hal.Init()` + endless `runCycle(&hal)` loop | TECH-MAIN-001 |
+| `main.cpp` | `runCycle(Hal*)` (declared in `include/main.h`): one cycle, `hal->Init()` (TECH-HAL-006) → power on → read sensors → encode → transmit → power off → hibernate, with encoders and wrappers built from the injected `Hal*` (except the file-scope `BMx280`); `main()` (excluded under `UNIT_TEST`) = endless `runCycle(&hal)` loop | TECH-MAIN-001, TECH-HAL-006 |
 | `AnalogFilter` | Accumulates ADC samples with configurable warm-up exclusion; returns integer floor mean | TECH-FILTER-001, TECH-FILTER-002 |
 | `ConversionTools` | BCD-in-hex conversion utilities for 16-bit and 32-bit decimal values | TECH-CONVERT-001, TECH-CONVERT-002 |
 
@@ -73,7 +73,7 @@ Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at constru
 
 ## Main loop structure
 
-`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers. One cycle is `void runCycle(Hal* hal)` (TECH-MAIN-001, declared in `include/main.h`); `main()` calls `hal.Init()` then loops on `runCycle(&hal)`, and is compiled out under `UNIT_TEST` so native test binaries can link `src/`.
+`src/main.cpp` only orchestrates; protocol and sensor details live in the encoders and wrappers. One cycle is `void runCycle(Hal* hal)` (TECH-MAIN-001, declared in `include/main.h`); `runCycle` starts with `hal->Init()` (TECH-HAL-006), `main()` only loops on `runCycle(&hal)`, and is compiled out under `UNIT_TEST` so native test binaries can link `src/`.
 
 1. `hal->PowerOnSensors()`.
 2. `ReadEnvironment()` fills a `Measurements` from the fitted sensors (`BMx280`, `Ds18b20`). A field is flagged present only if its sensor is fitted and read correctly (DS18B20: `0` means read error).
@@ -217,13 +217,13 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | TECH-HAL-003 | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
 | TECH-HAL-004 | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; pull-ups unused pins; BOD-sleep disable |
 | TECH-HAL-005 | `Attiny84aHal` / `TestHal_` | LedOn/LedOff toggle PORTB PB1 on AVR; toggle IsLedOn in TestHal_ |
-| TECH-HAL-006 | `Attiny84aHal` / `TestHal_` | Init() calls TinyI2C.init() on AVR (USE_I2C); sets I2CIsConfigured in TestHal_ |
+| TECH-HAL-006 | `main.cpp` / `Attiny84aHal` / `TestHal_` | runCycle calls Init() first, before PowerOnSensors; Init() calls TinyI2C.init() on AVR (USE_I2C); TestHal_ records 'I'; checked in test_main_cycle |
 | TECH-FILTER-001 | `AnalogFilter` | Discards first `exclusion` values; accumulates up to `samples`; Get() returns integer floor mean |
 | TECH-FILTER-002 | `AnalogFilter` | Push() after samples count reached is silently ignored; Get() returns mean of first samples values |
 | TECH-CONVERT-001 | `ConversionTools` | dec16ToHex packs each decimal digit of uint16_t into one nibble (BCD-in-hex) |
 | TECH-CONVERT-002 | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | TECH-SERIAL-001 | `SoftSerial` | Output-only UART at 9600 baud; one SerialWriteBit call per bit, bit period (1 000 000 / 9600) − 25 µs held by the HAL |
-| TECH-MAIN-001 | `main.cpp` / `include/main.h` / `platformio.ini` | One cycle extracted into `runCycle(Hal*)`; encoders built from the injected Hal, BMx280 file-scope; `main()` excluded under UNIT_TEST; four `native_cycle_*` envs run `test_main_cycle` |
+| TECH-MAIN-001 | `main.cpp` / `include/main.h` / `platformio.ini` | One cycle extracted into `runCycle(Hal*)`; encoders built from the injected Hal, BMx280 file-scope; `main()` only loops on runCycle, excluded under UNIT_TEST; four `native_cycle_*` envs run `test_main_cycle` |
 | TECH-SERIAL-002 | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
 | TECH-X10-001 | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | TECH-X10-002 | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
