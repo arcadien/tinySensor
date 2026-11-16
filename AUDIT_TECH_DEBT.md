@@ -252,7 +252,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 |----|------|:------:|:------:|:------:|:--------:|
 | ~~T1~~ | ~~**The CI builds no AVR target**. The workflow only runs `pio test -e native_debug`. A refactoring can break `S_02`..`SOLAR_TEST` without warning. The "prod" project is never checked.~~ — ✅ **Resolved 2026-04-19** (two-job workflow, AVR matrix) | 5 | 4 | 2 | ~~36~~ |
 | ~~T2~~ | ~~No active coverage report. `.coveralls.yml` exists (and is compromised, see C1), but no CI step generates/uploads coverage.~~ — ⛔ **Dropped 2026-10-25** (Coveralls removed from the project; secret gone, checked 2026-11-16) | 2 | 1 | 2 | ~~12~~ |
-| T3 | No test for the `BMx280` wrapper (the header exposes `GetTemperature/GetHumidity/GetPressure`, no test checks the bridges). | 3 | 2 | 3 | 15 |
+| ~~T3~~ | ~~No test for the `BMx280` wrapper.~~ — ⛔ **Closed 2026-11-16** (accepted: on native the wrapper is a stub returning 0 and on AVR a pass-through to the SparkFun library, so a test would check nothing real) | 3 | 2 | 3 | ~~15~~ |
 | ~~T4~~ | ~~No test for `SoftSerial` — blocked by C6 (dependency on `_delay_us`).~~ — ✅ **Resolved 2026-10-25** (`test_softSerial` suite, 6 tests) | 2 | 2 | 2 | ~~16~~ |
 | ~~T5~~ | ~~No HW-in-the-loop or simavr-based test run in CI, although `[env:SOLAR_TEST]` is configured for simavr.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 3 | 4 | ~~12~~ |
 | ~~T6~~ | ~~The Oregon/Lacrosse timing tests check a *string of orders* through `TestHal.Orders`; neither real timings nor interop with RTL_433/RFLink are checked.~~ — ◐ **Closed 2026-11-16, partly covered** (`tinyDecoders` native tests decode the repository encoders' frames with an RFLink-modelled decoder) | 3 | 3 | 4 | ~~12~~ |
@@ -305,8 +305,7 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
-| 1 | T3 | No test of the `BMx280` wrapper | Test | 15 |
-| 2 | I8 | No `v*` tag yet: `v1.0.0` once the product is tested | Infra | 12 |
+| 1 | I8 | No `v*` tag yet: `v1.0.0` once the product is tested | Infra | 12 |
 
 ---
 
@@ -318,7 +317,7 @@ One item at a time, in this order (cheapest first):
 2. ~~**Doc4** — reference the protocol documents.~~ ✅ 2026-11-16
 3. ~~**A6** — decide on `feat/328p_hal`.~~ ⛔ branch deleted 2026-11-16
 4. ~~**T7** — give `test_busses` a real check.~~ ✅ 2026-11-16 (TECH-HAL-006)
-5. **T3** — `BMx280` wrapper test, through the RBD workflow (requirement, test, code).
+5. ~~**T3** — `BMx280` wrapper test.~~ ⛔ closed 2026-11-16 (stub / pass-through)
 6. **I8** — tag `v1.0.0` on `master` once the product is tested on real hardware (the `release` job publishes every firmware).
 7. ~~**Doc6** — hardware BOM from the KiCad schematic.~~ ✅ 2026-11-16
 
