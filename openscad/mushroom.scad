@@ -25,15 +25,15 @@
 //   openscad -D 'part="plug"'    -o mushroom_plug.3mf    mushroom.scad
 //   openscad -D 'part="dots"'    -o mushroom_dots.3mf    mushroom.scad   # every dot, numbered, standing on its edge (supports under)
 // Renders:
-//   openscad --preview -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
-//   openscad --preview -D 'part="assembly"' --camera=0,0,150,90,0,0,900 --imgsize=1000,1300 -o rendu_champignon_cote.png mushroom.scad
-//   openscad --preview -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
-//   openscad --preview -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
-//   openscad --preview -D 'part="exploded"' --camera=0,0,330,70,0,25,1950 --imgsize=1000,1800 -o rendu_champignon_eclate.png mushroom.scad
-//   openscad --preview -D 'part="cradle_view"' --camera=40,20,10,55,0,30,230 --imgsize=1200,800 -o rendu_champignon_berceau.png mushroom.scad
-//   openscad --preview -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
-//   openscad --preview -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
-//   openscad --preview -D 'part="console"'  --camera=41,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
+//   openscad --preview --colorscheme=Starnight -D 'part="assembly"' --camera=10,0,145,75,0,25,950 --imgsize=1000,1300 -o rendu_champignon.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="assembly"' --camera=0,0,150,90,0,0,900 --imgsize=1000,1300 -o rendu_champignon_cote.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="assembly"' --camera=0,0,90,112,0,200,720 --imgsize=1000,1000 -o rendu_champignon_dessous.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="assembly"' --camera=0,0,30,65,0,40,260 --imgsize=1000,800 -o rendu_champignon_pied.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="exploded"' --camera=0,0,330,70,0,25,1950 --imgsize=1000,1800 -o rendu_champignon_eclate.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="cradle_view"' --camera=40,20,10,55,0,30,230 --imgsize=1200,800 -o rendu_champignon_berceau.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="section"'  --camera=0,0,150,90,0,0,850 --imgsize=1000,1300 -o rendu_champignon_coupe.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="sensor"'   --camera=-18,5,166,96,0,0,150 --imgsize=1200,800 -o rendu_champignon_capteur.png mushroom.scad
+//   openscad --preview --colorscheme=Starnight -D 'part="console"'  --camera=41,0,5,75,0,-20,95 --imgsize=1200,800 -o rendu_champignon_console.png mushroom.scad   # ~4 min
 //
 // Frames: world = Z up, stem axis at X = Y = 0, Z = 0 on the table.
 // Cap (cap_xf): Z = 0 under the gill disc, axis tilted by cap_tilt towards +X.
