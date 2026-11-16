@@ -256,7 +256,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~T4~~ | ~~No test for `SoftSerial` — blocked by C6 (dependency on `_delay_us`).~~ — ✅ **Resolved 2026-10-25** (`test_softSerial` suite, 6 tests) | 2 | 2 | 2 | ~~16~~ |
 | ~~T5~~ | ~~No HW-in-the-loop or simavr-based test run in CI, although `[env:SOLAR_TEST]` is configured for simavr.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 3 | 4 | ~~12~~ |
 | ~~T6~~ | ~~The Oregon/Lacrosse timing tests check a *string of orders* through `TestHal.Orders`; neither real timings nor interop with RTL_433/RFLink are checked.~~ — ◐ **Closed 2026-11-16, partly covered** (`tinyDecoders` native tests decode the repository encoders' frames with an RFLink-modelled decoder) | 3 | 3 | 4 | ~~12~~ |
-| T7 | `emitter/test/test_busses/bussesTest.cpp` only tests an `I2CIsConfigured` boolean after `Init()` — no regression value. | 2 | 1 | 2 | 12 |
+| ~~T7~~ | ~~`test_busses` only tests an `I2CIsConfigured` boolean after `Init()` — no regression value.~~ — ✅ **Resolved 2026-11-16** (TECH-HAL-006 rewritten: `runCycle` calls `hal->Init()` first, before sensor power-on, re-initialising the I2C/USI after each hibernate; `test_main_cycle` checks `Init` is the first HAL call, once; `test_busses` removed) | 2 | 1 | 2 | ~~12~~ |
 
 ### 3.4 Dependency debt
 
@@ -295,7 +295,7 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~I5~~ | ~~Single-runner, single-python, single-env CI. No matrix to test different tooling versions.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 2 | 2 | ~~20~~ |
 | ~~I6~~ | ~~No pre-commit or `.editorconfig`. `clang-format` is installed in the devcontainer but not applied automatically (commit `68cefb8 chore: clang-format` suggests a one-off manual pass).~~ — ✅ **Resolved 2026-10-25** (`.editorconfig`, clang-format 18.1.8 pre-commit, CI `lint` job) | 2 | 1 | 2 | ~~12~~ |
 | ~~I7~~ | ~~Minimal `.gitignore` (12 lines): does not exclude `Debug/` (hence I1), nor `*.o`, `*.d`, `*.hex` at the root.~~ — ✅ **Resolved 2026-04-19** (buggy line 1 removed, artefact patterns added, commented structure). | 2 | 2 | 1 | ~~20~~ |
-| I8 | No versioning: tags exist (`late_otpim`, `second_pcb_batch`, …) and one release (2026-06), but no `v*` tag, so the CI `release` job never ran. | 2 | 1 | 2 | 12 |
+| I8 | No versioning: tags exist (`late_otpim`, `second_pcb_batch`, …) and one release (2026-06), but no `v*` tag, so the CI `release` job never ran. **Decision 2026-11-16**: real releases from `v1.0.0`. | 2 | 1 | 2 | 12 |
 
 ---
 
@@ -305,10 +305,9 @@ Every other item is resolved or closed (§1bis, §3). The April top 20 is in the
 
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
-| 3 | T3 | No test of the `BMx280` wrapper | Test | 15 |
-| 4 | T7 | `test_busses` has no regression value | Test | 12 |
-| 4 | I8 | No `v*` tag, the `release` job never ran | Infra | 12 |
-| 6 | Doc6 | No consolidated hardware BOM | Doc | 9 |
+| 1 | T3 | No test of the `BMx280` wrapper | Test | 15 |
+| 2 | I8 | No `v*` tag yet, `v1.0.0` decided | Infra | 12 |
+| 3 | Doc6 | No consolidated hardware BOM | Doc | 9 |
 
 ---
 
@@ -319,9 +318,9 @@ One item at a time, in this order (cheapest first):
 1. ~~**Doc3** — describe `scripts/flash_tinySensor` in `docs/debugging.md`.~~ ✅ 2026-11-16
 2. ~~**Doc4** — reference the protocol documents.~~ ✅ 2026-11-16
 3. ~~**A6** — decide on `feat/328p_hal`.~~ ⛔ branch deleted 2026-11-16
-4. **T7** — drop `test_busses` or give it a real check.
+4. ~~**T7** — give `test_busses` a real check.~~ ✅ 2026-11-16 (TECH-HAL-006)
 5. **T3** — `BMx280` wrapper test, through the RBD workflow (requirement, test, code).
-6. **I8** — decide on `v*` tags (the `release` job is ready) or close.
+6. **I8** — tag `v1.0.0` on `master` once this series is merged (the `release` job publishes every firmware).
 7. **Doc6** — hardware BOM from the KiCad schematic.
 
 ---
