@@ -14,10 +14,12 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 
 | Env | Protocol | Sensor | Battery | Notes |
 |-----|----------|--------|---------|-------|
-| `S_02` | Oregon, channel 1, rolling code `0x20` | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 2 |
-| `S_03` | Lacrosse WS7000, address THREE | BMP280 (temp + pressure) | 2× AA via charge pump | Prototype rev 3 |
+| `S_02` | Oregon, channel 1, rolling code `0x20` | BMP280 (temperature sent only) | 2× AA via charge pump | Prototype rev 2 |
+| `S_03` | Lacrosse WS7000, address THREE | BMP280 (temperature sent only) | 2× AA via charge pump | Prototype rev 3 |
 | `S_04` | Oregon, channel 3, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
 | `S_05` | none: X10 battery meter only | BME280 (read, not transmitted) | 18650 Li-ion | Prototype rev 5 — older HW design, higher `INTERNAL_1v1=1343` reflects this chip |
+
+With `USE_BMP280` the firmware reads and sends the temperature only, although the BMP280 also measures pressure: `ReadEnvironment` reads pressure and humidity only with `USE_BME280`. No emulated Oregon sensor carries temperature + pressure without humidity anyway; on Lacrosse the pressure could be sent, it is not today.
 
 ## Special environments
 
