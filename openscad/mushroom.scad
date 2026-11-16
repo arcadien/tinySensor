@@ -355,9 +355,13 @@ function disc_pts() = [for (i = [0 : na - 1]) let(a = i * 360 / na, r = inner_mi
 disc_rmax = cap_R - cap_t;   // gill depth normalisation (beyond: minimum depth)
 function gill_d(r) = gill_depth[1] + (gill_depth[0] - gill_depth[1]) * pow(max(0, (disc_rmax - r) / (disc_rmax - collar_r)), 1.3);
 function adiff(a, b) = abs(((a - b + 540) % 360) - 180);
-// angles where a gill would be in the way: dome screws, USB socket, chassis screws, sleeve screw
+// angles where a gill would be in the way: USB socket, sleeve screw
 ch_screws = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (ix - 2.5), sy * (iy - 2.5)]];
-gill_skip = concat([for (a = tab_a) [a, 7]], [[0, 12], [collar_screw_a, 7]], [for (p = ch_screws) [atan2(p[1], p[0]), 5]]);
+gill_skip = [[0, 12], [collar_screw_a, 7]];
+// screws driven from below: the gills are cut short around them (room for the head and the screwdriver), the clearance
+// running on to the nearest end so that no stub is left: dome screws near the edge (outwards), chassis screws inwards
+screws_below = concat([for (a = tab_a) [tab_r(a) * [cos(a), sin(a)], 1.5]], [for (p = ch_screws) [p, 0]]);   // [position, end / position]
+screw_clear = 4.5;
 assert(min([for (a = [-12 : 2 : 12]) inner_min(a) - disc_fit]) >= chg_x + chg_t + 1.5 + usb_cut[0] / 2 + 2, "Disc too small around the USB socket");
 function gill_ok(a) = min([for (s = gill_skip) adiff(a, s[0]) - s[1]]) > 0;
 
@@ -372,7 +376,10 @@ module gills() {
         for (i = [0 : n_gills - 1]) let(a = (i + 0.5) * 360 / n_gills) if (gill_ok(a))
           rotate([0, 0, a]) rotate([90, 0, 0]) linear_extrude(gill_t, center = true)
             polygon(concat([[collar_r - 1, 0]], [for (r = [collar_r - 1 : 2 : cap_R * 1.5]) [r, -gill_d(r)]], [[cap_R * 1.5, 0]]));
-        translate([0, 0, -50]) linear_extrude(50 + eps) offset(delta = -1) polygon(disc_pts());
+        translate([0, 0, -50]) linear_extrude(50 + eps) difference() {
+          offset(delta = -1) polygon(disc_pts());
+          for (s = screws_below) hull() for (p = [s[0], s[0] * s[1]]) translate(p) circle(r = screw_clear, $fn = 32);
+        }
       }
     }
     // sleeve
