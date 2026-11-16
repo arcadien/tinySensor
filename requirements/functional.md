@@ -231,6 +231,12 @@
 **Dependencies:** FUNC-BATTERY-001
 **Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` calls `hal.GetRawAnalogSensor()` (PA0 ADC reading) and converts it to millivolts via `hal.ConvertAnalogValueToMv(rawAdc, vccMv)`, where `vccMv` was computed by `ComputeVccMv(INTERNAL_1v1)`.
 
+### FUNC-MAIN-001
+**Title:** Environment frame sent twice per cycle, separated by a silence at least one frame long
+**Status:** validated
+**Dependencies:** FUNC-OREGON-014, FUNC-LACROSSE-002, PLAT-POWER-004, TECH-MAIN-001
+**Description:** In every cycle where the sensor sends an environment frame (Oregon or Lacrosse, whichever the build uses), it sends that frame twice, and both copies are identical. Between the end of the first copy and the start of the second, the radio stays low for at least the length of one frame: 246 ms for Oregon and 98 ms for Lacrosse. This matches commercial Oregon sensors and makes up for single frames that RFLink missed. The X10 meter frames, the luminosity frame, and cycles that send no environment frame stay as they are. Acceptance: in one cycle on an Oregon build and one on a Lacrosse build, the radio output holds two identical environment frames. Between them there is a silence of at least 246 ms (Oregon) or 98 ms (Lacrosse), and the radio is never high during it. A build with no environment protocol sends no extra frame.
+
 ---
 
 ### FUNC-DECODE-001
