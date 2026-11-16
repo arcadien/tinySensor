@@ -45,7 +45,7 @@ use <euro2.scad>
 
 /* [Render] */
 part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, deck, stem, ground, cradle, plug, dot]
-dot_d = 8;         // diameter of the exported dot (part = "dot")
+dot_d = 16;        // diameter of the exported dot (part = "dot")
 explode = 40;      // exploded view: gap between levels (part = "exploded")
 cap_color = "#c0392b"; // render only (fly agaric; panther cap: "#8b5a2b")
 
@@ -79,18 +79,17 @@ corbel_w = 12;     // dome corbels, above the disc: width (around the screw)
 corbel_h = 10;     // height of the straight face, 45° chamfer above up to the wall
 corbel_in = 5;     // corbel overhang beyond the screw axis, inwards
 corbel_pilot = 8;  // pilot hole depth (M3x10 self-tapping: 3 of disc + 7 engaged)
-tab_base = [90, 210, 330];  // dome screws (corbels): each slides (±40°) towards the nearest lobe
-dot_sizes = [6, 8, 10];
-dot_bag = [6, 6, 6, 8, 8, 8, 10, 10, 10, 10, 10];  // dot size draw: large ones favoured
+tab_base = [90, 210, 330];  // dome screws (corbels), angles in the cap frame
+dot_sizes = [12, 16, 20];
+dot_bag = [12, 12, 12, 16, 16, 16, 20, 20, 20, 20, 20];  // dot size draw: large ones favoured
 dot_pocket = 0.8;
-dot_gap = 12;      // minimum gap between two dots
+dot_h = 1.2;       // lens height above the pocket (thin, whatever the diameter)
+dot_gap = 22;      // minimum gap between two dots
 
-/* [Cap outline: lobe generator] */
-lobe_seed = 6;     // seed: change for another shape
-lobe_n = 4.5;      // dominant lobe count
-lobe_amp = 0.22;   // max deviation from the mean radius, at the edge (0.22 = ±22 %)
-lobe_top = 0.3;    // share of the deformation left at the top (1 = bumpy all the way up)
-lobe_rot = 165;    // outline orientation in degrees; -1 = automatic (best clearance around the electronics)
+/* [Cap outline: ellipse] */
+lobe_seed = 6;     // seed of the random draws (stem and ring lobes, dots)
+ell_ratio = 0.8;   // minor / major axis of the elliptic outline (1 = round); same area as a circle of radius cap_R
+ell_rot = -1;      // major axis orientation in degrees; -1 = automatic (best clearance around the electronics)
 clear_m = 3;       // target minimum clearance between the electronics and the dome (clearance index)
 
 /* [Gills] */
@@ -226,14 +225,9 @@ function cap_shift(z) = cap_top * neck_k(z);
 function lean_pt(p) = let(a = cap_lean * neck_k(p[2]), dz = p[2] - cap_neck[0] * cap_H)
   [p[0] * cos(a) - dz * sin(a), p[1], cap_neck[0] * cap_H + p[0] * sin(a) + dz * cos(a)];
 
-// outline: harmonics 2 to 7 with random phases, weighted around lobe_n, normalised to lobe_amp
 function vsum(v, i = 0) = i < len(v) ? v[i] + vsum(v, i + 1) : 0;
-lobe_terms = [for (k = [2 : 7]) let(q = rands(0, 1, 2, lobe_seed * 17 + k)) [k, (0.5 + 0.5 * q[0]) * exp(-pow((k - lobe_n) / 1.5, 2)), 360 * q[1]]];
-function lobe_raw(phi) = vsum([for (h = lobe_terms) h[1] * sin(h[0] * phi + h[2])]);
-lobe_peak = max([for (i = [0 : 179]) abs(lobe_raw(2 * i))]);
-function lobe_at(phi, rot) = lobe_amp * lobe_raw(phi - rot) / lobe_peak;
-// full deformation at the edge (s = 0), reduced to lobe_top at the top (s = 1)
-function wav_r(phi, s, rot) = 1 + lobe_at(phi, rot) * (lobe_top + (1 - lobe_top) * (1 - s));
+// outline: ellipse of mean radius 1 (a * b = 1), major axis at rot; same at every height (convex sections)
+function wav_r(phi, s, rot) = 1 / sqrt(ell_ratio * pow(cos(phi - rot), 2) + pow(sin(phi - rot), 2) / ell_ratio);
 // edge thickening: full under the disc, then 45° blend (no support)
 function rim_extra(z) = let(e = rim_w - cap_t) max(0, min(e, e - (z - cap_skirt)));
 function inner_rr(phi, zz, rot) = lookup(zz, prof_zr) * wav_r(phi, min(1, zz / cap_H), rot) - cap_t - rim_extra(zz);
@@ -248,7 +242,7 @@ function v_in(p, rot) = let(zz = p[2] + cap_skirt, d = [p[0], p[1]] - cap_shift(
 function worst(rot) = max([for (p = clear_pts) v_in(p, rot)]);
 rots = [for (a = [0 : 5 : 355]) worst(a)];
 best_rot = search(min(rots), rots)[0] * 5;
-rot = lobe_rot >= 0 ? lobe_rot : best_rot;
+rot = ell_rot >= 0 ? ell_rot : best_rot;
 function wav(phi, s = 0) = wav_r(phi, s, rot);
 // surface point: t from 0 (edge) to 90 (top) along the meridian, off = inset along the normal
 function cap_pt(phi, t, off = 0) = let(m = prof(t / 90), n = [m[1][1], -m[1][0]] / norm(m[1]), s = m[0][1] / cap_H,
@@ -274,8 +268,10 @@ module dome_solid(off = 0) {   // solid volume under the surface, closed by the 
 // dots: "Poisson disc" draw on the real surface: candidates on a dense, noisy (phi, t)
 // grid, visited in a pseudo-random order, kept if far enough from the others
 dot_cand = [for (t = [4 : 2 : 88], phi = [0 : 3 : 357]) let(q = rands(0, 1, 3, t * 1000 + phi + lobe_seed))
-  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt)) if (p[2] > 9)
-  [pp, tt, dot_bag[floor(q[2] * len(dot_bag) * 0.999)], p]];
+  let(tt = t + q[0] * 2, pp = phi + q[1] * 3, p = cap_pt(pp, tt), d = dot_bag[floor(q[2] * len(dot_bag) * 0.999)])
+  // flat dot on the curved dome: its edge lifts by (d/2)^2 / 2r, kept within the pocket depth
+  // shortcut: hoop curvature only (meridian ignored), fine while the gourd stays this smooth
+  if (p[2] > 9 && d * d / (8 * prof(tt / 90)[0][0] * wav(pp)) <= dot_pocket) [pp, tt, d, p]];
 function dot_far(c, acc, i = 0) = i >= len(acc) ? true
   : norm(c[3] - acc[i][3]) < (c[2] + acc[i][2]) / 2 + dot_gap ? false : dot_far(c, acc, i + 1);
 function dot_pick(i, acc) = i >= len(dot_cand) ? acc
@@ -291,8 +287,7 @@ module at_dot(d) {
 // dome screws: axis 5 mm from the wall at the edge (away from the electronics), in the corbels
 function tab_r(a) = inner_r(a, 2) - 5;
 corbel_z = cap_skirt + disc_t;   // corbel bearing face = top of the disc (dome frame)
-function argmax_a(a0) = let(c = [for (d = [-40 : 2 : 40]) lobe_at(a0 + d, rot)]) a0 - 40 + 2 * search(max(c), c)[0];
-tab_a = [for (a = tab_base) argmax_a(a)];
+tab_a = tab_base;
 // corbels on the wall, just above the disc: the disc rises into the dome and is pulled up by the screws;
 // straight face on the inside, 45° chamfer up to the wall above; the only face towards the bed:
 // the bearing face (corbel_z, ~7 mm above the bed), bridged without support (checked in PETG)
@@ -324,9 +319,9 @@ module cap() {
 }
 
 module dot(d) {
-  cylinder(d = d, h = dot_pocket + eps, $fn = 32);   // overlap: a single solid with the lens
+  cylinder(d = d, h = dot_pocket + eps, $fn = 48);   // overlap: a single solid with the lens
   translate([0, 0, dot_pocket]) intersection() {
-    scale([1, 1, 0.45]) sphere(d = d, $fn = 32);
+    scale([1, 1, 2 * dot_h / d]) sphere(d = d, $fn = 48);
     translate([-d, -d, 0]) cube([2 * d, 2 * d, d]);
   }
 }
@@ -661,7 +656,7 @@ module exploded(e = explode) {
   }
 }
 
-echo(str("Outline: seed ", lobe_seed, ", orientation ", rot, "°, clearance index ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok: >= 3 mm everywhere)" : " (WARNING: electronics less than 3 mm from the dome, raise cap_R / cap_H or change the seed)"));
+echo(str("Outline: ellipse ", ell_ratio, ", orientation ", rot, "°, clearance index ", round(worst(rot) * 100) / 100, worst(rot) <= 1 ? " (ok: >= 3 mm everywhere)" : " (WARNING: electronics less than 3 mm from the dome, raise cap_R / cap_H or ell_ratio)"));
 echo(str("Dots: ", len(dots), " in total — ", [for (s = dot_sizes) str("Ø", s, " x", len([for (d = dots) if (d[2] == s) 1]))]));
 echo(str("Dome top: ", [for (v = [apex[0], apex[1]]) round(v * 10) / 10], " (J1 \"RADIO\" at ", [for (v = radio_p) round(v * 10) / 10], "), ", round(apex[2] - cap_skirt - pcb_z - pcb_t), " mm above the board; ", round(collar_h * sin(cap_tilt) + apex[0] * cos(cap_tilt) + (apex[2] - cap_skirt) * sin(cap_tilt)), " mm from the stem axis in X"));
 echo(str("BME280: pin 1 at ", [for (v = i2c_p1) round(v * 100) / 100], ", underside of the breakout ", bme_z - bme_t - disc_t, " mm above the disc"));

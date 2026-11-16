@@ -42,8 +42,8 @@ PROJECTS = {
             "Chapeau": ['part="cap"'], "Lamelles": ['part="gills"'], "Châssis": ['part="chassis"'],
             "Plancher": ['part="deck"'], "Pied": ['part="stem"'], "Sol": ['part="ground"'],
             "Berceau": ['part="cradle"'], "Bouchon": ['part="plug"'],
-            "Pois Ø6": ['part="dot"', "dot_d=6"], "Pois Ø8": ['part="dot"', "dot_d=8"],
-            "Pois Ø10": ['part="dot"', "dot_d=10"],
+            "Pois Ø12": ['part="dot"', "dot_d=12"], "Pois Ø16": ['part="dot"', "dot_d=16"],
+            "Pois Ø20": ['part="dot"', "dot_d=20"],
         },
         # very tall cap: 6 mm edge + brim; no support (the corbel faces bridge in PETG,
         # checked on the 2026-11 print)
@@ -53,8 +53,7 @@ PROJECTS = {
         # objects from before the renaming ("OpenSCAD Model"), matched by their source file
         "from_file": {"mushroom_cap": "Chapeau", "mushroom_gills": "Lamelles", "mushroom_chassis": "Châssis",
                       "mushroom_deck": "Plancher", "mushroom_stem": "Pied", "mushroom_ground": "Sol",
-                      "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon", "mushroom_dot6": "Pois Ø6",
-                      "mushroom_dot8": "Pois Ø8", "mushroom_dot10": "Pois Ø10"},
+                      "mushroom_cradle": "Berceau", "mushroom_plug": "Bouchon"},
     },
     "box.3mf": {   # wall box: print only one of the two bases
         "scad": "tinysensor_box.scad",
