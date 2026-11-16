@@ -69,6 +69,12 @@
 **Dependencies:** —
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
 
+### CONF-BUILD-012
+**Title:** BATTERY_DIVIDER sets the battery divider ratio on PA1
+**Status:** validated
+**Dependencies:** FUNC-BATTERY-002, CONF-BUILD-010
+**Description:** `BATTERY_DIVIDER` is the ratio of battery voltage to PA1 voltage on boards with a resistor divider. It is 2 for the 1 MΩ / 1 MΩ divider of the v2.2 rework and of v3.0, which closes BACKLOG F1. Boards that don't set it behave as before, and it has no effect on boards whose battery is VCC.
+
 ### CONF-DECODE-002
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated
