@@ -134,12 +134,12 @@ ballast_wall = 2.4; // wall between the chamber and the outside of the stem
 fill_d = 15;       // filling hole in the bottom
 plug_d = 21;       // counterbore of the glued plug
 plug_t = 1.2;      // = counterbore depth (6 layers of 0.2)
-stem_r = 19;       // shaft radius at the bottom, it widens steadily up to the sleeve (collar_r)
-stem_amp = 0.15;   // shaft lobes (only add material: the wall around the cell never gets thinner)
+stem_r = 15;       // shaft radius at the bottom, it widens steadily up to the sleeve (collar_r)
+stem_amp = 0.1;    // shaft lobes (only add material: the wall around the cell never gets thinner)
 stem_twist = 1.2;  // lobe rotation along the shaft (°/mm)
-bulb_r = [22, 34];   // bulbous base (sketch): bulge, short side then long side
-bulb_z = 22;         // belly height
-bulb_up = [21, 27];  // upward spread of the bulb: short side, long side (shoulder)
+bulb_r = [13, 30];   // bulbous base (sketch): bulge, short side then long side
+bulb_z = [28, 17];   // belly height: short side, long side (lopsided bulb, sagging towards the long side)
+bulb_up = [16, 26];  // upward spread of the bulb: short side, long side (shoulder)
 bulb_dn = 34;        // downward spread: rounded base, slope < 45° for printing
 foot_dir = 200;    // direction of the long side (°)
 ring_z = 72;       // cup ring: attached to the neck, raised edge under the cap
@@ -455,9 +455,9 @@ function base_r(z) = stem_r + (collar_r - stem_r) * min(1, z / stem_h);
 // outer stem radius: conical shaft + twisting lobes (zero under the sleeve) + asymmetric bulb
 function foot_w(phi) = pow((1 + cos(phi - foot_dir)) / 2, 2);   // 1 on the wide-flare side, 0 opposite
 function stem_rr(phi, z) = let(w = foot_w(phi), B = bulb_r[0] + (bulb_r[1] - bulb_r[0]) * w,
-  S = z < bulb_z ? bulb_dn : bulb_up[0] + (bulb_up[1] - bulb_up[0]) * w,
+  Z = bulb_z[0] + (bulb_z[1] - bulb_z[0]) * w, S = z < Z ? bulb_dn : bulb_up[0] + (bulb_up[1] - bulb_up[0]) * w,
   fade = max(0, min(1, (stem_h - z) / 15)))
-  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + B * exp(-pow((z - bulb_z) / S, 2));
+  base_r(z) * (1 + stem_amp * (0.5 + 0.5 * hnorm(stem_T, stem_P, phi - stem_twist * z)) * fade) + B * exp(-pow((z - Z) / S, 2));
 
 // ballast chamber volume (cm³), integrated in slices
 ballast_v = let(dz = 0.5, na = 72) vsum([for (z = [foot_t : dz : ballast_top]) vsum([for (i = [0 : na - 1])
