@@ -299,12 +299,9 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 
 ---
 
-## 4. Open items (2026-11-16)
+## 4. Open items (2026-11-17)
 
-No item left open on 2026-11-17: every item is resolved or closed (§1bis, §3). The April top 20 is in the git history.
-
-| Rank | ID | Item | Cat. | Score |
-|:----:|----|------|:----:|:-----:|
+None: every item is resolved or closed (§1bis, §3). The April top 20 is in the git history.
 
 ---
 
