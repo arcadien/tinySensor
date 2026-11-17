@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [TECH-HAL-004](../requirements/technical.md#tech-hal-004) (no internal pull-up on PORTA)_
+_Last updated: 2026-11-17 — [PLAT-POWER-007](../requirements/platform.md#plat-power-007) (sensor bus pull-ups to SENSOR_VCC) and [TECH-HAL-004](../requirements/technical.md#tech-hal-004) (no internal pull-up on PORTA)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -225,15 +225,15 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [TECH-CONVERT-002](../requirements/technical.md#tech-convert-002) | `ConversionTools` | dec32ToHex packs each decimal digit of uint32_t into one nibble (BCD-in-hex) |
 | [TECH-SERIAL-001](../requirements/technical.md#tech-serial-001) | `SoftSerial` | Output-only UART at 9600 baud; one SerialWriteBit call per bit, bit period (1 000 000 / 9600) − 25 µs held by the HAL |
 | [TECH-MAIN-001](../requirements/technical.md#tech-main-001) | `main.cpp` / `include/main.h` / `platformio.ini` | One cycle extracted into `runCycle(Hal*)`; encoders built from the injected Hal, BMx280 file-scope; `main()` only loops on runCycle, excluded under UNIT_TEST; five `native_cycle_*` envs run `test_main_cycle` |
-| [TECH-SERIAL-002](../requirements/technical.md#tech-serial-002) | `main.cpp` | SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op |
+| [TECH-SERIAL-002](../requirements/technical.md#tech-serial-002) | `main.cpp` | Draft. SoftSerial instantiated and SerialPrintInfo active only when USE_SERIAL_LOG defined; otherwise no-op; no build environment sets USE_SERIAL_LOG |
 | [TECH-X10-001](../requirements/technical.md#tech-x10-001) | `Hal` / `Attiny84aHal` / `TestHal_` | Five new pure-virtual Hal methods: DelayX10PreambleHigh (8960 µs), DelayX10PreambleLow (4500 µs), DelayX10BitShort (560 µs), DelayX10BitLong (1120 µs), DelayX10Gap (40000 µs) |
 | [TECH-X10-002](../requirements/technical.md#tech-x10-002) | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
 | [FUNC-BATTERY-001](../requirements/functional.md#func-battery-001) | `Hal` / `main.cpp` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
 | [FUNC-BATTERY-002](../requirements/functional.md#func-battery-002) | `Hal` / `main.cpp` / `include/config.h` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) × BATTERY_DIVIDER (default 1) |
 | [FUNC-BATTERY-003](../requirements/functional.md#func-battery-003) | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
 | [FUNC-SENSOR-001](../requirements/functional.md#func-sensor-001) | `BMx280` | Wraps BMP280/BME280 at I2C 0x76; Begin/GetTemperature/GetPressure/GetHumidity/Shutdown interface |
-| [FUNC-SENSOR-002](../requirements/functional.md#func-sensor-002) | `Ds18b20` | ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
-| [TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001) | `Ds18b20` | DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly |
+| [FUNC-SENSOR-002](../requirements/functional.md#func-sensor-002) | `Ds18b20` | Draft. ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
+| [TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001) | `Ds18b20` | Draft. DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly; PA3 to be released (input, no pull-up, not driven) after `Read()`, not implemented |
 | [TECH-SENSOR-002](../requirements/technical.md#tech-sensor-002) | `BMx280` | `Begin`, `GetTemperature` (°C), `GetPressure` (Pa), `GetHumidity` (%), `Shutdown`; SparkFun BME280 library at 0x76 on AVR, stubs returning 0 on native; no `Hal*` |
 | [FUNC-SENSOR-003](../requirements/functional.md#func-sensor-003) | `LightSensor` / `LacrosseWS7000` | BH1750 at I2C 0x23 ONE_TIME_HIGH_RES_MODE; lux reported as two Lacrosse type-5 frames |
 | [FUNC-ANALOG-001](../requirements/functional.md#func-analog-001) | `Hal` / `main.cpp` | GetRawAnalogSensor() reads PA0; ConvertAnalogValueToMv converts to mV using vccMv from [FUNC-BATTERY-001](../requirements/functional.md#func-battery-001) |
@@ -258,7 +258,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [PLAT-POWER-004](../requirements/platform.md#plat-power-004) | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | [PLAT-POWER-005](../requirements/platform.md#plat-power-005) | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | [PLAT-POWER-006](../requirements/platform.md#plat-power-006) | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
-| [PLAT-POWER-007](../requirements/platform.md#plat-power-007) | board (`hardware/tinysensor`) | Hardware fact: I2C pull-ups R3 (SCL, PA4) / R2 (SDA, PA6) and 1-Wire pull-up R6 (PA3), 4.7 kΩ to SENSOR_VCC (PA2); buses unpowered while PA2 is low. No firmware change |
+| [PLAT-POWER-007](../requirements/platform.md#plat-power-007) | board (`hardware/tinysensor`) | Hardware fact: I2C pull-ups R3 (SCL, PA4) / R2 (SDA, PA6) and 1-Wire pull-up R6 (PA3), 4.7 kΩ to SENSOR_VCC (PA2); buses unpowered while PA2 is low. Firmware side: no internal pull-up on these pins ([TECH-HAL-004](../requirements/technical.md#tech-hal-004)); PA3 released after the DS18B20 read ([TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001), draft, not implemented) |
 | [TECH-HAL-007](../requirements/technical.md#tech-hal-007) | `Attiny84aHal` / `main.cpp` | `Hibernate(s)` → static `sleep(s)` (`s >> 3`, min 1; saves/restores PRR, DDRA, DDRB, PORTA, PORTB); `PowerOnSensors`/`PowerOffSensors` drive PA2 (and `DDRB.2` with `USE_SWITCHED_5V`); `TRANSMIT_WITH_LED(code)` = `LedOn`, code, `LedOff`, `Delay30ms` |
 | [TECH-DECODE-001](../requirements/technical.md#tech-decode-001) | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
 | [FUNC-DECODE-001](../requirements/functional.md#func-decode-001) | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
