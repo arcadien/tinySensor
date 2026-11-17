@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [FUNC-OREGON-008](../requirements/functional.md#func-oregon-008) (pressure rounded to whole hPa before the offset)_
+_Last updated: 2026-11-17 — [FUNC-LACROSSE-004](../requirements/functional.md#func-lacrosse-004) (temperature rounded to the tenth, clamped ±99.9 °C)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -200,7 +200,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-LACROSSE-001](../requirements/functional.md#func-lacrosse-001) | `LacrosseWS7000` | Preamble is exactly 10 consecutive zero bits, then a one start bit |
 | [FUNC-LACROSSE-002](../requirements/functional.md#func-lacrosse-002) | `LacrosseWS7000` | Sensor-type nibble encoding: 0=temp, 1=T+H, 4=T+H+P, 5=lux, F=unknown |
 | [FUNC-LACROSSE-003](../requirements/functional.md#func-lacrosse-003) | `LacrosseWS7000` | Address (0–7) in bits 0–2; negative temperature sign in bit 3 of second nibble |
-| [FUNC-LACROSSE-004](../requirements/functional.md#func-lacrosse-004) | `LacrosseWS7000` | Temperature clamped ±99 °C; encoded as decimal/unit/dozen nibbles |
+| [FUNC-LACROSSE-004](../requirements/functional.md#func-lacrosse-004) | `LacrosseWS7000` | Temperature rounded to the tenth (halves away from zero), clamped ±99.9 °C; encoded as tenths/units/tens digit nibbles, sign of the rounded value |
 | [FUNC-LACROSSE-005](../requirements/functional.md#func-lacrosse-005) | `LacrosseWS7000` | Humidity clamped to 99.9 %; encoded as decimal/unit/dozen nibbles |
 | [FUNC-LACROSSE-006](../requirements/functional.md#func-lacrosse-006) | `LacrosseWS7000` | Pressure clamped 850–1100 hPa, offset −200; encoded as four nibbles |
 | [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) | `LacrosseWS7000` | Luminosity encoded as 7 nibbles in type-5 (light sensor) frame |
