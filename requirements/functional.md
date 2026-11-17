@@ -162,7 +162,7 @@
 
 ### FUNC-X10-003
 **Title:** X10 switch frame: house code, scattered unit code and byte complements
-**Status:** validated
+**Status:** deprecated
 **Dependencies:** —
 **Description:** An X10 switch frame is 4 bytes. House code `a`–`p` (either case) puts in the high nibble of byte 0 the X10 code 6, 7, 4, 5, 8, 9, 10, 11, 14, 15, 12, 13, 0, 1, 2, 3 respectively; another character gives 0. With `u` = unit − 1, bit 3 of `u` goes to bit 2 of byte 0, and bits 2, 1, 0 of `u` go to bits 6, 3, 4 of byte 2. The command (on, off, bright, dim) is the rest of byte 2. Byte 1 is the complement of byte 0 and byte 3 the complement of byte 2. It is sent per [FUNC-X10-005](#func-x10-005).
 
