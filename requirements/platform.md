@@ -59,11 +59,11 @@
 ---
 
 ### PLAT-POWER-007
-**Title:** The sensor bus pull-ups (SCL on PA4, SDA on PA6, 1-Wire on PA3) are external resistors to the switched sensor rail SENSOR_VCC (PA2)
+**Title:** Every sensor board pulls its sensor buses (SCL on PA4, SDA on PA6, 1-Wire on PA3) up with external resistors to the switched sensor rail SENSOR_VCC (PA2)
 **Status:** validated
 **Dependencies:** [PLAT-POWER-002](#plat-power-002)
 **derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
-**Description:** The sensor buses are pulled up by three external 4.7 kΩ resistors to `SENSOR_VCC`, the sensor rail switched by PA2: R3 on SCL (PA4) and R2 on SDA (PA6) for the I2C bus, R6 on the 1-Wire bus (PA3), which serves the DS18B20. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). Verified by inspection of the v3.0 schematic (`hardware/tinysensor/tinySensorv1.kicad_sch`).
+**Description:** Every board running this firmware has external pull-ups on its sensor buses, to `SENSOR_VCC`, the sensor rail switched by PA2: SCL (PA4) and SDA (PA6) for the I2C bus, and the 1-Wire bus (PA3), which serves the DS18B20. The firmware enables no internal pull-up on these pins ([TECH-HAL-004](technical.md#tech-hal-004)), so a board without them has no working I2C bus. On v3.0 they are three 4.7 kΩ resistors: R3 on SCL, R2 on SDA, R6 on 1-Wire. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). Verified by inspection of the v3.0 schematic (`hardware/tinysensor/tinySensorv1.kicad_sch`); other board revisions are not checked: bench check pending.
 
 ---
 
