@@ -29,10 +29,10 @@
 **Description:** Every Oregon frame starts with a 24 one-bit preamble (three `0xFF` bytes), then carries the 11-byte payload, and ends with an 8 zero-bit postamble (one `0x00` byte).
 
 ### FUNC-OREGON-005
-**Title:** Positive temperature sent as tenths, units and tens digits in payload bytes 4–5
+**Title:** Positive temperature rounded to the tenth, clamped to 99.9 °C, sent as tenths, units and tens digits in payload bytes 4–5
 **Status:** validated
 **Dependencies:** —
-**Description:** A non-negative temperature is sent as three decimal digits: tenths in the high nibble of byte 4, units in the low nibble of byte 5, tens in the high nibble of byte 5 (frame nibbles 9, 10, 11, the sync nibble being nibble 0). This is the Oregon v2.1 layout read by RFLink (`Plugins/Plugin_048.c`, couin3, lines 733-734). The low nibble of byte 4 holds the flags ([FUNC-OREGON-011](#func-oregon-011)).
+**Description:** A non-negative temperature is rounded to the nearest tenth (halves up), then clamped to 99.9 °C, and sent as three decimal digits: tenths in the high nibble of byte 4, units in the low nibble of byte 5, tens in the high nibble of byte 5 (frame nibbles 9, 10, 11, the sync nibble being nibble 0). Rounding comes before the split, so each digit is 0–9: 21.97 °C sends 22.0, 21.94 °C sends 21.9, 99.96 °C and 120 °C send 99.9. This is the Oregon v2.1 layout read by RFLink (`Plugins/Plugin_048.c`, couin3, lines 733-734). The low nibble of byte 4 holds the flags ([FUNC-OREGON-011](#func-oregon-011)).
 
 ### FUNC-OREGON-006
 **Title:** Negative temperature sets the sign bit, bit 3 of byte 6, and sends the absolute value
