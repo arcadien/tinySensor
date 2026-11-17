@@ -1,1 +1,17 @@
-exclusions: []
+exclusions:
+  - id: HIST-BACKFILL-001
+    finding: "test(ID) commits without implementation commits for FUNC-OREGON-001..013, FUNC-LACROSSE-001..009, FUNC-X10-001..007, FUNC-BATTERY-001, FUNC-BATTERY-003, TECH-HAL-001..003, TECH-HAL-005, TECH-FILTER-001, TECH-FILTER-002, TECH-CONVERT-002"
+    justification: "The code predates the RBD workflow; the test commits tagged existing tests. Adding implementation commits would mean rewriting master history."
+    date: 2026-11-17
+  - id: HIST-COMMIT-MISMATCH-001
+    finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005"
+    justification: "Merged history (chore: CI wiring, tests or code bundled in a neighbour commit). It cannot change without rewriting master; the current tags and code are traced."
+    date: 2026-11-17
+  - id: HIST-PREFIX-001
+    finding: "Plan and architecture files changed by commits with the wrong prefix (.rbd/config.yml, requirements/technical.md, requirements/platform.md, docs/architecture.md)"
+    justification: "Merged history from before the pre-push hook enforced prefixes. Rewriting master is not worth it; new commits go through the hook."
+    date: 2026-11-17
+  - id: TEST-GWT-001
+    finding: "51 test functions in 10 emitter test files lack Given/When/Then markers"
+    justification: "Tests written before the RBD workflow; adding the markers changes no behaviour. To be done if these files are reworked."
+    date: 2026-11-17
