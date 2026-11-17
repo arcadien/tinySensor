@@ -30,7 +30,12 @@ inline bool ApplyMeasurements(OregonV3 &encoder, const Measurements &m,
     encoder.SetTemperature(m.temperature);
   }
   if (m.Has(Measurements::HUMIDITY)) {
-    encoder.SetHumidity(static_cast<uint8_t>(m.humidity));
+    // rounded to whole %, clamped first: a negative float -> uint8_t is UB
+    // (FUNC-OREGON-007)
+    const float h = m.humidity;
+    encoder.SetHumidity(h < 0    ? 0
+                        : h > 99 ? 99
+                                 : static_cast<uint8_t>(round(h)));
   }
   if (m.Has(Measurements::PRESSURE)) {
     encoder.SetPressure(static_cast<uint16_t>(m.pressure));

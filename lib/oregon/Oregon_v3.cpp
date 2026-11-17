@@ -119,6 +119,8 @@ void OregonV3::SendOne() {
 
 void OregonV3::SetHumidity(uint8_t humidity) {
   messageStatus |= 1 << 1;
+  if (humidity > 99)
+    humidity = 99;
 
   // units share byte 6 with the temperature sign bit
   uint8_t dozens = humidity / 10;
