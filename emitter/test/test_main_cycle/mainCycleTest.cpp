@@ -251,6 +251,7 @@ static int Count(const std::vector<unsigned char> &orders, unsigned char c) {
 }
 
 // @req TECH-MAIN-001
+// @req CONF-BUILD-006 (hibernates SLEEP_TIME_IN_SECONDS)
 void Expect_cycle_powers_sensors_first_then_powers_off_and_hibernates_last() {
   // Given
   CycleSpyHal spy;
@@ -339,6 +340,10 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
 // @req FUNC-X10-006 (battery meter: BCD mV at BATTERY_VOLTAGE_X10_ID)
 // @req FUNC-X10-007 (analog meter: BCD mV at ANALOG1_X10_ID)
 // @req FUNC-ANALOG-001 (PA0 reading converted to mV against VCC)
+// @req CONF-BUILD-005 (VCC from INTERNAL_1v1)
+// @req CONF-BUILD-008 (battery meter address)
+// @req CONF-BUILD-009 (analog meter only with ANALOG1_X10_ID)
+// @req CONF-BUILD-010 (native_cycle_oregon_vcc: battery = VCC)
 void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   // Given
   CycleSpyHal spy;
