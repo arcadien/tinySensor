@@ -203,10 +203,10 @@
 **Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
 
 ### FUNC-BATTERY-003
-**Title:** Low battery mutes the X10 meters and sets the Oregon battery-low flag
+**Title:** Low battery mutes the X10 meters and the luminosity frames, and sets the Oregon battery-low flag
 **Status:** validated
-**Dependencies:** FUNC-BATTERY-002, FUNC-OREGON-011, FUNC-X10-006, FUNC-X10-007
-**Description:** The battery is low when its voltage is below the build's threshold (CONF-BUILD-007). Then Oregon frames carry the battery-low flag (FUNC-OREGON-011), and the battery and analog X10 meter frames are not sent.
+**Dependencies:** FUNC-BATTERY-002, FUNC-OREGON-011, FUNC-X10-006, FUNC-X10-007, FUNC-SENSOR-003
+**Description:** The battery is low when its voltage is below the build's threshold (CONF-BUILD-007). Then the battery and analog X10 meter frames and the luminosity frames (FUNC-SENSOR-003) are not sent, and Oregon frames carry the battery-low flag (FUNC-OREGON-011). The environment frame is still sent; a Lacrosse frame has no battery-low flag, so it is unchanged.
 
 ### FUNC-SENSOR-001
 **Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
