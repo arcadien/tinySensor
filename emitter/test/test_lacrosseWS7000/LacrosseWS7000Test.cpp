@@ -222,92 +222,75 @@ void Expect_good_sensor_address_emission() {
 #undef TEST_COUNT
 }
 
+// Orders of nibbles as sent: four bits LSB first, each nibble followed by a
+// one bit separator (FUNC-LACROSSE-009)
+static std::vector<unsigned char> NibbleOrders(
+    std::initializer_list<uint8_t> nibbles) {
+  static const unsigned char one[] = {BIT_ONE};
+  static const unsigned char zero[] = {BIT_ZERO};
+  std::vector<unsigned char> orders;
+  for (uint8_t nibble : nibbles) {
+    for (uint8_t bit = 0; bit < 4; bit++) {
+      const unsigned char *b = ((nibble >> bit) & 1) ? one : zero;
+      orders.insert(orders.end(), b, b + ORDERS_PER_BIT);
+    }
+    orders.insert(orders.end(), one, one + ORDERS_PER_BIT);
+  }
+  return orders;
+}
+
+// Compares the sent orders from bit `bitOffset` on with `nibbles`
+static void AssertNibblesSentAt(uint16_t bitOffset,
+                                std::initializer_list<uint8_t> nibbles,
+                                const char *id) {
+  const std::vector<unsigned char> expected = NibbleOrders(nibbles);
+  TEST_ASSERT_GREATER_OR_EQUAL_MESSAGE(
+      bitOffset * ORDERS_PER_BIT + expected.size(), TestHal.Orders.size(), id);
+  TEST_ASSERT_EQUAL_CHAR_ARRAY_MESSAGE(
+      expected.data(), TestHal.GetOrders() + bitOffset * ORDERS_PER_BIT,
+      expected.size(), id);
+}
+
+struct TemperatureCase {
+  const char *id;
+  float temperature;
+  bool negative;
+  uint8_t tenths, units, tens;
+};
+
+static const TemperatureCase temperatureCases[] = {
+    {"zero", 0.0f, false, 0, 0, 0},
+    {"-12.7", -12.7f, true, 7, 2, 1},
+    {"10.0", 10.0f, false, 0, 0, 1},
+    {"23.32", 23.32f, false, 3, 3, 2},
+    {"21.97-rounds-up-to-22.0", 21.97f, false, 0, 2, 2},
+    {"21.94-rounds-down-to-21.9", 21.94f, false, 9, 1, 2},
+    {"21.25-half-rounds-up", 21.25f, false, 3, 1, 2},
+    {"-10.25-half-rounds-away-from-zero", -10.25f, true, 3, 0, 1},
+    {"99.96-clamped-to-99.9", 99.96f, false, 9, 9, 9},
+    {"200.1-clamped-to-99.9", 200.1f, false, 9, 9, 9},
+    {"-100.1-clamped-to--99.9", -100.1f, true, 9, 9, 9},
+    // rounds to 0.0, which is not negative
+    {"-0.04-sends-0.0-without-sign", -0.04f, false, 0, 0, 0},
+};
+
 // @req FUNC-LACROSSE-004
 void Expect_good_temperature_emission() {
-  struct TempTestData {
-    float givenTemperature;
-    uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 3) + (3 * ORDERS_PER_BIT)];
-  };
-
-#define TEST_COUNT 6
-  // clang-format off
-  TempTestData testDatas[TEST_COUNT] = {
-  { // #0
-    0.0,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
-    } 
-  },
-  {// #1
-    -12.7,
-    {
-      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // decimals
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
-    } 
-  },
-  {// #2
-    10.0,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
-    } 
-  },
-  {// #3
-    200.1, // overlimit, set to 99
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // 0 decimals
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // 9 units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // 9 dozens
-    }
-  },
-  {// #4
-    23.32,
-    {
-      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
-      BIT_ONE,  BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ZERO, BIT_ONE, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // dozens
-    } 
-  },
-  {// #5
-    -100.1, // overlimit, set to -99
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // decimals
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // dozens
-    } 
-  }
-  };
-  // clang-format on
-
-  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter++) {
-    TempTestData testData = testDatas[testCounter];
+  for (const TemperatureCase &c : temperatureCases) {
+    // Given
     TestHal.ClearOrders();
     LacrosseWS7000 lacrosse(&TestHal);
     lacrosse.SetAddress(LacrosseWS7000::Address::ZERO);
-    lacrosse.SetTemperature(testData.givenTemperature);
+    lacrosse.SetTemperature(c.temperature);
+
+    // When
     lacrosse.Send();
 
-    sprintf(buffer, "Sensor temperature #%u\n", testCounter);
-    uint8_t *actualOrders = TestHal.GetOrders();
-
-    // Note: before address, we have:
-    // - preamble                      (10 bits + 1)
-    // - sensor type                   (4 bits  + 1)
-    // - sensor address and temp. sign (4 bits  + 1)
-
-    // so comparison shall start at order
-    // ((10 + 1 + 4 + 1 + 4 + 1) * ORDERS_PER_BIT)
-    auto shift = 21 * ORDERS_PER_BIT;
-    uint8_t *actualTemperatureStart = actualOrders + shift;
-
-    TEST_ASSERT_EQUAL_CHAR_ARRAY_MESSAGE(testData.expectedNibble,
-                                         actualTemperatureStart, 75, buffer);
+    // Then: preamble (10 + 1 bits) and type (5 bits) come first; address
+    // ZERO leaves only the sign bit in the address nibble
+    const uint8_t addressAndSign = c.negative ? 0x8 : 0x0;
+    AssertNibblesSentAt(16, {addressAndSign, c.tenths, c.units, c.tens}, c.id);
   }
-#undef TEST_COUNT
 }
 
 // @req FUNC-LACROSSE-005
