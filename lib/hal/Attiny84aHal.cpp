@@ -56,7 +56,8 @@ static void UseLessPowerAsPossible() {
   PRR |= _BV(PRADC);
 
   // better, but not easy to invert for VCC sensing
-  DIDR0 |= _BV(ADC2D) | _BV(ADC1D);  // digital buffers
+  // digital buffers; PA5 (MISO) has no pull-up and would float while awake
+  DIDR0 |= _BV(ADC5D) | _BV(ADC2D) | _BV(ADC1D);
 }
 
 /*
