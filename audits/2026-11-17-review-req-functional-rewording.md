@@ -1,6 +1,6 @@
 # MR Review — req/functional-rewording — 2026-11-17
 
-PR #75. Diff: `requirements/functional.md`, `requirements/technical.md` only. No code or test file changed.
+Reviewed commit: `3cd968485189df3c0e10cfcd96a2589bb03d4bd2` (PR #75 head at review time; history rewritten by the fix, same tree as `23a0ae6f733b9a64ba58e1ce039be1f5bd2d4c34`). Diff: `requirements/functional.md`, `requirements/technical.md` only. No code or test file changed.
 
 ## Summary
 

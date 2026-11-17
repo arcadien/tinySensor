@@ -40,8 +40,9 @@ static void UseLessPowerAsPossible() {
   DDRA = 0;
   DDRB = 0;
 
-  // pull-up all unused pins by default
-  PORTA = 0b01111000;
+  // pull-ups only on unused PORTB pins; PORTA bus pins have
+  // external pull-ups to SENSOR_VCC (PLAT-POWER-007)
+  PORTA = 0;
   PORTB = 0b11111100;
 
   // Analog comparator power down

@@ -58,6 +58,15 @@
 
 ---
 
+### PLAT-POWER-007
+**Title:** The sensor bus pull-ups (SCL on PA4, SDA on PA6, 1-Wire on PA3) are external resistors to the switched sensor rail SENSOR_VCC (PA2)
+**Status:** validated
+**Dependencies:** [PLAT-POWER-002](#plat-power-002)
+**derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
+**Description:** The sensor buses are pulled up by three external 4.7 kΩ resistors to `SENSOR_VCC`, the sensor rail switched by PA2: R3 on SCL (PA4) and R2 on SDA (PA6) for the I2C bus, R6 on the 1-Wire bus (PA3), which serves the DS18B20. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). Verified by inspection of the v3.0 schematic (`hardware/tinysensor/tinySensorv1.kicad_sch`).
+
+---
+
 ### PLAT-DECODE-003
 **Title:** Receiver captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
 **Status:** validated
