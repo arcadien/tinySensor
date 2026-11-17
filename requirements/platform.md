@@ -61,7 +61,7 @@
 ### PLAT-DECODE-003
 **Title:** Receiver captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
+**Dependencies:** TECH-DECODE-002
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** The receiver runs on an ATmega328P (Pro Mini 5 V / 16 MHz) or an ATmega32U4 (Pro Micro 5 V / 16 MHz); the only difference here is the ICP1 pin: PB0 (Pro Mini D8) or PD4 (Pro Micro pin 4). ICP1 is an input without pull-up: the RXB6 is powered at 5 V and drives it directly, without level shifting. Timer1 is fully reconfigured (Arduino only uses Timer0 for its time base): normal mode, prescaler 8 (0.5 µs ticks), noise canceller on, capture and overflow interrupts on, capture edge opposite to the current ICP1 level. Each capture ends a pulse (low when the captured edge rose), lasting the ticks since the previous capture / 2, or 65535 µs when a whole timer period has elapsed, then flips the edge. Ended pulses go into a 64-pulse buffer, which absorbs the I2C and serial waits; when it is full, the pulse is dropped. Each overflow adds 32768 µs to the time base, which counts one second per 1 000 000 µs. Pulses and time are read with interrupts briefly disabled. Verified by inspection and on the bench on both boards.
 
@@ -70,7 +70,7 @@
 ### PLAT-DECODE-004
 **Title:** Receiver drives the SSD1306 128x32 OLED at I2C 0x3C over hardware TWI at 400 kHz, one character cell at a time, without framebuffer
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, UI-DECODE-002, UI-DECODE-003, CONF-DECODE-003, CONF-DECODE-004
+**Dependencies:** TECH-DECODE-002, UI-DECODE-002, UI-DECODE-003
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** The OLED is on the hardware TWI at 400 kHz: SDA A4 (PC4) and SCL A5 (PC5) on the Pro Mini, SDA D2 (PD1) and SCL D3 (PD0) on the Pro Micro. At start the receiver sends, in one transaction after control byte `0x00`, the SSD1306 set-up `AE D5 80 A8 1F D3 00 40 8D 14 20 02 A1 C8 DA 02 81 8F D9 F1 DB 40 A4 A6`, writes zeros to the 4 pages × 128 columns, then sends `AF`. An 8x16 character at text page `page` and column `col` is written on display pages `page` and `page + 1`: for each, commands `B0+page`, `col*8 & 0x0F`, `0x10 | (col*8 >> 4)` in one transaction, then `0x40` and the 8 glyph bytes in another. A 16x32 character at column `col` is written on pages 0 to 3: commands `B0+page`, `col*16 & 0x0F`, `0x10 | (col*16 >> 4)`, then `0x40` and the 16 bytes of that page of the big glyph (17 bytes, within the 32-byte I2C buffer of the Arduino core); about 2 ms at 400 kHz, short against the 64-pulse buffer of PLAT-DECODE-003. No display buffer is kept in RAM. The OLED module has its own regulator and accepts a 5 V supply and 5 V I2C levels, so it is wired directly to the 5 V board, without level shifting. Verified by inspection and on the bench on both boards.
 
@@ -79,6 +79,6 @@
 ### PLAT-DECODE-005
 **Title:** Receiver writes RFLink lines on the serial port (debug UART TX D1 on the Pro Mini, USB CDC on the Pro Micro) without blocking the pulse capture
 **Status:** validated
-**Dependencies:** TECH-DECODE-002, CONF-DECODE-003, CONF-DECODE-004
+**Dependencies:** TECH-DECODE-002
 **derives_from:** [TECH-DECODE-002](technical.md#tech-decode-002)
 **Description:** On the Pro Mini, the serial port is the hardware USART (TX D1/PD1, 57600 baud 8N1, interrupt-driven 128-byte transmit buffer set by CONF-DECODE-004): a debug output only, which works with or without a USB-serial adapter connected. On the Pro Micro it is the native USB CDC serial, whose rate is ignored. A line is followed by `\r\n`, and is dropped when the transmit buffer lacks room for it, so the receiver never waits for the serial port to drain, nor for a USB host on the Pro Micro. Incoming bytes are ignored and no startup banner is sent. Verified on the bench with `pio device monitor -b 57600` (through a USB-serial adapter on the Pro Mini).
