@@ -9,7 +9,7 @@
 **Status:** validated
 **Dependencies:** [TECH-HAL-004](technical.md#tech-hal-004)
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Verified by inspection (AVR only, no native test).
+**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Brownout detection is off during each sleep period. Verified by inspection (AVR only, no native test).
 
 ---
 
@@ -27,7 +27,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-001](#plat-power-001), [PLAT-POWER-002](#plat-power-002), [TECH-HAL-004](technical.md#tech-hal-004)
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep. Verified by inspection (AVR only, no native test).
+**Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input: PA0 and PA1 without pull-up, PB3 (RESET) pulled up, PB2 pulled up except with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)), and PA7 (digital output) and PB1 (LED) keep their last output level as pull-up state. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep. Verified by inspection (AVR only, no native test).
 
 ---
 
@@ -59,11 +59,11 @@
 ---
 
 ### PLAT-POWER-007
-**Title:** The sensor bus pull-ups (SCL on PA4, SDA on PA6, 1-Wire on PA3) are external resistors to the switched sensor rail SENSOR_VCC (PA2)
+**Title:** Every sensor board pulls its sensor buses (SCL on PA4, SDA on PA6, 1-Wire on PA3) up with external resistors to the switched sensor rail SENSOR_VCC (PA2)
 **Status:** validated
 **Dependencies:** [PLAT-POWER-002](#plat-power-002)
 **derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
-**Description:** The sensor buses are pulled up by three external 4.7 kΩ resistors to `SENSOR_VCC`, the sensor rail switched by PA2: R3 on SCL (PA4) and R2 on SDA (PA6) for the I2C bus, R6 on the 1-Wire bus (PA3), which serves the DS18B20. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). Verified by inspection of the v3.0 schematic (`hardware/tinysensor/tinySensorv1.kicad_sch`).
+**Description:** Every board running this firmware has external pull-ups on its sensor buses, to `SENSOR_VCC`, the sensor rail switched by PA2: SCL (PA4) and SDA (PA6) for the I2C bus, and the 1-Wire bus (PA3), which serves the DS18B20. The firmware enables no internal pull-up on these pins ([TECH-HAL-004](technical.md#tech-hal-004)), so a board without them has no working I2C bus. On v3.0 they are three 4.7 kΩ resistors: R3 on SCL, R2 on SDA, R6 on 1-Wire. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). Verified by inspection of the v3.0 schematic (`hardware/tinysensor/tinySensorv1.kicad_sch`); other board revisions are not checked: bench check pending.
 
 ---
 

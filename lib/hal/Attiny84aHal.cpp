@@ -56,12 +56,8 @@ static void UseLessPowerAsPossible() {
   PRR |= _BV(PRADC);
 
   // better, but not easy to invert for VCC sensing
-  DIDR0 |= _BV(ADC2D) | _BV(ADC1D);  // digital buffers
-
-  // deactivate brownout detection during sleep (p.36)
-  MCUCR |= _BV(BODS) | _BV(BODSE);
-  MCUCR |= _BV(BODS);
-  MCUSR &= ~_BV(BODSE);
+  // digital buffers; PA5 (MISO) has no pull-up and would float while awake
+  DIDR0 |= _BV(ADC5D) | _BV(ADC2D) | _BV(ADC1D);
 }
 
 /*
@@ -103,7 +99,10 @@ void sleep(uint16_t s) {
     sleep_enable();
     sei();
 
-    sleep_mode();
+    // brownout detection off for this sleep (p.36): BODS only holds for
+    // 3 cycles, so the timed sequence must directly precede the sleep
+    sleep_bod_disable();
+    sleep_cpu();
     // here the system is sleeping
     // here the system wakes up
     sleep_disable();
