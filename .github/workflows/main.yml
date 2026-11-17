@@ -140,8 +140,18 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: firmware
+      # every artifact holds firmware.hex/.elf: rename them after the artifact (firmware-S_02 -> S_02.hex)
+      - name: Name firmware files after their target
+        run: |
+          mkdir release
+          for d in firmware/*/; do
+            n=$(basename "$d"); n=${n#firmware-}
+            [ "$n" = tinydecoders ] && n=tinydecoders-promini
+            for f in "$d"*; do cp "$f" "release/$n.${f##*.}"; done
+          done
+          ls release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: firmware/**/*
+          files: release/*
           generate_release_notes: true

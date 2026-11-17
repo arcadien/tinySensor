@@ -6,6 +6,8 @@ The old Atmel Studio project (`TinySensor/`) was removed. Debugging now goes thr
 
 ## Flashing (ISP)
 
+> **Unplug the BME280 before flashing.** ISP and I2C share the ATtiny84A pins PA4 (SCK / SCL) and PA6 (MOSI / SDA): with the sensor on J3 or J14, flashing fails. Always wire the BME280 through its JST connector, never solder it to the board, or the board can no longer be flashed.
+
 Two ways, both over the 6-pin ISP connector:
 
 | Command | Programmer | Writes |
