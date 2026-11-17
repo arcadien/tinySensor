@@ -336,6 +336,8 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
 // @req CONF-BUILD-012 (native_cycle_oregon_divider: BATTERY_DIVIDER=2)
 // @req CONF-BUILD-013 (OREGON_NO_PRESSURE: THGR228N temperature+humidity)
 // @req FUNC-MAIN-001 (environment frame sent twice)
+// @req FUNC-X10-006 (battery meter: BCD mV at BATTERY_VOLTAGE_X10_ID)
+// @req FUNC-X10-007 (analog meter: BCD mV at ANALOG1_X10_ID)
 void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   // Given
   CycleSpyHal spy;
