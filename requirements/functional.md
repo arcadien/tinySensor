@@ -227,10 +227,10 @@
 **Description:** On a build with a BH1750 and while the battery is not low, each cycle starts a one-time high-resolution measurement on the sensor at I2C address 0x23, waits 150 ms, reads the lux value and sends it twice in a Lacrosse luminosity frame (FUNC-LACROSSE-007), for better reception.
 
 ### FUNC-ANALOG-001
-**Title:** Auxiliary analog input on PA0 read and converted to millivolts
+**Title:** Auxiliary analog input on PA0 measured in millivolts
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-001
-**Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` calls `hal.GetRawAnalogSensor()` (PA0 ADC reading) and converts it to millivolts via `hal.ConvertAnalogValueToMv(rawAdc, vccMv)`, where `vccMv` was computed by `ComputeVccMv(INTERNAL_1v1)`.
+**Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, each cycle reads PA0 with the ADC and converts the reading to mV using the VCC measured per FUNC-BATTERY-001.
 
 ### FUNC-MAIN-001
 **Title:** Environment frame sent twice per cycle, separated by a silence at least one frame long
