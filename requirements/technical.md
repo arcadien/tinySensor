@@ -28,10 +28,10 @@
 ---
 
 ### TECH-HAL-004
-**Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; pull-ups all unused pins; disables brownout detection during sleep
+**Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; pulls up PA3–PA6 and PB2–PB7; disables brownout detection during sleep
 **Status:** validated
 **Dependencies:** —
-**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, applies pull-ups via `PORTA`/`PORTB`, disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence). Verification: inspection and the AVR builds (AVR only, no native test).
+**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, sets `PORTA = 0b01111000` (pull-ups on PA3–PA6: 1-Wire, SCL, MISO, SDA) and `PORTB = 0b11111100` (PB2–PB7; PB0 and PB1 are then made outputs for the radio and the LED), disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence). Verification: inspection and the AVR builds (AVR only, no native test).
 
 ---
 
