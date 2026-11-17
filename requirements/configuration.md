@@ -20,7 +20,7 @@
 **Title:** Set Oregon channel and rolling code per environment
 **Status:** validated
 **Dependencies:** CONF-BUILD-001
-**Description:** An Oregon build sets `OREGON_CHANNEL` to 1, 2 or 3 and `OREGON_RCODE` to a rolling code no greater than `0xA5`. Every Oregon frame carries them (FUNC-OREGON-009, FUNC-OREGON-010).
+**Description:** An Oregon build sets `OREGON_CHANNEL` to 1, 2 or 3 and `OREGON_RCODE` to a rolling code no greater than `0xA5`. Every Oregon frame carries them (FUNC-OREGON-009, FUNC-OREGON-010). Verification: inspection; the native cycle tests build Oregon variants with these flags but compare against frames built from the same values.
 
 ### CONF-BUILD-004
 **Title:** Set Lacrosse device address per environment
@@ -44,7 +44,7 @@
 **Title:** Configure low-battery threshold via LOW_BATTERY_VOLTAGE
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-003
-**Description:** `LOW_BATTERY_VOLTAGE` sets the battery voltage, in mV, below which the battery is low (FUNC-BATTERY-003). The default is 2000 mV.
+**Description:** `LOW_BATTERY_VOLTAGE` sets the battery voltage, in mV, below which the battery is low (FUNC-BATTERY-003). The default is 2000 mV. Verification: inspection; the native cycle tests use readings above the threshold, and the low-battery effect is tested on its own (FUNC-BATTERY-003).
 
 ### CONF-BUILD-008
 **Title:** Assign a unique X10 meter address for battery voltage reporting
@@ -68,7 +68,7 @@
 **Title:** Document charge-pump sensor rail via USE_CHARGE_PUMP
 **Status:** validated
 **Dependencies:** —
-**Description:** `USE_CHARGE_PUMP` only records that the board's sensor rail is boosted by a charge pump. It changes nothing in the firmware.
+**Description:** `USE_CHARGE_PUMP` only records that the board's sensor rail is boosted by a charge pump. It changes nothing in the firmware. Verification: inspection, no firmware source reads `USE_CHARGE_PUMP`.
 
 ### CONF-BUILD-012
 **Title:** BATTERY_DIVIDER sets the battery divider ratio on PA1
