@@ -47,6 +47,8 @@ pio run -d emitter -e S_02                 # firmware for one board
 pio run -d emitter -e S_02 -t upload       # flash it
 ```
 
+> **Unplug the BME280 before flashing.** ISP and I2C share the ATtiny84A pins PA4 (SCK / SCL) and PA6 (MOSI / SDA): with the sensor on J3 or J14, flashing fails. Always wire the BME280 through its JST connector, never solder it to the board, or the board can no longer be flashed.
+
 CI runs the native tests, compile-fail checks for invalid flag combinations (`emitter/test/compile_fail/`), sensor-variant checks (`emitter/test/build_variants/`), `clang-format` and a build of every board.
 
 * Architecture: [docs/architecture.md](docs/architecture.md)
