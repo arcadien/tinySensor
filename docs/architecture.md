@@ -252,9 +252,9 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | CONF-BUILD-012 | `main.cpp` / `include/config.h` / `platformio.ini` | BATTERY_DIVIDER (default 1) scales the PA1 reading; ignored with BATTERY_IS_VCC |
 | CONF-BUILD-013 | `main.cpp` / `EnvironmentEncoder.h` / `platformio.ini` | OREGON_NO_PRESSURE: ReadEnvironment stores no pressure, OregonV3 sends THGR228N; without USE_OREGON → #error |
 | CONF-BUILD-014 | `platformio.ini` / `docs/environments.md` | `[env:mushroom]` in default_envs: Oregon ch 3 / 0x3C, BME280 without pressure, BATTERY_DIVIDER=2, X10 meter 7, 3000 mV, 300 s |
-| PLAT-POWER-001 | `Attiny84aHal` | Hibernate loops SLEEP_MODE_PWR_DOWN for ceil(s/8) WDT periods; minimum 1 period |
+| PLAT-POWER-001 | `Attiny84aHal` | Hibernate loops SLEEP_MODE_PWR_DOWN for s / 8 WDT periods, rounded down; minimum 1 period |
 | PLAT-POWER-002 | `Attiny84aHal` / `main.cpp` | PA2 (SENSOR_VCC) driven high before first sensor read; driven low after last transmission |
-| PLAT-POWER-003 | `Attiny84aHal` | PRR bits for USI/Timer0/Timer1/ADC set in sleep(); GPIO reconfigured as inputs with pull-ups; all restored on wake |
+| PLAT-POWER-003 | `Attiny84aHal` | PRR bits for USI/Timer0/Timer1/ADC set in sleep(); PA2 and PB0 outputs held low, PA3–PA6 inputs without pull-up, other unused pins pulled up; all restored on wake |
 | PLAT-POWER-004 | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | PLAT-POWER-005 | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | PLAT-POWER-006 | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
