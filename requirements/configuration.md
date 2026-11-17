@@ -13,7 +13,7 @@
 ### CONF-BUILD-002
 **Title:** Select temperature and luminosity sensors via build flags
 **Status:** validated
-**Dependencies:** FUNC-SENSOR-001, FUNC-SENSOR-002, FUNC-SENSOR-003
+**Dependencies:** FUNC-SENSOR-001, FUNC-SENSOR-003
 **Description:** `USE_BMP280` or `USE_BME280` selects a BMx280 sensor for the temperature; `USE_BME280` adds humidity and pressure and wins when both are set. `USE_DS18B20` selects the DS18B20; combined with a BMx280, the DS18B20 gives the temperature and the BMx280 the humidity and pressure. With no temperature sensor, no environment frame is sent. `USE_BH1750` adds luminosity reporting, whatever the temperature sensor and the environment protocol. `USE_BMP280`, `USE_BME280` or `USE_BH1750` turns on the I2C bus (`USE_I2C`) when the build does not set it.
 
 ### CONF-BUILD-003
