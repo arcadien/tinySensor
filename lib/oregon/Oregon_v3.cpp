@@ -128,32 +128,24 @@ void OregonV3::SetHumidity(uint8_t humidity) {
 
 void OregonV3::SetTemperature(float temperature) {
   messageStatus |= 1;
+  if (temperature > 99.9f)
+    temperature = 99.9f;
+  if (temperature < -99.9f)
+    temperature = -99.9f;
+  // Rounded once to tenths so that no digit carries over 9; the sign is the
+  // rounded value's (FUNC-OREGON-005, FUNC-OREGON-006)
+  int16_t tenths = (int16_t)round(temperature * 10);
+
   // A reused instance must not keep the previous sign (FUNC-OREGON-015)
   message[6] &= 0xF7;
-  if (temperature < 0) {
+  if (tenths < 0) {
     message[6] |= 0x08;
-    temperature *= -1;
+    tenths = -tenths;
   }
+  uint8_t degrees = tenths / 10;
 
-  // Determine decimal and float part
-
-  // ex. for 27.4 degrees C
-  uint8_t tempIntegerPart = (uint8_t)temperature;  // 27
-
-  // (int)(27/10) = 2
-  uint8_t temperatureDozen = (uint8_t)(tempIntegerPart / 10);
-
-  // 2.7 - 20 = (int)7.4=7
-  uint8_t temperatureUnit = (uint8_t)round(
-      (float)((float)tempIntegerPart / 10.0 - (float)temperatureDozen) * 10.0);
-
-  uint8_t temperatureDecimal = (uint8_t)round(
-      (float)(temperature - (float)tempIntegerPart)  // 27.4 - 27 = 0.4
-      * 10                                           // 0.4 * 10 = 4
-  );
-
-  message[4] = (message[4] & 0x0F) | (temperatureDecimal << 4);
-  message[5] = (temperatureDozen << 4) | temperatureUnit;
+  message[4] = (message[4] & 0x0F) | ((tenths % 10) << 4);
+  message[5] = ((degrees / 10) << 4) | (degrees % 10);
 }
 
 void OregonV3::FinalizeMessage() {
