@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) (luminosity as mantissa and power-of-ten exponent)_
+_Last updated: 2026-11-17 — [FUNC-DECODE-003](../requirements/functional.md#func-decode-003) (lux = mantissa × 10^exponent, capped at 65535)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -263,7 +263,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [TECH-DECODE-001](../requirements/technical.md#tech-decode-001) | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
 | [FUNC-DECODE-001](../requirements/functional.md#func-decode-001) | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
 | [FUNC-DECODE-002](../requirements/functional.md#func-decode-002) | `LacrosseDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the high pulse of the last separator of a valid WS7000 frame; bit 1 = 400/800, 0 = 800/400 µs ±30 %; ≥ 6 zero bits sync; types 0/1/4/5 → 3/6/10/7 data nibbles; `Type()`, `Address()` |
-| [FUNC-DECODE-003](../requirements/functional.md#func-decode-003) | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()`; 0 when the type does not carry the value |
+| [FUNC-DECODE-003](../requirements/functional.md#func-decode-003) | `LacrosseDecoder` (tinyDecoders) | `TemperatureTenths()` (signed by address bit 3), `HumidityTenths()`, `PressureTenths()` (+2000), `Lux()` = mantissa × 10^d4 capped at 65535; 0 when the type does not carry the value |
 | [FUNC-DECODE-004](../requirements/functional.md#func-decode-004) | `OregonDecoder` (tinyDecoders) | `Feed(high, durationUs)` true on the long pulse of the last checksum bit (frame bit 60/72/88 for `EA4C`/`1A2D`,`1A3D`/`5A5D`); short 150–731, long 732–1199 µs; ≥ 12 ones sync, `b0` from the first zero (sync nibble); checksum = nibble sum − 0xA; `DeviceId()`, `Channel()`, `RollingCode()` = b3, `BatteryLow()` = b4 & 0x0C |
 | [FUNC-DECODE-005](../requirements/functional.md#func-decode-005) | `OregonDecoder` (tinyDecoders) | `TemperatureTenths()` (b5 high/low, b4 high; signed by b6 bit 3), `HumidityPercent()` (`1A2D`, `1A3D`, `5A5D`), `PressureHpa()` = b8 + 795 (`5A5D`); 0 when the ID does not carry the value |
 | [FUNC-DECODE-006](../requirements/functional.md#func-decode-006) | `SourceTable` (tinyDecoders) | `Update(decoder, nowSeconds)` per decoder; source = (kind, id, code), Oregon code = rolling code, kinds Oregon / Lacrosse / LacrosseLux / X10; capacity 16 on AVR (8 on native), oldest `lastSeenSeconds` replaced; X10 BCD to mV, invalid BCD gives no field; `Count()`, `At(i)` in first-seen order |
