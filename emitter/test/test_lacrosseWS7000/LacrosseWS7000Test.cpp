@@ -366,6 +366,41 @@ void Expect_good_pressure_emission() {
   }
 }
 
+struct LuminosityCase {
+  const char *id;
+  uint16_t lux;
+  uint8_t units, tens, hundreds, exponent;  // of the mantissa
+};
+
+static const LuminosityCase luminosityCases[] = {
+    {"zero", 0, 0, 0, 0, 0},
+    {"999-fits-mantissa", 999, 9, 9, 9, 0},
+    {"1000-exponent-1", 1000, 0, 0, 1, 1},
+    {"1234-rounds-down", 1234, 3, 2, 1, 1},
+    {"1235-half-rounds-up", 1235, 4, 2, 1, 1},
+    {"9994-rounds-to-999", 9994, 9, 9, 9, 1},
+    {"9995-rounds-over-999-exponent-2", 9995, 0, 0, 1, 2},
+    {"65535-max", 65535, 5, 5, 6, 2},
+};
+
+// @req FUNC-LACROSSE-007
+void Expect_good_luminosity_emission() {
+  for (const LuminosityCase &c : luminosityCases) {
+    // Given
+    TestHal.ClearOrders();
+    LacrosseWS7000 lacrosse(&TestHal);
+    lacrosse.SetLuminosity(c.lux);
+
+    // When
+    lacrosse.Send();
+
+    // Then: preamble (11 bits), type and address (5 bits each) come first;
+    // the three exposure time nibbles are zero
+    AssertNibblesSentAt(
+        11 + 2 * 5, {c.units, c.tens, c.hundreds, c.exponent, 0, 0, 0}, c.id);
+  }
+}
+
 // @req FUNC-LACROSSE-008
 void Expect_encoding_of_simple_temperature_message() {
   // clang-format off
@@ -514,6 +549,7 @@ int main(int, char **) {
   RUN_TEST(Expect_good_temperature_emission);
   RUN_TEST(Expect_good_humidity_emission);
   RUN_TEST(Expect_good_pressure_emission);
+  RUN_TEST(Expect_good_luminosity_emission);
   RUN_TEST(Expect_encoding_of_simple_temperature_message);
   RUN_TEST(Expect_encoding_of_simple_temperature_and_humi_message);
   RUN_TEST(Expect_encoding_of_simple_temperature_and_humi_and_pressure_message);
