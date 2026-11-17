@@ -119,10 +119,10 @@
 **Description:** The temperature is rounded to the nearest tenth (halves away from zero) and clamped to [−99.9, +99.9] °C. Its absolute value is sent as three digit nibbles, each 0–9, in order: tenths, units, tens. 21.97 °C sends 22.0, 21.94 °C sends 21.9, −10.25 °C sends −10.3. The sign is that of the rounded value, sent per [FUNC-LACROSSE-003](#func-lacrosse-003): −0.04 °C sends 0.0 without sign.
 
 ### FUNC-LACROSSE-005
-**Title:** Humidity clamped to 99.9 % and sent as tenths, units and tens nibbles
+**Title:** Humidity rounded to the tenth, clamped to 99.9 %, sent as tenths, units and tens nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** A humidity of 100 % or more is sent as 99.9 %. The value is sent as three nibbles in order: tenths, units, tens.
+**Description:** The humidity is rounded to the nearest tenth (halves up); a result of 100 % or more is sent as 99.9 %. The value is sent as three digit nibbles, each 0–9, in order: tenths, units, tens. 42.47 % sends 42.5, 99.96 % sends 99.9.
 
 ### FUNC-LACROSSE-006
 **Title:** Pressure clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
