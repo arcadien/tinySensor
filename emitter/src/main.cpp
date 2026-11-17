@@ -49,6 +49,11 @@ static BMx280 bmx280;
 #include <x10rf.h>
 #endif
 
+// FUNC-MAIN-001: environment frame sent twice; 8 extra x 30 ms + the trailing
+// 30 ms = 270 ms of silence, longer than one Oregon frame (246 ms).
+#define ENVIRONMENT_FRAME_REPEAT 2
+#define ENVIRONMENT_GAP_EXTRA_30MS 8
+
 #define TRANSMIT_WITH_LED(code) \
   do {                          \
     hal->LedOn();               \
@@ -82,7 +87,9 @@ static Measurements ReadEnvironment(Hal *hal) {
   m.SetTemperature(bmx280.GetTemperature());
 #if defined(USE_BME280)
   m.SetHumidity(bmx280.GetHumidity());
+#if !defined(OREGON_NO_PRESSURE)  // CONF-BUILD-013: THGR228N frame
   m.SetPressure(bmx280.GetPressure() / 100);
+#endif
 #endif
   bmx280.Shutdown();
 #endif
@@ -117,7 +124,8 @@ void runCycle(Hal *hal) {
   uint16_t batteryVoltageInMv = vccMv;
 #else
   uint16_t rawBattery = hal->GetRawBattery();
-  uint16_t batteryVoltageInMv = hal->ConvertAnalogValueToMv(rawBattery, vccMv);
+  uint16_t batteryVoltageInMv =
+      hal->ConvertAnalogValueToMv(rawBattery, vccMv) * BATTERY_DIVIDER;
 #endif
   lowBattery = (batteryVoltageInMv < LOW_BATTERY_VOLTAGE);
   SerialPrintInfo(hal, "Vbatt", batteryVoltageInMv, " mV");
@@ -171,7 +179,12 @@ void runCycle(Hal *hal) {
   }
 
   if (sendEnvironment) {
-    TRANSMIT_WITH_LED(environmentEncoder.Send());
+    for (uint8_t i = 0; i < ENVIRONMENT_FRAME_REPEAT; i++) {
+      for (uint8_t d = 0; i > 0 && d < ENVIRONMENT_GAP_EXTRA_30MS; d++) {
+        hal->Delay30ms();
+      }
+      TRANSMIT_WITH_LED(environmentEncoder.Send());
+    }
   }
 #endif
 

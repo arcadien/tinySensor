@@ -26,7 +26,7 @@ PA1 (U1 pin 12) is tied straight to +BATT. With a full 18650 (4.2 V), the pin ge
 2. **Scrape** the track solder mask over 2 mm, just after the cut on the +BATT side.
 3. **High resistor, 1 MΩ:** from U1.12 to the scraped copper, across the cut, bottom side.
 4. **Low resistor, 1 MΩ, and 100 nF:** from U1.12 to U1.14 (GND), bottom side. The legs straddle pin 13 (PA0): sleeve them.
-5. The divider draws about 2 µA all the time. The reading is half the battery voltage, and the firmware must multiply it by 2. That setting does not exist yet (firmware backlog F1). Until then, do not enable `BATTERY_VOLTAGE_X10_ID`, or build with `BATTERY_IS_VCC` (which measures VCC only).
+5. The divider draws about 2 µA all the time. The reading is half the battery voltage, and the firmware must multiply it by 2: build with `-DBATTERY_DIVIDER=2` (CONF-BUILD-012, closes firmware backlog F1).
 
 ### 4. Board cut (P5): do not leave +BATT against ground
 

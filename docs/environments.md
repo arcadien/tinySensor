@@ -18,6 +18,7 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 | `S_03` | Lacrosse WS7000, address THREE | BME280 (temp + humidity + pressure) | 2× AA via charge pump | Prototype rev 3 |
 | `S_04` | Oregon, channel 3, rolling code `0x04` | BME280 (temp + humidity + pressure) | 2× AA | Prototype rev 4 |
 | `S_05` | none: X10 battery meter only | BME280 (read, not transmitted) | 18650 Li-ion | Prototype rev 5 — older HW design, higher `INTERNAL_1v1=1343` reflects this chip |
+| `mushroom` | Oregon, channel 3, rolling code `0x3C` | BME280 (temp + humidity, no pressure: THGR228N frame) | 18650 Li-ion via TP4056, 3.3 V buck-boost, PA1 divider /2 | Cut-down v2.2 in the mushroom enclosure; X10 battery meter 7; `INTERNAL_1v1=1104` calibrated on the battery reading |
 
 ## Special environments
 
@@ -37,6 +38,7 @@ Each physical prototype board has `S_XX` written on its PCB. That label is the P
 | `S_03` | 2× AA via charge pump | 1100 mV |
 | `S_04`, `robot` | 2× AA | 2200 mV |
 | `S_05` | 18650 Li-ion | 3400 mV |
+| `mushroom` | 18650 Li-ion via TP4056, 3.3 V buck-boost | 3000 mV |
 | `devmodule`, `SOLAR_TEST` | bench / solar (`BATTERY_IS_VCC` on `devmodule`) | 3300 mV |
 
 When the measured battery voltage falls below the threshold, the X10 battery and analog meter frames and the BH1750 luminosity frames are suppressed, and `SetBatteryLow(true)` is sent in the Oregon frame.

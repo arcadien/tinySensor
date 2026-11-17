@@ -32,6 +32,7 @@
 #include <config.h>
 #include <conversionTools.h>
 #include <main.h>
+#include <algorithm>
 #include <unity.h>
 #include <vector>
 
@@ -44,6 +45,15 @@
 #if (defined(USE_OREGON) || defined(USE_LACROSSE)) && \
     (defined(USE_BMP280) || defined(USE_BME280))
 #define EXPECT_ENVIRONMENT_FRAME
+#define ENVIRONMENT_FRAMES 2  // FUNC-MAIN-001: environment frame sent twice
+// FUNC-MAIN-001: Delay30ms added between the two copies, on top of the
+// transmission's own trailing Delay30ms (9 x 30 = 270 ms of silence).
+#define ENVIRONMENT_GAP_EXTRA_30MS 8
+#if defined(USE_OREGON)
+#define ENVIRONMENT_MIN_GAP_US 246000UL  // one Oregon frame
+#else
+#define ENVIRONMENT_MIN_GAP_US 98000UL  // one Lacrosse frame
+#endif
 #endif
 
 #if defined(USE_BH1750)
@@ -112,7 +122,7 @@ static int ExpectedFrameCount() {
   frames += LIGHT_FRAMES;
 #endif
 #if defined(EXPECT_ENVIRONMENT_FRAME)
-  frames++;
+  frames += ENVIRONMENT_FRAMES;
 #endif
   return frames;
 }
@@ -138,6 +148,42 @@ static int CountTransmissions(const std::vector<unsigned char> &orders) {
   return n;
 }
 
+#if defined(EXPECT_ENVIRONMENT_FRAME)
+// Orders of one environment encoder Send(), without the LED/delay wrapper.
+static std::vector<unsigned char> EnvironmentFrameOrders() {
+  CycleSpyHal ref;
+  Measurements m;
+  m.SetTemperature(0);  // native BMx280 stub values
+#if defined(USE_BME280)
+  m.SetHumidity(0);
+#if !defined(OREGON_NO_PRESSURE)
+  m.SetPressure(0);  // CONF-BUILD-013: without pressure -> THGR228N frame
+#endif
+#endif
+  EnvironmentEncoder environment(&ref);
+  ConfigureEncoder(environment);
+  ApplyMeasurements(environment, m, false);
+  environment.Send();
+  return ref.Orders;
+}
+
+// Duration of a recorded token in microseconds; non-delay tokens take 0.
+static unsigned long TokenDurationUs(unsigned char token) {
+  switch (token) {
+    case DELAY_30MS:
+      return 30000;
+    case 'D':
+      return 512;
+    case 'P':
+      return 1024;
+    case 'A':
+      return 400;
+    default:
+      return 0;
+  }
+}
+#endif
+
 // HAL sequence of one iteration of the former while(1) loop, rebuilt with
 // direct encoder calls on a separate HAL.
 static std::vector<unsigned char> ReferenceCycleOrders() {
@@ -155,6 +201,9 @@ static std::vector<unsigned char> ReferenceCycleOrders() {
   uint16_t batteryMv = vccMv;
 #else
   uint16_t batteryMv = ref.ConvertAnalogValueToMv(ref.GetRawBattery(), vccMv);
+#if defined(BATTERY_DIVIDER)
+  batteryMv *= BATTERY_DIVIDER;  // FUNC-BATTERY-002: PA1 reads battery / ratio
+#endif
 #endif
   x10.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00,
                ConversionTools::dec16ToHex(batteryMv));
@@ -178,17 +227,14 @@ static std::vector<unsigned char> ReferenceCycleOrders() {
 #endif
 
 #if defined(EXPECT_ENVIRONMENT_FRAME)
-  Measurements m;
-  m.SetTemperature(0);  // native BMx280 stub values
-#if defined(USE_BME280)
-  m.SetHumidity(0);
-  m.SetPressure(0);
-#endif
-  EnvironmentEncoder environment(&ref);
-  ConfigureEncoder(environment);
-  ApplyMeasurements(environment, m, false);
-  environment.Send();
-  AppendFrame(expected, ref);
+  std::vector<unsigned char> frame = EnvironmentFrameOrders();
+  for (int i = 0; i < ENVIRONMENT_FRAMES; i++) {
+    if (i > 0) {
+      expected.insert(expected.end(), ENVIRONMENT_GAP_EXTRA_30MS, DELAY_30MS);
+    }
+    ref.Orders = frame;
+    AppendFrame(expected, ref);
+  }
 #endif
 
   expected.push_back(POWER_OFF);
@@ -271,6 +317,7 @@ void Expect_cycle_on_TestHal_records_orders_on_TestHal() {
 // @req TECH-MAIN-001
 // @req CONF-BUILD-001 (native_cycle_x10: no protocol, no environment frame)
 // @req CONF-BUILD-002 (no temperature sensor: no environment frame)
+// @req FUNC-MAIN-001 (environment frame sent twice)
 void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
   // Given
   CycleSpyHal spy;
@@ -285,6 +332,10 @@ void Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant() {
 // @req TECH-MAIN-001
 // @req CONF-BUILD-002 (BMP280: temperature only; BME280: + humidity,
 // pressure)
+// @req FUNC-BATTERY-002 (battery meter = PA1 voltage x divider ratio)
+// @req CONF-BUILD-012 (native_cycle_oregon_divider: BATTERY_DIVIDER=2)
+// @req CONF-BUILD-013 (OREGON_NO_PRESSURE: THGR228N temperature+humidity)
+// @req FUNC-MAIN-001 (environment frame sent twice)
 void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   // Given
   CycleSpyHal spy;
@@ -299,6 +350,33 @@ void Expect_cycle_hal_sequence_unchanged_from_former_main_loop() {
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expected.data(), spy.Orders.data(),
                                expected.size());
 }
+
+#if defined(EXPECT_ENVIRONMENT_FRAME)
+// @req FUNC-MAIN-001
+void Expect_environment_frame_sent_twice_with_a_silence_one_frame_long() {
+  // Given
+  CycleSpyHal spy;
+  std::vector<unsigned char> frame = EnvironmentFrameOrders();
+
+  // When
+  runCycle(&spy);
+
+  // Then
+  const std::vector<unsigned char> &o = spy.Orders;
+  auto first = std::search(o.begin(), o.end(), frame.begin(), frame.end());
+  TEST_ASSERT_TRUE_MESSAGE(first != o.end(), "No environment frame");
+  auto gapStart = first + frame.size();
+  auto second = std::search(gapStart, o.end(), frame.begin(), frame.end());
+  TEST_ASSERT_TRUE_MESSAGE(second != o.end(), "Only one environment frame");
+  unsigned long gapUs = 0;
+  for (auto it = gapStart; it != second; ++it) {
+    TEST_ASSERT_NOT_EQUAL_MESSAGE('H', *it, "Radio high between the copies");
+    gapUs += TokenDurationUs(*it);
+  }
+  TEST_ASSERT_TRUE_MESSAGE(gapUs >= ENVIRONMENT_MIN_GAP_US,
+                           "Silence shorter than one frame");
+}
+#endif
 
 // @req CONF-BUILD-002
 void Expect_i2c_derived_when_an_i2c_sensor_is_selected() {
@@ -332,6 +410,9 @@ int main(int, char **) {
   RUN_TEST(Expect_cycle_on_TestHal_records_orders_on_TestHal);
   RUN_TEST(Expect_cycle_sends_one_frame_per_enabled_output_of_the_variant);
   RUN_TEST(Expect_cycle_hal_sequence_unchanged_from_former_main_loop);
+#if defined(EXPECT_ENVIRONMENT_FRAME)
+  RUN_TEST(Expect_environment_frame_sent_twice_with_a_silence_one_frame_long);
+#endif
   RUN_TEST(Expect_i2c_derived_when_an_i2c_sensor_is_selected);
   return UNITY_END();
 }

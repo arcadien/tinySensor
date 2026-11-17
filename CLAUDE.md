@@ -92,6 +92,8 @@ find emitter/src emitter/include emitter/test lib tinyDecoders -path '*/.pio' -p
 | `LACROSSE_ID` | Lacrosse address enum value |
 | `INTERNAL_1v1` | Calibrated 1.1 V internal reference in mV (chip-specific) |
 | `BATTERY_IS_VCC` | Battery voltage = VCC (no external divider) |
+| `BATTERY_DIVIDER` | Battery / PA1 voltage ratio of the divider (default 1; 2 on v2.2 rework and v3.0, CONF-BUILD-012) |
+| `OREGON_NO_PRESSURE` | BME280 Oregon board sends THGR228N temperature + humidity, no pressure (requires `USE_OREGON`, CONF-BUILD-013) |
 | `USE_CHARGE_PUMP` | Board uses a charge pump for sensor power |
 | `USE_SWITCHED_5V` | PB2 (J8) drives a PNP that powers an off-board 5 V module during measurements (LM35 variant, `hardware/tinysensor/VARIANTE_LM35.md`, PLAT-POWER-006) |
 | `SLEEP_TIME_IN_SECONDS` | Hibernate duration between measurements |

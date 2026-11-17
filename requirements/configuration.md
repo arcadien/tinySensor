@@ -69,6 +69,24 @@
 **Dependencies:** —
 **Description:** `USE_CHARGE_PUMP` is an informational build flag documenting that the sensor VCC rail on a given board is boosted via a charge pump. No firmware code branches on this flag; it exists solely for build-system documentation purposes.
 
+### CONF-BUILD-012
+**Title:** BATTERY_DIVIDER sets the battery divider ratio on PA1
+**Status:** validated
+**Dependencies:** FUNC-BATTERY-002, CONF-BUILD-010
+**Description:** `BATTERY_DIVIDER` is the ratio of battery voltage to PA1 voltage on boards with a resistor divider. It is 2 for the 1 MΩ / 1 MΩ divider of the v2.2 rework and of v3.0, which closes BACKLOG F1. Boards that don't set it behave as before, and it has no effect on boards whose battery is VCC.
+
+### CONF-BUILD-013
+**Title:** OREGON_NO_PRESSURE makes a BME280 Oregon sensor send temperature and humidity only
+**Status:** validated
+**Dependencies:** CONF-BUILD-001, CONF-BUILD-002, FUNC-OREGON-012
+**Description:** With `OREGON_NO_PRESSURE`, a BME280 board drops the pressure reading. It sends a THGR228N temperature-and-humidity frame, like the commercial outdoor sensors, instead of a BTHR918 frame. Setting the flag on a build without the Oregon protocol fails at compile time. Acceptance: such a build sends a THGR228N frame with the measured temperature and humidity.
+
+### CONF-BUILD-014
+**Title:** `mushroom` environment builds the 18650-powered BME280 Oregon sensor in the mushroom enclosure
+**Status:** validated
+**Dependencies:** CONF-BUILD-003, CONF-BUILD-005, CONF-BUILD-007, CONF-BUILD-008, CONF-BUILD-012, CONF-BUILD-013
+**Description:** The `mushroom` board is a cut-down v2.2 with a BME280. Its 18650 is charged by a TP4056, and a 3.3 V buck-boost supplies VCC, so VCC is not the battery voltage and PA1 reads half of it. It sends Oregon temperature and humidity without pressure on channel 3 with rolling code 0x3C. The X10 meter 7 reports the battery through a divider of 2 every 5 minutes. The low-battery threshold is 3000 mV, so the discharge stays tracked down to 3.0 V while the buck-boost keeps VCC steady. The 1.1 V reference uses the provisional 1100 mV until the board is calibrated. The environment is part of the default build, and the environment docs list it with its battery and threshold. Acceptance: the environment builds.
+
 ### CONF-DECODE-002
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated

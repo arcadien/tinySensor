@@ -127,7 +127,7 @@
 **Title:** One measurement/transmission cycle is a standalone runCycle(Hal*) callable from native tests
 **Status:** validated
 **Dependencies:** TECH-HAL-001
-**Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `emitter/include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence, apart from the leading `Init()` (TECH-HAL-006). `main()` only calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol.
+**Description:** One complete cycle (sensor power-on, measurement, transmissions, sensor power-off, hibernate) is a free function `void runCycle(Hal* hal)` declared in `emitter/include/main.h`. Every `Hal` call it makes, directly or through the encoders and sensor wrappers it uses, goes to the injected `hal`. Every build target keeps an unchanged HAL call sequence, apart from the leading `Init()` (TECH-HAL-006) and the repeated environment frame (FUNC-MAIN-001). `main()` only calls `runCycle` in an endless loop, and is excluded from test builds. Dedicated native test environments with zero sleep time exercise `runCycle` for each build variant family: Oregon with divided battery, Oregon with battery equal to VCC, Lacrosse, and no environment protocol. The native cycle tests cover one more variant family: Oregon with a battery divider and without pressure.
 
 ---
 
