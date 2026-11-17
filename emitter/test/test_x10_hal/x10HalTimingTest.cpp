@@ -168,6 +168,7 @@ void TestHal_DelayX10Gap_appends_distinct_token() {
 }
 
 // @req TECH-X10-001
+// @req TECH-HAL-002
 void TestHal_X10_tokens_are_all_distinct() {
   // Given
   // Each token must differ from every other token
