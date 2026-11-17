@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [UI-DECODE-001](../requirements/ui.md#ui-decode-001) (source page cell positions, placed by `Receiver`)_
+_Last updated: 2026-11-17 — [FUNC-X10-003](../requirements/functional.md#func-x10-003) (deprecated, x10Switch removed)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -208,7 +208,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-LACROSSE-009](../requirements/functional.md#func-lacrosse-009) | `LacrosseWS7000` | Bit 1 = high 400 / low 800 µs, bit 0 = high 800 / low 400 µs; nibble bits LSB first, then a one-bit separator |
 | [FUNC-X10-001](../requirements/functional.md#func-x10-001) | `x10rf` | RFXmeter 6-byte frame: address, partial complement, 24-bit value, packet-type nibble, nibble-sum parity |
 | [FUNC-X10-002](../requirements/functional.md#func-x10-002) | `x10rf` | RFXsensor 4-byte frame: address+type bits, partial complement, value, packet-type status + nibble-sum parity |
-| [FUNC-X10-003](../requirements/functional.md#func-x10-003) | `x10rf` | x10Switch 4-byte frame: house-code nibble lookup, bit-scattered unit code, full-byte complements |
+| [FUNC-X10-003](../requirements/functional.md#func-x10-003) | `x10rf` | Deprecated: x10Switch is removed, no X10 switch frame is sent |
 | [FUNC-X10-004](../requirements/functional.md#func-x10-004) | `x10rf` | x10Security 6-byte frame: address, address with its low nibble inverted, command + complement, id, XOR-fold parity |
 | [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Two copies per cycle, each followed by a 40 ms silence via DelayX10Gap (see [TECH-X10-001](../requirements/technical.md#tech-x10-001)); LED lit from before the first copy until after the last |
 | [FUNC-X10-006](../requirements/functional.md#func-x10-006) | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
