@@ -81,7 +81,7 @@ The cycle for each change:
 | [audits/exclusions.yml](audits/exclusions.yml) | Audit findings accepted on purpose, with their justification |
 | [.rbd/config.yml](.rbd/config.yml) | ID format, test tag convention and linter command |
 
-Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be observed, without class or function names. Those details live in `TECH`. Requirement IDs cited in these documents link to their heading. The workflow is driven by the `rbd` Claude Code plugin (`/rbd`, `/rbd-audit`, `/rbd-review`); see `CLAUDE.md`.
+Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be observed, without class or function names. Those details live in `TECH`. Requirement IDs cited in these documents link to their heading. The workflow is driven by the [`rbd` Claude Code plugin](https://github.com/arcadien/claude-marketplace/tree/main/plugins/rbd) (`/rbd`, `/rbd-audit`, `/rbd-review`); see `CLAUDE.md`.
 
 ## Hardware and enclosure
 
