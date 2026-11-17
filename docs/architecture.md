@@ -210,7 +210,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-X10-002](../requirements/functional.md#func-x10-002) | `x10rf` | RFXsensor 4-byte frame: address+type bits, partial complement, value, packet-type status + nibble-sum parity |
 | [FUNC-X10-003](../requirements/functional.md#func-x10-003) | `x10rf` | x10Switch 4-byte frame: house-code nibble lookup, bit-scattered unit code, full-byte complements |
 | [FUNC-X10-004](../requirements/functional.md#func-x10-004) | `x10rf` | x10Security 6-byte frame: address, address with its low nibble inverted, command + complement, id, XOR-fold parity |
-| [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Transmission repeated rf_repeats times with 40 ms inter-repeat cooldown via DelayX10Gap (see [TECH-X10-001](../requirements/technical.md#tech-x10-001)) |
+| [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Two copies per cycle, each followed by a 40 ms silence via DelayX10Gap (see [TECH-X10-001](../requirements/technical.md#tech-x10-001)); LED lit from before the first copy until after the last |
 | [FUNC-X10-006](../requirements/functional.md#func-x10-006) | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [FUNC-X10-007](../requirements/functional.md#func-x10-007) | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [TECH-HAL-001](../requirements/technical.md#tech-hal-001) | `Hal` / `Attiny84aHal` / `TestHal_` / `BMx280` | Encoders and HAL-using wrappers take Hal* at construction; BMx280 (third-party bus driver) takes none; no direct AVR register access except addresses passed to a bus driver |
