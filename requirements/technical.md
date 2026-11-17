@@ -28,10 +28,10 @@
 ---
 
 ### TECH-HAL-004
-**Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; pulls up PA3–PA6 and PB2–PB7; disables brownout detection during sleep
+**Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; no pull-up on PORTA, pull-ups on PB2–PB7; disables brownout detection during sleep
 **Status:** validated
-**Dependencies:** —
-**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, sets `PORTA = 0b01111000` (pull-ups on PA3–PA6: 1-Wire, SCL, MISO, SDA) and `PORTB = 0b11111100` (PB2–PB7; PB0 and PB1 are then made outputs for the radio and the LED), disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence). Verification: inspection and the AVR builds (AVR only, no native test).
+**Dependencies:** [PLAT-POWER-007](platform.md#plat-power-007)
+**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, sets `PORTA = 0` (no internal pull-up on any PORTA pin) and `PORTB = 0b11111100` (pull-ups on PB2–PB7; PB0 and PB1 are then made outputs for the radio and the LED), disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence). PORTA has no unused pin: PA0/PA1 are analog inputs, PA2 (`SENSOR_VCC`) and PA7 are outputs, and PA3–PA6 are the sensor bus pins, PA3/PA4/PA6 pulled up externally to `SENSOR_VCC` ([PLAT-POWER-007](platform.md#plat-power-007)). While the MCU is awake with PA2 low (boot and wake before the sensors are powered, after they are powered off before sleep), an internal pull-up on PA3–PA6 would drive current through the external pull-ups into PA2 and back-power the sensors. Verification: AVR only, no native test (`TestHal_` has no registers): inspection and the AVR builds; bench check pending (BME280 still read with the external pull-ups only).
 
 ---
 
