@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [FUNC-OREGON-007](../requirements/functional.md#func-oregon-007) (humidity rounded to whole %, clamped to 0–99 %)_
+_Last updated: 2026-11-17 — [FUNC-OREGON-008](../requirements/functional.md#func-oregon-008) (pressure rounded to whole hPa before the offset)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -189,7 +189,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-OREGON-005](../requirements/functional.md#func-oregon-005) | `OregonV3` | Positive temperature rounded to the nearest tenth, clamped to 99.9 °C, then split: tenths byte 4 high, units byte 5 low, tens byte 5 high (nibbles 9–11) |
 | [FUNC-OREGON-006](../requirements/functional.md#func-oregon-006) | `OregonV3` | Negative temperature sign flag is bit 3 of byte 6 (nibble 12) |
 | [FUNC-OREGON-007](../requirements/functional.md#func-oregon-007) | `OregonV3` | Humidity rounded to whole %, clamped to 0–99 %; units byte 6 high, tens byte 7 low (nibbles 13–14) |
-| [FUNC-OREGON-008](../requirements/functional.md#func-oregon-008) | `OregonV3` | Pressure byte 8 = hPa − 795 clamped 0–255 (offset from HA `sensor.oregonbth_5a23`); weather prediction in byte 9 |
+| [FUNC-OREGON-008](../requirements/functional.md#func-oregon-008) | `OregonV3` | Pressure rounded to whole hPa; byte 8 = hPa − 795 clamped 0–255 (offset from HA `sensor.oregonbth_5a23`); weather prediction in byte 9 from the rounded pressure |
 | [FUNC-OREGON-009](../requirements/functional.md#func-oregon-009) | `OregonV3` | Channel 1–3 encoded as bitmask in byte 2; out-of-range ignored |
 | [FUNC-OREGON-010](../requirements/functional.md#func-oregon-010) | `OregonV3` | Rolling code is byte 3 |
 | [FUNC-OREGON-011](../requirements/functional.md#func-oregon-011) | `OregonV3` | Battery-low flag is bit 2 of byte 4 |
