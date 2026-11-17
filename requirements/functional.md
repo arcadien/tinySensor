@@ -191,16 +191,16 @@
 **Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, every cycle sends the auxiliary analog voltage in mV (FUNC-ANALOG-001), one decimal digit per nibble, in an RFXmeter frame with that address and packet type 0. Nothing is sent while the battery is low.
 
 ### FUNC-BATTERY-001
-**Title:** VCC measured against the internal 1.1 V reference
+**Title:** VCC measured against the internal 1.1 V reference; pin voltages scaled from VCC
 **Status:** validated
 **Dependencies:** —
-**Description:** VCC in mV is the board's calibrated 1.1 V reference value (mV, CONF-BUILD-005) × 1024 divided by the ADC reading of the internal 1.1 V reference, truncated to an integer.
+**Description:** VCC in mV is the board's calibrated 1.1 V reference value (mV, CONF-BUILD-005) × (1024 / the ADC reading of the internal 1.1 V reference), truncated to an integer. A pin voltage in mV is VCC / 1024 × its 10-bit ADC reading, truncated to an integer; FUNC-BATTERY-002 and FUNC-ANALOG-001 use it.
 
 ### FUNC-BATTERY-002
 **Title:** Battery voltage is VCC, or the PA1 divider reading multiplied by the board's divider ratio
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-001
-**Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
+**Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage (FUNC-BATTERY-001 pin voltage formula) multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
 
 ### FUNC-BATTERY-003
 **Title:** Low battery mutes the X10 meters and the luminosity frames, and sets the Oregon battery-low flag
@@ -230,7 +230,7 @@
 **Title:** Auxiliary analog input on PA0 measured in millivolts
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-001
-**Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, each cycle reads PA0 with the ADC and converts the reading to mV using the VCC measured per FUNC-BATTERY-001.
+**Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, each cycle reads PA0 with the ADC and converts the reading to mV with the FUNC-BATTERY-001 pin voltage formula.
 
 ### FUNC-MAIN-001
 **Title:** Environment frame sent twice per cycle, separated by a silence at least one frame long
