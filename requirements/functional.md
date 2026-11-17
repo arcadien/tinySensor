@@ -149,46 +149,46 @@
 **Description:** Every nibble of the frame (type, address, data and check nibbles) is sent as its four bits followed by a one bit.
 
 ### FUNC-X10-001
-**Title:** RFXmeter builds a 6-byte frame with address, partial complement, 24-bit value, packet-type nibble, and nibble-sum parity
+**Title:** RFXmeter frame: address, address check, 24-bit value, packet type and nibble-sum parity
 **Status:** validated
 **Dependencies:** —
-**Description:** `RFXmeter()` fills a 6-byte buffer: byte[0]=address, byte[1]=(upper nibble of ~address)+(lower nibble of address), bytes[2–4]=24-bit value (clamped to 0 on overflow), byte[5] upper nibble=packet type, byte[5] lower nibble=bitwise NOT of sum of all byte nibble-pairs. The buffer is transmitted via `SendCommand`.
+**Description:** An RFXmeter frame is 6 bytes: byte 0 is the address; byte 1 is the address with its high nibble inverted; bytes 2–4 carry the 24-bit value (0 when the value does not fit in 24 bits); the high nibble of byte 5 is the packet type; the low nibble of byte 5 is the inverted sum of all the nibbles before it. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-002
-**Title:** RFXsensor builds a 4-byte frame with address-type encoding, value, packet-type status, and nibble-sum parity
+**Title:** RFXsensor frame: address and type, check, value, status and nibble-sum parity
 **Status:** validated
 **Dependencies:** —
-**Description:** `RFXsensor()` fills a 4-byte buffer: byte[0]=(address<<2)|type_bits (t=0,v=2,a=1,m=3), byte[1]=(upper nibble of ~byte[0])+(lower nibble of byte[0]), byte[2]=value, byte[3] upper nibble=packet-type status byte, byte[3] lower nibble=bitwise NOT of nibble sum of bytes[0–2] and byte[3] upper nibble. The buffer is transmitted via `SendCommand`.
+**Description:** An RFXsensor frame is 4 bytes: byte 0 is the address shifted left by 2 with the sensor type in bits 0–1 (temperature 0, voltage 2, A/D 1, message 3); byte 1 is byte 0 with its high nibble inverted; byte 2 is the value; the high nibble of byte 3 is the packet-type status; the low nibble of byte 3 is the inverted sum of all the nibbles before it. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-003
-**Title:** x10Switch builds a 4-byte frame with house-code nibble lookup, bit-scattered unit encoding, and full-byte complements
+**Title:** X10 switch frame: house code, scattered unit code and byte complements
 **Status:** validated
 **Dependencies:** —
-**Description:** `x10Switch()` maps house-code characters 'a'–'p' to a 4-bit lookup table value placed in byte[0] upper nibble. Unit code bits are scattered across byte[0] bit 2 and byte[2] bits 3, 4, 6. Byte[1]=~byte[0] and byte[3]=~byte[2]. The 4-byte buffer is transmitted via `SendCommand`.
+**Description:** An X10 switch frame is 4 bytes. House code `a`–`p` gives a 4-bit value from the X10 lookup table in the high nibble of byte 0. The unit code bits are spread over bit 2 of byte 0 and bits 3, 4 and 6 of byte 2. Byte 1 is the complement of byte 0 and byte 3 the complement of byte 2. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-004
-**Title:** x10Security builds a 6-byte frame with XOR-fold parity reduced to a single bit
+**Title:** X10 security frame with a single parity bit
 **Status:** validated
 **Dependencies:** —
-**Description:** `x10Security()` fills a 6-byte buffer: byte[0]=address, byte[1]=(lower nibble of ~byte[0])+(upper nibble of byte[0]), byte[2]=command, byte[3]=~command, byte[4]=id. Byte[5] is the XOR of all six bytes (using byte[5] bit 7 only), folded by successive XOR-halvings to a single bit. The buffer is transmitted via `SendCommand`.
+**Description:** An X10 security frame is 6 bytes: byte 0 is the address; byte 1 is the low nibble of the inverted address plus the high nibble of the address; byte 2 is the command and byte 3 its complement; byte 4 is the id; bit 7 of byte 5 is the parity of the frame, the XOR of all six bytes folded down to one bit. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-005
-**Title:** Each transmission is repeated rf_repeats times with a 40 ms inter-repeat cooldown on AVR
+**Title:** Each X10 frame is repeated with a 40 ms gap, the LED on throughout
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendCommand()` loops `_rf_repeats` times. Each iteration sends the preamble burst, all frame bits MSB-first, and a trailing stop bit, then calls `x10_cooldown_gap()` (40 000 µs delay on AVR, no-op on host). `LedOn`/`LedOff` bracket the full repeated sequence.
+**Description:** An X10 frame is sent the configured number of times. Each copy is the preamble burst, the frame bits most significant first and a stop bit, followed by a 40 ms silence. The LED is lit from before the first copy until after the last.
 
 ### FUNC-X10-006
-**Title:** Battery voltage in mV is BCD-encoded and transmitted via RFXmeter when battery is not low
+**Title:** Battery voltage in mV is sent as BCD in an RFXmeter frame while the battery is not low
 **Status:** validated
 **Dependencies:** FUNC-X10-001, FUNC-BATTERY-001, FUNC-BATTERY-002
-**Description:** When `BATTERY_VOLTAGE_X10_ID` is defined and `lowBattery` is false, `main()` reads VCC in mV, converts it to BCD via `ConversionTools::dec16ToHex`, and calls `x10encoder.RFXmeter(BATTERY_VOLTAGE_X10_ID, 0x00, value)`. The transmission is suppressed entirely when `lowBattery` is true.
+**Description:** When the build sets a battery meter address (CONF-BUILD-008) and the battery is not low, every cycle sends the battery voltage in mV, one decimal digit per nibble (3960 mV gives 0x3960), in an RFXmeter frame with that address and packet type 0. Nothing is sent while the battery is low.
 
 ### FUNC-X10-007
-**Title:** Auxiliary analog sensor voltage in mV is BCD-encoded and transmitted via RFXmeter when battery is not low
+**Title:** Auxiliary analog voltage in mV is sent as BCD in an RFXmeter frame while the battery is not low
 **Status:** validated
 **Dependencies:** FUNC-X10-001, FUNC-ANALOG-001
-**Description:** When `ANALOG1_X10_ID` is defined and `lowBattery` is false, `main()` reads the raw analog sensor value, converts it to mV via `hal.ConvertAnalogValueToMv`, BCD-encodes via `ConversionTools::dec16ToHex`, and calls `x10encoder.RFXmeter(ANALOG1_X10_ID, 0x00, value)`. The transmission is suppressed when `lowBattery` is true.
+**Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, every cycle sends the auxiliary analog voltage in mV (FUNC-ANALOG-001), one decimal digit per nibble, in an RFXmeter frame with that address and packet type 0. Nothing is sent while the battery is low.
 
 ### FUNC-BATTERY-001
 **Title:** VCC computed from ATtiny84a internal 1.1 V reference
