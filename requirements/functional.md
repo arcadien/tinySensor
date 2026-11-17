@@ -199,7 +199,7 @@
 ### FUNC-BATTERY-002
 **Title:** Battery voltage is VCC, or the PA1 divider reading multiplied by the board's divider ratio
 **Status:** validated
-**Dependencies:** FUNC-BATTERY-001, CONF-BUILD-012
+**Dependencies:** FUNC-BATTERY-001
 **Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
 
 ### FUNC-BATTERY-003

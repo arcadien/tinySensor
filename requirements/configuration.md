@@ -62,7 +62,7 @@
 **Title:** Signal direct VCC battery measurement via BATTERY_IS_VCC
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-002
-**Description:** `BATTERY_IS_VCC` is for boards with no divider on PA1, where the battery powers the chip: the battery voltage is then the measured VCC and PA1 is not read (FUNC-BATTERY-002).
+**Description:** `BATTERY_IS_VCC` marks a board with no divider on PA1, where the battery powers the chip: it selects the VCC case of FUNC-BATTERY-002.
 
 ### CONF-BUILD-011
 **Title:** Document charge-pump sensor rail via USE_CHARGE_PUMP
@@ -73,8 +73,8 @@
 ### CONF-BUILD-012
 **Title:** BATTERY_DIVIDER sets the battery divider ratio on PA1
 **Status:** validated
-**Dependencies:** FUNC-BATTERY-002, CONF-BUILD-010
-**Description:** `BATTERY_DIVIDER` is the ratio of battery voltage to PA1 voltage on boards with a resistor divider. It is 2 for the 1 MΩ / 1 MΩ divider of the v2.2 rework and of v3.0, which closes BACKLOG F1. Boards that don't set it behave as before, and it has no effect on boards whose battery is VCC.
+**Dependencies:** FUNC-BATTERY-002
+**Description:** `BATTERY_DIVIDER` sets the divider ratio of FUNC-BATTERY-002 on boards with a resistor divider on PA1: 2 for the 1 MΩ / 1 MΩ divider of the v2.2 rework and of v3.0, which closes BACKLOG F1.
 
 ### CONF-BUILD-013
 **Title:** OREGON_NO_PRESSURE makes a BME280 Oregon sensor send temperature and humidity only
