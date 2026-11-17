@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [PLAT-POWER-007](../requirements/platform.md#plat-power-007) (sensor bus pull-ups to SENSOR_VCC) and [TECH-HAL-004](../requirements/technical.md#tech-hal-004) (no internal pull-up on PORTA)_
+_Last updated: 2026-11-17 — [FUNC-OREGON-005](../requirements/functional.md#func-oregon-005) (temperature rounded to the tenth, clamped to 99.9 °C)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -186,7 +186,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-OREGON-002](../requirements/functional.md#func-oregon-002) | `OregonV3` | One bit HAL call sequence (L-D512-H-D1024-L-D512) |
 | [FUNC-OREGON-003](../requirements/functional.md#func-oregon-003) | `OregonV3` | Byte serialisation: LSB nibble before MSB nibble |
 | [FUNC-OREGON-004](../requirements/functional.md#func-oregon-004) | `OregonV3` | Frame structure: 3-byte preamble + payload + 1-byte postamble |
-| [FUNC-OREGON-005](../requirements/functional.md#func-oregon-005) | `OregonV3` | Positive temperature: tenths byte 4 high, units byte 5 low, tens byte 5 high (nibbles 9–11) |
+| [FUNC-OREGON-005](../requirements/functional.md#func-oregon-005) | `OregonV3` | Positive temperature rounded to the nearest tenth, clamped to 99.9 °C, then split: tenths byte 4 high, units byte 5 low, tens byte 5 high (nibbles 9–11) |
 | [FUNC-OREGON-006](../requirements/functional.md#func-oregon-006) | `OregonV3` | Negative temperature sign flag is bit 3 of byte 6 (nibble 12) |
 | [FUNC-OREGON-007](../requirements/functional.md#func-oregon-007) | `OregonV3` | Humidity units byte 6 high, tens byte 7 low (nibbles 13–14) |
 | [FUNC-OREGON-008](../requirements/functional.md#func-oregon-008) | `OregonV3` | Pressure byte 8 = hPa − 795 clamped 0–255 (offset from HA `sensor.oregonbth_5a23`); weather prediction in byte 9 |
