@@ -38,7 +38,8 @@ inline bool ApplyMeasurements(OregonV3 &encoder, const Measurements &m,
                                  : static_cast<uint8_t>(round(h)));
   }
   if (m.Has(Measurements::PRESSURE)) {
-    encoder.SetPressure(static_cast<uint16_t>(m.pressure));
+    // rounded to whole hPa before offset and forecast (FUNC-OREGON-008)
+    encoder.SetPressure(static_cast<uint16_t>(round(m.pressure)));
   }
   if (!m.Has(Measurements::TEMPERATURE)) {
     return false;
