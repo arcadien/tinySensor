@@ -51,6 +51,14 @@
 
 ---
 
+### TECH-HAL-007
+**Title:** Attiny84aHal names the PLAT-POWER behaviour: Hibernate, PowerOnSensors / PowerOffSensors, TRANSMIT_WITH_LED
+**Status:** validated
+**Dependencies:** TECH-HAL-004, TECH-HAL-005, PLAT-POWER-001, PLAT-POWER-002, PLAT-POWER-004, PLAT-POWER-006
+**Description:** `Attiny84aHal::Hibernate(s)` calls the file-static `sleep(s)` of `lib/hal/Attiny84aHal.cpp`, which computes `s >> 3` (minimum 1) watchdog periods and saves / restores PRR, DDRA, DDRB, PORTA and PORTB (PLAT-POWER-001, PLAT-POWER-003). `PowerOnSensors()` drives PA2 high and `PowerOffSensors()` low (PLAT-POWER-002); with `USE_SWITCHED_5V`, the constructor clears `PORTB.2`, `PowerOnSensors()` sets `DDRB.2` and `PowerOffSensors()` clears it (PLAT-POWER-006). In `emitter/src/main.cpp`, the macro `TRANSMIT_WITH_LED(code)` expands to `hal->LedOn()`, `code`, `hal->LedOff()`, `hal->Delay30ms()`, and wraps every `Send()` of the cycle (PLAT-POWER-004). `Delay512Us`, `Delay1024Us`, `Delay400Us` and `Delay30ms` are calibrated for 1 MHz (PLAT-POWER-005).
+
+---
+
 ### TECH-FILTER-001
 **Title:** AnalogFilter discards the first `exclusion` values then accumulates up to `samples` values and returns their integer floor mean
 **Status:** validated
