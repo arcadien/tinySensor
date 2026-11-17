@@ -131,10 +131,10 @@
 **Description:** The pressure is rounded to the nearest tenth of hPa (halves up), clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four digit nibbles, each 0–9, in order: units, tens, hundreds, tenths. 1013.37 hPa sends 813.4 as 3, 1, 8, 4.
 
 ### FUNC-LACROSSE-007
-**Title:** Luminosity sent as 7 nibbles in a type 5 frame
+**Title:** Luminosity sent as a 3-digit mantissa and a power-of-ten exponent in a type 5 frame
 **Status:** validated
 **Dependencies:** —
-**Description:** A luminosity frame (type 0x5, [FUNC-LACROSSE-002](#func-lacrosse-002)) carries the units, tens and hundreds digits of the lux value followed by four zero nibbles: 7 data nibbles.
+**Description:** A luminosity frame (type 0x5, [FUNC-LACROSSE-002](#func-lacrosse-002)) carries 7 data nibbles in the Lacrosse WS2500-19 layout read by rtl_433 (`src/devices/lacrosse_ws7000.c`, type 5): the units, tens and hundreds digits of a mantissa, an exponent nibble, then three zero nibbles (exposure time, not measured). Lux = mantissa × 10^exponent. The exponent is the smallest one for which the lux value divided by 10^exponent, rounded to the nearest integer (halves up), is at most 999; that rounded value is the mantissa. Mantissa, exponent: 999 lx gives 999, 0; 1000 lx gives 100, 1; 1234 lx gives 123, 1; 1235 lx gives 124, 1; 9995 lx gives 100, 2; 65535 lx gives 655, 2.
 
 ### FUNC-LACROSSE-008
 **Title:** Frame ends with an XOR check nibble then a sum check nibble starting at 5
