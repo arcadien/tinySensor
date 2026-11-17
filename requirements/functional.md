@@ -152,7 +152,7 @@
 **Title:** RFXmeter frame: address, address check, 24-bit value, packet type and nibble-sum parity
 **Status:** validated
 **Dependencies:** —
-**Description:** An RFXmeter frame is 6 bytes: byte 0 is the address; byte 1 is the address with its high nibble inverted; bytes 2–4 carry the 24-bit value (0 when the value does not fit in 24 bits); the high nibble of byte 5 is the packet type; the low nibble of byte 5 is the inverted sum of all the nibbles before it. It is sent per FUNC-X10-005.
+**Description:** An RFXmeter frame is 6 bytes: byte 0 is the address; byte 1 is the address with its high nibble inverted; bytes 2–4 carry the 24-bit value: byte 4 its high byte, byte 2 its middle byte, byte 3 its low byte (the value is 0 when it does not fit in 24 bits); the high nibble of byte 5 is the packet type; the low nibble of byte 5 is the inverted sum of all the nibbles before it. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-002
 **Title:** RFXsensor frame: address and type, check, value, status and nibble-sum parity
@@ -164,19 +164,19 @@
 **Title:** X10 switch frame: house code, scattered unit code and byte complements
 **Status:** validated
 **Dependencies:** —
-**Description:** An X10 switch frame is 4 bytes. House code `a`–`p` gives a 4-bit value from the X10 lookup table in the high nibble of byte 0. The unit code bits are spread over bit 2 of byte 0 and bits 3, 4 and 6 of byte 2. Byte 1 is the complement of byte 0 and byte 3 the complement of byte 2. It is sent per FUNC-X10-005.
+**Description:** An X10 switch frame is 4 bytes. House code `a`–`p` (either case) puts in the high nibble of byte 0 the X10 code 6, 7, 4, 5, 8, 9, 10, 11, 14, 15, 12, 13, 0, 1, 2, 3 respectively; another character gives 0. With `u` = unit − 1, bit 3 of `u` goes to bit 2 of byte 0, and bits 2, 1, 0 of `u` go to bits 6, 3, 4 of byte 2. The command (on, off, bright, dim) is the rest of byte 2. Byte 1 is the complement of byte 0 and byte 3 the complement of byte 2. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-004
 **Title:** X10 security frame with a single parity bit
 **Status:** validated
 **Dependencies:** —
-**Description:** An X10 security frame is 6 bytes: byte 0 is the address; byte 1 is the low nibble of the inverted address plus the high nibble of the address; byte 2 is the command and byte 3 its complement; byte 4 is the id; bit 7 of byte 5 is the parity of the frame, the XOR of all six bytes folded down to one bit. It is sent per FUNC-X10-005.
+**Description:** An X10 security frame is 6 bytes: byte 0 is the address; byte 1 is the address with its low nibble inverted; byte 2 is the command and byte 3 its complement; byte 4 is the id; byte 5 is the parity of the frame, 0x00 or 0x01: the XOR of bytes 0–4 folded down to one bit. It is sent per FUNC-X10-005.
 
 ### FUNC-X10-005
 **Title:** Each X10 frame is repeated with a 40 ms gap, the LED on throughout
 **Status:** validated
 **Dependencies:** —
-**Description:** An X10 frame is sent the configured number of times. Each copy is the preamble burst, the frame bits most significant first and a stop bit, followed by a 40 ms silence. The LED is lit from before the first copy until after the last.
+**Description:** An X10 frame is sent twice in each sensor cycle (the encoder takes the copy count at construction). Each copy is a preamble, radio high 8960 µs then low 4500 µs, then the frame bits most significant first and a one stop bit, each bit being high 560 µs then low 560 µs (`0`) or 1680 µs (`1`), followed by a 40 ms silence. The LED is lit from before the first copy until after the last.
 
 ### FUNC-X10-006
 **Title:** Battery voltage in mV is sent as BCD in an RFXmeter frame while the battery is not low
