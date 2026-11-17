@@ -209,22 +209,22 @@
 **Description:** When `batteryVoltageInMv < LOW_BATTERY_VOLTAGE`, `main()` sets `lowBattery = true`. Oregon frames receive `SetBatteryLow(true)`. All X10 RFXmeter transmissions guarded by `!lowBattery` (battery voltage and analog sensor) are suppressed entirely.
 
 ### FUNC-SENSOR-001
-**Title:** BMx280 wraps BMP280 and BME280 behind a common interface at I2C address 0x76
+**Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
 **Status:** validated
 **Dependencies:** —
-**Description:** The `BMx280` class initialises the sensor at I2C address 0x76 and exposes `Begin()`, `GetTemperature()` (°C), `GetPressure()` (Pa), `GetHumidity()` (%), and `Shutdown()` (sleep mode). On non-AVR targets the methods are stubs returning 0.
+**Description:** On a build with a BME280 or BMP280 (CONF-BUILD-002), each cycle reads the temperature (°C), the pressure and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: TECH-SENSOR-002.
 
 ### FUNC-SENSOR-002
-**Title:** DS18B20 temperature read on 1-Wire PA3; raw value divided by 16 gives degrees Celsius
+**Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
 **Status:** validated
 **Dependencies:** —
-**Description:** When `USE_DS18B20` is defined on AVR, `main()` calls `ds18b20convert()` on PORTA bit 3, waits 1 s, then calls `ds18b20read()`. On `DS18B20_ERROR_OK`, the raw 16-bit fixed-point value is right-shifted by dividing by 16 to obtain temperature in °C as an integer.
+**Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. On a successful read, the temperature in whole °C is the raw 1/16 °C value divided by 16. Wrapper details: TECH-SENSOR-001.
 
 ### FUNC-SENSOR-003
-**Title:** BH1750 light sensor read in ONE_TIME_HIGH_RES_MODE and reported as a Lacrosse type-5 luminosity frame transmitted twice
+**Title:** BH1750 luminosity sent twice as a Lacrosse luminosity frame
 **Status:** validated
 **Dependencies:** FUNC-LACROSSE-007
-**Description:** When `USE_BH1750` is defined and `lowBattery` is false, `main()` initialises a `BH1750` at I2C address 0x23 in `ONE_TIME_HIGH_RES_MODE`, waits 150 ms, reads the lux value, sets it on a `LacrosseWS7000` encoder, and calls `Send()` twice to maximise reception reliability.
+**Description:** On a build with a BH1750 and while the battery is not low, each cycle starts a one-time high-resolution measurement on the sensor at I2C address 0x23, waits 150 ms, reads the lux value and sends it twice in a Lacrosse luminosity frame (FUNC-LACROSSE-007), for better reception.
 
 ### FUNC-ANALOG-001
 **Title:** Auxiliary analog input on PA0 read and converted to millivolts
