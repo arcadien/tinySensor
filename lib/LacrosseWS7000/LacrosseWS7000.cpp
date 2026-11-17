@@ -11,6 +11,25 @@
     checkSum += (nibble);       \
   } while (0)
 
+// Out of line: inlined in each setter it costs flash on the ATtiny84A, as
+// round() and a 32-bit division would.
+void LacrosseWS7000::NumericalValueSplitter::Split(float input,
+                                                   Result *result) {
+  float magnitude = fabs(input);
+  uint16_t integerValue = magnitude;
+  uint8_t decimals = (magnitude - integerValue) * 10 + 0.5f;
+  if (decimals == 10) {
+    decimals = 0;
+    integerValue++;
+  }
+  result->isNegative = (input < 0) && (integerValue || decimals);
+  result->decimals = decimals;
+  result->units = integerValue % 10;
+  integerValue /= 10;
+  result->dozens = integerValue % 10;
+  result->hundreds = (integerValue / 10) & 0x0F;
+}
+
 LacrosseWS7000::LacrosseWS7000(Hal *hal) : _hal(hal), availableData(0) {}
 
 void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
@@ -19,8 +38,8 @@ void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
 
 void LacrosseWS7000::SetHumidity(float humidity) {
   availableData |= HUMIDITY_AVAILABLE;
-  if (humidity >= 100)
-    humidity = 99.9;
+  if (humidity > 99.9f)
+    humidity = 99.9f;
   NumericalValueSplitter::Split(humidity, &this->humidity);
 }
 
@@ -34,17 +53,27 @@ void LacrosseWS7000::SetPressure(float pressure) {
   NumericalValueSplitter::Split(pressure, &this->pressure);
 }
 
+// Rounds lux / 10^exponent directly (not digit by digit, which would round
+// twice) with 16-bit divisions only: 32-bit ones cost flash on the ATtiny84A.
 void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
   availableData |= LUMINOSITY_AVAILABLE;
-  NumericalValueSplitter::Split(luminosity, &this->luminosity);
+  uint16_t divisor = 1;
+  uint16_t mantissa = luminosity;
+  luminosityExponent = 0;
+  while (mantissa > 999) {
+    divisor *= 10;
+    luminosityExponent++;
+    mantissa = luminosity / divisor + (luminosity % divisor * 2 >= divisor);
+  }
+  NumericalValueSplitter::Split(mantissa, &this->luminosity);
 }
 
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
-  if (temperature > 99)
-    temperature = 99;
-  if (temperature < -99)
-    temperature = -99;
+  if (temperature > 99.9f)
+    temperature = 99.9f;
+  if (temperature < -99.9f)
+    temperature = -99.9f;
   NumericalValueSplitter::Split(temperature, &this->temperature);
 }
 
@@ -114,7 +143,7 @@ void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
   SendNibble(luminosity.units);
   SendNibble(luminosity.dozens);
   SendNibble(luminosity.hundreds);
-  SendNibble(0x00);
+  SendNibble(luminosityExponent);
   SendNibble(0x00);
   SendNibble(0x00);
   SendNibble(0x00);
@@ -122,7 +151,7 @@ void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
   nibbles[0] = luminosity.units;
   nibbles[1] = luminosity.dozens;
   nibbles[2] = luminosity.hundreds;
-  nibbles[3] = 0x00;
+  nibbles[3] = luminosityExponent;
   nibbles[4] = 0x00;
   nibbles[5] = 0x00;
   nibbles[6] = 0x00;

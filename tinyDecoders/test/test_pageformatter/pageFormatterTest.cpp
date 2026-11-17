@@ -8,7 +8,8 @@
  * printf):
  *   void FormatPage(const SourceRecord &record, bool alternate, char big[7],
  *                   char top[5], char bottom[5]);
- * SourceRecord comes from SourceTable.h (FUNC-DECODE-006).
+ * SourceRecord comes from SourceTable.h (FUNC-DECODE-006). The lux unit cell
+ * is the character '\x01' (LuxUnit) right after the lux digits.
  */
 
 #include <stdint.h>
@@ -20,6 +21,8 @@
 
 // Degree glyph; kept a separate literal so "\x7F" never eats a hex digit
 #define DEG "\x7F"
+// Lux unit cell, LuxUnit in Font8x16.h (TECH-DECODE-004)
+#define UNIT "\x01"
 
 static const uint8_t T = SourceRecord::Temperature;
 static const uint8_t H = SourceRecord::Humidity;
@@ -103,7 +106,7 @@ static const PageCase pageCases[] = {
     {"spec-lux",
      {LUX, 2, 0, LX, 0, 0, 0, 1000, 0},
      false,
-     "1000lx",
+     "1000" UNIT " ",
      "  L2",
      "    "},
     {"spec-x10",
@@ -164,20 +167,26 @@ static const PageCase pageCases[] = {
     {"lux-before-millivolts",
      {LUX, 0, 0, LX | MV, 0, 0, 0, 1000, 3960},
      false,
-     "1000lx",
+     "1000" UNIT " ",
      "  L0",
      "    "},
     // Lux
     {"lux-zero",
      {LUX, 7, 0, LX, 0, 0, 0, 0, 0},
      false,
-     "0lx   ",
+     "0" UNIT "    ",
      "  L7",
+     "    "},
+    {"spec-lux-max",
+     {LUX, 2, 0, LX, 0, 0, 0, 65535, 0},
+     false,
+     "65535" UNIT,
+     "  L2",
      "    "},
     {"lux-four-digits-max",
      {LUX, 7, 0, LX, 0, 0, 0, 9999, 0},
      false,
-     "9999lx",
+     "9999" UNIT " ",
      "  L7",
      "    "},
     // Millivolts
@@ -317,7 +326,7 @@ void FormatPage_renders_main_value_identifier_and_side_value() {
 }
 
 static const bool kAlternates[] = {false, true};
-static const char allowedGlyphs[] = "0123456789 .-%" DEG "VlxLXabcdef";
+static const char allowedGlyphs[] = "0123456789 .-%" DEG "VlxLXabcdef" UNIT;
 
 static void assertGlyphs(const char *id, const char *text, size_t length) {
   for (size_t i = 0; i < length; i++) {

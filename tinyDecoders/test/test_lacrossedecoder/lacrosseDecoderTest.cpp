@@ -349,7 +349,9 @@ static const ValueCase valueCases[] = {
     {"pressure-min", {TEMP | HUM | PRES, 20, 50, 850, 0}, 200, 500, 8500, 0},
     {"pressure-max", {TEMP | HUM | PRES, 20, 50, 1100, 0}, 200, 500, 11000, 0},
     {"lux-zero", {LUX, 0, 0, 0, 0}, 0, 0, 0, 0},
-    {"lux-max-hundreds-nibble", {LUX, 0, 0, 0, 1599}, 0, 0, 0, 1599},
+    {"spec-luminosity-max", {LUX, 0, 0, 0, 65535}, 0, 0, 0, 65500},
+    {"lux-mantissa-999", {LUX, 0, 0, 0, 999}, 0, 0, 0, 999},
+    {"lux-mantissa-123-exponent-1", {LUX, 0, 0, 0, 1234}, 0, 0, 0, 1230},
 };
 
 // @req FUNC-DECODE-003
@@ -370,6 +372,35 @@ void LacrosseDecoder_exposes_measurements_of_lacrosse_ws7000() {
                                      c.id);
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.pressure, decoder.PressureTenths(),
                                      c.id);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.lux, decoder.Lux(), c.id);
+  }
+}
+
+struct RawLuxCase {
+  const char *id;
+  std::vector<uint8_t> nibbles;  // type 5, address 2, d1..d7
+  uint16_t lux;
+};
+
+static const RawLuxCase rawLuxCases[] = {
+    {"spec-999-exponent-3-capped", {5, 2, 9, 9, 9, 3, 0, 0, 0}, 65535},
+    {"exposure-nibbles-ignored", {5, 2, 5, 5, 6, 2, 7, 3, 9}, 65500},
+    {"mantissa-1-exponent-4", {5, 2, 1, 0, 0, 4, 0, 0, 0}, 10000},
+    {"mantissa-0-exponent-9", {5, 2, 0, 0, 0, 9, 0, 0, 0}, 0},
+};
+
+// @req FUNC-DECODE-003
+void LacrosseDecoder_reads_lux_from_mantissa_and_exponent() {
+  for (const RawLuxCase &c : rawLuxCases) {
+    // Given
+    std::vector<Pulse> pulses = framePulses(withChecks(c.nibbles));
+    LacrosseDecoder decoder;
+
+    // When
+    int frames = countFrames(decoder, pulses);
+
+    // Then
+    TEST_ASSERT_EQUAL_INT_MESSAGE(1, frames, c.id);
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(c.lux, decoder.Lux(), c.id);
   }
 }
@@ -406,6 +437,7 @@ int main(int, char **) {
   RUN_TEST(LacrosseDecoder_recovers_from_noise_and_partial_frames);
   RUN_TEST(LacrosseDecoder_completes_frame_on_last_separator_high);
   RUN_TEST(LacrosseDecoder_exposes_measurements_of_lacrosse_ws7000);
+  RUN_TEST(LacrosseDecoder_reads_lux_from_mantissa_and_exponent);
   RUN_TEST(LacrosseDecoder_clears_fields_absent_from_the_next_frame);
   return UNITY_END();
 }

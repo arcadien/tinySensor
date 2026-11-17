@@ -11,6 +11,8 @@
  * UI-DECODE-003 adds, in the same header:
  *   void ReadBigGlyphPage(char c, uint8_t page, uint8_t bytes[16]);
  * page 0-3 of the 16x32 glyph, computed from ReadGlyph (no extra table).
+ * The lux unit cell '\x01' (LuxUnit) is not doubled: pages 0-1 blank, pages
+ * 2-3 the top then bottom halves of the 8x16 'l' (cols 0-7) and 'x' (8-15).
  */
 
 #include <stdint.h>
@@ -147,6 +149,30 @@ void ReadBigGlyphPage_gives_blank_pages_for_space() {
   }
 }
 
+// Lux unit cell, LuxUnit in Font8x16.h; literal so the suite builds without it
+static const char luxUnit = '\x01';
+
+// @req UI-DECODE-003
+void ReadBigGlyphPage_draws_the_lux_unit_as_small_l_and_x_in_the_lower_half() {
+  // Given
+  Glyph l = read('l');
+  Glyph x = read('x');
+  uint8_t expected[4][16] = {};
+  for (uint8_t half = 0; half < 2; half++) {
+    memcpy(expected[2 + half], l.bytes + half * 8, 8);
+    memcpy(expected[2 + half] + 8, x.bytes + half * 8, 8);
+  }
+  uint8_t pages[4][16];
+  memset(pages, 0xA5, sizeof pages);
+
+  // When
+  for (uint8_t page = 0; page < 4; page++)
+    ReadBigGlyphPage(luxUnit, page, pages[page]);
+
+  // Then
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, pages, sizeof pages);
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -156,5 +182,7 @@ int main(int, char **) {
   RUN_TEST(ReadGlyph_gives_a_blank_glyph_outside_the_set);
   RUN_TEST(ReadBigGlyphPage_doubles_the_8x16_glyph);
   RUN_TEST(ReadBigGlyphPage_gives_blank_pages_for_space);
+  RUN_TEST(
+      ReadBigGlyphPage_draws_the_lux_unit_as_small_l_and_x_in_the_lower_half);
   return UNITY_END();
 }

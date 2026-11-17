@@ -25,11 +25,6 @@ testing support.
 #ifndef x10rf_h
 #define x10rf_h
 
-#define ON 0x00
-#define OFF 0x20
-#define BRIGHT 0x88
-#define DIM 0x98
-
 #include <Hal.h>
 #include <stdint.h>
 
@@ -45,7 +40,6 @@ class x10rf {
                 uint32_t rfxm_value);
   void RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type, char rfxs_packet_type,
                  uint8_t rfxs_value);
-  void x10Switch(char house_code, uint8_t unit_code, uint8_t command);
   void x10Security(uint8_t address, uint8_t id, uint8_t command);
 
   uint8_t *getMessage();

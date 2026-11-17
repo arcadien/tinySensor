@@ -102,8 +102,7 @@ bool LacrosseDecoder::Checked() const {
          nibbles[frameNibbles - 1] == (checkSum & 0x0F);
 }
 
-// Data nibbles d(first+2), d(first+1), d(first) as hundreds, tens and units;
-// a nibble may exceed 9 (e.g. lux 1000 sends 10 hundreds)
+// Data nibbles d(first+2), d(first+1), d(first) as hundreds, tens and units
 uint16_t LacrosseDecoder::Digits(uint8_t first) const {
   const uint8_t *d = nibbles + 1;  // d[1] is the first data nibble
   return d[first + 2] * 100 + d[first + 1] * 10 + d[first];
@@ -118,7 +117,12 @@ void LacrosseDecoder::Publish() {
   pressureTenths = 0;
   lux = 0;
   if (type == 5) {
-    lux = Digits(1);
+    // Mantissa x 10^d4, capped at 65535: multiplying stops once above the cap
+    uint32_t value = Digits(1);
+    for (uint8_t exponent = nibbles[1 + 4]; exponent && value <= 0xFFFF;
+         exponent--)
+      value *= 10;
+    lux = value > 0xFFFF ? 0xFFFF : value;
     return;
   }
   temperatureTenths = negative ? -Digits(1) : Digits(1);

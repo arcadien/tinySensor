@@ -1,5 +1,7 @@
 #include "PageFormatter.h"
 
+#include <Font8x16.h>
+
 static const uint8_t BigLength = 6;
 static const uint8_t SideLength = 4;
 static const char Degree = '\x7F';
@@ -10,11 +12,6 @@ static const uint8_t MaxHumidityPercent = 99;
 static char *PutChar(char *at, char c) {
   *at = c;
   return at + 1;
-}
-
-static char *PutText(char *at, const char *text) {
-  while (*text) *at++ = *text++;
-  return at;
 }
 
 // Lowercase hex digit, computed: a digit table would cost 17 B of AVR RAM
@@ -94,7 +91,7 @@ void FormatPage(const SourceRecord &record, bool alternate, char big[7],
   if (record.fields & SourceRecord::Temperature)
     end = PutTemperature(text, record.temperatureTenths);
   else if (record.fields & SourceRecord::Lux)
-    end = PutText(PutNumber(text, record.lux), "lx");
+    end = PutChar(PutNumber(text, record.lux), LuxUnit);
   else if (record.fields & SourceRecord::Millivolts)
     end = PutVolts(text, record.millivolts);
   PutField(big, BigLength, text, end, false);

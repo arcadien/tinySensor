@@ -20,7 +20,22 @@ void ReadGlyph(char c, uint8_t glyph[16]) {
   }
 }
 
+// Lux unit cell: plain 8x16 'l' and 'x' side by side in the lower half
+static void ReadLuxUnitPage(uint8_t page, uint8_t bytes[16]) {
+  for (uint8_t i = 0; i < 16; i++) bytes[i] = 0;
+  if (page < 2)
+    return;
+  uint8_t glyph[16];
+  uint8_t half = (page - 2) * 8;
+  ReadGlyph('l', glyph);
+  for (uint8_t i = 0; i < 8; i++) bytes[i] = glyph[half + i];
+  ReadGlyph('x', glyph);
+  for (uint8_t i = 0; i < 8; i++) bytes[8 + i] = glyph[half + i];
+}
+
 void ReadBigGlyphPage(char c, uint8_t page, uint8_t bytes[16]) {
+  if (c == LuxUnit)
+    return ReadLuxUnitPage(page, bytes);
   uint8_t glyph[16];
   ReadGlyph(c, glyph);
   for (uint8_t x = 0; x < 16; x++) {

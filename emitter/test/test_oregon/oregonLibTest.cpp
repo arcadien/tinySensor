@@ -219,6 +219,12 @@ static const TemperatureCase positiveTemperatureCases[] = {
     {"21.5", 21.5f, 0x50, 0x21, 0x00},
     {"8.4-no-tens", 8.4f, 0x40, 0x08, 0x00},
     {"zero", 0.0f, 0x00, 0x00, 0x00},
+    {"21.97-rounds-up-to-22.0", 21.97f, 0x00, 0x22, 0x00},
+    {"21.94-rounds-down-to-21.9", 21.94f, 0x90, 0x21, 0x00},
+    {"21.25-half-rounds-up", 21.25f, 0x30, 0x21, 0x00},
+    {"99.9-max", 99.9f, 0x90, 0x99, 0x00},
+    {"99.96-clamped-to-99.9", 99.96f, 0x90, 0x99, 0x00},
+    {"120-clamped-to-99.9", 120.0f, 0x90, 0x99, 0x00},
 };
 
 // @req FUNC-OREGON-005
@@ -245,6 +251,12 @@ static const TemperatureCase negativeTemperatureCases[] = {
     {"-8.4-no-tens", -8.4f, 0x40, 0x08, 0x08},
     {"-10.2", -10.2f, 0x20, 0x10, 0x08},
     {"-0.5", -0.5f, 0x50, 0x00, 0x08},
+    {"-21.97-rounds-to-22.0", -21.97f, 0x00, 0x22, 0x08},
+    {"-10.25-half-rounds-away-from-zero", -10.25f, 0x30, 0x10, 0x08},
+    {"-99.96-clamped-to-99.9", -99.96f, 0x90, 0x99, 0x08},
+    {"-120-clamped-to-99.9", -120.0f, 0x90, 0x99, 0x08},
+    // rounds to 0.0, which is not negative
+    {"-0.04-sends-0.0-sign-clear", -0.04f, 0x00, 0x00, 0x00},
 };
 
 // @req FUNC-OREGON-006
@@ -308,7 +320,7 @@ struct HumidityCase {
 static const HumidityCase humidityCases[] = {
     {"52", 52, 0x20, 0x05},       {"67", 67, 0x70, 0x06},
     {"7-no-tens", 7, 0x70, 0x00}, {"zero", 0, 0x00, 0x00},
-    {"99", 99, 0x90, 0x09},
+    {"99", 99, 0x90, 0x09},       {"100-clamped-to-99", 100, 0x90, 0x09},
 };
 
 // @req FUNC-OREGON-007

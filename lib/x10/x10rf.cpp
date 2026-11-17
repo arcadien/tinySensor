@@ -20,7 +20,6 @@ testing support.
 
 #include "x10rf.h"
 #include <bitOps.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -218,40 +217,6 @@ void x10rf::RFXsensor(uint8_t rfxs_address, uint8_t rfxs_type,
   uint8_t parity = ~(NIBBLE_SUM(_message[0]) + NIBBLE_SUM(_message[1]) +
                      NIBBLE_SUM(_message[2]) + ((_message[3] & 0xF0) >> 4));
   _message[3] = (_message[3] & 0xf0) + (parity & 0XF);
-  SendCommand(_message, 4);
-}
-
-void x10rf::x10Switch(char house_code, uint8_t unit_code, uint8_t command) {
-  clearMessageBuffer(_message);
-  // House code lookup table: indices a-p map to nibble values
-  static const uint8_t house_codes[] = {
-      0b0110, 0b0111, 0b0100, 0b0101, 0b1000, 0b1001, 0b1010, 0b1011,
-      0b1110, 0b1111, 0b1100, 0b1101, 0b0000, 0b0001, 0b0010, 0b0011};
-  char lower = tolower(house_code);
-  if (lower >= 'a' && lower <= 'p') {
-    _message[0] = house_codes[lower - 'a'];
-  } else {
-    _message[0] = 0;
-  }
-  _message[0] = _message[0] << 4;  // House code goes into the upper nibble
-
-  switch (command) {
-    case ON:
-    case OFF:
-    case BRIGHT:
-    case DIM:
-      _message[2] = command;
-      break;
-  }
-  // Set unit number
-  unit_code = unit_code - 1;
-  BITWRITE(_message[2], 6, BITREAD(unit_code, 2));
-  BITWRITE(_message[2], 3, BITREAD(unit_code, 1));
-  BITWRITE(_message[2], 4, BITREAD(unit_code, 0));
-  BITWRITE(_message[0], 2, BITREAD(unit_code, 3));
-  // Set parity
-  _message[1] = ~_message[0];
-  _message[3] = ~_message[2];
   SendCommand(_message, 4);
 }
 

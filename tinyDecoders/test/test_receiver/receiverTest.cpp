@@ -184,6 +184,7 @@ static const SourceStepCase sourceStepCases[] = {
 };
 
 // @req FUNC-DECODE-007
+// @req UI-DECODE-001
 void Receiver_draws_every_source_cell_in_order_on_the_first_frame() {
   for (const SourceStepCase &c : sourceStepCases) {
     // Given

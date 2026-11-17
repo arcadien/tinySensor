@@ -4,8 +4,8 @@ exclusions:
     justification: "The code predates the RBD workflow; the test commits tagged existing tests (FUNC-ANALOG-001 to PLAT-POWER-004 added on 2026-11-17 by 7f4c027, 6fdc43a, 4919547). Adding implementation commits would mean rewriting master history."
     date: 2026-11-17
   - id: HIST-COMMIT-MISMATCH-001
-    finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005"
-    justification: "Merged history (chore: CI wiring, tests or code bundled in a neighbour commit). It cannot change without rewriting master; the current tags and code are traced."
+    finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005, TECH-SERIAL-001, CONF-BUILD-012, FUNC-SENSOR-003"
+    justification: "Merged history (chore: CI wiring, tests or code bundled in a neighbour commit). TECH-SERIAL-001 (6817d72 added its tests inside the tech commit), CONF-BUILD-012 (code in 0d775cc feat(FUNC-BATTERY-002), tag in d64fb61) and FUNC-SENSOR-003 (tags in a5987fb, tech: without ID) added on 2026-11-17 (audit 3, finding 10). It cannot change without rewriting master; the current tags and code are traced."
     date: 2026-11-17
   - id: HIST-PREFIX-001
     finding: "Plan and architecture files changed by commits with the wrong prefix (.rbd/config.yml, requirements/technical.md, requirements/platform.md, docs/architecture.md)"
@@ -18,4 +18,12 @@ exclusions:
   - id: SESSION-PREFIX-001
     finding: "bfdb0a6 (docs:) changed audits/exclusions.yml; cd584b8 (plan:) changed docs/architecture.md"
     justification: "Merged on master. bfdb0a6 should have been plan:, used from now on for exclusions. cd584b8 is a link-format pass over the whole architecture document with no single requirement; plan: is accepted for such whole-document format changes."
+    date: 2026-11-17
+  - id: RECEIVER-STATIC-HAL-001
+    finding: "TECH-DECODE-002: the Receiver's injected ReceiverHal* is a compile-time typedef of AtmegaReceiverHal (TestReceiverHal in tests), not an abstract interface"
+    justification: "Intentional static interface, documented in docs/architecture.md: no vtable on the ATmega328P receiver, the test HAL is swapped in at build time."
+    date: 2026-11-17
+  - id: DRAFT-TAG-DS18B20-001
+    finding: "4 tests in emitter/test/test_ds18b20/ds18b20Test.cpp are tagged with the draft TECH-SENSOR-001"
+    justification: "TECH-SENSOR-001 went back to draft pending the DS18B20 rework (PA3 release, 0 °C reading, FUNC-SENSOR-002). The tests still check the current driver wrapper; the tag stays so they are re-traced when the requirement is validated again."
     date: 2026-11-17

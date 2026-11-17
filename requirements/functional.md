@@ -29,28 +29,28 @@
 **Description:** Every Oregon frame starts with a 24 one-bit preamble (three `0xFF` bytes), then carries the 11-byte payload, and ends with an 8 zero-bit postamble (one `0x00` byte).
 
 ### FUNC-OREGON-005
-**Title:** Positive temperature sent as tenths, units and tens digits in payload bytes 4–5
+**Title:** Positive temperature rounded to the tenth, clamped to 99.9 °C, sent as tenths, units and tens digits in payload bytes 4–5
 **Status:** validated
 **Dependencies:** —
-**Description:** A non-negative temperature is sent as three decimal digits: tenths in the high nibble of byte 4, units in the low nibble of byte 5, tens in the high nibble of byte 5 (frame nibbles 9, 10, 11, the sync nibble being nibble 0). This is the Oregon v2.1 layout read by RFLink (`Plugins/Plugin_048.c`, couin3, lines 733-734). The low nibble of byte 4 holds the flags ([FUNC-OREGON-011](#func-oregon-011)).
+**Description:** A non-negative temperature is rounded to the nearest tenth (halves up), then clamped to 99.9 °C, and sent as three decimal digits: tenths in the high nibble of byte 4, units in the low nibble of byte 5, tens in the high nibble of byte 5 (frame nibbles 9, 10, 11, the sync nibble being nibble 0). Rounding comes before the split, so each digit is 0–9: 21.97 °C sends 22.0, 21.94 °C sends 21.9, 99.96 °C and 120 °C send 99.9. This is the Oregon v2.1 layout read by RFLink (`Plugins/Plugin_048.c`, couin3, lines 733-734). The low nibble of byte 4 holds the flags ([FUNC-OREGON-011](#func-oregon-011)).
 
 ### FUNC-OREGON-006
 **Title:** Negative temperature sets the sign bit, bit 3 of byte 6, and sends the absolute value
 **Status:** validated
 **Dependencies:** [FUNC-OREGON-005](#func-oregon-005)
-**Description:** A negative temperature sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734) and sends its absolute value with the [FUNC-OREGON-005](#func-oregon-005) layout.
+**Description:** A temperature that is negative after rounding to the nearest tenth sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734). It sends its absolute value with the [FUNC-OREGON-005](#func-oregon-005) rounding, clamp and layout: −10.25 °C sends −10.3, −120 °C sends −99.9, and −0.04 °C sends 0.0 with the sign bit clear.
 
 ### FUNC-OREGON-007
-**Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
+**Title:** Humidity rounded to whole %, clamped to 0–99 %, units in the high nibble of byte 6, tens in the low nibble of byte 7
 **Status:** validated
 **Dependencies:** —
-**Description:** A humidity of 0–99 % is sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). The high nibble of byte 7 (comfort) stays 0.
+**Description:** The humidity is rounded to the nearest whole percent (halves up), then clamped to 0–99 %, and sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). 67.4 % sends 67, 67.5 % sends 68, 99.6 % and 100 % send 99. The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
-**Title:** Pressure sent as hPa − 795 in byte 8; weather forecast in byte 9
+**Title:** Pressure rounded to whole hPa, sent as hPa − 795 in byte 8; weather forecast in byte 9
 **Status:** validated
 **Dependencies:** —
-**Description:** Byte 8 (frame nibbles 16–17) holds the pressure in hPa minus 795, clamped to 0–255 (795–1050 hPa). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a forecast code: 0x30 (rain, < 1000 hPa), 0x20 (cloudy, < 1010), 0x60 (partly cloudy, < 1025) or 0xC0 (sunny, ≥ 1025).
+**Description:** Byte 8 (frame nibbles 16–17) holds the pressure rounded to the nearest whole hPa (halves up), minus 795, clamped to 0–255 (795–1050 hPa): 1013.4 hPa sends 218, 1013.5 hPa sends 219. Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a forecast code chosen from the rounded pressure: 0x30 (rain, < 1000 hPa), 0x20 (cloudy, < 1010), 0x60 (partly cloudy, < 1025) or 0xC0 (sunny, ≥ 1025).
 
 ### FUNC-OREGON-009
 **Title:** Channel 1–3 sent as a one-bit mask in the high nibble of byte 2; another value is ignored
@@ -113,28 +113,28 @@
 **Description:** The second nibble holds the 3-bit sensor address in bits 0–2. Bit 3 is 1 when the frame carries a negative temperature, else 0.
 
 ### FUNC-LACROSSE-004
-**Title:** Temperature clamped to ±99 °C and sent as tenths, units and tens nibbles
+**Title:** Temperature rounded to the tenth, clamped to ±99.9 °C, sent as tenths, units and tens nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** The temperature is clamped to [−99, +99] °C and its absolute value sent as three nibbles in order: tenths, units, tens. The sign is sent per [FUNC-LACROSSE-003](#func-lacrosse-003).
+**Description:** The temperature is rounded to the nearest tenth (halves away from zero) and clamped to [−99.9, +99.9] °C. Its absolute value is sent as three digit nibbles, each 0–9, in order: tenths, units, tens. 21.97 °C sends 22.0, 21.94 °C sends 21.9, −10.25 °C sends −10.3. The sign is that of the rounded value, sent per [FUNC-LACROSSE-003](#func-lacrosse-003): −0.04 °C sends 0.0 without sign.
 
 ### FUNC-LACROSSE-005
-**Title:** Humidity clamped to 99.9 % and sent as tenths, units and tens nibbles
+**Title:** Humidity rounded to the tenth, clamped to 99.9 %, sent as tenths, units and tens nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** A humidity of 100 % or more is sent as 99.9 %. The value is sent as three nibbles in order: tenths, units, tens.
+**Description:** The humidity is rounded to the nearest tenth (halves up); a result of 100 % or more is sent as 99.9 %. The value is sent as three digit nibbles, each 0–9, in order: tenths, units, tens. 42.47 % sends 42.5, 99.96 % sends 99.9.
 
 ### FUNC-LACROSSE-006
-**Title:** Pressure clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
+**Title:** Pressure rounded to the tenth, clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** The pressure is clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four nibbles in order: units, tens, hundreds, tenths.
+**Description:** The pressure is rounded to the nearest tenth of hPa (halves up), clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four digit nibbles, each 0–9, in order: units, tens, hundreds, tenths. 1013.37 hPa sends 813.4 as 3, 1, 8, 4.
 
 ### FUNC-LACROSSE-007
-**Title:** Luminosity sent as 7 nibbles in a type 5 frame
+**Title:** Luminosity sent as a 3-digit mantissa and a power-of-ten exponent in a type 5 frame
 **Status:** validated
 **Dependencies:** —
-**Description:** A luminosity frame (type 0x5, [FUNC-LACROSSE-002](#func-lacrosse-002)) carries the units, tens and hundreds digits of the lux value followed by four zero nibbles: 7 data nibbles.
+**Description:** A luminosity frame (type 0x5, [FUNC-LACROSSE-002](#func-lacrosse-002)) carries 7 data nibbles in the Lacrosse WS2500-19 layout read by rtl_433 (`src/devices/lacrosse_ws7000.c`, type 5): the units, tens and hundreds digits of a mantissa, an exponent nibble, then three zero nibbles (exposure time, not measured). Lux = mantissa × 10^exponent. The exponent is the smallest one for which the lux value divided by 10^exponent, rounded to the nearest integer (halves up), is at most 999; that rounded value is the mantissa. Mantissa, exponent: 999 lx gives 999, 0; 1000 lx gives 100, 1; 1234 lx gives 123, 1; 1235 lx gives 124, 1; 9995 lx gives 100, 2; 65535 lx gives 655, 2.
 
 ### FUNC-LACROSSE-008
 **Title:** Frame ends with an XOR check nibble then a sum check nibble starting at 5
@@ -162,7 +162,7 @@
 
 ### FUNC-X10-003
 **Title:** X10 switch frame: house code, scattered unit code and byte complements
-**Status:** validated
+**Status:** deprecated
 **Dependencies:** —
 **Description:** An X10 switch frame is 4 bytes. House code `a`–`p` (either case) puts in the high nibble of byte 0 the X10 code 6, 7, 4, 5, 8, 9, 10, 11, 14, 15, 12, 13, 0, 1, 2, 3 respectively; another character gives 0. With `u` = unit − 1, bit 3 of `u` goes to bit 2 of byte 0, and bits 2, 1, 0 of `u` go to bits 6, 3, 4 of byte 2. The command (on, off, bright, dim) is the rest of byte 2. Byte 1 is the complement of byte 0 and byte 3 the complement of byte 2. It is sent per [FUNC-X10-005](#func-x10-005).
 
@@ -212,7 +212,7 @@
 **Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
 **Status:** validated
 **Dependencies:** —
-**Description:** On a build with a BME280 or BMP280 ([CONF-BUILD-002](configuration.md#conf-build-002)), each cycle reads the temperature (°C), the pressure and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: [TECH-SENSOR-002](technical.md#tech-sensor-002). Verification: inspection and the AVR builds; native builds stub the sensor ([TECH-SENSOR-002](technical.md#tech-sensor-002)). Bench check pending: BME280 readings over several cycles on the mushroom board.
+**Description:** On a build with a BME280 or BMP280 ([CONF-BUILD-002](configuration.md#conf-build-002)), each cycle reads the temperature (°C), the pressure in hPa (the sensor value in Pa divided by 100, not rounded: each encoder rounds it to its frame resolution) and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: [TECH-SENSOR-002](technical.md#tech-sensor-002). Verification: inspection and the AVR builds; native builds stub the sensor ([TECH-SENSOR-002](technical.md#tech-sensor-002)). Bench check pending: BME280 readings over several cycles on the mushroom board.
 
 ### FUNC-SENSOR-002
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
@@ -256,7 +256,7 @@
 **Title:** Receiver reads Lacrosse measurements in tenths and lux
 **Status:** validated
 **Dependencies:** [FUNC-DECODE-002](#func-decode-002), [FUNC-LACROSSE-003](#func-lacrosse-003), [FUNC-LACROSSE-004](#func-lacrosse-004), [FUNC-LACROSSE-005](#func-lacrosse-005), [FUNC-LACROSSE-006](#func-lacrosse-006), [FUNC-LACROSSE-007](#func-lacrosse-007)
-**Description:** With `d1..dn` the data nibbles after the address nibble in transmission order, a decoded Lacrosse frame gives, until the next one: temperature in tenths `d3*100 + d2*10 + d1`, negative when bit 3 of the address nibble is set (types 0, 1, 4); humidity in tenths `d6*100 + d5*10 + d4` (types 1, 4); pressure in hPa tenths `d9*1000 + d8*100 + d7*10 + d10 + 2000` (type 4); lux `d3*100 + d2*10 + d1` (type 5, `d4..d7` ignored). A value the frame type does not carry reads 0. Test: the Lacrosse encoder sending −10.2 °C, 42.5 %, 1013.4 hPa and 1000 lux reads −102, 425, 10134 and 1000.
+**Description:** With `d1..dn` the data nibbles after the address nibble in transmission order, a decoded Lacrosse frame gives, until the next one: temperature in tenths `d3*100 + d2*10 + d1`, negative when bit 3 of the address nibble is set (types 0, 1, 4); humidity in tenths `d6*100 + d5*10 + d4` (types 1, 4); pressure in hPa tenths `d9*1000 + d8*100 + d7*10 + d10 + 2000` (type 4); lux `(d3*100 + d2*10 + d1) × 10^d4`, capped at 65535 (type 5, `d5..d7` ignored). A value the frame type does not carry reads 0. Test: the Lacrosse encoder sending −10.2 °C, 42.5 %, 1013.4 hPa, 1000 lux and 65535 lux reads −102, 425, 10134, 1000 and 65500; a type 5 frame with mantissa 999 and exponent 3 reads 65535.
 
 ### FUNC-DECODE-004
 **Title:** Receiver decodes Oregon v2.1 frames (device ID, channel, rolling code, battery) from radio pulses
@@ -280,7 +280,7 @@
 **Title:** Receiver shows one page per source every 10 s on the OLED and redraws only changed cells
 **Status:** validated
 **Dependencies:** [FUNC-DECODE-006](#func-decode-006), [FUNC-DECODE-010](#func-decode-010), [UI-DECODE-001](ui.md#ui-decode-001), [TECH-DECODE-002](technical.md#tech-decode-002), [TECH-DECODE-003](technical.md#tech-decode-003)
-**Description:** The receiver feeds every captured radio pulse to its X10, Lacrosse and Oregon decoders and records each decoded frame with the current second ([FUNC-DECODE-006](#func-decode-006)). The page is computed again only when the second changes or a frame is decoded, and each computation first removes expired sources ([FUNC-DECODE-010](#func-decode-010)). While no source is known (at start, or once the last one expired), the screen shows the waiting page: `Waiting for data` on the middle text row (8x16 row 1, pixel rows 8–23, columns 0–15); it is never part of the rotation. Otherwise it shows source `(second / 10) % count`, laid out per [UI-DECODE-001](ui.md#ui-decode-001), with the alternate value when `(second / 2)` is odd. A source page is 6 big 16x32 cells and a side column of 2 lines of 4 characters (8x16 columns 12–15, identifier on row 0, humidity or pressure on row 2); its 14 cells cover the whole screen. The screen is blank at start, so the first waiting page draws only its 16 text cells. Entering a source page draws all 14 of its cells, spaces included. Entering the waiting page from a source page first draws the 14 source cells as spaces, then the 16 text cells. Each turn of the receiver's main loop, which also empties the pulse buffer, draws at most one pending cell, so a page change never delays the decoding by more than one cell (one that differs from what is shown, or forced by a page switch), the first in the order big 0–5, identifier 12–15, humidity or pressure 12–15, then waiting text 0–15. Test: waiting page at 12 s (row 1 reads `Waiting for data`, 16 draws); the first decoded frame then draws all 14 source cells; Oregon and Lacrosse frames give their pages alternating every 10 s; a BTHR918 alone shows its humidity at 0–1 s and its pressure at 2–3 s on row 2; no draw when nothing changed; a single source last heard 1800 s ago gives the waiting page after 14 blank source cells (big cells and rows 0 and 2, columns 12–15, are spaces).
+**Description:** The receiver feeds every captured radio pulse to its X10, Lacrosse and Oregon decoders and records each decoded frame with the current second ([FUNC-DECODE-006](#func-decode-006)). The page is computed again only when the second changes or a frame is decoded, and each computation first removes expired sources ([FUNC-DECODE-010](#func-decode-010)). While no source is known (at start, or once the last one expired), the screen shows the waiting page: `Waiting for data` on the middle text row (8x16 row 1, pixel rows 8–23, columns 0–15); it is never part of the rotation. Otherwise it shows source `(second / 10) % count` in the 14 cells of [UI-DECODE-001](ui.md#ui-decode-001), with the alternate value when `(second / 2)` is odd. The screen is blank at start, so the first waiting page draws only its 16 text cells. Entering a source page draws all 14 of its cells, spaces included. Entering the waiting page from a source page first draws the 14 source cells as spaces, then the 16 text cells. Each turn of the receiver's main loop, which also empties the pulse buffer, draws at most one pending cell, so a page change never delays the decoding by more than one cell (one that differs from what is shown, or forced by a page switch), the first in the order big cells 0–5, identifier cells left to right, second value cells left to right, then waiting text columns 0–15. Test: waiting page at 12 s (row 1 reads `Waiting for data`, 16 draws); the first decoded frame then draws all 14 source cells; Oregon and Lacrosse frames give their pages alternating every 10 s; a BTHR918 alone shows its humidity at 0–1 s and its pressure at 2–3 s as its second value; no draw when nothing changed; a single source last heard 1800 s ago gives the waiting page after 14 blank source cells (big field, identifier and second value are spaces).
 
 ### FUNC-DECODE-008
 **Title:** Receiver renders each decoded frame as an RFLink text line
