@@ -9,7 +9,7 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-004
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period.
+**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Verified by inspection (AVR only, no native test).
 
 ---
 
@@ -27,7 +27,7 @@
 **Status:** validated
 **Dependencies:** PLAT-POWER-001, PLAT-POWER-002, TECH-HAL-004
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep.
+**Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input, with pull-ups on the unused ones. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep. Verified by inspection (AVR only, no native test).
 
 ---
 
@@ -45,7 +45,7 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-001
 **derives_from:** [TECH-HAL-001](technical.md#tech-hal-001)
-**Description:** Every physical build environment runs an ATtiny84A at 1 MHz (`[env:avr_base]`: `board_build.mcu = attiny84a`, `board_build.f_cpu = 1000000L`). The 512 µs, 1024 µs, 400 µs and 30 ms delays are calibrated for this clock only.
+**Description:** Every physical build environment runs an ATtiny84A at 1 MHz (`[env:avr_base]`: `board_build.mcu = attiny84a`, `board_build.f_cpu = 1000000L`). The 512 µs, 1024 µs, 400 µs and 30 ms delays are calibrated for this clock only. Verified by inspection of `emitter/platformio.ini` and by the AVR builds.
 
 ---
 
