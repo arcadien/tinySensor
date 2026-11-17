@@ -110,6 +110,33 @@ void Expect_oregon_humidity_rounded_to_whole_percent() {
   }
 }
 
+// bytes 8-9: rounded hPa - 795, forecast chosen from the rounded pressure
+static const OregonBytesCase oregonPressureCases[] = {
+    {"1013.4-rounds-down-to-218", 1013.4f, {0xDA, 0x60}},
+    {"1013.5-half-rounds-up-to-219", 1013.5f, {0xDB, 0x60}},
+    {"999.5-rounds-to-1000-cloudy", 999.5f, {0xCD, 0x20}},
+    {"1009.5-rounds-to-1010-partly-cloudy", 1009.5f, {0xD7, 0x60}},
+    {"1024.5-rounds-to-1025-sunny", 1024.5f, {0xE6, 0xC0}},
+    {"1049.5-rounds-to-1050-is-255", 1049.5f, {0xFF, 0xC0}},
+};
+
+// @req FUNC-OREGON-008
+void Expect_oregon_pressure_rounded_to_whole_hpa() {
+  for (const OregonBytesCase &c : oregonPressureCases) {
+    // Given
+    Measurements m;
+    m.SetPressure(c.value);
+    OregonV3 encoder(&TestHal);
+
+    // When
+    ApplyMeasurements(encoder, m, false);
+
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(c.bytes, encoder.GetMessage() + 8, 2,
+                                         c.id);
+  }
+}
+
 // @req FUNC-BATTERY-003
 void Expect_oregon_battery_low_flag_applied_with_temperature() {
   Measurements m;
@@ -202,6 +229,7 @@ int main(int, char **) {
 
   RUN_TEST(Expect_oregon_frame_unchanged_for_full_measurements);
   RUN_TEST(Expect_oregon_humidity_rounded_to_whole_percent);
+  RUN_TEST(Expect_oregon_pressure_rounded_to_whole_hpa);
   RUN_TEST(Expect_oregon_battery_low_flag_applied_with_temperature);
   RUN_TEST(Expect_no_environment_frame_without_temperature);
   RUN_TEST(Expect_lacrosse_frame_unchanged_for_full_measurements);
