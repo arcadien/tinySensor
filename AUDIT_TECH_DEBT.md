@@ -295,17 +295,16 @@ The highest theoretical score is 50 ((5+5)×(6−1)). Items fall into four bands
 | ~~I5~~ | ~~Single-runner, single-python, single-env CI. No matrix to test different tooling versions.~~ — ⛔ **Closed 2026-11-16** (won't do) | 3 | 2 | 2 | ~~20~~ |
 | ~~I6~~ | ~~No pre-commit or `.editorconfig`. `clang-format` is installed in the devcontainer but not applied automatically (commit `68cefb8 chore: clang-format` suggests a one-off manual pass).~~ — ✅ **Resolved 2026-10-25** (`.editorconfig`, clang-format 18.1.8 pre-commit, CI `lint` job) | 2 | 1 | 2 | ~~12~~ |
 | ~~I7~~ | ~~Minimal `.gitignore` (12 lines): does not exclude `Debug/` (hence I1), nor `*.o`, `*.d`, `*.hex` at the root.~~ — ✅ **Resolved 2026-04-19** (buggy line 1 removed, artefact patterns added, commented structure). | 2 | 2 | 1 | ~~20~~ |
-| I8 | No versioning: tags exist (`late_otpim`, `second_pcb_batch`, …) and one release (2026-06), but no `v*` tag, so the CI `release` job never ran. **Decision 2026-11-16**: real releases from `v1.0.0`. | 2 | 1 | 2 | 12 |
+| ~~I8~~ | ~~No versioning: no `v*` tag, the CI `release` job never ran.~~ — ✅ **Resolved 2026-11-17** (`v1.0.0` released with per-target firmware files; release job fixed for duplicate asset names; the v3.0 board is still untested) | 2 | 1 | 2 | ~~12~~ |
 
 ---
 
 ## 4. Open items (2026-11-16)
 
-Every other item is resolved or closed (§1bis, §3). The April top 20 is in the git history.
+No item left open on 2026-11-17: every item is resolved or closed (§1bis, §3). The April top 20 is in the git history.
 
 | Rank | ID | Item | Cat. | Score |
 |:----:|----|------|:----:|:-----:|
-| 1 | I8 | No `v*` tag yet: `v1.0.0` once the product is tested | Infra | 12 |
 
 ---
 
@@ -318,7 +317,7 @@ One item at a time, in this order (cheapest first):
 3. ~~**A6** — decide on `feat/328p_hal`.~~ ⛔ branch deleted 2026-11-16
 4. ~~**T7** — give `test_busses` a real check.~~ ✅ 2026-11-16 (TECH-HAL-006)
 5. ~~**T3** — `BMx280` wrapper test.~~ ⛔ closed 2026-11-16 (stub / pass-through)
-6. **I8** — tag `v1.0.0` on `master` once the product is tested on real hardware (the `release` job publishes every firmware).
+6. ~~**I8** — tag `v1.0.0`.~~ ✅ 2026-11-17
 7. ~~**Doc6** — hardware BOM from the KiCad schematic.~~ ✅ 2026-11-16
 
 ---
