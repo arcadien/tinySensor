@@ -214,7 +214,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-X10-006](../requirements/functional.md#func-x10-006) | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [FUNC-X10-007](../requirements/functional.md#func-x10-007) | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [TECH-HAL-001](../requirements/technical.md#tech-hal-001) | `Hal` / `Attiny84aHal` / `TestHal_` / `BMx280` | Encoders and HAL-using wrappers take Hal* at construction; BMx280 (third-party bus driver) takes none; no direct AVR register access except addresses passed to a bus driver |
-| [TECH-HAL-002](../requirements/technical.md#tech-hal-002) | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W |
+| [TECH-HAL-002](../requirements/technical.md#tech-hal-002) | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W, Q, R, T, U, G, I |
 | [TECH-HAL-003](../requirements/technical.md#tech-hal-003) | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
 | [TECH-HAL-004](../requirements/technical.md#tech-hal-004) | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; `PORTA = 0` (no internal pull-up, bus pins rely on the external pull-ups of [PLAT-POWER-007](../requirements/platform.md#plat-power-007)), pull-ups on PB2 and PB3 (PB2 cleared again with `USE_SWITCHED_5V`) |
 | [TECH-HAL-005](../requirements/technical.md#tech-hal-005) | `Attiny84aHal` / `TestHal_` | LedOn/LedOff toggle PORTB PB1 on AVR; toggle IsLedOn in TestHal_ |
