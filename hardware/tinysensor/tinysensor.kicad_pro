@@ -267,7 +267,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "tinySensorv1.kicad_pro",
+    "filename": "tinysensor.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -316,8 +316,8 @@
     "legacy_lib_list": [],
     "top_level_sheets": [
       {
-        "filename": "tinySensorv1.kicad_sch",
-        "name": "tinySensorv1",
+        "filename": "tinysensor.kicad_sch",
+        "name": "tinysensor",
         "uuid": "00000000-0000-0000-0000-000000000000"
       }
     ]

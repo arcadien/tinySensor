@@ -1,4 +1,4 @@
 (sym_lib_table
   (version 7)
-  (lib (name "tinySensorv1-rescue")(type "Legacy")(uri "${KIPRJMOD}/tinySensorv1-rescue.lib")(options "")(descr "rescued MCU / ISP symbols"))
+  (lib (name "tinysensor-rescue")(type "Legacy")(uri "${KIPRJMOD}/tinysensor-rescue.lib")(options "")(descr "rescued MCU / ISP symbols"))
 )

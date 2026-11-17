@@ -181,7 +181,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcb880c")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -557,7 +557,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcbc5c9")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -822,7 +822,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcdda39")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2163,7 +2163,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcb9383")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2444,7 +2444,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bce88b9")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2685,7 +2685,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005beb17b5")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2893,7 +2893,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005e0b7120")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4234,7 +4234,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005e0ce887")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4478,7 +4478,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bd28967")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4743,7 +4743,7 @@
 		)
 		(path "/2f726bef-c25a-44bb-964b-9474dcda4560")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4973,7 +4973,7 @@
 		)
 		(path "/4a83580d-ac3b-49ff-854b-7cd2eff4c51a")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5501,7 +5501,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcb8747")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5749,7 +5749,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcb85ea")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5997,7 +5997,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcb91a0")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6245,7 +6245,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f04feaf")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6486,7 +6486,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcf975a")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6809,7 +6809,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f02ee88")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7075,7 +7075,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f036a1b")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7324,7 +7324,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f0654d3")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7635,7 +7635,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f0666ce")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7945,7 +7945,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bdb015f")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8194,7 +8194,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bdb032d")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9296,7 +9296,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f9f6584")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9648,7 +9648,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bea80b3")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -9758,7 +9758,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005be89558")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -9855,7 +9855,7 @@
 		)
 		(path "/3cd8afe1-61ef-4abb-930e-29d7e98936e8")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10088,7 +10088,7 @@
 		)
 		(path "/22294315-1036-4b5a-84d4-3e7e00aa80ea")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10476,7 +10476,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005fa1df8d")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10626,7 +10626,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005be897a6")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -10724,7 +10724,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bdaddd8")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11112,7 +11112,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005be894c2")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -11221,7 +11221,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bccf337")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11460,7 +11460,7 @@
 		)
 		(path "/b52d16f5-63d0-4bac-b940-e06c210d031e")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11830,7 +11830,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005be8964e")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -11940,7 +11940,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005be896fe")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
@@ -12049,7 +12049,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005bcdf3e0")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12190,7 +12190,7 @@
 		)
 		(path "/0fd805c9-bc87-4d5e-90f9-12958f520b7b")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12377,7 +12377,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005ef9d131")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12564,7 +12564,7 @@
 		)
 		(path "/00000000-0000-0000-0000-00005f0dc052")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12745,7 +12745,7 @@
 		)
 		(path "/ac4cddad-4e23-4738-82e1-c7071c0b3808")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12900,7 +12900,7 @@
 		)
 		(path "/4b24e439-fc67-41cb-8cff-4cceef287214")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -13057,7 +13057,7 @@
 		)
 		(path "/0327a0a2-8067-48cd-9554-00b20f6f5b1d")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -13214,7 +13214,7 @@
 		)
 		(path "/ddd29c2c-9c2f-4bae-97c2-278bd8b35455")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -13360,7 +13360,7 @@
 		)
 		(path "/4e74d1cd-79ad-43b7-b8a1-382c283880fb")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(zone_connect 1)
 		(attr exclude_from_pos_files allow_soldermask_bridges)
 		(net_tie_pad_groups "1,2")
@@ -13688,7 +13688,7 @@
 		)
 		(path "/f9a379d6-57a9-4a82-bf3e-649832a27b92")
 		(sheetname "/")
-		(sheetfile "tinySensorv1.kicad_sch")
+		(sheetfile "tinysensor.kicad_sch")
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line

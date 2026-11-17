@@ -47,7 +47,7 @@ def add_symbol(lib_id, ref, value, footprint, x, y, a=0, pins=('1', '2'), hide_r
          p('Reference', ref, 2.5, -1.3, hide_ref), p('Value', value, 2.5, 1.3), p('Footprint', footprint, 0, 0, True),
          p('Datasheet', '', 0, 0, True), p('Description', '', 0, 0, True)]
     s += [['pin', Q(n), ['uuid', uid()]] for n in pins]
-    s.append(['instances', ['project', Q('tinySensorv1'), ['path', Q('/' + ROOT), ['reference', Q(ref)], ['unit', '1']]]])
+    s.append(['instances', ['project', Q('tinysensor'), ['path', Q('/' + ROOT), ['reference', Q(ref)], ['unit', '1']]]])
     t.append(s); return s
 
 def power(kind, x, y, a=0):
