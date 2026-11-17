@@ -293,78 +293,39 @@ void Expect_good_temperature_emission() {
   }
 }
 
+struct HumidityCase {
+  const char *id;
+  float humidity;
+  uint8_t tenths, units, tens;
+};
+
+static const HumidityCase humidityCases[] = {
+    {"zero", 0.0f, 0, 0, 0},
+    {"12", 12.0f, 0, 2, 1},
+    {"42.47-rounds-up-to-42.5", 42.47f, 5, 2, 4},
+    {"42.25-half-rounds-up", 42.25f, 3, 2, 4},
+    {"9.97-rounds-up-to-10.0", 9.97f, 0, 0, 1},
+    {"99.96-clamped-to-99.9", 99.96f, 9, 9, 9},
+    {"100-clamped-to-99.9", 100.0f, 9, 9, 9},
+    {"101-clamped-to-99.9", 101.0f, 9, 9, 9},
+};
+
 // @req FUNC-LACROSSE-005
 void Expect_good_humidity_emission() {
-  struct TempTestData {
-    uint8_t givenHumidity;
-    uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 3) + (3 * ORDERS_PER_BIT)];
-  };
-
-#define TEST_COUNT 4
-  // clang-format off
-  TempTestData testDatas[TEST_COUNT] = {
-  { // #0
-    0,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
-    } 
-  },
-  {// #1
-    12,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ZERO, BIT_ONE,  BIT_ZERO, BIT_ZERO, SKIPPED_ONE,
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE
-    } 
-  },
-  {// #2
-    100, // clamped to 99.9
-    {
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // decimals
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // dozens
-    } 
-  },
-  {// #3
-    101, // clamped to 99.9
-    {
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE,
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE,
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE
-    } 
-  }
-};
-  // clang-format on
-
-  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter++) {
-    TempTestData testData = testDatas[testCounter];
+  for (const HumidityCase &c : humidityCases) {
+    // Given
     TestHal.ClearOrders();
     LacrosseWS7000 lacrosse(&TestHal);
     lacrosse.SetTemperature(42);  // unchecked
-    lacrosse.SetHumidity(testData.givenHumidity);
+    lacrosse.SetHumidity(c.humidity);
+
+    // When
     lacrosse.Send();
 
-    sprintf(buffer, "Sensor humidity #%u", testCounter);
-    uint8_t *actualOrders = TestHal.GetOrders();
-
-    // Note: before address, we have:
-    // - preamble                      (11 bits)
-    // - sensor type                   (1 nibble)
-    // - sensor address and temp. sign (1 nibble)
-    // - sensor temp.                  (3 nibbles)
-
-    // so comparison shall start at order
-    // (11 * ORDERS_PER_BIT) + (5 * ORDERS_PER_NIBBLE) + (5 * ORDERS_PER_BIT)
-    auto shift = ((11 * ORDERS_PER_BIT) + (5 * ORDERS_PER_NIBBLE) +
-                  (5 * ORDERS_PER_BIT));
-    uint8_t *actualHumidityStart = actualOrders + shift;
-
-    TEST_ASSERT_EQUAL_CHAR_ARRAY_MESSAGE(testData.expectedNibble,
-                                         actualHumidityStart, 75, buffer);
+    // Then: preamble (11 bits), type, address and 3 temperature nibbles
+    // (5 bits each) come first
+    AssertNibblesSentAt(11 + 5 * 5, {c.tenths, c.units, c.tens}, c.id);
   }
-#undef TEST_COUNT
 }
 
 // @req FUNC-LACROSSE-006
