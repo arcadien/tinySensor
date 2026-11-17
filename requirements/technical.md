@@ -7,7 +7,7 @@
 **Title:** Encoders and sensor wrappers that use the HAL receive Hal* at construction; no direct AVR register access
 **Status:** validated
 **Dependencies:** —
-**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and every sensor wrapper that performs hardware timing or I/O itself (`Ds18b20`, `LightSensor`) must accept a `Hal*` at construction and must use only `Hal` methods for that I/O. A sensor wrapper whose hardware access is entirely delegated to a third-party bus driver (`BMx280`) takes no `Hal*`. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`, except register addresses passed as arguments to a third-party bus driver.
+**Description:** Every protocol encoder (`OregonV3`, `LacrosseWS7000`, `x10rf`, `SoftSerial`) and every sensor wrapper that performs hardware timing or I/O itself (`Ds18b20`, `LightSensor`) must accept a `Hal*` at construction and must use only `Hal` methods for that I/O. A sensor wrapper whose hardware access is entirely delegated to a third-party bus driver (`BMx280`) takes no `Hal*`. Direct access to AVR registers (`PORTA`, `PORTB`, `ADCSRA`, etc.) is forbidden outside `Attiny84aHal`, except register addresses passed as arguments to a third-party bus driver. Verification: inspection; outside `Attiny84aHal`, the only AVR registers in `emitter/` and `lib/` are the addresses `Ds18b20` passes to the ds18b20 driver.
 
 ---
 
@@ -23,7 +23,7 @@
 **Title:** ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on the Hal base class
 **Status:** validated
 **Dependencies:** —
-**Description:** `Hal::ComputeVccMv(uint16_t known11refValue)` and `Hal::ConvertAnalogValueToMv(uint16_t adcReading, uint16_t vccInMv)` are implemented directly on `Hal` and are not overridden by any subclass. Both `Attiny84aHal` and `TestHal_` inherit them unchanged.
+**Description:** `Hal::ComputeVccMv(uint16_t known11refValue)` and `Hal::ConvertAnalogValueToMv(uint16_t adcReading, uint16_t vccInMv)` are implemented directly on `Hal` and are not overridden by any subclass. Both `Attiny84aHal` and `TestHal_` inherit them unchanged. Verification: inspection; `test_power` calls both methods on `TestHal_` through the base class.
 
 ---
 
@@ -31,7 +31,7 @@
 **Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; pull-ups all unused pins; disables brownout detection during sleep
 **Status:** validated
 **Dependencies:** —
-**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, applies pull-ups via `PORTA`/`PORTB`, disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence).
+**Description:** `Attiny84aHal()` calls `UseLessPowerAsPossible()`, which sets `DDRA`/`DDRB` to 0, applies pull-ups via `PORTA`/`PORTB`, disables the analog comparator (`ACSR|=ACD`), disables Timer1 (`PRR|=PRTIM1`), clears `ADCSRA` and disables the ADC (`PRR|=PRADC`), and deactivates brownout detection during sleep (`MCUCR BODS/BODSE` sequence). Verification: inspection and the AVR builds (AVR only, no native test).
 
 ---
 
@@ -103,7 +103,7 @@
 **Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
 **Status:** validated
 **Dependencies:** TECH-SERIAL-001
-**Description:** When `USE_SERIAL_LOG` is defined, `emitter/src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated.
+**Description:** When `USE_SERIAL_LOG` is defined, `emitter/src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated. Verification: inspection; no build environment sets `USE_SERIAL_LOG`, so the logging path is not compiled in CI.
 
 ---
 
