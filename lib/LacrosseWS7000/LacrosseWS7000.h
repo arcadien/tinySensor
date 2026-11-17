@@ -41,20 +41,9 @@ class LacrosseWS7000 {
       uint8_t decimals;
     };
 
-    static void Split(float input, Result *result) {
-      result->isNegative = (input < 0);
-      input = abs(input);
-
-      uint16_t integerValue = floor(input);
-      uint16_t totalIntegerValue = integerValue;
-
-      result->hundreds = ((uint8_t)(floor(integerValue / 100))) & 0x0F;
-      integerValue = integerValue % 100;
-      result->dozens = (uint8_t)(floor((integerValue / 10))) & 0x0F;
-      result->units = integerValue % 10;
-      result->decimals =
-          ((uint8_t)round((input - totalIntegerValue) * 10)) & 0x0F;
-    }
+    // Rounded to tenths (halves away from zero) with the carry, so that no
+    // digit exceeds 9; the sign is the rounded value's.
+    static void Split(float input, Result *result);
   };
 
   LacrosseWS7000(Hal *hal);

@@ -11,6 +11,25 @@
     checkSum += (nibble);       \
   } while (0)
 
+// Out of line: inlined in each setter it costs flash on the ATtiny84A, as
+// round() and a 32-bit division would.
+void LacrosseWS7000::NumericalValueSplitter::Split(float input,
+                                                   Result *result) {
+  float magnitude = fabs(input);
+  uint16_t integerValue = magnitude;
+  uint8_t decimals = (magnitude - integerValue) * 10 + 0.5f;
+  if (decimals == 10) {
+    decimals = 0;
+    integerValue++;
+  }
+  result->isNegative = (input < 0) && (integerValue || decimals);
+  result->decimals = decimals;
+  result->units = integerValue % 10;
+  integerValue /= 10;
+  result->dozens = integerValue % 10;
+  result->hundreds = (integerValue / 10) & 0x0F;
+}
+
 LacrosseWS7000::LacrosseWS7000(Hal *hal) : _hal(hal), availableData(0) {}
 
 void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
@@ -19,8 +38,8 @@ void LacrosseWS7000::SetAddress(LacrosseWS7000::Address address) {
 
 void LacrosseWS7000::SetHumidity(float humidity) {
   availableData |= HUMIDITY_AVAILABLE;
-  if (humidity >= 100)
-    humidity = 99.9;
+  if (humidity > 99.9f)
+    humidity = 99.9f;
   NumericalValueSplitter::Split(humidity, &this->humidity);
 }
 
@@ -41,10 +60,10 @@ void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
 
 void LacrosseWS7000::SetTemperature(float temperature) {
   availableData |= TEMPERATURE_AVAILABLE;
-  if (temperature > 99)
-    temperature = 99;
-  if (temperature < -99)
-    temperature = -99;
+  if (temperature > 99.9f)
+    temperature = 99.9f;
+  if (temperature < -99.9f)
+    temperature = -99.9f;
   NumericalValueSplitter::Split(temperature, &this->temperature);
 }
 
