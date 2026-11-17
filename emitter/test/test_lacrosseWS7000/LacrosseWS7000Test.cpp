@@ -328,75 +328,42 @@ void Expect_good_humidity_emission() {
   }
 }
 
+struct PressureCase {
+  const char *id;
+  float pressure;
+  uint8_t units, tens, hundreds, tenths;  // of the rounded hPa - 200
+};
+
+static const PressureCase pressureCases[] = {
+    {"0-clamped-to-850", 0.0f, 0, 5, 6, 0},
+    {"994.1", 994.1f, 4, 9, 7, 1},
+    {"994.8", 994.8f, 4, 9, 7, 8},
+    {"1013.37-rounds-to-813.4", 1013.37f, 3, 1, 8, 4},
+    {"1013.25-half-rounds-up", 1013.25f, 3, 1, 8, 3},
+    {"1013.97-rounds-up-to-814.0", 1013.97f, 4, 1, 8, 0},
+    {"849.96-rounds-to-850", 849.96f, 0, 5, 6, 0},
+    {"1099.96-rounds-to-1100", 1099.96f, 0, 0, 9, 0},
+    {"1100.04-clamped-to-1100", 1100.04f, 0, 0, 9, 0},
+};
+
 // @req FUNC-LACROSSE-006
 void Expect_good_pressure_emission() {
-  struct TempTestData {
-    float givenPressure;
-    uint8_t expectedNibble[(ORDERS_PER_NIBBLE * 4) + (4 * ORDERS_PER_BIT)];
-  };
-
-#define TEST_COUNT 3
-  // clang-format off
-  TempTestData testDatas[TEST_COUNT] = {
-  { // #0 
-    0, // should be raised to 850-200 by implementation
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // dozen
-      BIT_ZERO, BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // hundreds
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // decimals
-    } 
-  },
-  {// #1
-    794.1+200,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // dozen
-      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // hundreds
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ZERO, SKIPPED_ONE  // decimals 
-    } 
-  },
-  {// #2
-    794.8+200,
-    {
-      BIT_ZERO, BIT_ZERO, BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // units
-      BIT_ONE,  BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE, // dozen
-      BIT_ONE,  BIT_ONE,  BIT_ONE,  BIT_ZERO, SKIPPED_ONE, // hundreds
-      BIT_ZERO, BIT_ZERO, BIT_ZERO, BIT_ONE,  SKIPPED_ONE  // decimals
-    } 
-  }
-};
-  // clang-format on
-
-  for (uint8_t testCounter = 0; testCounter < TEST_COUNT; testCounter++) {
-    TempTestData testData = testDatas[testCounter];
+  for (const PressureCase &c : pressureCases) {
+    // Given
     TestHal.ClearOrders();
     LacrosseWS7000 lacrosse(&TestHal);
     lacrosse.SetTemperature(42);  // unchecked
     lacrosse.SetHumidity(42);     // unchecked
-    lacrosse.SetPressure(testData.givenPressure);
+    lacrosse.SetPressure(c.pressure);
+
+    // When
     lacrosse.Send();
 
-    sprintf(buffer, "Sensor pressure #%u", testCounter);
-    uint8_t *actualOrders = TestHal.GetOrders();
-
-    // Note: before address, we have:
-    // - preamble                      (11 bits)
-    // - sensor type                   (1 nibble)
-    // - sensor address and temp. sign (1 nibble)
-    // - sensor temp.                  (3 nibbles)
-    // - sensor humi.                  (3 nibbles)
-
-    // so comparison shall start at order
-    // (11 * ORDERS_PER_BIT) + (8 * ORDERS_PER_NIBBLE) + (8 * ORDERS_PER_BIT)
-    auto shift = ((11 * ORDERS_PER_BIT) + (8 * ORDERS_PER_NIBBLE) +
-                  (8 * ORDERS_PER_BIT));
-    uint8_t *actualPressureStart = actualOrders + shift;
-
-    TEST_ASSERT_EQUAL_CHAR_ARRAY_MESSAGE(testData.expectedNibble,
-                                         actualPressureStart, 100, buffer);
+    // Then: preamble (11 bits), type, address, 3 temperature and 3 humidity
+    // nibbles (5 bits each) come first
+    AssertNibblesSentAt(11 + 8 * 5, {c.units, c.tens, c.hundreds, c.tenths},
+                        c.id);
   }
-#undef TEST_COUNT
 }
 
 // @req FUNC-LACROSSE-008
