@@ -251,6 +251,12 @@ static const TemperatureCase negativeTemperatureCases[] = {
     {"-8.4-no-tens", -8.4f, 0x40, 0x08, 0x08},
     {"-10.2", -10.2f, 0x20, 0x10, 0x08},
     {"-0.5", -0.5f, 0x50, 0x00, 0x08},
+    {"-21.97-rounds-to-22.0", -21.97f, 0x00, 0x22, 0x08},
+    {"-10.25-half-rounds-away-from-zero", -10.25f, 0x30, 0x10, 0x08},
+    {"-99.96-clamped-to-99.9", -99.96f, 0x90, 0x99, 0x08},
+    {"-120-clamped-to-99.9", -120.0f, 0x90, 0x99, 0x08},
+    // rounds to 0.0, which is not negative
+    {"-0.04-sends-0.0-sign-clear", -0.04f, 0x00, 0x00, 0x00},
 };
 
 // @req FUNC-OREGON-006
