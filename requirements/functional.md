@@ -47,10 +47,10 @@
 **Description:** The humidity is rounded to the nearest whole percent (halves up), then clamped to 0–99 %, and sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). 67.4 % sends 67, 67.5 % sends 68, 99.6 % and 100 % send 99. The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
-**Title:** Pressure sent as hPa − 795 in byte 8; weather forecast in byte 9
+**Title:** Pressure rounded to whole hPa, sent as hPa − 795 in byte 8; weather forecast in byte 9
 **Status:** validated
 **Dependencies:** —
-**Description:** Byte 8 (frame nibbles 16–17) holds the pressure in hPa minus 795, clamped to 0–255 (795–1050 hPa). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a forecast code: 0x30 (rain, < 1000 hPa), 0x20 (cloudy, < 1010), 0x60 (partly cloudy, < 1025) or 0xC0 (sunny, ≥ 1025).
+**Description:** Byte 8 (frame nibbles 16–17) holds the pressure rounded to the nearest whole hPa (halves up), minus 795, clamped to 0–255 (795–1050 hPa): 1013.4 hPa sends 218, 1013.5 hPa sends 219. Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a forecast code chosen from the rounded pressure: 0x30 (rain, < 1000 hPa), 0x20 (cloudy, < 1010), 0x60 (partly cloudy, < 1025) or 0xC0 (sunny, ≥ 1025).
 
 ### FUNC-OREGON-009
 **Title:** Channel 1–3 sent as a one-bit mask in the high nibble of byte 2; another value is ignored
