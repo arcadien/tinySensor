@@ -101,7 +101,7 @@
 
 ### TECH-SERIAL-002
 **Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
-**Status:** validated
+**Status:** draft
 **Dependencies:** TECH-SERIAL-001
 **Description:** When `USE_SERIAL_LOG` is defined, `emitter/src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated. Verification: inspection; no build environment sets `USE_SERIAL_LOG`, so the logging path is not compiled in CI.
 

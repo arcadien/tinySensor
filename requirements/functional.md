@@ -216,7 +216,7 @@
 
 ### FUNC-SENSOR-002
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
-**Status:** validated
+**Status:** draft
 **Dependencies:** —
 **Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. On a successful read, the temperature in whole °C is the raw 1/16 °C value divided by 16. Wrapper details: TECH-SENSOR-001. Verification: inspection and the AVR builds only; no sensor unit in service uses a DS18B20, so it is not bench-tested.
 
