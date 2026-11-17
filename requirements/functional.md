@@ -212,13 +212,13 @@
 **Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
 **Status:** validated
 **Dependencies:** —
-**Description:** On a build with a BME280 or BMP280 (CONF-BUILD-002), each cycle reads the temperature (°C), the pressure and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: TECH-SENSOR-002.
+**Description:** On a build with a BME280 or BMP280 (CONF-BUILD-002), each cycle reads the temperature (°C), the pressure and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: TECH-SENSOR-002. Verification: inspection and the AVR builds; native builds stub the sensor (TECH-SENSOR-002). Bench check pending: BME280 readings over several cycles on the mushroom board.
 
 ### FUNC-SENSOR-002
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
 **Status:** validated
 **Dependencies:** —
-**Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. On a successful read, the temperature in whole °C is the raw 1/16 °C value divided by 16. Wrapper details: TECH-SENSOR-001.
+**Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. On a successful read, the temperature in whole °C is the raw 1/16 °C value divided by 16. Wrapper details: TECH-SENSOR-001. Verification: inspection and the AVR builds only; no sensor unit in service uses a DS18B20, so it is not bench-tested.
 
 ### FUNC-SENSOR-003
 **Title:** BH1750 luminosity sent twice as a Lacrosse luminosity frame
