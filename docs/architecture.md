@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [FUNC-LACROSSE-006](../requirements/functional.md#func-lacrosse-006) (pressure rounded to the tenth)_
+_Last updated: 2026-11-17 — [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) (luminosity as mantissa and power-of-ten exponent)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -203,7 +203,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-LACROSSE-004](../requirements/functional.md#func-lacrosse-004) | `LacrosseWS7000` | Temperature rounded to the tenth (halves away from zero), clamped ±99.9 °C; encoded as tenths/units/tens digit nibbles, sign of the rounded value |
 | [FUNC-LACROSSE-005](../requirements/functional.md#func-lacrosse-005) | `LacrosseWS7000` | Humidity rounded to the tenth, clamped to 99.9 %; encoded as tenths/units/tens digit nibbles |
 | [FUNC-LACROSSE-006](../requirements/functional.md#func-lacrosse-006) | `LacrosseWS7000` | Pressure rounded to the tenth, clamped 850–1100 hPa, offset −200; encoded as units/tens/hundreds/tenths digit nibbles |
-| [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) | `LacrosseWS7000` | Luminosity encoded as 7 nibbles in type-5 (light sensor) frame |
+| [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) | `LacrosseWS7000` | Luminosity in a type-5 frame, WS2500-19 layout: 3-digit mantissa (units/tens/hundreds), exponent nibble (lux = mantissa × 10^exp, smallest exponent with the rounded mantissa ≤ 999), 3 zero exposure nibbles |
 | [FUNC-LACROSSE-008](../requirements/functional.md#func-lacrosse-008) | `LacrosseWS7000` | Frame ends with XOR checksum nibble and running-sum nibble (init 5) |
 | [FUNC-LACROSSE-009](../requirements/functional.md#func-lacrosse-009) | `LacrosseWS7000` | Bit 1 = high 400 / low 800 µs, bit 0 = high 800 / low 400 µs; nibble bits LSB first, then a one-bit separator |
 | [FUNC-X10-001](../requirements/functional.md#func-x10-001) | `x10rf` | RFXmeter 6-byte frame: address, partial complement, 24-bit value, packet-type nibble, nibble-sum parity |
