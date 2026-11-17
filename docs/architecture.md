@@ -197,7 +197,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-OREGON-013](../requirements/functional.md#func-oregon-013) | `OregonV3` | messageStatus bit-field (bit0=temp, bit1=humi, bit2=press) |
 | [FUNC-OREGON-014](../requirements/functional.md#func-oregon-014) | `OregonV3` | Full frame matches the Oregon v2.1 reference payloads decoded by RFLink |
 | [FUNC-OREGON-015](../requirements/functional.md#func-oregon-015) | `OregonV3` | Reused instance: setters replace their field (sign bit, channel nibble), checksum rewritten |
-| [FUNC-LACROSSE-001](../requirements/functional.md#func-lacrosse-001) | `LacrosseWS7000` | Preamble is exactly 10 consecutive zero bits |
+| [FUNC-LACROSSE-001](../requirements/functional.md#func-lacrosse-001) | `LacrosseWS7000` | Preamble is exactly 10 consecutive zero bits, then a one start bit |
 | [FUNC-LACROSSE-002](../requirements/functional.md#func-lacrosse-002) | `LacrosseWS7000` | Sensor-type nibble encoding: 0=temp, 1=T+H, 4=T+H+P, 5=lux, F=unknown |
 | [FUNC-LACROSSE-003](../requirements/functional.md#func-lacrosse-003) | `LacrosseWS7000` | Address (0–7) in bits 0–2; negative temperature sign in bit 3 of second nibble |
 | [FUNC-LACROSSE-004](../requirements/functional.md#func-lacrosse-004) | `LacrosseWS7000` | Temperature clamped ±99 °C; encoded as decimal/unit/dozen nibbles |
@@ -205,11 +205,11 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-LACROSSE-006](../requirements/functional.md#func-lacrosse-006) | `LacrosseWS7000` | Pressure clamped 850–1100 hPa, offset −200; encoded as four nibbles |
 | [FUNC-LACROSSE-007](../requirements/functional.md#func-lacrosse-007) | `LacrosseWS7000` | Luminosity encoded as 7 nibbles in type-5 (light sensor) frame |
 | [FUNC-LACROSSE-008](../requirements/functional.md#func-lacrosse-008) | `LacrosseWS7000` | Frame ends with XOR checksum nibble and running-sum nibble (init 5) |
-| [FUNC-LACROSSE-009](../requirements/functional.md#func-lacrosse-009) | `LacrosseWS7000` | Each nibble followed by mandatory trailing one-bit separator |
+| [FUNC-LACROSSE-009](../requirements/functional.md#func-lacrosse-009) | `LacrosseWS7000` | Bit 1 = high 400 / low 800 µs, bit 0 = high 800 / low 400 µs; nibble bits LSB first, then a one-bit separator |
 | [FUNC-X10-001](../requirements/functional.md#func-x10-001) | `x10rf` | RFXmeter 6-byte frame: address, partial complement, 24-bit value, packet-type nibble, nibble-sum parity |
 | [FUNC-X10-002](../requirements/functional.md#func-x10-002) | `x10rf` | RFXsensor 4-byte frame: address+type bits, partial complement, value, packet-type status + nibble-sum parity |
 | [FUNC-X10-003](../requirements/functional.md#func-x10-003) | `x10rf` | x10Switch 4-byte frame: house-code nibble lookup, bit-scattered unit code, full-byte complements |
-| [FUNC-X10-004](../requirements/functional.md#func-x10-004) | `x10rf` | x10Security 6-byte frame: address, swapped-nibble complement, command + complement, id, XOR-fold parity |
+| [FUNC-X10-004](../requirements/functional.md#func-x10-004) | `x10rf` | x10Security 6-byte frame: address, address with its low nibble inverted, command + complement, id, XOR-fold parity |
 | [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Transmission repeated rf_repeats times with 40 ms inter-repeat cooldown via DelayX10Gap (see [TECH-X10-001](../requirements/technical.md#tech-x10-001)) |
 | [FUNC-X10-006](../requirements/functional.md#func-x10-006) | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [FUNC-X10-007](../requirements/functional.md#func-x10-007) | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
@@ -230,7 +230,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [TECH-X10-002](../requirements/technical.md#tech-x10-002) | `x10rf` | x10rf replaces all file-static _delay_us() calls with the five new Hal timing methods; <util/delay.h> block removed |
 | [FUNC-BATTERY-001](../requirements/functional.md#func-battery-001) | `Hal` / `main.cpp` | ComputeVccMv reads internal 1.1 V ADC ref; calibrated constant supplied as INTERNAL_1v1 build flag |
 | [FUNC-BATTERY-002](../requirements/functional.md#func-battery-002) | `Hal` / `main.cpp` / `include/config.h` | batteryVoltageInMv = vccMv (BATTERY_IS_VCC) or ConvertAnalogValueToMv(GetRawBattery(), vccMv) × BATTERY_DIVIDER (default 1) |
-| [FUNC-BATTERY-003](../requirements/functional.md#func-battery-003) | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter transmissions |
+| [FUNC-BATTERY-003](../requirements/functional.md#func-battery-003) | `main.cpp` | lowBattery flag gates Oregon SetBatteryLow and suppresses all RFXmeter and luminosity transmissions |
 | [FUNC-SENSOR-001](../requirements/functional.md#func-sensor-001) | `BMx280` | Wraps BMP280/BME280 at I2C 0x76; Begin/GetTemperature/GetPressure/GetHumidity/Shutdown interface |
 | [FUNC-SENSOR-002](../requirements/functional.md#func-sensor-002) | `Ds18b20` | Draft. ds18b20convert + ds18b20read on PA3; raw / 16 = temperature in °C; accessed only through Ds18b20 wrapper |
 | [TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001) | `Ds18b20` | Draft. DS18B20 access encapsulated in Ds18b20 wrapper; main.cpp must not reference PORTA/DDRA/PINA or ds18b20 library functions directly; PA3 to be released (input, no pull-up, not driven) after `Read()`, not implemented |
@@ -240,7 +240,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-MAIN-001](../requirements/functional.md#func-main-001) | `main.cpp` | Environment frame sent twice per cycle; radio low between the copies for at least one frame length (Oregon ≥ 246 ms, Lacrosse ≥ 98 ms); X10 and luminosity frames unchanged |
 | [CONF-BUILD-001](../requirements/configuration.md#conf-build-001) | `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | At most one of USE_OREGON / USE_LACROSSE; neither → no EnvironmentEncoder (HAS_ENVIRONMENT_ENCODER unset), no environment frame; both → #error |
 | [CONF-BUILD-002](../requirements/configuration.md#conf-build-002) | `main.cpp` / `include/config.h` | USE_BMP280/BME280 → BMx280 (BME280 adds humidity/pressure, wins if both); USE_DS18B20 → Ds18b20, overrides BMx280 temperature when combined; no temperature sensor → no environment frame; USE_BH1750 independent of temperature sensor and protocol; USE_I2C auto-derived |
-| [CONF-BUILD-003](../requirements/configuration.md#conf-build-003) | `EnvironmentEncoder.h` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (≤ 0xA5) applied to OregonV3 by ConfigureEncoder() |
+| [CONF-BUILD-003](../requirements/configuration.md#conf-build-003) | `EnvironmentEncoder.h` / `platformio.ini` | OREGON_CHANNEL (1–3) and OREGON_RCODE (0x00–0xFF) applied to OregonV3 by ConfigureEncoder() |
 | [CONF-BUILD-004](../requirements/configuration.md#conf-build-004) | `config.h` / `EnvironmentEncoder.h` / `main.cpp` / `platformio.ini` | LACROSSE_ID applied to the Lacrosse environment encoder and to the luminosity encoder; USE_LACROSSE or USE_BH1750 without LACROSSE_ID → #error |
 | [CONF-BUILD-005](../requirements/configuration.md#conf-build-005) | `Hal` / `platformio.ini` | INTERNAL_1v1 (mV) chip-calibrated constant consumed by Hal::ComputeVccMv() |
 | [CONF-BUILD-006](../requirements/configuration.md#conf-build-006) | `main.cpp` / `include/config.h` | SLEEP_TIME_IN_SECONDS passed to Hal::Hibernate(); default 32 s from config.h |
