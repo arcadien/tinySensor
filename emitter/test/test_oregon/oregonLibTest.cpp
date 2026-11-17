@@ -320,7 +320,7 @@ struct HumidityCase {
 static const HumidityCase humidityCases[] = {
     {"52", 52, 0x20, 0x05},       {"67", 67, 0x70, 0x06},
     {"7-no-tens", 7, 0x70, 0x00}, {"zero", 0, 0x00, 0x00},
-    {"99", 99, 0x90, 0x09},
+    {"99", 99, 0x90, 0x09},       {"100-clamped-to-99", 100, 0x90, 0x09},
 };
 
 // @req FUNC-OREGON-007

@@ -53,15 +53,16 @@ static void AssertSameOrders(const std::vector<unsigned char> &expected,
 void Expect_oregon_frame_unchanged_for_full_measurements() {
   Measurements m;
   m.SetTemperature(21.5f);
-  m.SetHumidity(48.7f);
-  m.SetPressure(1013.4f);
+  // whole values: the rounding is checked by the FUNC-OREGON-007/008 tables
+  m.SetHumidity(48.0f);
+  m.SetPressure(1013.0f);
 
   OregonV3 reference(&TestHal);
   reference.SetChannel(1);
   reference.SetRollingCode(0x20);
   reference.SetTemperature(21.5f);
-  reference.SetHumidity(48.7f);  // former implicit float -> uint8_t
-  reference.SetPressure(1013.4f);
+  reference.SetHumidity(48);
+  reference.SetPressure(1013);
   reference.SetBatteryLow(false);
 
   OregonV3 encoder(&TestHal);
@@ -70,6 +71,43 @@ void Expect_oregon_frame_unchanged_for_full_measurements() {
   TEST_ASSERT_TRUE(ApplyMeasurements(encoder, m, false));
 
   AssertSameOrders(SendAndCapture(reference), SendAndCapture(encoder));
+}
+
+/*
+ * The sensors give float humidity and pressure; ApplyMeasurements() must send
+ * them rounded to the Oregon frame resolution (whole % and whole hPa).
+ */
+struct OregonBytesCase {
+  const char *id;
+  float value;
+  uint8_t bytes[2];
+};
+
+// bytes 6-7: humidity units << 4 (low nibble: sign, clear here), tens
+static const OregonBytesCase oregonHumidityCases[] = {
+    {"67.4-rounds-down", 67.4f, {0x70, 0x06}},
+    {"67.5-half-rounds-up", 67.5f, {0x80, 0x06}},
+    {"9.5-rounds-up-to-10", 9.5f, {0x00, 0x01}},
+    {"99.6-clamped-to-99", 99.6f, {0x90, 0x09}},
+    {"100-clamped-to-99", 100.0f, {0x90, 0x09}},
+    {"-3-clamped-to-0", -3.0f, {0x00, 0x00}},
+};
+
+// @req FUNC-OREGON-007
+void Expect_oregon_humidity_rounded_to_whole_percent() {
+  for (const OregonBytesCase &c : oregonHumidityCases) {
+    // Given
+    Measurements m;
+    m.SetHumidity(c.value);
+    OregonV3 encoder(&TestHal);
+
+    // When
+    ApplyMeasurements(encoder, m, false);
+
+    // Then
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(c.bytes, encoder.GetMessage() + 6, 2,
+                                         c.id);
+  }
 }
 
 // @req FUNC-BATTERY-003
@@ -163,6 +201,7 @@ int main(int, char **) {
   UnityBegin("environmentTest.cpp");
 
   RUN_TEST(Expect_oregon_frame_unchanged_for_full_measurements);
+  RUN_TEST(Expect_oregon_humidity_rounded_to_whole_percent);
   RUN_TEST(Expect_oregon_battery_low_flag_applied_with_temperature);
   RUN_TEST(Expect_no_environment_frame_without_temperature);
   RUN_TEST(Expect_lacrosse_frame_unchanged_for_full_measurements);
