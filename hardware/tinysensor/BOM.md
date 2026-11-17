@@ -1,13 +1,13 @@
 # tinySensor board: bill of materials (v3.0)
 
-Generated from the v3.0 schematic (`tinySensorv1.kicad_sch`, rev 3.0), grouped by value and footprint. No part is marked DNP: which connectors and modules to fit depends on the sensor unit, see [`WIRING.md`](WIRING.md) and [`docs/environments.md`](../../docs/environments.md). v2.2 boards: see [`REWORK_v2.2.md`](REWORK_v2.2.md).
+Generated from the v3.0 schematic (`tinysensor.kicad_sch`, rev 3.0), grouped by value and footprint. No part is marked DNP: which connectors and modules to fit depends on the sensor unit, see [`WIRING.md`](WIRING.md) and [`docs/environments.md`](../../docs/environments.md). v2.2 boards: see [`REWORK_v2.2.md`](REWORK_v2.2.md).
 
 Regenerate after a schematic change:
 
 ```bash
 kicad-cli sch export bom --fields 'Reference,Value,Footprint,${QUANTITY}' \
   --labels 'Refs,Value,Footprint,Qty' --group-by 'Value,Footprint' --ref-range-delimiter '' \
-  -o bom.csv tinySensorv1.kicad_sch
+  -o bom.csv tinysensor.kicad_sch
 ```
 
 ## Components

@@ -16,7 +16,7 @@ part = "assembly"; // [base, lid, assembly, open]
 usage = "ext";     // [int, ext]
 gland_side = "left"; // [left, right, bottom] cable gland wall (usage ext)
 
-/* [PCB — from hardware/tinysensor/tinySensorv1.kicad_pcb] */
+/* [PCB — from hardware/tinysensor/tinysensor.kicad_pcb] */
 pcb_w = 93.98;
 pcb_h = 63.754;
 pcb_t = 1.6;

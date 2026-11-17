@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="D">
   <design>
-    <source>C:\Users\aurelien\git\tinySensor\hardware\kicad\tinySensorv1.sch</source>
+    <source>C:\Users\aurelien\git\tinySensor\hardware\kicad\tinysensor.sch</source>
     <date>11/11/2018 12:52:55</date>
     <tool>Eeschema (5.0.0)</tool>
     <sheet number="1" name="/" tstamps="/">
@@ -10,7 +10,7 @@
         <company/>
         <rev/>
         <date/>
-        <source>tinySensorv1.sch</source>
+        <source>tinysensor.sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
         <comment number="3" value=""/>

@@ -1,11 +1,11 @@
 EESchema-LIBRARY Version 2.4
 #encoding utf-8
 #
-# ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue
+# ATtiny84A-PU-MCU_Microchip_ATtiny-tinysensor-rescue
 #
-DEF ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue U 0 20 Y Y 1 F N
+DEF ATtiny84A-PU-MCU_Microchip_ATtiny-tinysensor-rescue U 0 20 Y Y 1 F N
 F0 "U" -500 850 50 H V L BNN
-F1 "ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue" 100 -850 50 H V L TNN
+F1 "ATtiny84A-PU-MCU_Microchip_ATtiny-tinysensor-rescue" 100 -850 50 H V L TNN
 F2 "Package_DIP:DIP-14_W7.62mm" 0 0 50 H I C CIN
 F3 "" 0 0 50 H I C CNN
 $FPLIST

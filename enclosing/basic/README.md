@@ -21,7 +21,7 @@ Open-box render: `openscad --preview -D 'part="open"' --camera=110,-230,420,110,
 
 ## Main box (`tinysensor_box.scad`)
 
-- Fitted to the v2.2 PCB (`hardware/tinysensor/tinySensorv1.kicad_pcb`): 93.98 × 63.75 mm, held by the 4 corner M2.5 holes on 5 mm standoffs.
+- Fitted to the v2.2 PCB (`hardware/tinysensor/tinysensor.kicad_pcb`): 93.98 × 63.75 mm, held by the 4 corner M2.5 holes on 5 mm standoffs.
 - Clearance above the PCB: 25 mm (large capacitors), parameter `comp_h`.
 - Free 14 mm bay on the bottom side (18650 holder side) for cables and antenna.
 - Overall size: ~117 × 101 × 39 mm (flange and lid included).

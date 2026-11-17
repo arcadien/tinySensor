@@ -36,7 +36,7 @@ F 3 "~" H 5200 1400 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L tinySensorv1-rescue:ATtiny84A-PU-MCU_Microchip_ATtiny-tinySensorv1-rescue U1
+L tinysensor-rescue:ATtiny84A-PU-MCU_Microchip_ATtiny-tinysensor-rescue U1
 U 1 1 5BCB880C
 P 2250 2000
 F 0 "U1" H 1720 2046 50  0000 R CNN
@@ -335,7 +335,7 @@ Wire Wire Line
 Text Label 3000 2600 0    50   ~ 0
 RESET
 $Comp
-L tinySensorv1-rescue:AVR-ISP-6-Connector J6
+L tinysensor-rescue:AVR-ISP-6-Connector J6
 U 1 1 5BCF975A
 P 2250 4300
 F 0 "J6" H 1970 4396 50  0000 R CNN

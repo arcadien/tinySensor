@@ -1,7 +1,7 @@
 (export 
   (version D) 
   (design 
-    (source C:\Users\aurelien\Documents\Kicad\tinySensorv1\tinySensorv1.sch) 
+    (source C:\Users\aurelien\Documents\Kicad\tinysensor\tinysensor.sch) 
     (date "20/10/2018 22:43:18") 
     (tool "Eeschema (5.0.0)") 
     (sheet 

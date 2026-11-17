@@ -58,7 +58,7 @@
     "ssh_key": ""
   },
   "meta": {
-    "filename": "tinySensorv1.kicad_prl",
+    "filename": "tinysensor.kicad_prl",
     "version": 5
   },
   "net_inspector_panel": {
