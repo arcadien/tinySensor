@@ -38,7 +38,7 @@
 **Title:** Negative temperature sets the sign bit, bit 3 of byte 6, and sends the absolute value
 **Status:** validated
 **Dependencies:** [FUNC-OREGON-005](#func-oregon-005)
-**Description:** A negative temperature sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734) and sends its absolute value with the [FUNC-OREGON-005](#func-oregon-005) layout.
+**Description:** A temperature that is negative after rounding to the nearest tenth sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734). It sends its absolute value with the [FUNC-OREGON-005](#func-oregon-005) rounding, clamp and layout: −10.25 °C sends −10.3, −120 °C sends −99.9, and −0.04 °C sends 0.0 with the sign bit clear.
 
 ### FUNC-OREGON-007
 **Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
