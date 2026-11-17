@@ -125,10 +125,10 @@
 **Description:** The humidity is rounded to the nearest tenth (halves up); a result of 100 % or more is sent as 99.9 %. The value is sent as three digit nibbles, each 0–9, in order: tenths, units, tens. 42.47 % sends 42.5, 99.96 % sends 99.9.
 
 ### FUNC-LACROSSE-006
-**Title:** Pressure clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
+**Title:** Pressure rounded to the tenth, clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** The pressure is clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four nibbles in order: units, tens, hundreds, tenths.
+**Description:** The pressure is rounded to the nearest tenth of hPa (halves up), clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four digit nibbles, each 0–9, in order: units, tens, hundreds, tenths. 1013.37 hPa sends 813.4 as 3, 1, 8, 4.
 
 ### FUNC-LACROSSE-007
 **Title:** Luminosity sent as 7 nibbles in a type 5 frame
