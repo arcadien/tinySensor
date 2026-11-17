@@ -75,6 +75,8 @@ This project uses Requirement-Based Development. **Every code change must origin
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
+Every report in `audits/` (`/rbd-audit`, `/rbd-review`) states on its first line under the title the full hash of the commit it audited (`Audited commit:` or `Reviewed commit:`), so `git diff <hash>..HEAD -- requirements docs emitter lib tinyDecoders` shows what changed since the last audit.
+
 **Linter**: `clang-format` **18.1.8** (`--dry-run --Werror`) on all `*.cpp`/`*.h` under `emitter/` (`src/`, `include/`, `test/`), `lib/` and `tinyDecoders/`. Must pass before every test or implementation commit; enforced by the CI `lint` job and by the pre-commit hook (`pip install pre-commit && pre-commit install`). Other clang-format versions may format macros differently. Run it with:
 
 ```bash
