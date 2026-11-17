@@ -218,7 +218,7 @@
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
 **Status:** draft
 **Dependencies:** —
-**Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. On a successful read, the temperature in whole °C is the raw 1/16 °C value divided by 16. Wrapper details: TECH-SENSOR-001. Verification: inspection and the AVR builds only; no sensor unit in service uses a DS18B20, so it is not bench-tested.
+**Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. The temperature in whole °C is the raw 1/16 °C value divided by 16. A result of 0 °C counts as a failed read, so a real 0 °C is lost too: the cycle then has no temperature and, with no other temperature source, sends no environment frame (CONF-BUILD-002). Wrapper details: TECH-SENSOR-001. Verification: inspection and the AVR builds only; no sensor unit in service uses a DS18B20, so it is not bench-tested.
 
 ### FUNC-SENSOR-003
 **Title:** BH1750 luminosity sent twice as a Lacrosse luminosity frame
