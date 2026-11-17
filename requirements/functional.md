@@ -191,10 +191,10 @@
 **Description:** When the build sets an analog meter address (CONF-BUILD-009) and the battery is not low, every cycle sends the auxiliary analog voltage in mV (FUNC-ANALOG-001), one decimal digit per nibble, in an RFXmeter frame with that address and packet type 0. Nothing is sent while the battery is low.
 
 ### FUNC-BATTERY-001
-**Title:** VCC computed from ATtiny84a internal 1.1 V reference
+**Title:** VCC measured against the internal 1.1 V reference
 **Status:** validated
 **Dependencies:** —
-**Description:** `Hal::ComputeVccMv(known11refValue)` reads the raw ADC value of the internal 1.1 V reference via `GetRawInternal11Ref()` and returns `(uint16_t)(known11refValue * 1024.0 / rawAnalog11ref)`. The calibrated reference value is supplied as `INTERNAL_1v1` at build time.
+**Description:** VCC in mV is the board's calibrated 1.1 V reference value (mV, CONF-BUILD-005) × 1024 divided by the ADC reading of the internal 1.1 V reference, truncated to an integer.
 
 ### FUNC-BATTERY-002
 **Title:** Battery voltage is VCC, or the PA1 divider reading multiplied by the board's divider ratio
@@ -203,10 +203,10 @@
 **Description:** On boards where the battery powers the chip directly, the battery voltage is the measured VCC. On other boards, it is the PA1 voltage multiplied by the divider ratio set at build time, which is 1 when not set. This scaled voltage drives the low-battery decision and is the value the X10 battery meter reports. Acceptance: with a ratio of 2, the battery meter reports twice the PA1 voltage; without a ratio, it reports the PA1 voltage unchanged.
 
 ### FUNC-BATTERY-003
-**Title:** Low-battery flag suppresses X10 meter transmissions and sets Oregon battery-low bit
+**Title:** Low battery mutes the X10 meters and sets the Oregon battery-low flag
 **Status:** validated
 **Dependencies:** FUNC-BATTERY-002, FUNC-OREGON-011, FUNC-X10-006, FUNC-X10-007
-**Description:** When `batteryVoltageInMv < LOW_BATTERY_VOLTAGE`, `main()` sets `lowBattery = true`. Oregon frames receive `SetBatteryLow(true)`. All X10 RFXmeter transmissions guarded by `!lowBattery` (battery voltage and analog sensor) are suppressed entirely.
+**Description:** The battery is low when its voltage is below the build's threshold (CONF-BUILD-007). Then Oregon frames carry the battery-low flag (FUNC-OREGON-011), and the battery and analog X10 meter frames are not sent.
 
 ### FUNC-SENSOR-001
 **Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
