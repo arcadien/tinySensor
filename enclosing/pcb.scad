@@ -1,5 +1,5 @@
 // Simplified TinySensor v2.2 board and its 18650 cell, for the renders.
-// Positions read from hardware/tinysensor/tinySensorv1.kicad_pcb (absolute KiCad coordinates),
+// Positions read from hardware/tinysensor/tinysensor.kicad_pcb (absolute KiCad coordinates),
 // approximate volumes (boxes and cylinders), not meant for printing.
 //
 // Frame: bottom-left corner of the PCB, Y up (KiCad: Y down), PCB underside at Z = 0.
