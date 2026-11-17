@@ -20,7 +20,7 @@
 **Title:** Set Oregon channel and rolling code per environment
 **Status:** validated
 **Dependencies:** CONF-BUILD-001
-**Description:** An Oregon build sets `OREGON_CHANNEL` to 1, 2 or 3 and `OREGON_RCODE` to a rolling code no greater than `0xA5`. Every Oregon frame carries them (FUNC-OREGON-009, FUNC-OREGON-010). Verification: inspection; the native cycle tests build Oregon variants with these flags but compare against frames built from the same values.
+**Description:** An Oregon build sets `OREGON_CHANNEL` to 1, 2 or 3 and `OREGON_RCODE` to a rolling code 0x00–0xFF (FUNC-OREGON-010; the old 0xA5 limit came from the former layout that split the code over bytes 2 and 3). Every Oregon frame carries them (FUNC-OREGON-009, FUNC-OREGON-010). Verification: inspection; the native cycle tests build Oregon variants with these flags but compare against frames built from the same values.
 
 ### CONF-BUILD-004
 **Title:** Set Lacrosse device address per environment
