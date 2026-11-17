@@ -143,10 +143,10 @@
 **Description:** After the data nibbles come two check nibbles. The first is the XOR of every nibble sent before it, on 4 bits. The second is 5 plus every nibble sent before it, the XOR nibble included, on 4 bits.
 
 ### FUNC-LACROSSE-009
-**Title:** Every nibble is followed by a one bit separator
+**Title:** Lacrosse bits are 400/800 µs pulses, nibbles least significant bit first, each followed by a one bit separator
 **Status:** validated
 **Dependencies:** —
-**Description:** Every nibble of the frame (type, address, data and check nibbles) is sent as its four bits followed by a one bit.
+**Description:** A one bit is radio high 400 µs then low 800 µs; a zero bit is high 800 µs then low 400 µs. Every nibble of the frame (type, address, data and check nibbles) is sent as its four bits, least significant first, followed by a one bit.
 
 ### FUNC-X10-001
 **Title:** RFXmeter frame: address, address check, 24-bit value, packet type and nibble-sum parity
