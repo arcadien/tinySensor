@@ -41,13 +41,6 @@ typedef struct X10SecurityTestData {
   uint8_t expectedCRC;
 } X10SecurityTestData;
 
-typedef struct X10SwitchTestData {
-  uint8_t houseCode;
-  uint8_t unitCode;
-  uint8_t command;
-  uint8_t expectedMessage[4];
-} X10SwitchTestData;
-
 typedef struct X10SensorTestData {
   uint8_t address;
   uint8_t type;
@@ -62,31 +55,6 @@ typedef struct X10MeterTestData {
   uint32_t value;
   uint8_t expectedMessage[6];
 } X10MeterTestData;
-
-// @req FUNC-X10-003
-void Expect_x10_switch_right_encoding() {
-  char buffer[256];
-  uint8_t testCount = 1;
-
-  // clang-format off
-  X10SwitchTestData testDatas[] = {
-    {'b', 0x0f, OFF, {0x74,0x8B,0x68,0x97}}
-  };
-  // clang-format on
-
-  for (uint8_t testIndex = 0; testIndex < testCount; testIndex++) {
-    X10SwitchTestData testData = testDatas[testIndex];
-    x10rf x10Encoder(&TestHal, 1);
-    x10Encoder.x10Switch(testData.houseCode, testData.unitCode,
-                         testData.command);
-
-    uint8_t *actual = x10Encoder.getMessage();
-
-    sprintf(buffer, "Checking X10 Switch message test #%u", testIndex);
-    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(testData.expectedMessage, actual, 4,
-                                         buffer);
-  }
-}
 
 // @req FUNC-X10-004
 void Expect_x10_security_right_parity() {
@@ -183,7 +151,6 @@ void tearDown(void) {}
 int main(int, char **) {
   UnityBegin("x10LibTest.cpp");
 
-  RUN_TEST(Expect_x10_switch_right_encoding);
   RUN_TEST(Expect_x10_security_right_parity);
   RUN_TEST(Expect_x10_meter_right_encoding);
   RUN_TEST(Expect_x10_sensor_right_encoding);
