@@ -212,7 +212,7 @@
 **Title:** Temperature, humidity and pressure read from a BME280 or BMP280 at I2C address 0x76
 **Status:** validated
 **Dependencies:** —
-**Description:** On a build with a BME280 or BMP280 ([CONF-BUILD-002](configuration.md#conf-build-002)), each cycle reads the temperature (°C), the pressure and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: [TECH-SENSOR-002](technical.md#tech-sensor-002). Verification: inspection and the AVR builds; native builds stub the sensor ([TECH-SENSOR-002](technical.md#tech-sensor-002)). Bench check pending: BME280 readings over several cycles on the mushroom board.
+**Description:** On a build with a BME280 or BMP280 ([CONF-BUILD-002](configuration.md#conf-build-002)), each cycle reads the temperature (°C), the pressure in hPa (the sensor value in Pa divided by 100, not rounded: each encoder rounds it to its frame resolution) and, on a BME280, the humidity (%) from the sensor at I2C address 0x76, then puts the sensor to sleep. Wrapper details: [TECH-SENSOR-002](technical.md#tech-sensor-002). Verification: inspection and the AVR builds; native builds stub the sensor ([TECH-SENSOR-002](technical.md#tech-sensor-002)). Bench check pending: BME280 readings over several cycles on the mushroom board.
 
 ### FUNC-SENSOR-002
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
