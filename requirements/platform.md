@@ -36,7 +36,7 @@
 **Status:** validated
 **Dependencies:** TECH-HAL-005
 **derives_from:** [TECH-HAL-005](technical.md#tech-hal-005)
-**Description:** Every transmission of a cycle turns the LED on before its first bit, turns it off after its last bit, then waits 30 ms.
+**Description:** A transmission is one frame of an encoder, with all its copies: the repeated copies of an X10 frame (FUNC-X10-005) are one transmission, while each luminosity copy (FUNC-SENSOR-003) and each environment copy (FUNC-MAIN-001) is its own transmission. Every transmission of a cycle turns the LED on before its first bit, turns it off after its last bit, then waits 30 ms; for an X10 frame, the 30 ms come after the 40 ms gap of its last copy.
 
 ---
 
