@@ -1,7 +1,7 @@
 exclusions:
   - id: HIST-BACKFILL-001
-    finding: "test(ID) commits without implementation commits for FUNC-OREGON-001..013, FUNC-LACROSSE-001..009, FUNC-X10-001..007, FUNC-BATTERY-001, FUNC-BATTERY-003, TECH-HAL-001..003, TECH-HAL-005, TECH-FILTER-001, TECH-FILTER-002, TECH-CONVERT-002"
-    justification: "The code predates the RBD workflow; the test commits tagged existing tests. Adding implementation commits would mean rewriting master history."
+    finding: "test(ID) commits without implementation commits for FUNC-OREGON-001..013, FUNC-LACROSSE-001..009, FUNC-X10-001..007, FUNC-BATTERY-001, FUNC-BATTERY-003, FUNC-ANALOG-001, CONF-BUILD-005, CONF-BUILD-006, CONF-BUILD-008, CONF-BUILD-009, CONF-BUILD-010, PLAT-POWER-002, PLAT-POWER-004, TECH-HAL-001..003, TECH-HAL-005, TECH-FILTER-001, TECH-FILTER-002, TECH-CONVERT-002"
+    justification: "The code predates the RBD workflow; the test commits tagged existing tests (FUNC-ANALOG-001 to PLAT-POWER-004 added on 2026-11-17 by 7f4c027, 6fdc43a, 4919547). Adding implementation commits would mean rewriting master history."
     date: 2026-11-17
   - id: HIST-COMMIT-MISMATCH-001
     finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005"
@@ -14,4 +14,8 @@ exclusions:
   - id: TEST-GWT-001
     finding: "51 test functions in 10 emitter test files lack Given/When/Then markers"
     justification: "Tests written before the RBD workflow; adding the markers changes no behaviour. To be done if these files are reworked."
+    date: 2026-11-17
+  - id: SESSION-PREFIX-001
+    finding: "bfdb0a6 (docs:) changed audits/exclusions.yml; cd584b8 (plan:) changed docs/architecture.md"
+    justification: "Merged on master. bfdb0a6 should have been plan:, used from now on for exclusions. cd584b8 is a link-format pass over the whole architecture document with no single requirement; plan: is accepted for such whole-document format changes."
     date: 2026-11-17
