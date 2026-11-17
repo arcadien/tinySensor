@@ -2,96 +2,97 @@
 
 <!-- Requirements are added here during Phase 2 of the RBD workflow. -->
 <!-- Format: req(ID): title -->
+<!-- Functional requirements state observable behaviour (radio frames, values, screen, serial lines); class names, signatures and memory layout belong in technical.md. -->
 
 ### FUNC-OREGON-001
-**Title:** Zero bit encoded as H-D512-L-D1024-H-D512 HAL call sequence
+**Title:** Oregon zero bit is radio high 512 µs, low 1024 µs, high 512 µs
 **Status:** validated
 **Dependencies:** —
-**Description:** When `SendZero()` is called, `OregonV3` emits exactly six HAL calls in order: `RadioGoHigh`, `Delay512Us`, `RadioGoLow`, `Delay1024Us`, `RadioGoHigh`, `Delay512Us`. This sequence is the sole representation of a zero bit on the radio channel.
+**Description:** The Oregon encoder sends a zero bit as the radio output high for 512 µs, low for 1024 µs, then high for 512 µs. A zero bit has no other form on air.
 
 ### FUNC-OREGON-002
-**Title:** One bit encoded as L-D512-H-D1024-L-D512 HAL call sequence
+**Title:** Oregon one bit is radio low 512 µs, high 1024 µs, low 512 µs
 **Status:** validated
 **Dependencies:** —
-**Description:** When `SendOne()` is called, `OregonV3` emits exactly six HAL calls in order: `RadioGoLow`, `Delay512Us`, `RadioGoHigh`, `Delay1024Us`, `RadioGoLow`, `Delay512Us`. This sequence is the sole representation of a one bit on the radio channel.
+**Description:** The Oregon encoder sends a one bit as the radio output low for 512 µs, high for 1024 µs, then low for 512 µs. A one bit has no other form on air.
 
 ### FUNC-OREGON-003
-**Title:** Data bytes transmitted LSB-nibble first then MSB-nibble
+**Title:** Oregon bytes go out low nibble first
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** `SendData()` iterates over each byte and transmits its low nibble (bits 0–3) before its high nibble (bits 4–7), each bit sent via `SendZero()` or `SendOne()`. This nibble order applies to every byte in the message, preamble, and postamble.
+**Description:** Every byte of an Oregon frame (preamble, payload and postamble) goes out low nibble (bits 0–3) first, then high nibble (bits 4–7), each bit as in FUNC-OREGON-001 and FUNC-OREGON-002.
 
 ### FUNC-OREGON-004
-**Title:** Frame begins with 24 one-bits preamble and ends with 2-zero-bit postamble byte
+**Title:** Oregon frame is 24 one bits, the 11-byte payload, then 8 zero bits
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** Every `Send()` call first transmits three `0xFF` preamble bytes (24 one-bits total via `SendData`), then the 11-byte message payload, then one `0x00` postamble byte (8 zero-bits, equivalent to two zero nibbles).
+**Description:** Every Oregon frame starts with a 24 one-bit preamble (three `0xFF` bytes), then carries the 11-byte payload, and ends with an 8 zero-bit postamble (one `0x00` byte).
 
 ### FUNC-OREGON-005
-**Title:** Positive temperature encoded as tenths, units and tens nibbles 9–11 in bytes 4–5
+**Title:** Positive temperature sent as tenths, units and tens digits in payload bytes 4–5
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetTemperature()` with a non-negative value encodes the tenths digit into the high nibble of byte 4, the units digit into the low nibble of byte 5 and the tens digit into the high nibble of byte 5 (frame nibbles 9, 10, 11 counting the sync nibble as 0: Oregon v2.1 layout as decoded by RFLink `Plugins/Plugin_048.c` (couin3) lines 733-734). The low nibble of byte 4 is the flags nibble (FUNC-OREGON-011).
+**Description:** A non-negative temperature is sent as three decimal digits: tenths in the high nibble of byte 4, units in the low nibble of byte 5, tens in the high nibble of byte 5 (frame nibbles 9, 10, 11, the sync nibble being nibble 0). This is the Oregon v2.1 layout read by RFLink (`Plugins/Plugin_048.c`, couin3, lines 733-734). The low nibble of byte 4 holds the flags (FUNC-OREGON-011).
 
 ### FUNC-OREGON-006
-**Title:** Negative temperature sets bit 3 of byte 6 and encodes the absolute value
+**Title:** Negative temperature sets the sign bit, bit 3 of byte 6, and sends the absolute value
 **Status:** validated
 **Dependencies:** FUNC-OREGON-005
-**Description:** When the temperature argument to `SetTemperature()` is negative, `OregonV3` sets bit 3 of byte 6 (`0x08`, low nibble of byte 6 = frame nibble 12, RFLink `Plugins/Plugin_048.c` (couin3) line 734) as the negative sign flag, then encodes the absolute value with the FUNC-OREGON-005 layout.
+**Description:** A negative temperature sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734) and sends its absolute value with the FUNC-OREGON-005 layout.
 
 ### FUNC-OREGON-007
 **Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetHumidity()` accepts a value in the range 0–99 and stores the units digit in the high nibble of byte 6 and the tens digit in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink `Plugins/Plugin_048.c` (couin3) line 737). The high nibble of byte 7 (comfort) stays 0.
+**Description:** A humidity of 0–99 % is sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
-**Title:** Pressure stored as hPa − 795 in byte 8; weather prediction byte at byte 9
+**Title:** Pressure sent as hPa − 795 in byte 8; weather forecast in byte 9
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetPressure()` stores the hPa value minus 795, clamped to 0–255, in byte 8 (frame nibbles 16–17). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a weather-prediction code: 0x30 (rain, <1000 hPa), 0x20 (cloudy, <1010), 0x60 (partly cloudy, <1025), or 0xC0 (sunny, ≥1025).
+**Description:** Byte 8 (frame nibbles 16–17) holds the pressure in hPa minus 795, clamped to 0–255 (795–1050 hPa). Offset source: the user's RFLink gateway shows an early tinySensor (old firmware, this same layout) as Home Assistant `sensor.oregonbth_5a23` at 975 hPa while the receiver captured byte 8 = `0xB4` (180 + 795) in the same frame (2026-11-11); this restores that firmware's layout. Byte 9 holds a forecast code: 0x30 (rain, < 1000 hPa), 0x20 (cloudy, < 1010), 0x60 (partly cloudy, < 1025) or 0xC0 (sunny, ≥ 1025).
 
 ### FUNC-OREGON-009
-**Title:** Channel (1–3) encoded as 1-bit mask in high nibble of byte 2; out-of-range silently ignored
+**Title:** Channel 1–3 sent as a one-bit mask in the high nibble of byte 2; another value is ignored
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetChannel()` accepts values 1, 2, or 3 and sets bit `(4 + channel - 1)` of byte 2, producing 0x10, 0x20, or 0x40 respectively. Any value outside the range 1–3 is silently ignored and the message byte is left unchanged.
+**Description:** Channel 1, 2 or 3 sets the high nibble of byte 2 to 0x1, 0x2 or 0x4 (byte 2 = 0x10, 0x20 or 0x40). Any other channel value is ignored: byte 2 keeps its previous value.
 
 ### FUNC-OREGON-010
-**Title:** Rolling code stored as byte 3
+**Title:** Rolling code sent as byte 3
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetRollingCode()` writes the rolling code byte as byte 3 (frame nibbles 6–7, RFLink `osdata[3]`, RFLink `Plugins/Plugin_048.c` (couin3) line 711). The low nibble of byte 2 (last device ID nibble) stays 0. Any value 0x00–0xFF is accepted.
+**Description:** The rolling code, any value 0x00–0xFF, is byte 3 (frame nibbles 6–7, RFLink `osdata[3]`, line 711). The low nibble of byte 2 (last device ID nibble) stays 0.
 
 ### FUNC-OREGON-011
-**Title:** Battery-low flag is bit 2 of byte 4; cleared when battery is OK
+**Title:** Battery-low flag is bit 2 of byte 4
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetBatteryLow(true)` sets bit 2 of byte 4 (`message[4] |= 0x04`, flags nibble 8, read by RFLink `Plugins/Plugin_048.c` (couin3) line 714). `SetBatteryLow(false)` clears it (`message[4] &= 0xFB`). All other bits of byte 4 are unaffected.
+**Description:** A low battery sets bit 2 of byte 4 (flags nibble 8, RFLink line 714); a good battery clears it. The other bits of byte 4 are unchanged.
 
 ### FUNC-OREGON-012
-**Title:** Device ID, sync nibble included, auto-selected at Send() based on which fields are populated
+**Title:** Emulated Oregon device and checksum follow the measurements the frame carries
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** `FinalizeMessage()` writes bytes 0–1 as transmitted, the low nibble of byte 0 being the sync nibble 0xA, based on `messageStatus`: temperature only gives `0xEA 0x4C` (THN132N); temperature and humidity give `0x1A 0x2D` (THGR228N); temperature, humidity and pressure give `0x5A 0x5D` (BTHR918) (RFLink `Plugins/Plugin_048.c` (couin3) lines 650, 696, 730). The checksum is (sum of all preceding nibbles − 0xA) & 0xFF, low nibble first: nibbles 13–14 (high nibble of byte 6, low nibble of byte 7) for THN132N, byte 8 for THGR228N, byte 10 for BTHR918 (RFLink `Plugins/Plugin_048.c` (couin3) lines 465, 654, 698).
+**Description:** Payload bytes 0–1 are the device ID, the low nibble of byte 0 being the sync nibble 0xA. Temperature only gives `0xEA 0x4C` (THN132N); temperature and humidity give `0x1A 0x2D` (THGR228N); temperature, humidity and pressure give `0x5A 0x5D` (BTHR918) (RFLink lines 650, 696, 730). The checksum is (sum of all preceding nibbles − 0xA) & 0xFF, low nibble first: nibbles 13–14 (high nibble of byte 6, low nibble of byte 7) for THN132N, byte 8 for THGR228N, byte 10 for BTHR918 (RFLink lines 465, 654, 698).
 
 ### FUNC-OREGON-013
-**Title:** messageStatus bit-field tracks which fields are set (bit 0=temp, bit 1=humi, bit 2=press)
+**Title:** An Oregon frame carries every measurement loaded since the encoder was created
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002
-**Description:** The private `messageStatus` byte is initialised to 0. `SetTemperature()` sets bit 0, `SetHumidity()` sets bit 1, and `SetPressure()` sets bit 2. The field is readable via `GetMessageStatus()` and governs device-ID selection in `FinalizeMessage()`.
+**Description:** The encoder starts with no measurement. Loading a temperature, a humidity or a pressure adds it to the measurements the encoder reports and sends; nothing removes one. This set chooses the device ID (FUNC-OREGON-012).
 
 ### FUNC-OREGON-014
-**Title:** Full frame byte sequence matches the Oregon v2.1 reference payloads decoded by RFLink
+**Title:** Full payload matches the Oregon v2.1 reference payloads decoded by RFLink
 **Status:** validated
 **Dependencies:** FUNC-OREGON-001, FUNC-OREGON-002, FUNC-OREGON-003, FUNC-OREGON-004, FUNC-OREGON-005, FUNC-OREGON-006, FUNC-OREGON-007, FUNC-OREGON-008, FUNC-OREGON-009, FUNC-OREGON-010, FUNC-OREGON-011, FUNC-OREGON-012, FUNC-OREGON-013
-**Description:** The 11-byte payload produced by `FinalizeMessage()` matches: THN132N channel 1, rolling code 0x3C, battery low, −10.2 °C gives `EA4C103C2410D803000000`; THGR228N channel 3, rolling code 0xC4, 21.5 °C, 67 % gives `1A2D40C450217006390000`; BTHR918 channel 3, rolling code 0x7E, battery low, 21.5 °C, 60 %, 1013 hPa gives `5A5D407E54210006DA605F`. Read with the RFLink `Plugins/Plugin_048.c` (couin3) field formulas and the 795 hPa offset (FUNC-OREGON-008), these payloads give back their inputs.
+**Description:** The 11-byte payload is: THN132N channel 1, rolling code 0x3C, battery low, −10.2 °C gives `EA4C103C2410D803000000`; THGR228N channel 3, rolling code 0xC4, 21.5 °C, 67 % gives `1A2D40C450217006390000`; BTHR918 channel 3, rolling code 0x7E, battery low, 21.5 °C, 60 %, 1013 hPa gives `5A5D407E54210006DA605F`. Read with the RFLink `Plugins/Plugin_048.c` (couin3) field formulas and the 795 hPa offset (FUNC-OREGON-008), these payloads give back their inputs.
 
 ### FUNC-OREGON-015
-**Title:** A reused `OregonV3` instance carries no field bits over from a previous frame
+**Title:** A reused Oregon encoder carries no field value over from a previous frame
 **Status:** validated
 **Dependencies:** FUNC-OREGON-006, FUNC-OREGON-009, FUNC-OREGON-012, FUNC-OREGON-013, FUNC-OREGON-014
-**Description:** Every setter overwrites all bits of its field, never OR-ing into a previous value: `SetTemperature()` with a non-negative value clears the sign bit (bit 3 of byte 6); `SetChannel()` with 1, 2 or 3 sets the high nibble of byte 2 to 0x1, 0x2 or 0x4, clearing the previous channel; `FinalizeMessage()` rewrites the checksum nibbles. `messageStatus` stays cumulative (FUNC-OREGON-013). Test: one instance sends the FUNC-OREGON-014 THN132N frame, then the THGR228N inputs, then the BTHR918 inputs; each payload equals its FUNC-OREGON-014 reference.
+**Description:** When one encoder sends several frames, each new value fully replaces the previous one: a non-negative temperature clears the sign bit; a new channel replaces the previous channel; the checksum is computed again. The set of measurements stays cumulative (FUNC-OREGON-013). Test: one encoder sends the FUNC-OREGON-014 THN132N frame, then the THGR228N inputs, then the BTHR918 inputs; each payload equals its FUNC-OREGON-014 reference.
 
 ### FUNC-LACROSSE-001
 **Title:** Preamble is exactly 10 consecutive zero bits
