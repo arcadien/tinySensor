@@ -53,7 +53,35 @@ CI runs the native tests, compile-fail checks for invalid flag combinations (`em
 
 * Architecture: [docs/architecture.md](docs/architecture.md)
 * Step debugging over debugWIRE: [docs/debugging.md](docs/debugging.md)
-* Requirements: `requirements/*.md` (requirement-based development, see `CLAUDE.md`)
+* Requirements: see [Requirement-based development](#requirement-based-development) below
+
+## Requirement-based development
+
+This project follows requirement-based development (RBD): every behaviour of the firmware, the receiver and the boards is written down as a requirement before it is tested and coded. Each requirement, its tests and the commits that implement it can therefore be traced to each other.
+
+The cycle for each change:
+
+1. **Requirement.** The change is first written as a requirement with an ID such as `FUNC-OREGON-001` (category, domain, number), a status (`validated` or `draft`) and its dependencies.
+2. **Tests.** Tests are written next. Each Unity test function carries the ID it verifies on the line above it: `// @req FUNC-OREGON-001`. Requirements that no host test can observe (AVR registers, wiring, bench measurements) say instead how they are verified: by inspection, by a build, or on the bench.
+3. **Code.** The code then makes the tests pass. The linter (`clang-format` 18.1.8) and the full native test suite must pass before each commit.
+4. **Commit.** Each commit names what it serves: `req(ID):`, `test(ID):`, `feat(ID):`, `tech(ID):`, `conf(ID):` or `arch(ID):`; `plan:` for workflow files; `hw:`, `docs:`, `fix:` or `chore:` outside the code cycle. A pre-push hook rejects a code commit whose ID is missing or not `validated`.
+
+`git log --grep FUNC-MAIN-001` and `grep -rn FUNC-MAIN-001 emitter/test` show where a requirement was written, tested and implemented.
+
+| Document | Contents |
+|---|---|
+| [requirements/functional.md](requirements/functional.md) | `FUNC`: observable behaviour: radio frames, measurements, battery, receiver decoding, RFLink lines |
+| [requirements/ui.md](requirements/ui.md) | `UI`: what the receiver OLED shows |
+| [requirements/configuration.md](requirements/configuration.md) | `CONF`: build flags, PlatformIO environments, CI |
+| [requirements/platform.md](requirements/platform.md) | `PLAT`: hardware use: pins, registers, timers, sleep, board pull-ups |
+| [requirements/technical.md](requirements/technical.md) | `TECH`: classes, interfaces, memory layout, test doubles |
+| [requirements/performance.md](requirements/performance.md) | `PERF`: none yet |
+| [docs/architecture.md](docs/architecture.md) | Component diagram, dependency injection map, and a requirement → component traceability table |
+| [audits/](audits/) | Audit and review reports. Each one starts with the commit it audited, so `git diff <hash>..HEAD` shows what changed since |
+| [audits/exclusions.yml](audits/exclusions.yml) | Audit findings accepted on purpose, with their justification |
+| [.rbd/config.yml](.rbd/config.yml) | ID format, test tag convention and linter command |
+
+Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be observed, without class or function names. Those details live in `TECH`. Requirement IDs cited in these documents link to their heading. The workflow is driven by the [`rbd` Claude Code plugin](https://github.com/arcadien/claude-marketplace/tree/main/plugins/rbd) (`/rbd`, `/rbd-audit`, `/rbd-review`); see `CLAUDE.md`.
 
 ## Hardware and enclosure
 
