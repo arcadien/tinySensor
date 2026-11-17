@@ -41,10 +41,10 @@
 **Description:** A temperature that is negative after rounding to the nearest tenth sets bit 3 of byte 6 (`0x08`, frame nibble 12, RFLink line 734). It sends its absolute value with the [FUNC-OREGON-005](#func-oregon-005) rounding, clamp and layout: −10.25 °C sends −10.3, −120 °C sends −99.9, and −0.04 °C sends 0.0 with the sign bit clear.
 
 ### FUNC-OREGON-007
-**Title:** Humidity units in the high nibble of byte 6, tens in the low nibble of byte 7
+**Title:** Humidity rounded to whole %, clamped to 0–99 %, units in the high nibble of byte 6, tens in the low nibble of byte 7
 **Status:** validated
 **Dependencies:** —
-**Description:** A humidity of 0–99 % is sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). The high nibble of byte 7 (comfort) stays 0.
+**Description:** The humidity is rounded to the nearest whole percent (halves up), then clamped to 0–99 %, and sent as two decimal digits: units in the high nibble of byte 6, tens in the low nibble of byte 7 (frame nibbles 13 and 14, RFLink line 737). 67.4 % sends 67, 67.5 % sends 68, 99.6 % and 100 % send 99. The high nibble of byte 7 (comfort) stays 0.
 
 ### FUNC-OREGON-008
 **Title:** Pressure sent as hPa − 795 in byte 8; weather forecast in byte 9
