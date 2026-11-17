@@ -2,6 +2,10 @@
 
 #include <stdint.h>
 
+// Lux unit big cell, written by FormatPage after the lux digits; its small
+// glyph is blank (TECH-DECODE-004)
+static const char LuxUnit = '\x01';
+
 // Copies the 8x16 glyph of `c` in SSD1306 page order (UI-DECODE-002): bytes
 // 0-7 are columns 0-7 of the top 8 pixel rows, bytes 8-15 the bottom ones,
 // bit 0 the top pixel. Characters outside the FormatPage set are blank.
