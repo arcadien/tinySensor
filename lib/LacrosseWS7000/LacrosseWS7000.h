@@ -91,7 +91,8 @@ class LacrosseWS7000 {
   NumericalValueSplitter::Result temperature;
   NumericalValueSplitter::Result humidity;
   NumericalValueSplitter::Result pressure;
-  NumericalValueSplitter::Result luminosity;
+  NumericalValueSplitter::Result luminosity;  // digits of the mantissa
+  uint8_t luminosityExponent = 0;             // lux = mantissa * 10^exponent
   Address address;
 
   Hal *_hal;

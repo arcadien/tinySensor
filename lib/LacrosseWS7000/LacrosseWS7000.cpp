@@ -53,9 +53,19 @@ void LacrosseWS7000::SetPressure(float pressure) {
   NumericalValueSplitter::Split(pressure, &this->pressure);
 }
 
+// Rounds lux / 10^exponent directly (not digit by digit, which would round
+// twice) with 16-bit divisions only: 32-bit ones cost flash on the ATtiny84A.
 void LacrosseWS7000::SetLuminosity(uint16_t luminosity) {
   availableData |= LUMINOSITY_AVAILABLE;
-  NumericalValueSplitter::Split(luminosity, &this->luminosity);
+  uint16_t divisor = 1;
+  uint16_t mantissa = luminosity;
+  luminosityExponent = 0;
+  while (mantissa > 999) {
+    divisor *= 10;
+    luminosityExponent++;
+    mantissa = luminosity / divisor + (luminosity % divisor * 2 >= divisor);
+  }
+  NumericalValueSplitter::Split(mantissa, &this->luminosity);
 }
 
 void LacrosseWS7000::SetTemperature(float temperature) {
@@ -133,7 +143,7 @@ void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
   SendNibble(luminosity.units);
   SendNibble(luminosity.dozens);
   SendNibble(luminosity.hundreds);
-  SendNibble(0x00);
+  SendNibble(luminosityExponent);
   SendNibble(0x00);
   SendNibble(0x00);
   SendNibble(0x00);
@@ -141,7 +151,7 @@ void LacrosseWS7000::SendLuminosity(uint8_t *nibbles) {
   nibbles[0] = luminosity.units;
   nibbles[1] = luminosity.dozens;
   nibbles[2] = luminosity.hundreds;
-  nibbles[3] = 0x00;
+  nibbles[3] = luminosityExponent;
   nibbles[4] = 0x00;
   nibbles[5] = 0x00;
   nibbles[6] = 0x00;
