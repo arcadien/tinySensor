@@ -95,58 +95,58 @@
 **Description:** When one encoder sends several frames, each new value fully replaces the previous one: a non-negative temperature clears the sign bit; a new channel replaces the previous channel; the checksum is computed again. The set of measurements stays cumulative (FUNC-OREGON-013). Test: one encoder sends the FUNC-OREGON-014 THN132N frame, then the THGR228N inputs, then the BTHR918 inputs; each payload equals its FUNC-OREGON-014 reference.
 
 ### FUNC-LACROSSE-001
-**Title:** Preamble is exactly 10 consecutive zero bits
+**Title:** Lacrosse frame starts with 10 zero bits then a one start bit
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendPreamble()` transmits exactly 10 zero bits by calling `SendZero()` ten times. No other bits precede the preamble. The preamble is always followed by a single one-bit start marker emitted by `Send()` before the first nibble.
+**Description:** Every Lacrosse frame starts with exactly 10 zero bits, with nothing before them, followed by a single one bit before the first nibble.
 
 ### FUNC-LACROSSE-002
-**Title:** Sensor-type nibble encodes available data combination; unknown combination emits 0xF
+**Title:** Type nibble follows the measurements the frame carries; an unknown combination sends 0xF
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendType()` maps the `availableData` bitmask to a type nibble: temperature-only (0x01) → 0x0, temperature and humidity (0x03) → 0x1, temperature, humidity, and pressure (0x07) → 0x4, luminosity-only (0x08) → 0x5. Any other combination emits 0xF.
+**Description:** The first nibble is the sensor type: temperature only gives 0x0, temperature and humidity 0x1, temperature, humidity and pressure 0x4, luminosity only 0x5. Any other combination gives 0xF.
 
 ### FUNC-LACROSSE-003
-**Title:** Address (0–7) in bits 0–2 of second nibble; negative temperature sign in bit 3
+**Title:** Address 0–7 in bits 0–2 of the second nibble; negative temperature sign in bit 3
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendAddressAndTemperatureSign()` encodes the 3-bit sensor address in bits 0–2. If temperature is available and negative, bit 3 is set to 1. The resulting nibble is sent via `SendNibble()`.
+**Description:** The second nibble holds the 3-bit sensor address in bits 0–2. Bit 3 is 1 when the frame carries a negative temperature, else 0.
 
 ### FUNC-LACROSSE-004
-**Title:** Temperature clamped to ±99 °C and encoded as three nibbles: decimal, unit, dozen
+**Title:** Temperature clamped to ±99 °C and sent as tenths, units and tens nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetTemperature()` clamps the input to [−99, +99] °C. `SendTemperature()` then transmits three nibbles in order: tenths digit, units digit, dozens digit. The sign is communicated separately via FUNC-LACROSSE-003.
+**Description:** The temperature is clamped to [−99, +99] °C and its absolute value sent as three nibbles in order: tenths, units, tens. The sign is sent per FUNC-LACROSSE-003.
 
 ### FUNC-LACROSSE-005
-**Title:** Humidity clamped to 99.9 % maximum and encoded as three nibbles: decimal, unit, dozen
+**Title:** Humidity clamped to 99.9 % and sent as tenths, units and tens nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetHumidity()` clamps any value ≥ 100 % to 99.9 %. `SendHumidity()` transmits three nibbles in order: tenths digit, units digit, dozens digit.
+**Description:** A humidity of 100 % or more is sent as 99.9 %. The value is sent as three nibbles in order: tenths, units, tens.
 
 ### FUNC-LACROSSE-006
-**Title:** Pressure clamped to 850–1100 hPa, offset by −200, encoded as four nibbles: units, dozens, hundreds, decimal
+**Title:** Pressure clamped to 850–1100 hPa, minus 200, sent as units, tens, hundreds and tenths nibbles
 **Status:** validated
 **Dependencies:** —
-**Description:** `SetPressure()` clamps the input to [850, 1100] hPa then subtracts 200. `SendPressure()` transmits four nibbles in order: units digit, dozens digit, hundreds digit, tenths digit of the offset value.
+**Description:** The pressure is clamped to [850, 1100] hPa, then 200 is subtracted. The result is sent as four nibbles in order: units, tens, hundreds, tenths.
 
 ### FUNC-LACROSSE-007
-**Title:** Luminosity value encoded as 7 nibbles in a type-5 (light sensor) frame
+**Title:** Luminosity sent as 7 nibbles in a type 5 frame
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendLuminosity()` transmits the units, dozens, and hundreds nibbles of the lux value followed by four zero nibbles, giving a fixed 7-nibble payload. The type nibble for luminosity frames is 0x5 (see FUNC-LACROSSE-002).
+**Description:** A luminosity frame (type 0x5, FUNC-LACROSSE-002) carries the units, tens and hundreds digits of the lux value followed by four zero nibbles: 7 data nibbles.
 
 ### FUNC-LACROSSE-008
-**Title:** Frame ends with XOR checksum nibble followed by running-sum nibble initialised to 5
+**Title:** Frame ends with an XOR check nibble then a sum check nibble starting at 5
 **Status:** validated
 **Dependencies:** FUNC-LACROSSE-001, FUNC-LACROSSE-002, FUNC-LACROSSE-003, FUNC-LACROSSE-004, FUNC-LACROSSE-005, FUNC-LACROSSE-006, FUNC-LACROSSE-007
-**Description:** `Send()` maintains a running XOR (`checkXor`, init 0) and a running sum (`checkSum`, init 5) over every transmitted nibble. After all data nibbles, `checkXor` is masked to 4 bits, added into `checkSum` (also masked to 4 bits), and both are transmitted as the final two nibbles.
+**Description:** After the data nibbles come two check nibbles. The first is the XOR of every nibble sent before it, on 4 bits. The second is 5 plus every nibble sent before it, the XOR nibble included, on 4 bits.
 
 ### FUNC-LACROSSE-009
-**Title:** Each nibble is followed by a mandatory trailing one-bit separator
+**Title:** Every nibble is followed by a one bit separator
 **Status:** validated
 **Dependencies:** —
-**Description:** `SendNibble()` always calls `SendOne()` after transmitting its four data bits. This trailing one-bit separator is unconditional and applies to every nibble in the frame, including type, address, data, and checksum nibbles.
+**Description:** Every nibble of the frame (type, address, data and check nibbles) is sent as its four bits followed by a one bit.
 
 ### FUNC-X10-001
 **Title:** RFXmeter builds a 6-byte frame with address, partial complement, 24-bit value, packet-type nibble, and nibble-sum parity
