@@ -9,7 +9,7 @@
 **Status:** validated
 **Dependencies:** [TECH-HAL-004](technical.md#tech-hal-004)
 **derives_from:** [TECH-HAL-004](technical.md#tech-hal-004)
-**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Verified by inspection (AVR only, no native test).
+**Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Brownout detection is off during each sleep period. Verified by inspection (AVR only, no native test).
 
 ---
 
