@@ -123,6 +123,14 @@
 
 ---
 
+### TECH-SENSOR-002
+**Title:** BMx280 wraps BMP280 and BME280 behind one class; stubs return 0 on native builds
+**Status:** validated
+**Dependencies:** TECH-HAL-001, FUNC-SENSOR-001
+**Description:** Class `BMx280` (`emitter/include/BMx280.h`) exposes `Begin()`, `GetTemperature()` (°C), `GetPressure()` (Pa), `GetHumidity()` (%) and `Shutdown()` (sensor sleep mode). On AVR it forwards to the SparkFun BME280 library at I2C address 0x76; on non-AVR targets every method is a stub and the getters return 0. It takes no `Hal*` (TECH-HAL-001).
+
+---
+
 ### TECH-MAIN-001
 **Title:** One measurement/transmission cycle is a standalone runCycle(Hal*) callable from native tests
 **Status:** validated
