@@ -8,6 +8,10 @@ In the complete system, data is processed by a [Domoticz](https://domoticz.com/)
 Data decoding is also tested using [RTL_433](https://github.com/merbanan/rtl_433) decoder.
 Large part of the code, especially wireless encoders, are unit-tested.
 
+| TinySensor v3.0 board | tinyDecoders receiver |
+|:---:|:---:|
+| ![TinySensor v3.0 board, isometric view](docs/img/tinysensor_v3_iso.png) | ![tinyDecoders receiver enclosure, isometric view](docs/img/receiver_iso.png) |
+
 ## Supported MCUs
 * ATTiny84a
 
@@ -87,6 +91,7 @@ Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be o
 
 * KiCad board (v3.0) in `hardware/tinysensor/`, with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
 * OpenSCAD enclosures (wall box, radiation shield, mushroom, receiver) in `enclosing/`, see [enclosing/README.md](enclosing/README.md).
+* Header renders: `kicad-cli pcb render --rotate '-45,0,45' --quality high --width 1400 --height 800 --zoom 1.22 -o docs/img/tinysensor_v3_iso.png hardware/tinysensor/tinysensor.kicad_pcb` and, from `enclosing/receiver/`, `openscad --preview -D 'part="assembly"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/receiver_iso.png receiver.scad`.
 
 ## Hardware options
 
