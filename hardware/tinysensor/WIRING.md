@@ -91,8 +91,8 @@ Module pin orders differ (an FS1000A is DATA/VCC/GND): match the pins by name, n
 | SDO | 6 SDO (JP6) | green, 1 ring |
 
 - Mushroom: no wire, the breakout's 6-pin male header plugs into a 6-way 2.54 mm female header soldered under the board in J3.
-- CSB is not connected on the board: the breakout must pull it up (≈ 10 kΩ to VIN), otherwise the sensor starts in SPI. Check with a meter; if it is missing, add 10 kΩ from CSB to VIN on the breakout.
-- The firmware enables the PA5 pull-up at init: SDO wired to MISO (JP6 2-3) in I2C mode would give address 0x77.
+- CSB is not connected on the board: the breakout must pull it up (≈ 10 kΩ to VIN), otherwise the sensor starts in SPI. Check with a meter; if it is missing, add 10 kΩ from CSB to VIN on the breakout. The working v2.2 mushroom board has such a 10 kΩ on CSB.
+- SDO needs no resistor: JP6 1-2 ties it straight to GND (address 0x76), as pad 6 of the v2.2 "I2C" footprint does. With JP6 2-3, SDO goes to MISO (PA5), which has no pull-up (`PORTA = 0`, TECH-HAL-004): in I2C mode it would float and the sensor address would be undefined.
 
 ### DS18B20 on J5
 
