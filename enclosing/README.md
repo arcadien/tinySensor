@@ -49,6 +49,6 @@ Every part is exported in its print orientation and prints **without support**, 
 
 ## Power (to decide)
 
-- 18650 holder on the PCB.
+- No 18650 holder on the v3.0 PCB (removed): an 18650 goes through a TP4056 to J13 (JST-XH), as in the mushroom.
 - Available AA/AAA holders: to fit in the bay or in a separate compartment (dimensions to provide).
 - Solar: the TP4056 (linear charger, no MPPT) is a poor fit; prefer a CN3065 or a CN3791.
