@@ -22,7 +22,7 @@ Full reports, ERC/DRC and images: `review/2026-11-06/`. Rework of the already-bu
 | R8 | Minor | Power | The global decoupling (2 × 10 µF) is weak for a CR2032, whose internal resistance is 10–20 Ω, against the radio current peak. | 100–470 µF low-leakage for the CR2032 versions. | S |
 | R9 | ✅ v3.0 (Minor) | Power | JP2 "DIRECT Vcc" shorts the DC-DC input to its output if J2 is fitted. | Note "JP2 closed ⇒ J2 not fitted". The firmware must then use `BATTERY_IS_VCC`. | S |
 | R10 | Question | Power | The J2 DC-DC module has no enable pin. Its quiescent current (often 10–100 µA) probably exceeds the sleeping ATtiny's. | **Decided (2026-11-07):** TPS63020 buck-boost module (Tars stock), wired to the J2 pads as in `REWORK_v2.2.md`. ◐ v3.0: J2 becomes a 1×03 header (1 +BATT, 2 GND, 3 VCC) on the same pads; v3.0 choice (2026-11-07): 2 AA or AAA cells on J13 and a 3.3 V boost module (in stock) on J2. A boost does not regulate if Vin > 3.3 V: with an 18650 (BT1), the TPS63020 buck-boost is needed. Without BME280 (DS18B20 on J5 or 3-pin analog sensor on J7, both up to 5.5 V), an 18650 with a boost is fine. v3.0 silkscreen: "18650: TPS63020, or boost without BME280". Measure its idle current (< 0.1 mA). | M |
-| R11 | ✅ v3.0 (Question) | I2C | The BME280 CSB pin (J3.5) is floating; if seen low, the sensor goes into SPI. SDO is on GND, hence address 0x76, matching the firmware. | Tie CSB to SENSOR_VCC, or check that the breakout pulls it up. SDO selects the address in I2C (GND = 0x76, the firmware's), and is the data output in SPI: decided, it is an assembly-time choice through JP6 (see P4), with a note on the schematic. Beware: at init the firmware enables the PA5 pull-up, so SDO wired to MISO in I2C would give 0x77. | S |
+| R11 | ✅ v3.0 (Question) | I2C | The BME280 CSB pin (J3.5) is floating; if seen low, the sensor goes into SPI. SDO is on GND, hence address 0x76, matching the firmware. | Tie CSB to SENSOR_VCC, or check that the breakout pulls it up. SDO selects the address in I2C (GND = 0x76, the firmware's), and is the data output in SPI: decided, it is an assembly-time choice through JP6 (see P4), with a note on the schematic. Beware: PA5 has no pull-up (`PORTA = 0`, TECH-HAL-004), so SDO wired to MISO (JP6 2-3) in I2C would float and leave the address undefined. | S |
 | R12 | Question | I2C | The BH1750 (`USE_BH1750`, 0x23, env SOLAR_TEST) does not appear in the schematic. | Document it on the second I2C connector once R6 is done, with ADDR at 0. | S |
 | R13 | Question | Power | `USE_CHARGE_PUMP` (`platformio.ini:66`, `:81`) is used by no code and matches no circuit. The TP4056 charger is not in the schematic. | Drop the flag or document the hardware concerned. | S |
 | R14 | Question | MCU | The fuses are not recorded, BODLEVEL in particular. The firmware turns the BOD off during sleep. | Record the intended fuses in the repository (BOD 1.8 V at 1 MHz). | S |
@@ -115,3 +115,15 @@ DRC with schematic parity: 0 footprint errors, 0 unconnected pads. The only rema
 - **Manufacturing:** GUI review, Gerber and drill file export. Neither has been done.
 - **Schematic:** a few power symbols overlap texts (readability only).
 - **F1:** closed, build with `-DBATTERY_DIVIDER=2` (CONF-BUILD-012).
+
+## Revision 3.0, hand edits in KiCad (2026-11-18)
+
+Still stamped **Rev 3.0** (no v3.0 board was ordered yet). Edited by hand in KiCad, no longer by the `scripts/make_v3_*.py` generators. Board 94.81 × 39.33 mm (was 93.98 × 63.75). DRC with schematic parity: 0 unconnected, 0 parity issues, only silkscreen warnings left (overlaps, one 0.7 mm text). ERC: 4 dangling wire ends, inherited library warnings.
+
+- **ISP with the BME280 plugged in:** R9 and R10 (330 Ω) in series between the MCU and J3/J14. Nets `SCK`/`MOSI` on the MCU side (U1, ISP J6), `SCL`/`SDA` on the sensor side (J3, J14, pull-ups R2/R3). To check on a built board: flashing with the BME280 in place, and I2C readings over several cycles.
+- **R7:** the RESET pull-up is now **R5** (10 kΩ); R9 is the SCL series resistor.
+- **P2 / R2:** BT1 18650 holder removed (cost, not used); an 18650 comes in through a TP4056 on J13. J13 is a JST-XH B2B-XH-A instead of a screw terminal. J10 (CR2032) now sits on RAW_IN, behind the Q1 reverse-polarity MOSFET.
+- **P13 / R8:** C4 is the 100 nF ceramic at the radio (replaces C8). C1 takes a Ø6.3 mm footprint: 10 µF for 2×AA/AAA or 18650 + TPS63020, 220 µF low-leakage for a CR2032 (R8). C7 (PA1 divider) is film: no tantalum, its leakage would bias the 500 kΩ source.
+- **R11/P4:** JP6 is delivered open: bridge 1-2 (I2C, 0x76) or 2-3 (SPI) at assembly.
+- **P8 / P11:** THT footprints for R1, R5, R7–R10, C6, C7; D1 is a 5 mm LED; J10 a Keystone 1060; three M3 holes MH1–MH3 (were six M2.5).
+- **Enclosures:** `enclosing/pcb.scad` still models v2.2. The wall box and the mushroom need a v3.0 model; cut at x = 147, v3.0 would be about 60.85 × 39.33 mm against 60.02 × 38.97 mm for the cut v2.2 in the mushroom foot.
