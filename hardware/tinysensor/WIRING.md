@@ -10,18 +10,17 @@ Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, netlist export
 
 | Ref | Name | Pin 1 | Pin 2 | Pin 3 | Pins 4–6 |
 |---|---|---|---|---|---|
-| J13 | RAW IN (screw terminal) | +RAW (square pad) | GND | | |
+| J13 | RAW IN (JST-XH 2-pin) | +RAW | GND | | |
 | J2 | 3.3 V module (1×03 header) | +BATT | GND | VCC | |
 | J1 | RADIO | GND | VCC | DATA (PB0) | |
-| J3 | I2C 1 (BME280) | SENSOR_VCC | GND | SCL (PA4) | 4 SDA (PA6), 5 n.c., 6 SDO (JP6) |
+| J3 | I2C 1 (BME280) | SENSOR_VCC | GND | SCL (PA4 through R9 330 Ω) | 4 SDA (PA6 through R10 330 Ω), 5 n.c., 6 SDO (JP6) |
 | J14 | I2C 2 | same as J3 | | | |
 | J5 | OneWire | SENSOR_VCC | GND | DQ (PA3) | |
 | J7 | Analog sensor | SENSOR_VCC | AIN (PA0, through R4 75 Ω) | GND with JP4 2-3 | |
 | J8 | EXT. INT0 | PB2 | GND | | |
 | J4 | Digital out | PA7 | GND | | |
-| J6 | ISP | MISO (PA5) | VCC | SCK (PA4, = SCL) | 4 MOSI (PA6, = SDA), 5 RESET, 6 GND |
-| J10 | CR2032 socket | +BATT | GND | | |
-| BT1 | 18650 holder | + on RAW_IN | − on GND | | |
+| J6 | ISP | MISO (PA5) | VCC | SCK (PA4, straight) | 4 MOSI (PA6, straight), 5 RESET, 6 GND |
+| J10 | CR2032 socket (Keystone 1060) | RAW_IN (behind Q1) | GND | | |
 
 SENSOR_VCC is PA2: J3, J14, J5 and J7 are powered only while the firmware measures.
 
@@ -30,7 +29,8 @@ SENSOR_VCC is PA2: J3, J14, J5 and J7 are powered only while the firmware measur
 | Jumper | Setting | Effect |
 |---|---|---|
 | JP2 DIRECT Vcc | closed **only when J2 is empty** | VCC = battery (2×AA/AAA straight on the MCU, build with `BATTERY_IS_VCC`). Closed with a module on J2, it shorts the module input to its output. |
-| JP6 SDO | 1-2 (default) | J3/J14 pin 6 = GND: BME280 in I2C at 0x76, the firmware address |
+| JP6 SDO | open (as delivered) | pin 6 floats: **bridge one side at assembly** |
+| | 1-2 | J3/J14 pin 6 = GND: BME280 in I2C at 0x76, the firmware address |
 | | 2-3 | pin 6 = MISO, for a sensor in SPI |
 | JP4 Analog ref | 2-3 | J7 pin 3 = GND (normal use) |
 | JP3 | closed | 1 µF from PA0 to GND: RC filter with R4 on the analog input |
@@ -38,10 +38,12 @@ SENSOR_VCC is PA2: J3, J14, J5 and J7 are powered only while the firmware measur
 
 ## On-board parts (no extra part needed)
 
-- I2C pull-ups R2/R3 4.7 kΩ and 1-Wire pull-up R6 4.7 kΩ, all to SENSOR_VCC: no resistor in the harness.
-- Battery sense: R7/R8 1 MΩ divider with C7 100 nF, PA1 reads Vbatt / 2 (firmware scaling: BACKLOG F1).
-- Q1 AO3401A: reverse-polarity protection on J13 and BT1 (P-MOSFET, drain on RAW_IN, source on +BATT, gate tied straight to GND: no gate resistor needed). **Not on J10** (CR2032).
-- R9 10 kΩ RESET pull-up, SW1 reset button, C8 100 nF at the radio.
+- I2C pull-ups R2/R3 4.7 kΩ and 1-Wire pull-up R6 4.7 kΩ, all to SENSOR_VCC: no resistor in the harness. R2/R3 sit on the sensor side of R9/R10.
+- R9/R10 330 Ω in series on SCL/SDA, between the MCU (nets `SCK`/`MOSI`, with the ISP J6) and the sensor connectors (nets `SCL`/`SDA`): the programmer is not loaded by the sensor. In I2C, a low driven by the sensor reads about 0 V at the MCU, and a low driven by the MCU about 0.22 V at the sensor.
+- Battery sense: R7/R8 1 MΩ divider with C7 100 nF film, PA1 reads Vbatt / 2 (firmware scaling: BACKLOG F1). C7 must be film or ceramic: a tantalum's leakage would bias the 500 kΩ source.
+- Q1 AO3401A: reverse-polarity protection on RAW_IN, which carries J13 and J10 (P-MOSFET, drain on RAW_IN, source on +BATT, gate tied straight to GND: no gate resistor needed).
+- R5 10 kΩ RESET pull-up, SW1 reset button, C4 100 nF ceramic at the radio (next to J1).
+- Decoupling: C2 100 nF film and C1 bulk electrolytic on VCC. C1 depends on the supply: 10 µF for 2×AA/AAA or an 18650 through the TPS63020, 220 µF low-leakage (e.g. Nichicon UKL) for a CR2032, whose 10–20 Ω internal resistance cannot feed the radio pulses alone. A standard electrolytic leaks about 0.01 CV (15 µA for 470 µF), more than the sleeping MCU.
 
 ## Off-board modules
 
@@ -51,9 +53,9 @@ Fit only what your build uses. Wire colours follow the project convention (see `
 
 | Source | Where | Wires |
 |---|---|---|
-| 2×AA or 2×AAA | J13 (1 = +, 2 = GND) | red / black, screw terminal at the board end |
-| 18650 | through a TP4056 module, OUT+ / OUT− to J13 (mushroom: W5/W6 of the harness), or in BT1 | red / black |
-| CR2032 | J10 | no wire, no reverse protection |
+| 2×AA or 2×AAA | J13 (1 = +, 2 = GND) | red / black, JST-XH (F) at the board end |
+| 18650 | through a TP4056 module, OUT+ / OUT− to J13 (mushroom: W5/W6 of the harness); the board has no 18650 holder | red / black |
+| CR2032 | J10 | no wire; on RAW_IN, behind Q1; C1 = 220 µF low-leakage |
 
 Never fit two sources together: they are in parallel and charge each other.
 

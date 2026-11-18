@@ -43,8 +43,8 @@
     <text x="644" y="134" font-weight="bold">J1 RADIO</text>
     <text x="644" y="152">1 GND</text><text x="644" y="172">2 VCC</text><text x="644" y="192">3 DATA <tspan fill="#999">(PB0)</tspan></text>
     <text x="644" y="234" font-weight="bold">J3 I2C 1 (or J14 I2C 2)</text>
-    <text x="644" y="252">1 SENSOR_VCC</text><text x="644" y="272">2 GND</text><text x="644" y="292">3 SCL <tspan fill="#999">(PA4)</tspan></text>
-    <text x="644" y="312">4 SDA <tspan fill="#999">(PA6)</tspan></text><text x="644" y="332">5 n.c.</text><text x="644" y="352">6 SDO (JP6)</text>
+    <text x="644" y="252">1 SENSOR_VCC</text><text x="644" y="272">2 GND</text><text x="644" y="292">3 SCL <tspan fill="#999">(PA4 via R9)</tspan></text>
+    <text x="644" y="312">4 SDA <tspan fill="#999">(PA6 via R10)</tspan></text><text x="644" y="332">5 n.c.</text><text x="644" y="352">6 SDO (JP6)</text>
     <text x="644" y="404" font-weight="bold">J5 OneWire</text>
     <text x="644" y="422">1 SENSOR_VCC</text><text x="644" y="442">2 GND</text><text x="644" y="462">3 DQ <tspan fill="#999">(PA3)</tspan></text>
     <text x="644" y="514" font-weight="bold">J7 Analog</text>
@@ -157,13 +157,13 @@
     <text x="52" y="680" font-weight="bold">On the board (no extra part needed)</text>
     <text x="52" y="698">• SENSOR_VCC = PA2: J3, J5, J7, J14 are powered only while measuring</text>
     <text x="52" y="714">• I2C pull-ups R2/R3 4.7 kΩ and 1-Wire pull-up R6 4.7 kΩ, to SENSOR_VCC</text>
-    <text x="52" y="730">• Battery sense R7/R8 1 MΩ divider: PA1 reads Vbatt / 2</text>
-    <text x="52" y="746">• Q1 AO3401A: reverse-polarity protection on J13 and BT1 (not on J10 CR2032)</text>
-    <text x="52" y="762">• BT1 18650 holder, J10 CR2032, J13: one battery source only</text>
+    <text x="52" y="730">• Battery sense R7/R8 1 MΩ + C7 100 nF film: PA1 reads Vbatt / 2</text>
+    <text x="52" y="746">• Q1 AO3401A: reverse-polarity protection on RAW_IN (J13 and J10 CR2032)</text>
+    <text x="52" y="762">• J10 CR2032 or J13 (JST-XH): one battery source only, no 18650 holder</text>
     <text x="520" y="698">• JP2 DIRECT Vcc: VCC = battery; close only when J2 is empty</text>
-    <text x="520" y="714">• JP6 SDO (J3/J14 pin 6): 1-2 GND = I2C 0x76 (default), 2-3 MISO = SPI</text>
+    <text x="520" y="714">• JP6 SDO (J3/J14 pin 6): open: bridge 1-2 GND = I2C 0x76, or 2-3 MISO = SPI</text>
     <text x="520" y="730">• JP4 2-3: J7 pin 3 = GND; JP3 closed: 1 µF filter on PA0</text>
     <text x="520" y="746">• JP1: LED on PB1 (leave open to save power)</text>
-    <text x="520" y="762">• ISP J6: MISO PA5, VCC, SCK PA4, MOSI PA6, RST, GND (shared with I2C)</text>
+    <text x="520" y="762">• ISP J6: MISO PA5, VCC, SCK PA4, MOSI PA6, RST, GND (R9/R10 330 Ω isolate J3/J14)</text>
   </g>
 </svg>
