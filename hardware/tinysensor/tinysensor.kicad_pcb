@@ -12774,6 +12774,18 @@
 		(layer "F.SilkS")
 		(uuid "00000000-0000-0000-0000-00005bebdd29")
 	)
+	(gr_poly
+		(pts
+			(xy 207.85016 48.02632) (xy 207.85016 87.36032) (xy 113.04016 87.36032) (xy 113.04016 81.55432) (xy 113.04016 48.02632)
+		)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "Edge.Cuts")
+		(uuid "6a6cd7f0-8ea4-4e62-a016-1e6782cf749e")
+	)
 	(gr_text "OneWire"
 		(at 191.55156 49.06772 0)
 		(layer "F.SilkS")
@@ -12986,17 +12998,43 @@
 			)
 		)
 	)
-	(gr_poly
+	(dimension
+		(type orthogonal)
+		(layer "Dwgs.User")
+		(uuid "12b2da1b-81ae-41a4-93c7-120224326b81")
 		(pts
-			(xy 207.85016 48.02632) (xy 207.85016 87.36032) (xy 113.04016 87.36032) (xy 113.04016 81.55432) (xy 113.04016 48.02632)
+			(xy 113.04016 48.02632) (xy 113.04016 87.36032)
 		)
-		(stroke
-			(width 0.1)
-			(type solid)
+		(height -4.63)
+		(orientation 1)
+		(format
+			(prefix "")
+			(suffix "")
+			(units 3)
+			(units_format 0)
+			(precision 4)
+			(suppress_zeroes yes)
 		)
-		(fill no)
-		(layer "Edge.Cuts")
-		(uuid "6a6cd7f0-8ea4-4e62-a016-1e6782cf749e")
+		(style
+			(thickness 0.05)
+			(arrow_length 1.27)
+			(text_position_mode 0)
+			(arrow_direction outward)
+			(extension_height 0.58642)
+			(extension_offset 0.5)
+			(keep_text_aligned yes)
+		)
+		(gr_text "39,334"
+			(at 107.26016 67.69332 90)
+			(layer "Dwgs.User")
+			(uuid "12b2da1b-81ae-41a4-93c7-120224326b81")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 	)
 	(dimension
 		(type orthogonal)
