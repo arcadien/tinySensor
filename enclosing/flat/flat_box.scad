@@ -22,7 +22,8 @@
 //             board edge over the empty J14 footprint; vents in the bottom and right walls and the lid above it.
 //     ds18b20: TO-92 in J5, legs bent so it lies flat, flat face down, past the top board edge (MH side);
 //              vents in the top wall and the lid above it.
-// - Lid on 4 M3 x 6 self-tapping screws in corner lugs: the CR2032 comes out without touching the board.
+// - Lid flush with the walls, on 4 M3 x 6 self-tapping screws in pillars inside the cavity corners, past both board
+//   ends: the CR2032 comes out without touching the board.
 //
 // Frame: origin = bottom-left corner of the cavity, X along the board, Y up (KiCad Y down), floor underside Z = 0.
 // The board lies with its KiCad bottom edge (J3/J14 side) towards Y = 0.
@@ -57,7 +58,7 @@ lid_t = 2.0;
 r_out = 3;
 
 /* [Screws and fixings] */
-lug_d = 8;                // corner lugs of the lid screws
+pillar_d = 7;             // lid screw pillars in the cavity corners, merged with the walls
 lid_screw_d_pilot = 2.5;  // M3 self-tapping in PETG
 lid_screw_d_clear = 3.4;
 lid_screw_depth = 6;
@@ -83,16 +84,15 @@ eps = 0.01;
 // ---------- derived dimensions ----------
 is_bme = sensor == "bme280";
 clr_top = is_bme ? clr : 4.5;   // ds18b20: the TO-92 sticks out 2.8 mm past the top board edge
-cav_w = pcb_w + 2 * clr;
+cav_w = pcb_w + 2 * (pillar_d + clr);   // pillars past both board ends
 cav_h = pcb_h + clr + clr_top;
-pcb_x0 = clr;
+pcb_x0 = pillar_d + clr;
 pcb_y0 = clr;
 z_pcb = floor_t + standoff_h;  // PCB underside
 z_top = z_pcb + pcb_t;
 radio_top = radio_flat ? radio_lift + radio_size[2] + radio_parts_h : 21.5;
 comp_h = max(c1_h, radio_top);
 base_h = z_top + comp_h + top_clr;
-screw_off = wall + 1;          // lid screw axis from the cavity edge (corner diagonal)
 
 // KiCad absolute -> cavity frame
 function k2c(p) = [pcb_x0 + p[0] - pcb_k0[0], pcb_y0 + pcb_h - (p[1] - pcb_k0[1])];
@@ -104,33 +104,40 @@ va = k2c(vent_k[0]);
 vb = k2c(vent_k[1]);
 vent_zone = [min(va[0], vb[0]), min(va[1], vb[1]), max(va[0], vb[0]), max(va[1], vb[1])];
 
-function lid_screws() = let(o = screw_off) [[-o, -o], [cav_w + o, -o], [-o, cav_h + o], [cav_w + o, cav_h + o]];
+function lid_screws() = let(o = pillar_d / 2) [[o, o], [cav_w - o, o], [o, cav_h - o], [cav_w - o, cav_h - o]];
 
 module rrect(w, h, r) { translate([r, r]) offset(r = r) square([w - 2 * r, h - 2 * r]); }
 module ring_rect(d, r = 1) { translate([-d, -d]) rrect(cav_w + 2 * d, cav_h + 2 * d, max(r, 0.5)); }
-module outline() { ring_rect(wall, r_out); for (p = lid_screws()) translate(p) circle(d = lug_d); }
+// pillars: a circle hulled into its cavity corner
+module pillars2d() { for (p = lid_screws()) hull() { translate(p) circle(d = pillar_d); translate([p[0] < cav_w / 2 ? 0 : p[0], p[1] < cav_h / 2 ? 0 : p[1]]) square(pillar_d / 2); } }
+module free2d() { difference() { ring_rect(0); pillars2d(); } }
+function plen(ps, i = 0) = i >= len(ps) - 1 ? 0 : norm(ps[i + 1] - ps[i]) + plen(ps, i + 1);
 module vent_zone2d() { translate([vent_zone[0], vent_zone[1]]) square([vent_zone[2] - vent_zone[0], vent_zone[3] - vent_zone[1]]); }
 
 // ---------- base ----------
 module base() {
   difference() {
     union() {
-      linear_extrude(base_h) outline();
+      linear_extrude(base_h) ring_rect(wall, r_out);
       for (s = [-1, 1]) ear(s);
     }
-    translate([0, 0, floor_t]) linear_extrude(base_h) ring_rect(0, 1);
+    translate([0, 0, floor_t]) linear_extrude(base_h) difference() { ring_rect(0, 1); pillars2d(); }
     for (p = lid_screws()) translate([p[0], p[1], base_h - lid_screw_depth]) cylinder(d = lid_screw_d_pilot, h = lid_screw_depth + eps);
-    intersection() {   // wall slots next to the sensor, 4 mm clear of the corners
+    intersection() {   // wall slots next to the sensor, clear of the pillars
       linear_extrude(base_h) vent_zone2d();
       union() {
-        for (x = [4 : vent_pitch : cav_w - 4 - vent_w], y = [-wall - eps, cav_h - eps])
+        for (x = [pillar_d + 1 : vent_pitch : cav_w - pillar_d - 1 - vent_w], y = [-wall - eps, cav_h - eps])
           translate([x, y, floor_t + 1]) cube([vent_w, wall + 2 * eps, base_h - floor_t - 3]);
-        for (y = [4 : vent_pitch : cav_h - 4 - vent_w], x = [-wall - eps, cav_w - eps])
+        for (y = [pillar_d + 1 : vent_pitch : cav_h - pillar_d - 1 - vent_w], x = [-wall - eps, cav_w - eps])
           translate([x, y, floor_t + 1]) cube([wall + 2 * eps, vent_w, base_h - floor_t - 3]);
       }
     }
     if (antenna_groove) translate([0, 0, base_h - 3 - antenna_groove_h]) linear_extrude(antenna_groove_h)
-      difference() { ring_rect(antenna_groove_d, 1); ring_rect(-eps); offset(delta = 2) vent_zone2d(); }
+      difference() {   // follows the walls and skirts the pillars
+        offset(r = antenna_groove_d) free2d();
+        free2d();
+        offset(delta = 2) vent_zone2d();
+      }
   }
   for (h = holes()) translate([h[0], h[1], floor_t - eps]) difference() {
     cylinder(d = standoff_d, h = standoff_h + eps);
@@ -153,11 +160,11 @@ module ear(s) {   // wall tab on the left (s = -1) or right (s = 1) end
 // ---------- lid (inner face at Z = 0) ----------
 module lid() {
   difference() {
-    linear_extrude(lid_t) outline();
+    linear_extrude(lid_t) ring_rect(wall, r_out);
     for (p = lid_screws()) translate([p[0], p[1], -eps]) cylinder(d = lid_screw_d_clear, h = lid_t + 2 * eps);
     // slots above the sensor
     translate([0, 0, -eps]) linear_extrude(lid_t + 2 * eps) intersection() {
-      offset(delta = -2) intersection() { vent_zone2d(); ring_rect(0); }
+      offset(delta = -2) intersection() { vent_zone2d(); free2d(); }
       for (x = [0 : vent_pitch : cav_w]) translate([x, 0]) square([vent_w, cav_h]);
     }
   }
@@ -186,9 +193,14 @@ module radio() {
   // antenna wire in the wall groove (17.3 cm from the module ANT pad)
   if (antenna_groove) color("Goldenrod") translate([0, 0, base_h - 3 - antenna_groove_h / 2]) {
     // along the wall away from the sensor, the left wall, then back along the sensor wall
-    y1 = is_bme ? cav_h + 0.5 : -0.5;
-    y2 = is_bme ? -0.5 : cav_h + 0.5;
-    path = [[cav_w - 2, y1], [-0.5, y1], [-0.5, y2], [173 - (cav_w - 1.5) - (cav_h + 1), y2]];
+    r = pillar_d / 2 + 0.4;
+    o = pillar_d / 2;
+    ys = is_bme ? [cav_h + 0.4, cav_h - o, o] : [-0.4, o, cav_h - o];   // start wall, first pillar, second pillar
+    a = is_bme ? [90, -180, 180, -90] : [-90, 180, 180, 450];          // arc angles around the two left pillars
+    arcs = concat([for (t = [0 : 8]) [o, ys[1]] + r * [cos(a[0] + t * (a[1] - a[0]) / 8), sin(a[0] + t * (a[1] - a[0]) / 8)]],
+                  [for (t = [0 : 8]) [o, ys[2]] + r * [cos(a[2] + t * (a[3] - a[2]) / 8), sin(a[2] + t * (a[3] - a[2]) / 8)]]);
+    head = concat([[cav_w - pillar_d - 4, ys[0]]], arcs);
+    path = concat(head, [arcs[len(arcs) - 1] + [173 - plen(head), 0]]);
     for (i = [0 : len(path) - 2]) hull() for (q = [path[i], path[i + 1]]) translate(q) sphere(d = 0.8, $fn = 8);
   }
 }

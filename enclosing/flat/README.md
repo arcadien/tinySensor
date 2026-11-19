@@ -18,9 +18,9 @@ Export and render commands are in the `flat_box.scad` header (`part` = `base`, `
 
 | | `bme280` | `ds18b20` |
 |---|---|---|
-| Base (with the wall tabs) | 124.8 × 55.3 × 19.5 mm | 124.8 × 58.8 × 19.5 mm |
-| Base without the tabs | 110.8 × 55.3 mm | 110.8 × 58.8 mm |
-| Lid | 110.8 × 55.3 × 2 mm | 110.8 × 58.8 × 2 mm |
+| Base (with the wall tabs) | 138.8 × 45.3 × 19.5 mm | 138.8 × 48.8 × 19.5 mm |
+| Base without the tabs | 114.8 × 45.3 mm | 114.8 × 48.8 mm |
+| Lid (flush with the walls) | 114.8 × 45.3 × 2 mm | 114.8 × 48.8 × 2 mm |
 | Closed box height | 21.5 mm | 21.5 mm |
 
 The parts fit an Ender 3 bed (220 × 220). The height is set by C1 (220 µF, Ø6.3 × 11.5 mm). C1 can't be laid over, because C2, C5, C7 and SW1 surround it and are all at least 4.3 mm tall. The flat radio comes to 10.9 mm, just under C1.
@@ -34,6 +34,7 @@ The parts fit an Ender 3 bed (220 × 220). The height is set by C1 (220 µF, Ø6
 - Not fitted: J13, J4, J7, J8, the J6 ISP header (holes only), and JP1. JP1 left open turns the LED off, which saves the battery.
 - **Radio**: the 433 MHz module is soldered straight into J1 with no header, its pins bent 90°. It lies flat over U1, components up, 5.8 mm above the board (it clears R9/R10). Match the pins by name: J1 is GND / VCC / DATA, while an FS1000A is DATA / VCC / GND. If the module pins are too short, extend them with 3 short wires.
 - **Antenna**: a 17.3 cm wire on the module ANT pad. It runs in the 1.2 × 0.8 mm groove along the inner wall, 3 mm under the rim, and the groove stops before the vents.
+- **Lid**: flush with the outer walls, on 4 M3 × 6 screws in Ø7 pillars inside the cavity corners, past both board ends. They clear the board by 1 mm, and the CR2032 holder by 7 mm. The antenna groove runs around them.
 - **Wall mounting**: 2 end tabs, Ø4 countersunk screws. Or just stand the box on a shelf.
 - **Vents**: plain 1.6 mm slots in the wall and the lid next to the sensor. There is no internal chamber: self-heating is negligible because the board sleeps 99 % of the time.
 
@@ -49,7 +50,7 @@ The parts fit an Ender 3 bed (220 × 220). The height is set by C1 (220 µF, Ø6
 | Qty | Part | Use |
 |---|---|---|
 | 3 | M3 × 6 self-tapping (or plastite) | board on the standoffs |
-| 4 | M3 × 6 self-tapping | lid, into the corner lugs |
+| 4 | M3 × 6 self-tapping | lid, into the corner pillars |
 | 2 | Ø4 countersunk wood screw + plug | wall tabs (optional) |
 | 1 | CR2032 | power |
 | 1 | 220 µF low-leakage electrolytic, Ø6.3, 2.5 mm pitch | C1 |
