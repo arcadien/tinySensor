@@ -94,7 +94,7 @@ Board connectors and module wiring: [`hardware/tinysensor/WIRING.md`](../../hard
 | Use | Qty | Reference |
 |---|---|---|
 | PCB → standoffs | 3 | M3 × 6 self-tapping |
-| Lid | 6 | M3 × 8 self-tapping |
+| Lid | 6 | M3 × 6 self-tapping (blind pilot: 3 mm lid + 4.2 mm, an M3 × 8 would bottom out) |
 | Box → wall | 2 | Ø4 countersunk + wall plugs |
 | Cable gland | 1 | PG7 |
 | Seal | ~45 cm | Ø2 TPU/EPDM cord |
