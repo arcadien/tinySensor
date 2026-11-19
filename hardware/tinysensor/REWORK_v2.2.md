@@ -43,11 +43,11 @@ The x = 147 and y = 87 lines cut the ground plane (B.Cu) and two +BATT tracks (F
 The module planned for J2 ("0.9–3.3 V to 3.3 V") is a boost. With an 18650 at 4.2 V, these modules usually let the input voltage through (≈ 3.9 V), while the BME280 is rated 3.6 V max.
 It is replaced by the **TPS63020** 3.3 V buck-boost module in stock from the Tars project (26.7 × 17.7 × 1.6 mm, too big for the J2 spot). It is wired:
 
-| Wire | Colour | TPS63020 module | Board | Length |
-|---|---|---|---|---|
-| W7 | red | VIN | J2 pad 1, +BATT (149.53 ; 57.25) | ~40 mm |
-| W8 | black | GND | J2 pad 2, GND (152.07 ; 57.25) | ~40 mm |
-| W9 | white | VOUT 3.3 V | J2 pad 3, VCC (154.61 ; 57.25) | ~40 mm |
+| Wire | Colour | TPS63020 module | Board | Ends (module / board) | Length |
+|---|---|---|---|---|---|
+| W7 | red | VIN | J2 pad 1, +BATT (149.53 ; 57.25) | soldered / soldered | ~40 mm |
+| W8 | black | GND | J2 pad 2, GND (152.07 ; 57.25) | soldered / soldered | ~40 mm |
+| W9 | white | VOUT 3.3 V | J2 pad 3, VCC (154.61 ; 57.25) | soldered / soldered | ~40 mm |
 
 - On the module: **EN tied to VIN**, and **PS/SYNC tied to GND** (power-save mode). Otherwise it stays in PWM and draws a few mA.
 - The module lies flat on top of the board, on double-sided foam tape, checking that no solder joint runs under it. There is plenty of room under the cap. The mushroom model does not plan its spot yet: to add.
@@ -73,4 +73,4 @@ It is replaced by the **TPS63020** 3.3 V buck-boost module in stock from the Tar
 
 ## Firmware
 
-The sleep fix (R3, R4) is on branch `hw/schematic-upgrade`: flash that version.
+The sleep fix (R3, R4) was merged into `master` (PR #47): flash the current `master`.

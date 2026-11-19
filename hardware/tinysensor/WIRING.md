@@ -2,7 +2,7 @@
 
 This is the **tinySensor emitter** board (ATtiny84A, `hardware/tinysensor/`). The 433 MHz receiver with OLED is documented separately in [`hardware/receiver/WIRING.md`](../receiver/WIRING.md).
 
-Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, [PDF export](tinysensor_schematic.pdf), netlist exported with `kicad-cli`). v2.2 boards share the same connectors, with the defects and the fixes listed in [`REWORK_v2.2.md`](REWORK_v2.2.md). Build flags per sensor unit: [`docs/environments.md`](../../docs/environments.md). Parts list: [`BOM.md`](BOM.md).
+Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, [PDF export](tinysensor_schematic.pdf), netlist exported with `kicad-cli`). v2.2 boards differ: "I2C" / "I2C_SPI" footprints instead of J3/J14, a screw-terminal J13 and no Q1; their defects and fixes are in [`REWORK_v2.2.md`](REWORK_v2.2.md). Build flags per sensor unit: [`docs/environments.md`](../../docs/environments.md). Parts list: [`BOM.md`](BOM.md).
 
 ![tinySensor connectors and modules](wiring.svg)
 
@@ -16,7 +16,7 @@ Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, [PDF export](t
 | J3 | I2C 1 (BME280) | SENSOR_VCC | GND | SCL (PA4 through R9 330 Ω) | 4 SDA (PA6 through R10 330 Ω), 5 n.c., 6 SDO (JP6) |
 | J14 | I2C 2 | same as J3 | | | |
 | J5 | OneWire | SENSOR_VCC | GND | DQ (PA3) | |
-| J7 | Analog sensor | SENSOR_VCC | AIN (PA0, through R4 75 Ω) | GND with JP4 2-3 | |
+| J7 | Analog sensor | SENSOR_VCC | AIN (PA0, direct; R4 75 Ω from PA0 to C3/JP3) | GND with JP4 2-3 | |
 | J8 | EXT. INT0 | PB2 | GND | | |
 | J4 | Digital out | PA7 | GND | | |
 | J6 | ISP | MISO (PA5) | VCC | SCK (PA4, straight) | 4 MOSI (PA6, straight), 5 RESET, 6 GND |
@@ -33,7 +33,8 @@ SENSOR_VCC is PA2: J3, J14, J5 and J7 are powered only while the firmware measur
 | | 1-2 | J3/J14 pin 6 = GND: BME280 in I2C at 0x76, the firmware address |
 | | 2-3 | pin 6 = MISO, for a sensor in SPI |
 | JP4 Analog ref | 2-3 | J7 pin 3 = GND (normal use) |
-| JP3 | closed | 1 µF from PA0 to GND: RC filter with R4 on the analog input |
+| JP3 | open | R4 75 Ω + C3 1 µF from PA0 to GND: RC filter on the analog input (TMP36, positive LM35) |
+| | closed | C3 bypassed: R4 from PA0 to GND, as load or reference resistor (LDR, negative LM35) |
 | JP1 LED | closed | LED D1 on PB1. Leave open on battery to save power. |
 
 ## On-board parts (no extra part needed)
@@ -61,11 +62,11 @@ Never fit two sources together: they are in parallel and charge each other.
 
 ### 3.3 V module on J2
 
-| Module pin | J2 pin | Colour |
-|---|---|---|
-| VIN | 1 +BATT | red |
-| GND | 2 GND | black |
-| VOUT | 3 VCC | white |
+| Module pin | J2 pin | Colour | Ends (module / board) | Length |
+|---|---|---|---|---|
+| VIN | 1 +BATT | red | soldered / Dupont (F) | per build |
+| GND | 2 GND | black | soldered / Dupont (F) | per build |
+| VOUT | 3 VCC | white | soldered / Dupont (F) | per build |
 
 - 18650 (up to 4.2 V) with a BME280 (3.6 V max): **TPS63020 buck-boost**. Tie EN to VIN and PS/SYNC to GND (power-save mode, otherwise it idles at a few mA). Check: 3.20–3.40 V on VCC at 3.7 V and 4.2 V in, idle current < 0.1 mA.
 - 2×AA/AAA: a 3.3 V boost module, or no module and JP2 closed.
@@ -73,24 +74,24 @@ Never fit two sources together: they are in parallel and charge each other.
 
 ### Radio on J1
 
-| Module pin | J1 pin | Colour |
-|---|---|---|
-| GND | 1 | blue |
-| VCC | 2 | white |
-| DATA | 3 (PB0) | green |
+| Module pin | J1 pin | Colour | Ends (module / board) | Length |
+|---|---|---|---|---|
+| GND | 1 | blue | Dupont (F) / Dupont (F) | per build |
+| VCC | 2 | white | Dupont (F) / Dupont (F) | per build |
+| DATA | 3 (PB0) | green | Dupont (F) / Dupont (F) | per build |
 
 Module pin orders differ (an FS1000A is DATA/VCC/GND): match the pins by name, not by position. Antenna: 17.3 cm straight wire (λ/4 at 433.92 MHz) on the module ANT pad. In the wall box the module lies flat (J1 pins bent 90°, module over J5/J8, antenna along the wall); standing, the box must be 7.8 mm deeper (`radio_flat = false`).
 
 ### BME280 / BMP280 on J3 (or J14)
 
-| Breakout pin | J3 pin | Colour |
-|---|---|---|
-| VIN | 1 SENSOR_VCC | white |
-| GND | 2 GND | blue |
-| SCL | 3 SCL | yellow |
-| SDA | 4 SDA | green |
-| CSB | 5 n.c. | — |
-| SDO | 6 SDO (JP6) | green, 1 ring |
+| Breakout pin | J3 pin | Colour | Ends (breakout / board) | Length |
+|---|---|---|---|---|
+| VIN | 1 SENSOR_VCC | white | Dupont (F) / JST-EH (F) | per build |
+| GND | 2 GND | blue | Dupont (F) / JST-EH (F) | per build |
+| SCL | 3 SCL | yellow | Dupont (F) / JST-EH (F) | per build |
+| SDA | 4 SDA | green | Dupont (F) / JST-EH (F) | per build |
+| CSB | 5 n.c. | — | — | — |
+| SDO | 6 SDO (JP6) | green, 1 ring | Dupont (F) / JST-EH (F) | per build |
 
 - Mushroom: no wire, the breakout's 6-pin male header plugs into a 6-way 2.54 mm female header soldered under the board in J3.
 - CSB is not connected on the board: the breakout must pull it up (≈ 10 kΩ to VIN), otherwise the sensor starts in SPI. Check with a meter; if it is missing, add 10 kΩ from CSB to VIN on the breakout. The working v2.2 mushroom board has such a 10 kΩ on CSB.
@@ -98,21 +99,21 @@ Module pin orders differ (an FS1000A is DATA/VCC/GND): match the pins by name, n
 
 ### DS18B20 on J5
 
-| DS18B20 pin (TO-92, flat face, legs down, left to right) | J5 pin | Colour |
-|---|---|---|
-| GND | 2 GND | blue |
-| DQ | 3 DQ (PA3) | green |
-| VDD | 1 SENSOR_VCC | white |
+| DS18B20 pin (TO-92, flat face, legs down, left to right) | J5 pin | Colour | Ends (sensor / board) | Length |
+|---|---|---|---|---|
+| GND | 2 GND | blue | soldered / Dupont (F) | per build |
+| DQ | 3 DQ (PA3) | green | soldered / Dupont (F) | per build |
+| VDD | 1 SENSOR_VCC | white | soldered / Dupont (F) | per build |
 
 The sensor order (GND, DQ, VDD) is not the J5 order (VCC, GND, DQ): cross the wires. Pull-up R6 is on the board.
 
 ### Analog sensor on J7
 
-| Sensor pin | J7 pin | Colour |
-|---|---|---|
-| +Vs | 1 SENSOR_VCC | white |
-| Vout | 2 AIN (PA0) | brown |
-| GND | 3 (JP4 2-3) | blue |
+| Sensor pin | J7 pin | Colour | Ends (sensor / board) | Length |
+|---|---|---|---|---|
+| +Vs | 1 SENSOR_VCC | white | soldered / Dupont (F) | per build |
+| Vout | 2 AIN (PA0) | brown | soldered / Dupont (F) | per build |
+| GND | 3 (JP4 2-3) | blue | soldered / Dupont (F) | per build |
 
 A TMP36 runs from SENSOR_VCC. An LM35 needs 4 V minimum: on 2×AA/AAA, power it from a 5 V boost switched by PB2 on J8, see [`VARIANTE_LM35.md`](VARIANTE_LM35.md) (`USE_SWITCHED_5V`).
 
