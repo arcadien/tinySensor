@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-17 — [FUNC-X10-003](../requirements/functional.md#func-x10-003) (deprecated, x10Switch removed)_
+_Last updated: 2026-11-19 — [TECH-HAL-004](../requirements/technical.md#tech-hal-004) (PA5 input buffer off, JP6 delivered open)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -216,7 +216,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [TECH-HAL-001](../requirements/technical.md#tech-hal-001) | `Hal` / `Attiny84aHal` / `TestHal_` / `OregonV3` / `LacrosseWS7000` / `x10rf` / `SoftSerial` / `Ds18b20` / `LightSensor` / `BMx280` | Encoders and HAL-using wrappers take Hal* at construction; BMx280 (third-party bus driver) takes none; no direct AVR register access except addresses passed to a bus driver |
 | [TECH-HAL-002](../requirements/technical.md#tech-hal-002) | `TestHal_` | Orders vector char-token recording: H, L, D, P, A, S, W, Q, R, T, U, G, I |
 | [TECH-HAL-003](../requirements/technical.md#tech-hal-003) | `Hal` | ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on Hal base |
-| [TECH-HAL-004](../requirements/technical.md#tech-hal-004) | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; `PORTA = 0` (no internal pull-up, bus pins rely on the external pull-ups of [PLAT-POWER-007](../requirements/platform.md#plat-power-007)), pull-ups on PB2 and PB3 (PB2 cleared again with `USE_SWITCHED_5V`) |
+| [TECH-HAL-004](../requirements/technical.md#tech-hal-004) | `Attiny84aHal` | Constructor power-reduction: disables Timer1, ADC, analog comparator; `PORTA = 0` (no internal pull-up, bus pins rely on the external pull-ups of [PLAT-POWER-007](../requirements/platform.md#plat-power-007)); PA5 digital input buffer off (`DIDR0` bit `ADC5D`: PA5 has no pull-up; JP6 2–3 wires it to the BME280 SDO), pull-ups on PB2 and PB3 (PB2 cleared again with `USE_SWITCHED_5V`) |
 | [TECH-HAL-005](../requirements/technical.md#tech-hal-005) | `Attiny84aHal` / `TestHal_` | LedOn/LedOff toggle PORTB PB1 on AVR; toggle IsLedOn in TestHal_ |
 | [TECH-HAL-006](../requirements/technical.md#tech-hal-006) | `main.cpp` / `Attiny84aHal` / `TestHal_` | runCycle calls Init() first, before PowerOnSensors; Init() calls TinyI2C.init() on AVR (USE_I2C); TestHal_ records 'I'; checked in test_main_cycle |
 | [TECH-FILTER-001](../requirements/technical.md#tech-filter-001) | `AnalogFilter` | Discards first `exclusion` values; accumulates up to `samples`; Get() returns integer floor mean |
