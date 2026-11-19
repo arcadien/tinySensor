@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 PlatformIO is the build system. The emitter firmware is the PlatformIO project in `emitter/` (`src/`, `include/`, `test/`, `platformio.ini`); `lib/` at the repository root is shared with the receiver `tinyDecoders/`. On this machine `pio` runs as `uvx --from platformio pio`. Run from the repository root:
 
 ```bash
-# Run all native tests (fast — runs on host, no hardware needed)
-pio test -d emitter -e native_debug
+# Run all native tests (fast — runs on host, no hardware needed).
+# native_debug ignores test_main_cycle, which runs in the native_cycle_* environments.
+pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_oregon_divider -e native_cycle_lacrosse -e native_cycle_x10
 
 # Run a single test suite
 pio test -d emitter -e native_debug -f test_oregon
@@ -27,7 +28,7 @@ Paths below without a folder (`src/`, `include/`, `test/`, `platformio.ini`) are
 
 ## Architecture
 
-The firmware is entirely build-time configured: every physical sensor unit is a separate PlatformIO environment (`S_02`–`S_05`, `robot`, `devmodule`, `SOLAR_TEST`), each with its own `build_flags` selecting the protocol, sensor type, calibration values, and sleep interval. There is no runtime configuration.
+The firmware is entirely build-time configured: every physical sensor unit is a separate PlatformIO environment (`S_02`–`S_05`, `robot`, `devmodule`, `SOLAR_TEST`, `mushroom`), each with its own `build_flags` selecting the protocol, sensor type, calibration values, and sleep interval. There is no runtime configuration.
 
 ### HAL abstraction
 
@@ -42,7 +43,7 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 | Library | Class | Protocol | Output |
 |---|---|---|---|
-| `lib/oregon` | `OregonV3` | Oregon Scientific v3 | 433 MHz OOK via `RadioGoHigh/Low` |
+| `lib/oregon` | `OregonV3` | Oregon Scientific v2.1 (frame layout; the class keeps its old name) | 433 MHz OOK via `RadioGoHigh/Low` |
 | `lib/LacrosseWS7000` | `LacrosseWS7000` | Lacrosse WS7000 | same |
 | `lib/x10` | `x10rf` | X10 RF | same — used for battery/analog reporting |
 | `lib/softSerial` | `SoftSerial` | UART (debug only) | via `SerialWriteBit` |
@@ -51,17 +52,17 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 ### Test approach
 
-Tests run on the host (`-e native_debug`, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
+Tests run on the host (`-e native_debug` and the `native_cycle_*` environments, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle`.
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle` (only in `native_cycle_*`).
 
 ### `src/main.cpp`
 
-`main()` is a single `while(1)` loop: power on sensors → `ReadEnvironment()` fills a `Measurements` (`include/Measurements.h`) → X10 meters → luminosity → environment frame → power off → hibernate. The environment protocol is a build-time alias, `EnvironmentEncoder` (`include/EnvironmentEncoder.h`), loaded with `ApplyMeasurements()` — no virtual call. Luminosity (`LightSensor`, BH1750) always goes out through a dedicated Lacrosse encoder. Sensor selection stays via `#ifdef` (`USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`); wrappers (`BMx280`, `Ds18b20`, `LightSensor`) take a `Hal*` and stub out on native builds. Details: `docs/architecture.md`, section *Main loop structure*.
+`main()` loops on `runCycle(&hal)`; one cycle: power on sensors → `ReadEnvironment()` fills a `Measurements` (`include/Measurements.h`) → X10 meters → luminosity → environment frame → power off → hibernate. The environment protocol is a build-time alias, `EnvironmentEncoder` (`include/EnvironmentEncoder.h`), loaded with `ApplyMeasurements()` — no virtual call. Luminosity (`LightSensor`, BH1750) always goes out through a dedicated Lacrosse encoder. Sensor selection stays via `#ifdef` (`USE_BMP280` / `USE_BME280` / `USE_DS18B20` / `USE_BH1750`); wrappers (`BMx280`, `Ds18b20`, `LightSensor`) take a `Hal*` and stub out on native builds. Details: `docs/architecture.md`, section *Main loop structure*.
 
 ### Debugging
 
-Step-debugging uses PlatformIO + AVaRICE + AVR Dragon over debugWIRE (the legacy Atmel Studio tree was removed). Toolchain, DWEN fuse procedure and hardware constraints (dedicated debug board) are in [`docs/debugging.md`](docs/debugging.md).
+Step-debugging uses PlatformIO + AVaRICE + AVR Dragon over debugWIRE (the legacy Atmel Studio tree was removed). Toolchain, DWEN fuse procedure and hardware constraints (v3.0 meets them with R5 10 kΩ and no RESET capacitor; v2.2 and earlier need a dedicated debug board) are in [`docs/debugging.md`](docs/debugging.md).
 
 ### RBD workflow
 
@@ -133,7 +134,7 @@ Current-limiting and pull resistors sit **at the board end**, never at the LED o
 Strip EXIF/GPS from every image before committing: `python3 ~/.claude/skills/hardware-change/scripts/strip_exif.py <paths>` (`--check` to verify).
 
 ### Commits
-No pre-push hook; prefixes are the RBD ones above plus `hw:` for hardware (`enclosing/`, `hardware/`) and `docs:` for doc-only commits. Make granular commits, one per area, and push after each.
+The rbd plugin's pre-push hook (a Claude Code hook on `git push`) checks the prefixes. It accepts the RBD ones above (`req()`…`arch()` must cite a validated ID), `plan:`, `hw:` for hardware (`enclosing/`, `hardware/`, from `.rbd/config.yml` `extra_commit_prefixes`), `docs:` for doc-only commits, and `fix:`, `chore:`, `style:`, `refactor:`. Make granular commits, one per area, and push after each.
 
 ## Modeling
 
