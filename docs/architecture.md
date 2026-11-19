@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-19 — [CONF-DECODE-003](../requirements/configuration.md#conf-decode-003) (Pro Micro is the production receiver)_
+_Last updated: 2026-11-19 — [CONF-DECODE-004](../requirements/configuration.md#conf-decode-004) (Pro Mini alternative build)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -282,5 +282,5 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [PLAT-DECODE-004](../requirements/platform.md#plat-decode-004) | `AtmegaReceiverHal` (tinyDecoders) | `Wire` at 400 kHz, SDA/SCL A4/A5 (Pro Mini) or D2/D3 (Pro Micro); SSD1306 0x3C, fixed init sequence, 4 × 128 zero bytes, `AF`; `DrawChar` = pages `page` and `page+1`, column col·8, 8 glyph bytes each; `DrawBigChar` = pages 0–3, column col·16, 16 bytes of `ReadBigGlyphPage` each; no level shifting (OLED module regulated, 5 V I2C) |
 | [PLAT-DECODE-005](../requirements/platform.md#plat-decode-005) | `AtmegaReceiverHal` (tinyDecoders) | `Serial.begin(57600)`: debug UART TX D1 (Pro Mini, adapter optional) or USB CDC (Pro Micro); `WriteLine` drops the line when `availableForWrite() < len + 2`, else line + `\r\n`; no `operator bool`; input ignored, no banner |
 | [CONF-DECODE-003](../requirements/configuration.md#conf-decode-003) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promicro` (production): `sparkfun_promicro16`, Arduino framework, avr109 upload; shared `src/main.cpp`, no `build_src_filter` |
-| [CONF-DECODE-004](../requirements/configuration.md#conf-decode-004) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promini` (production): `pro16MHzatmega328`, Arduino framework, default `arduino` upload through a USB-serial adapter, no `lib_deps`, `-DSERIAL_TX_BUFFER_SIZE=128`, USB 5 V on VCC; shared `src/main.cpp` |
+| [CONF-DECODE-004](../requirements/configuration.md#conf-decode-004) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promini` (alternative build): `pro16MHzatmega328`, Arduino framework, default `arduino` upload through a USB-serial adapter, no `lib_deps`, `-DSERIAL_TX_BUFFER_SIZE=128`, USB 5 V on VCC; shared `src/main.cpp` |
 | [TECH-DECODE-005](../requirements/technical.md#tech-decode-005) | `tinyDecoders/src/main.cpp` / `AtmegaReceiverHal` (tinyDecoders) | file-scope `hal` + `receiver`, `setup()` → `Init()`, `loop()` → `Poll()`; `ISR(TIMER1_CAPT_vect)`, `ISR(TIMER1_OVF_vect)`, `ATOMIC_BLOCK` reads; `Wire` at 400 kHz; `Serial.begin(57600)`, `availableForWrite()` guard, no `operator bool` |
