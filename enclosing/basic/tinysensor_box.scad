@@ -1,4 +1,4 @@
-// TinySensor v3.0 — screwed wall box with seal, 18650 cell trough on the floor
+// TinySensor v3.0 (cut board) — screwed wall box with seal, 18650 cell trough on the floor
 // Units: mm. Target material: PETG.
 //
 // Export:
@@ -9,12 +9,17 @@
 // Exploded isometric view (README header):
 //   openscad --preview -D 'part="exploded"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/wallbox_exploded_iso.png tinysensor_box.scad
 //
-// Frame: origin = "top-left" corner of the PCB seen from above (as in KiCad),
-// X to the right, Y down (KiCad) turned into Y up here.
-// Wall-mounted, the "bottom" side (Y=0, cable bay and cell trough side) faces the ground.
+// Frame: origin = bottom-left corner of the cavity, X to the right, Y up (KiCad Y down turned over).
+// Wall-mounted, the "bottom" side (Y=0, cell trough side) faces the ground.
 //
-// The v3.0 board has no 18650 holder: the cell lies in a trough moulded on the floor, between the cable
-// bay and the board (lighter variant of the mushroom cradle, same tab contacts: ../cell_cradle.scad),
+// The board is the v3.0 cut along its dotted line x = 147 (pcb_v3_cropped, as in the mushroom): the left part
+// with the CR2032 holder J10 and MH3 is removed (a flat CR2032 design will come later). It is screwed through
+// MH2 and MH1 (top edge) and rests on two ledges under its left (cut) and right edges, so it cannot tilt.
+// Layout, from the bottom up: cell trough, board; the side cable gland sits beside the trough end
+// (the 14 mm cable bay is kept only for the bottom-wall gland variant).
+//
+// The v3.0 board has no 18650 holder: the cell lies in a trough moulded on the floor, below the board (wall-mounted)
+// (lighter variant of the mushroom cradle, same tab contacts: ../cell_cradle.scad),
 // held by the "−" spring and two zip ties through the saddles. Contact wires (red "+", black "−") end in a
 // JST-XH 2-pin female housing plugged into J13 "RAW IN" (pin 1 RAW_IN, pin 2 GND; +BATT is behind the Q1 reverse-polarity MOSFET).
 // 18650 + BME280: the TPS63020 3.3 V module on J2 is required (the cell voltage exceeds the BME280 maximum).
@@ -25,20 +30,22 @@ explode = 35;      // exploded view: gap between levels (part = "exploded")
 usage = "ext";     // [int, ext]
 gland_side = "left"; // [left, right, bottom] cable gland wall (usage ext)
 
-/* [PCB v3.0 — from hardware/tinysensor/tinysensor.kicad_pcb] */
-pcb_w = 94.81;
+/* [Cut v3.0 PCB — ../pcb.scad (v3_crop_w / v3_crop_h); holes from crop_holes_v3()] */
+pcb_w = 60.85016;     // x 147 -> 207.85016 (KiCad)
 pcb_h = 39.334;
 pcb_t = 1.6;
-pcb_k0 = [113.04016, 48.02632];   // top-left corner of the outline, absolute KiCad coordinates
-// M3 mounting holes MH1, MH2, MH3 (all along the top edge), absolute KiCad coordinates
-pcb_holes_abs = [[203, 52], [151.35016, 52.11032], [117.85016, 52.86032]];
 
 /* [Volumes] */
 clr = 1.0;            // PCB / wall clearance
-bay = 14;             // cable bay on the bottom side (cable gland, antenna)
+bay_bottom = 14;      // cable bay under the trough, only for gland_side = "bottom" (PG7 nut in the bottom wall)
+gland_room = 8;       // free X beside the trough end for the side gland body and nut
 standoff_h = 5;       // height under the PCB (THT legs)
-comp_h = 25;          // tallest part above the PCB: 433 MHz module (FS1000A ~19 mm) standing on J1; C1 is 11.5
-top_clr = 2;          // clearance under the lid
+radio_flat = true;    // 433 MHz module laid flat over J5/J8 (J1 pins bent 90°, antenna along the wall); false: standing on J1
+// tallest part above the PCB. Flat radio: module on bent pins over the 8.5 mm J5/J8 pins (~13), mated
+// JST-XH/EH plugs + wire bend (~13-15), C1 11.5; the trough (contact tabs) sets the cavity depth up to 17.
+// Standing radio: FS1000A ~19 mm + header. No Dupont housing on the 2.54 headers in either case (~16.5 + wire).
+comp_h = radio_flat ? 17 : 25;
+top_clr = 2;          // clearance under the lid (and above the contact tabs)
 
 /* [Walls] */
 wall = 2.4;           // 6 perimeters, 0.4 nozzle
@@ -59,7 +66,10 @@ lid_screw_d_clear = 3.4;
 /* [Fixings] */
 pcb_screw_d_pilot = 2.5;  // M3 self-tapping
 standoff_d = 7;
+ledge_in = 1.2;       // edge ledges: overlap under the board (no pad within 1.3 mm of the cut / right edges)
+ledge_w = 2.4;        // ledge width beyond the board edge
 gland_d = 12.5;       // PG7
+gland_seat_d = 20;    // flat seat for the gland body, sunk into the flange chamfer (low box)
 wall_screw_d = 4.5;   // Ø4 wall screw
 ear_l = 12;           // tab overhang beyond the flange
 shield_notch = true;  // notches to clip the radiation shield under the box
@@ -79,30 +89,34 @@ include <../cell_cradle.scad>
 
 $fn = 48;
 eps = 0.01;
-// Side cable gland: in the bay (below the PCB in Y), high enough for the
-// inner nut (PG7, 15 across flats) to clear the PCB edge, and
-// under the flange chamfer that keeps the rain off.
-gland_z = gland_side == "bottom" ? 11.5 : 15;
-gland_x = 22;        // position in the bottom wall: offset from the central wall tab
-gland_y = 8;         // position in a side wall: middle of the bay
+// Side cable gland: beside the trough end (gland_room), below the PCB in Y, low on the wall: the inner nut
+// (PG7, 15 across flats, flats horizontal) just clears the floor; the outer body seats in a counterbore
+// sunk into the flange chamfer (the box is too low to keep it under the chamfer).
+gland_y = 8;         // position in a side wall, from the bottom wall
+gland_x = 17;        // position in the bottom wall (bay_bottom), seat clear of the central wall tab
 
 // ---------- derived dimensions ----------
-pcb_holes_kicad = [for (h = pcb_holes_abs) h - pcb_k0];   // relative to the PCB top-left corner
+bay = usage == "ext" && gland_side == "bottom" ? bay_bottom : 0;
 tr_cl_z = trough_lift + cell_d / 2;  // cell axis above the floor
 tr_end_h = tr_cl_z + cell_d / 2;     // trough end walls: up to the top of the cell
-cav_w = pcb_w + 2 * clr;
-tr_x0 = (cav_w - cr_len) / 2;        // trough centred in X, between the cable bay and the board
-pcb_x0 = clr;                        // PCB corner in the cavity frame
+tr_tab_h = tr_cl_z - bt_h / 2 - bt_sink + bt_h + bt_tab[1];   // top of the contact tabs above the floor
+cav_w = max(pcb_w + 2 * clr, gland_room + cr_len + clr);
+// trough against the wall opposite the side gland
+tr_x0 = usage == "ext" && gland_side == "right" ? clr : cav_w - clr - cr_len;
+pcb_x0 = (cav_w - pcb_w) / 2;        // PCB corner in the cavity frame, centred in X
 pcb_y0 = bay + trough_w + clr;
 cav_h = pcb_y0 + pcb_h + clr;
-cav_d = standoff_h + pcb_t + comp_h + top_clr;
+cav_d = max(standoff_h + pcb_t + comp_h, tr_tab_h) + top_clr;
 base_h = floor_t + cav_d;
-assert(tr_x0 >= 8, "Cell trough too long for the cavity (side gland nut)");
-assert(tr_end_h + 2 <= cav_d, "Cell trough higher than the cavity");
+gland_z = floor_t + 9;
+chamfer_z = base_h - flange_t - flange;   // bottom of the 45° chamfer under the flange
+assert(gland_z + gland_seat_d / 2 <= base_h - flange_t, "Cable gland seat reaches the flange");
+assert(pcb_x0 >= ledge_w, "No room for the board edge ledges");
+assert(tr_end_h + top_clr <= cav_d, "Cell trough higher than the cavity");
 groove_off = wall + 1.8;     // groove axis from the cavity edge
 screw_off = wall + flange - 2.8; // screw axis from the cavity edge
 
-function holes() = [for (h = pcb_holes_kicad) [pcb_x0 + h[0], pcb_y0 + pcb_h - h[1]]];
+function holes() = [for (h = crop_holes_v3()) [pcb_x0 + pcb_w / 2 + h[0], pcb_y0 + pcb_h / 2 + h[1]]];
 
 module rrect(w, h, r) {
   translate([r, r]) offset(r = r) square([w - 2 * r, h - 2 * r]);
@@ -144,9 +158,9 @@ module base() {
     // cable gland: side wall (default) or bottom wall
     if (usage == "ext") {
       if (gland_side == "bottom")
-        translate([gland_x, -wall - flange - eps, gland_z]) rotate([-90, 0, 0]) cylinder(d = gland_d, h = wall + flange + 2 * eps);
+        translate([gland_x, 0, gland_z]) rotate([90, 0, 0]) gland_hole();
       else
-        translate([gland_side == "left" ? -wall - eps : cav_w - eps, gland_y, gland_z]) rotate([0, 90, 0]) cylinder(d = gland_d, h = wall + 2 * eps);
+        translate([gland_side == "left" ? 0 : cav_w, gland_y, gland_z]) rotate([0, gland_side == "left" ? -90 : 90, 0]) gland_hole();
     }
     // indoor vents (slots in the bottom and top walls)
     if (usage == "int") vents();
@@ -157,6 +171,15 @@ module base() {
     cylinder(d = standoff_d, h = standoff_h + eps);
     cylinder(d = pcb_screw_d_pilot, h = standoff_h + 1);
   }
+  // ledges under the left (cut) and right edges: the two screws are on the top edge, the board would tilt
+  for (x = [pcb_x0 - ledge_w, pcb_x0 + pcb_w - ledge_in])
+    translate([x, pcb_y0, floor_t - eps]) cube([ledge_w + ledge_in, pcb_h, standoff_h + eps]);
+}
+
+// gland hole along +Z from the cavity face (z = 0): through the wall, then the seat through the chamfer
+module gland_hole() {
+  translate([0, 0, -eps]) cylinder(d = gland_d, h = wall + flange + 2 * eps);
+  translate([0, 0, wall]) cylinder(d = gland_seat_d, h = flange + eps);
 }
 
 module ear(s) {
@@ -177,7 +200,7 @@ module ear(s) {
 }
 
 module vents() {
-  n = 7; sw = 2; sl = 14; pitch = (cav_w - 20) / (n - 1);
+  n = 7; sw = 2; sl = min(14, chamfer_z - floor_t - 4); pitch = (cav_w - 20) / (n - 1);   // under the chamfer
   for (yy = [-wall - eps, cav_h - eps]) for (i = [0 : n - 1])
     translate([10 + i * pitch - sw / 2, yy, floor_t + 3]) cube([sw, wall + 2 * eps, sl]);
 }
@@ -198,6 +221,9 @@ module trough() {
 // trough in the cavity, turned 180°: wire notches towards the board (J13), "−" end on the right
 module trough_placed() { translate([tr_x0 + cr_len, bay + trough_w / 2, 0]) rotate([0, 0, 180]) children(); }
 
+// board (pcb_v3_cropped is centred on the origin), PCB underside at z
+module pcb_board(z = floor_t + standoff_h) translate([pcb_x0 + pcb_w / 2, pcb_y0 + pcb_h / 2, z]) pcb_v3_cropped();
+
 // ---------- lid ----------
 module lid() {
   difference() {
@@ -209,10 +235,10 @@ module lid() {
 }
 
 if (part == "base") base();
-else if (part == "lid") translate([0, 0, lid_t]) mirror([0, 0, 1]) lid();  // flat face on the bed, rib up
+else if (part == "lid") translate([0, 0, lid_t]) rotate([180, 0, 0]) lid();  // flat face on the bed, rib up (rotate, never mirror: CLAUDE.md)
 else if (part == "open") {
   color("DimGray") base();
-  translate([pcb_x0, pcb_y0, floor_t + standoff_h]) pcb_v3();
+  pcb_board();
   translate([0, 0, floor_t]) trough_placed() cradle_cell_mock(tr_cl_z);
   // lid turned over next to it, inner face (rib) visible
   color("Gray") translate([cav_w + 2 * (wall + flange) + 15, 0, lid_t]) mirror([0, 0, 1]) lid();
@@ -221,7 +247,7 @@ else if (part == "open") {
 else if (part == "exploded") {   // render only: base, cell + contacts, board, lid (rib down), lifted apart
   color("DimGray") base();
   translate([0, 0, floor_t + explode]) trough_placed() cradle_cell_mock(tr_cl_z);
-  translate([pcb_x0, pcb_y0, floor_t + standoff_h + 2 * explode]) pcb_v3();
+  pcb_board(floor_t + standoff_h + 2 * explode);
   color("Gray") translate([0, 0, base_h + 3 * explode + comp_h]) lid();  // + comp_h: clear of the board parts
 }
 else {
