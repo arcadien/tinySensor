@@ -27,7 +27,7 @@ Ready-to-slice parts: **one OrcaSlicer project per model**, next to its `.scad`,
 | Project | Plates | Objects |
 |---|---|---|
 | `basic/box.3mf` | Fond extérieur, Fond intérieur, Couvercle | print only one of the two bases: `ext` (cable gland, outdoor) or `int` (vents, indoor) |
-| `basic/shield.3mf` | Abri, Assiettes | Chapeau, Fond, Clip (optional); 4 plates |
+| `basic/shield.3mf` | Abri, Assiettes | Abri: Chapeau, Fond, Clip (optional); Assiettes: Assiette × 4 |
 | `basic/stand.3mf` | Mât, Pied | table stand, optional |
 | `receiver/receiver.3mf` | Pupitre | Coque, Fond |
 | `mushroom/mushroom.3mf` | Ailettes, Hat, White buttons, Ground, Divers, Foot, Support | Chapeau, Lamelles, Châssis, Pied, Sol, Berceau, Bouchon, Pois |

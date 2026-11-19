@@ -42,7 +42,7 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
-        run: pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
+        run: pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_oregon_divider -e native_cycle_lacrosse -e native_cycle_x10
       - name: Run tinyDecoders native tests
         run: pio test -d tinyDecoders -e native
       - name: Compile-fail checks
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST]
+        env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST, mushroom]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # 433 MHz receiver firmware: promini (production), promicro (prototype)
+  # 433 MHz receiver firmware: promicro (production), promini (alternative build)
   build-tinydecoders:
     name: Build tinyDecoders
     runs-on: ubuntu-latest
@@ -111,7 +111,7 @@ jobs:
       - name: Upload promini firmware artifact
         uses: actions/upload-artifact@v7
         with:
-          name: firmware-tinydecoders
+          name: firmware-tinydecoders-promini
           path: |
             tinyDecoders/.pio/build/promini/firmware.hex
             tinyDecoders/.pio/build/promini/firmware.elf
@@ -146,7 +146,6 @@ jobs:
           mkdir release
           for d in firmware/*/; do
             n=$(basename "$d"); n=${n#firmware-}
-            [ "$n" = tinydecoders ] && n=tinydecoders-promini
             for f in "$d"*; do cp "$f" "release/$n.${f##*.}"; done
           done
           ls release

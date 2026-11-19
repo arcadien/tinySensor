@@ -29,7 +29,7 @@ Large part of the code, especially wireless encoders, are unit-tested.
 * "one pin" emitters. Tested with low-cost 433 MHz emitters.
 
 ## Wireless protocols
-* Environment frame (temperature, humidity, pressure): Oregon Scientific v3 **or** Lacrosse WS7000, at most one per build. A build without either sends no environment frame.
+* Environment frame (temperature, humidity, pressure): Oregon Scientific v2.1 (class `OregonV3`) **or** Lacrosse WS7000, at most one per build. A build without either sends no environment frame.
 * Luminosity: always a dedicated Lacrosse WS7000 frame (Oregon has no light frame), so `LACROSSE_ID` is required whenever the BH1750 is fitted.
 * Battery level and analog input: optional X10 RFXmeter frames, not sent when the battery is low.
 
@@ -45,19 +45,20 @@ Various libraries are used here, and some where tweaked to remove any Arduino de
 
 ## Development
 
-The firmware is built with [PlatformIO](https://platformio.org/) and configured entirely at build time: each physical sensor is one PlatformIO environment (`S_02`…`S_05`, `robot`, `devmodule`, `SOLAR_TEST`) whose `build_flags` select protocol, sensors and calibration. See [docs/environments.md](docs/environments.md) to calibrate or add a board.
+The firmware is built with [PlatformIO](https://platformio.org/) and configured entirely at build time: each physical sensor is one PlatformIO environment (`S_02`…`S_05`, `robot`, `devmodule`, `SOLAR_TEST`, `mushroom`) whose `build_flags` select protocol, sensors and calibration. See [docs/environments.md](docs/environments.md) to calibrate or add a board.
 
 ```bash
 pio test -d emitter -e native_debug        # encoder and library unit tests, on the host
 pio test -d emitter -e native_cycle_oregon # one measurement cycle (runCycle) per build variant;
-                                           # also native_cycle_oregon_vcc, _lacrosse, _x10
+                                           # also native_cycle_oregon_vcc, _oregon_divider,
+                                           # _lacrosse, _x10
 pio run -d emitter -e S_02                 # firmware for one board
 pio run -d emitter -e S_02 -t upload       # flash it
 ```
 
 > **Flashing with a BME280 plugged in.** ISP and I2C share the ATtiny84A pins PA4 (SCK / SCL) and PA6 (MOSI / SDA). On **v3.0**, R9 and R10 (330 Ω) sit in series between the MCU and the sensor connectors J3/J14, so the programmer drives SCK and MOSI without the sensor holding them: the board should flash with the BME280 in place (not yet checked on a built board). On **v2.2 and earlier**, unplug the BME280 before flashing, otherwise flashing fails; always wire it through its JST connector, never solder it to the board.
 
-CI runs the native tests, compile-fail checks for invalid flag combinations (`emitter/test/compile_fail/`), sensor-variant checks (`emitter/test/build_variants/`), `clang-format` and a build of every board.
+CI runs the native tests (`native_debug` and every `native_cycle_*`), compile-fail checks for invalid flag combinations (`emitter/test/compile_fail/`), sensor-variant checks (`emitter/test/build_variants/`), `clang-format` and a build of every board (including `mushroom`).
 
 * Architecture: [docs/architecture.md](docs/architecture.md)
 * Step debugging over debugWIRE: [docs/debugging.md](docs/debugging.md)
@@ -72,7 +73,7 @@ The cycle for each change:
 1. **Requirement.** The change is first written as a requirement with an ID such as `FUNC-OREGON-001` (category, domain, number), a status (`validated` or `draft`) and its dependencies.
 2. **Tests.** Tests are written next. Each Unity test function carries the ID it verifies on the line above it: `// @req FUNC-OREGON-001`. Requirements that no host test can observe (AVR registers, wiring, bench measurements) say instead how they are verified: by inspection, by a build, or on the bench.
 3. **Code.** The code then makes the tests pass. The linter (`clang-format` 18.1.8) and the full native test suite must pass before each commit.
-4. **Commit.** Each commit names what it serves: `req(ID):`, `test(ID):`, `feat(ID):`, `tech(ID):`, `conf(ID):` or `arch(ID):`; `plan:` for workflow files; `hw:`, `docs:`, `fix:` or `chore:` outside the code cycle. A pre-push hook rejects a code commit whose ID is missing or not `validated`.
+4. **Commit.** Each commit names what it serves: `req(ID):`, `test(ID):`, `feat(ID):`, `tech(ID):`, `perf(ID):`, `ui(ID):`, `conf(ID):` or `arch(ID):`; `plan:` for workflow files; `hw:`, `docs:`, `fix:`, `chore:`, `style:` or `refactor:` outside the code cycle (`hw:` is added in `.rbd/config.yml`, `extra_commit_prefixes`). The rbd plugin's pre-push hook rejects any other prefix, and a code commit whose ID is missing or not `validated`.
 
 `git log --grep FUNC-MAIN-001` and `grep -rn FUNC-MAIN-001 emitter/test` show where a requirement was written, tested and implemented.
 

@@ -38,7 +38,7 @@ Check it on the maker's datasheet.
 | LM35 | Wired to |
 |---|---|
 | +Vs | 5 V module VOUT |
-| Vout | J7 pin 2 (analog input, PA0 through R4 75 Ω) |
+| Vout | J7 pin 2 (analog input PA0; leave JP3 open: closed, R4 75 Ω would load Vout to GND) |
 | GND | board GND (J2 pin 2, or J7 pin 3 if JP4 is soldered 2-3) |
 
 5 V module GND: board GND.

@@ -19,18 +19,18 @@ Full reports, ERC/DRC and images: `review/2026-11-06/`. Rework of the already-bu
 | R5 | ✅ v3.0 (Major) | LED | D1 is fitted backwards (anode on GND, cathode towards R1/PB1), and the PCB footprint matches that mistake. The firmware drives PB1 high to light it, so the LED never lights. | Flip D1 in the schematic and the PCB. | S |
 | R6 | ✅ v3.0 (Major) | Sync | The schematic is no longer the reference. Commit c8df224 added I2C and I2C_SPI (6-pin JST-EH), JP5, JP6 and the BH-18650 holder in the PCB only. J3, J11, J12 and MH3 are missing from the PCB, and MH1 is duplicated there. Two unconnected pads remain: JP6 to MISO, and I2C.6 to the GND zone. The 18650 − pole seems to have no net. | Carry these items into the schematic, then run "Update PCB from Schematic" until parity is clean. Check the 18650. | M |
 | R7 | ✅ v3.0 (Minor) | MCU | RESET has no external pull-up: only the weak internal one and a button. | 10 k to VCC, no capacitor, to stay debugWIRE compatible. | S |
-| R8 | Minor | Power | The global decoupling (2 × 10 µF) is weak for a CR2032, whose internal resistance is 10–20 Ω, against the radio current peak. | 100–470 µF low-leakage for the CR2032 versions. | S |
+| R8 | ✅ v3.0 (Minor) | Power | The global decoupling (2 × 10 µF) is weak for a CR2032, whose internal resistance is 10–20 Ω, against the radio current peak. | 100–470 µF low-leakage for the CR2032 versions. ✅ v3.0: C1 220 µF low-leakage for a CR2032 (2026-11-18). | S |
 | R9 | ✅ v3.0 (Minor) | Power | JP2 "DIRECT Vcc" shorts the DC-DC input to its output if J2 is fitted. | Note "JP2 closed ⇒ J2 not fitted". The firmware must then use `BATTERY_IS_VCC`. | S |
 | R10 | Question | Power | The J2 DC-DC module has no enable pin. Its quiescent current (often 10–100 µA) probably exceeds the sleeping ATtiny's. | **Decided (2026-11-07):** TPS63020 buck-boost module (Tars stock), wired to the J2 pads as in `REWORK_v2.2.md`. ◐ v3.0: J2 becomes a 1×03 header (1 +BATT, 2 GND, 3 VCC) on the same pads; v3.0 choice (2026-11-07): 2 AA or AAA cells on J13 and a 3.3 V boost module (in stock) on J2. A boost does not regulate if Vin > 3.3 V: with an 18650 (BT1), the TPS63020 buck-boost is needed. Without BME280 (DS18B20 on J5 or 3-pin analog sensor on J7, both up to 5.5 V), an 18650 with a boost is fine. v3.0 silkscreen: "18650: TPS63020, or boost without BME280". Measure its idle current (< 0.1 mA). | M |
 | R11 | ✅ v3.0 (Question) | I2C | The BME280 CSB pin (J3.5) is floating; if seen low, the sensor goes into SPI. SDO is on GND, hence address 0x76, matching the firmware. | Tie CSB to SENSOR_VCC, or check that the breakout pulls it up. SDO selects the address in I2C (GND = 0x76, the firmware's), and is the data output in SPI: decided, it is an assembly-time choice through JP6 (see P4), with a note on the schematic. Beware: PA5 has no pull-up (`PORTA = 0`, TECH-HAL-004), so SDO wired to MISO (JP6 2-3) in I2C would float and leave the address undefined. | S |
 | R12 | Question | I2C | The BH1750 (`USE_BH1750`, 0x23, env SOLAR_TEST) does not appear in the schematic. | Document it on the second I2C connector once R6 is done, with ADDR at 0. | S |
-| R13 | Question | Power | `USE_CHARGE_PUMP` (`platformio.ini:66`, `:81`) is used by no code and matches no circuit. The TP4056 charger is not in the schematic. | Drop the flag or document the hardware concerned. | S |
+| R13 | Question | Power | `USE_CHARGE_PUMP` (`platformio.ini`, envs `S_02` and `S_03`) is used by no code and matches no circuit. The TP4056 charger is not in the schematic. | Drop the flag or document the hardware concerned. | S |
 | R14 | Question | MCU | The fuses are not recorded, BODLEVEL in particular. The firmware turns the BOD off during sleep. | Record the intended fuses in the repository (BOD 1.8 V at 1 MHz). | S |
 | R15 | ◐ v3.0 (Minor) | Libraries | `fp-lib-table` points to `battery.pretty` and `Chinese breakouts.pretty`, which are missing. `sym-lib-table` declares a Legacy library that does not exist. J13 uses a footprint removed from KiCad, and J1/J3/J4 removed `Conn_*_Male/Female` symbols. U1 and J6 come from `-rescue.lib`. The file is in KiCad 7 format. | Clean the tables. Use standard symbols and footprints (`ATtiny84A-P`, `AVR-ISP-6`, `Conn_01x0N_Pin/Socket`, `TerminalBlock_Phoenix` 5.08), then "Update Symbols from Library". | S–M |
 | R16 | ◐ v3.0 (Minor) | Connectors | J1 is wired GND/VCC/DATA, while an FS1000A is DATA/VCC/GND. J5 is wired VCC/GND/DQ, while a TO-92 DS18B20 is GND/DQ/VDD. ISP pad 1 is round, so nothing marks it. | Pin functions on the silkscreen, and a square pad 1 on the ISP. | S |
 | R17 | ◐ v3.0 (Minor) | Hygiene | Values "4,7k" and "4k7" mixed. JP3 has value "~". C5, a 1 nF ceramic, uses a tantalum footprint, and C6 (0.1 µF) a polarised symbol. The R4 note (75R or 18k) is unclear. A wire dangles at (54.61 ; 120.65). The title block says Rev 2.3, the board v2.2. | Normalise values, switch C5 to `C_Disc`, delete the wire. | S |
 | R18 | Evolution | v2.3 | Ideas for a v2.3: ATtiny84A-SSU or ATtiny1614 (UPDI, hardware TWI, low-power RTC), OOK emitter for 1.8–3.6 V (STX882, SYN115), nano-power boost with enable, ideal-diode protection, switched divider. | — | L |
-| R19 | Major | ISP / I2C | ISP fails while a BME280 is plugged into the I2C connector (seen on the mushroom, 2026-11-16). SCK/MOSI are SCL/SDA, and the R2/R3 pull-ups go to SENSOR_VCC (PA2), unpowered while the MCU is in reset: the programmer's SCK/MOSI back-power the sensor rail through the pull-ups and the sensor's ESD diodes, and sync fails. Workaround: remove the sensor to flash (`docs/debugging.md`). | Isolate the sensor connector from the ISP lines during programming: series resistors (~1 k) on SCL/SDA towards the connector, or a jumper / analog switch; or move the pull-ups to VCC. Check on the bench before choosing. | S–M |
+| R19 | ◐ v3.0 (Major) | ISP / I2C | ISP fails while a BME280 is plugged into the I2C connector (seen on the mushroom, 2026-11-16). SCK/MOSI are SCL/SDA, and the R2/R3 pull-ups go to SENSOR_VCC (PA2), unpowered while the MCU is in reset: the programmer's SCK/MOSI back-power the sensor rail through the pull-ups and the sensor's ESD diodes, and sync fails. Workaround: remove the sensor to flash (`docs/debugging.md`). | Isolate the sensor connector from the ISP lines during programming: series resistors (~1 k) on SCL/SDA towards the connector, or a jumper / analog switch; or move the pull-ups to VCC. Check on the bench before choosing. ◐ v3.0: R9/R10 330 Ω in series on SCL/SDA (2026-11-18); bench check pending. | S–M |
 
 Not checked: the breakouts' internal pull-ups, the real DC-DC quiescent current, the fuse values.
 
@@ -89,15 +89,15 @@ DRC with schematic parity: 0 footprint errors, 0 unconnected pads. The only rema
 **Fixed:**
 - **R5/P10:** D1 rotated.
 - **R1:** PA1 goes through the R7/R8 1 MΩ divider, with C7 100 nF; the pin reads Vbatt / 2 (see F1).
-- **R2:** Q1 (AO3401A) protects against reversal on J13 and BT1.
+- **R2:** Q1 (AO3401A) protects against reversal on J13 and BT1. *(superseded 2026-11-18)*
 - **P1:** the sensor connectors' ground is tied to the plane.
-- **P2:** BT1 18650 is wired, its − pole on GND.
+- **P2:** BT1 18650 is wired, its − pole on GND. *(superseded 2026-11-18)*
 - **R6/P3:** J3 and J14 replace the PCB "I2C" and "I2C_SPI" connectors. J11, J12 and JP5 are deleted, and the duplicate MH1 becomes MH3.
-- **R11/P4:** JP6 selects SDO (pin 6), with 1-2 = GND by default and 2-3 = MISO.
-- **R7:** R9 10 kΩ pull-up on RESET.
-- **P13:** C8 100 nF at the radio.
-- **P8:** C6 becomes an 0805 on top.
-- **P11:** 2.7 mm M2.5 holes.
+- **R11/P4:** JP6 selects SDO (pin 6), with 1-2 = GND by default and 2-3 = MISO. *(superseded 2026-11-18)*
+- **R7:** R9 10 kΩ pull-up on RESET. *(superseded 2026-11-18)*
+- **P13:** C8 100 nF at the radio. *(superseded 2026-11-18)*
+- **P8:** C6 becomes an 0805 on top. *(superseded 2026-11-18)*
+- **P11:** 2.7 mm M2.5 holes. *(superseded 2026-11-18)*
 - **P16:** 1.05 mm drills.
 - **P6:** 0.5 mm between copper and edge.
 - **P5 (partly):** no ground plane along the cut lines. Two GND bridges cross these strips, and two +BATT tracks still run through them.
@@ -105,10 +105,10 @@ DRC with schematic parity: 0 footprint errors, 0 unconnected pads. The only rema
 - **R15 (partly):** library tables cleaned, and the J13 and BT1 footprints copied into `library/`.
 
 **Still open for v3.0:**
-- **P7:** ✅ J2 is a 1×03 header (`scripts/v3_j2_header.py`), MH5 stays reachable.
+- **P7:** ✅ J2 is a 1×03 header (`scripts/v3_j2_header.py`), MH5 stays reachable. *(superseded 2026-11-18)*
 - **P12:** J2 and J13 stay close to x = 147.
 - **P15:** +BATT tracks to widen.
-- **R8, R12, R13, R14, R18/P20:** not handled.
+- **R12, R13, R14, R18/P20:** not handled (R8 handled 2026-11-18, R19 in progress: see below).
 - **R16:** square pad 1 on the ISP.
 - **R17:** R4 note and dangling wire.
 - **Hygiene:** 28 footprints no longer match their library version, and the inherited (rescue) symbols are to replace.

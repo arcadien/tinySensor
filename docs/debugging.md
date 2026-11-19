@@ -21,7 +21,7 @@ Two ways, both over the 6-pin ISP connector:
 
 - **USB driver:** PlatformIO's avrdude 6.3 talks to the Dragon through libusb only. With the Atmel/Microchip (Jungo) driver, it fails with `usbdev_open(): did not find any USB device "usb" (0x03eb:0x2107)` and still prints `avrdude done. Thank you.`. Fix once with [Zadig](https://zadig.akeo.ie): *Options → List All Devices*, pick **AVR Dragon** (`03EB 2107`), install **libusb-win32**, replug. Microchip Studio no longer sees the Dragon afterwards (reinstall the Atmel driver from the Device Manager to go back).
 - **Check the exit code**, not the last line: avrdude ends with `done. Thank you.` even on failure. Under Git Bash its messages only show when stderr is redirected to a file (`2> avrdude.err`).
-- **Remove the BME280 (or any I2C sensor) before flashing.** SCK/MOSI are SCL/SDA, and the I2C pull-ups R2/R3 go to SENSOR_VCC (PA2), which is unpowered while the chip is held in reset. Driving SCK/MOSI then back-powers the sensor rail through the pull-ups and the sensor's protection diodes, and the Dragon fails with `ISP activation failed` / `RSP_DEBUGWIRE_SYNC_FAILED`, even with VCC and RESET at 3.3 V and a slow clock (`-B32`). Hardware fix: BACKLOG R19. In the mushroom, this means opening the gill disc for every flash.
+- **v2.2 and earlier: remove the BME280 (or any I2C sensor) before flashing.** SCK/MOSI are SCL/SDA, and the I2C pull-ups R2/R3 go to SENSOR_VCC (PA2), which is unpowered while the chip is held in reset. Driving SCK/MOSI then back-powers the sensor rail through the pull-ups and the sensor's protection diodes, and the Dragon fails with `ISP activation failed` / `RSP_DEBUGWIRE_SYNC_FAILED`, even with VCC and RESET at 3.3 V and a slow clock (`-B32`). Hardware fix: BACKLOG R19, R9/R10 330 Ω on v3.0, where the sensor should stay in place (bench check pending). In the v2.2 mushroom board, this means opening the gill disc for every flash.
 - **Replug the Dragon after a failed sync:** it then answers `sign-on command: status -1` to everything until it is unplugged from USB.
 - Read before writing: `avrdude -P usb -B8 -pt84 -cdragon_isp -C <tool-avrdude>/avrdude.conf -U lfuse:r:-:h` prints the signature (`0x1e930c`) and Vtarget. If the fuses already read `DF`/`62`/`FF`, flash only (`-U flash:w:<hex>:i`, verified by default).
 
@@ -75,9 +75,9 @@ If debugWIRE no longer answers: HVSP at 12 V (tolerance ~11.5–12.5 V), support
 - Fuses and lock bits unreachable during the session.
 - Chip erase (`-e`) impossible in debugWIRE mode.
 
-## Hardware constraints — dedicated debug board
+## Hardware constraints — debug board
 
-Production boards are not designed for debugWIRE. A dedicated debug board is needed with:
+v3.0 boards meet these constraints (R5 10 kΩ RESET pull-up, no capacitor on RESET). v2.2 and earlier boards are not designed for debugWIRE: they need a dedicated debug board with:
 
 - **/RESET without a capacitor** (the line carries the debugWIRE signal).
 - **/RESET pull-up ≥ 10 kΩ** (or no external resistor; do not use a lower value).
