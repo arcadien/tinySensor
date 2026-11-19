@@ -88,6 +88,12 @@
 **Dependencies:** [CONF-BUILD-003](#conf-build-003), [CONF-BUILD-005](#conf-build-005), [CONF-BUILD-007](#conf-build-007), [CONF-BUILD-008](#conf-build-008), [CONF-BUILD-012](#conf-build-012), [CONF-BUILD-013](#conf-build-013)
 **Description:** The `mushroom` board is a cut-down v2.2 with a BME280. Its 18650 is charged by a TP4056, and a 3.3 V buck-boost supplies VCC, so VCC is not the battery voltage and PA1 reads half of it. It sends Oregon temperature and humidity without pressure on channel 3 with rolling code 0x3C. The X10 meter 7 reports the battery through a divider of 2 every 5 minutes. The low-battery threshold is 3000 mV, so the discharge stays tracked down to 3.0 V while the buck-boost keeps VCC steady. The 1.1 V reference is calibrated at 1104 mV (4040 mV measured on J13 against 4026 mV reported). The environment is part of the default build, and the environment docs list it with its battery and threshold. Acceptance: the environment builds.
 
+### CONF-BUILD-015
+**Title:** CI runs every emitter native test environment and builds every emitter board environment
+**Status:** validated
+**Dependencies:** [CONF-BUILD-014](#conf-build-014), [TECH-MAIN-001](technical.md#tech-main-001)
+**Description:** The CI (`.github/workflows/main.yml`) runs `pio test -d emitter` on `native_debug` and on every `native_cycle_*` environment of `emitter/platformio.ini`: `native_cycle_oregon`, `native_cycle_oregon_vcc`, `native_cycle_oregon_divider`, `native_cycle_lacrosse` and `native_cycle_x10`. It builds every environment in `default_envs`: `S_02`, `S_03`, `S_04`, `S_05`, `robot`, `devmodule`, `SOLAR_TEST` and `mushroom`. It publishes each board firmware (`.hex`, `.elf`) as `firmware-<env>`, and the release waits for these builds. Verified by comparing the workflow with `emitter/platformio.ini` and by a green CI run.
+
 ### CONF-DECODE-002
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated
