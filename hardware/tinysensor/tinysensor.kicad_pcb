@@ -12924,86 +12924,6 @@
 		(uuid "00000000-0000-0000-0000-00005bebdd87")
 	)
 	(gr_line
-		(start 147 88)
-		(end 147 89)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd49")
-	)
-	(gr_line
-		(start 147 94)
-		(end 147 95)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd4f")
-	)
-	(gr_line
-		(start 147 96)
-		(end 147 97)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd51")
-	)
-	(gr_line
-		(start 147 98)
-		(end 147 99)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd53")
-	)
-	(gr_line
-		(start 147 100)
-		(end 147 101)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd55")
-	)
-	(gr_line
-		(start 147 102)
-		(end 147 103)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd57")
-	)
-	(gr_line
-		(start 147 104)
-		(end 147 105)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd5f")
-	)
-	(gr_line
-		(start 147 106)
-		(end 147 107)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(layer "F.SilkS")
-		(uuid "00000000-0000-0000-0000-00005bebdd61")
-	)
-	(gr_line
 		(start 147.01016 56.01032)
 		(end 147.01016 57.01032)
 		(stroke
@@ -13347,28 +13267,6 @@
 			)
 		)
 	)
-	(gr_text "1 seule source : CR2032, 18650 ou RAW IN"
-		(at 142.272142 110.8 0)
-		(layer "F.SilkS")
-		(uuid "a0f8e090-7d9b-485e-b640-e47e8b6da95f")
-		(effects
-			(font
-				(size 0.9 0.9)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "18650 : TPS63020, ou élévateur sans BME280"
-		(at 176.849286 110.8 0)
-		(layer "F.SilkS")
-		(uuid "eb00eb27-ca10-476a-8e6f-52db587009c2")
-		(effects
-			(font
-				(size 0.9 0.9)
-				(thickness 0.15)
-			)
-		)
-	)
 	(gr_text "Analog"
 		(at 172.080982 60.594012 0)
 		(layer "F.SilkS")
@@ -13535,6 +13433,28 @@
 				(thickness 0.125)
 			)
 			(justify mirror)
+		)
+	)
+	(gr_text "18650 : TPS63020, ou élévateur sans BME280"
+		(at 129.88016 86.25032 0)
+		(layer "Cmts.User")
+		(uuid "eb00eb27-ca10-476a-8e6f-52db587009c2")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "1 seule source : CR2032, 18650 ou RAW IN"
+		(at 129.95016 84.40032 0)
+		(layer "Cmts.User")
+		(uuid "a0f8e090-7d9b-485e-b640-e47e8b6da95f")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.15)
+			)
 		)
 	)
 	(segment
