@@ -92,7 +92,7 @@
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated
 **Dependencies:** [CONF-DECODE-003](#conf-decode-003), [CONF-DECODE-004](#conf-decode-004), [TECH-DECODE-001](technical.md#tech-decode-001)
-**Description:** The CI (`.github/workflows/main.yml`) lints `tinyDecoders` with the `.rbd/config.yml` linter command (build trees `*/.pio` skipped), runs the `tinyDecoders` native tests, and builds the `promini` and `promicro` environments. It publishes the promini firmware (`.hex`, `.elf`) as `firmware-tinydecoders` and the promicro one as `firmware-tinydecoders-promicro`, and the release waits for these builds. The PlatformIO cache follows changes to `tinyDecoders/platformio.ini`. The pre-commit clang-format hook covers `tinyDecoders/src`, `tinyDecoders/lib` and `tinyDecoders/test`. Verified by a green CI run.
+**Description:** The CI (`.github/workflows/main.yml`) lints `tinyDecoders` with the `.rbd/config.yml` linter command (build trees `*/.pio` skipped), runs the `tinyDecoders` native tests, and builds the `promini` and `promicro` environments. It publishes the promicro firmware (`.hex`, `.elf`, production) as `firmware-tinydecoders-promicro` and the promini one as `firmware-tinydecoders-promini`, and the release waits for these builds. The PlatformIO cache follows changes to `tinyDecoders/platformio.ini`. The pre-commit clang-format hook covers `tinyDecoders/src`, `tinyDecoders/lib` and `tinyDecoders/test`. Verified by a green CI run.
 
 ### CONF-DECODE-003
 **Title:** tinyDecoders promicro environment builds the receiver for the Pro Micro 5 V / 16 MHz breadboard prototype
