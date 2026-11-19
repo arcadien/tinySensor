@@ -1,4 +1,4 @@
-# 3D-printed enclosures — TinySensor v2.2
+# 3D-printed enclosures — TinySensor v3.0
 
 Parametric OpenSCAD models (tested with OpenSCAD 2021.01). Target material: **PETG**.
 
@@ -12,7 +12,8 @@ Each folder holds its `.scad` files, renders and Orca projects. Shared at the ro
 
 | File | Content |
 |---|---|
-| `pcb.scad` | Simplified v2.2 board and 18650 cell (renders only) |
+| `pcb.scad` | Simplified boards for the renders: v3.0 (`pcb_v3`, cut `pcb_v3_cropped`), v2.2 kept for the boards still in use (`pcb_v22`, `pcb_v22_cropped`) |
+| `cell_cradle.scad` | 18650 cell and tab-contact parameters, cradle cut modules: shared by the mushroom cradle and the wall-box trough |
 | `euro2.scad` | €2 coin for render scale |
 | `update_3mf.py`, `export.sh` | Update of every Orca project from the models (below) |
 
@@ -49,6 +50,6 @@ Every part is exported in its print orientation and prints **without support**, 
 
 ## Power (to decide)
 
-- No 18650 holder on the v3.0 PCB (removed): an 18650 goes through a TP4056 to J13 (JST-XH), as in the mushroom.
+- No 18650 holder on the v3.0 PCB (removed); J13 "RAW IN" is a 2-pin JST-XH. Wall box: a bare 18650 in a trough on the base floor, wired to J13, no charger (the cell is taken out to charge); with a BME280 the TPS63020 module on J2 is required. Mushroom: the 18650 goes through a TP4056 to J13.
 - Available AA/AAA holders: to fit in the bay or in a separate compartment (dimensions to provide).
 - Solar: the TP4056 (linear charger, no MPPT) is a poor fit; prefer a CN3065 or a CN3791.

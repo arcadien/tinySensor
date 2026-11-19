@@ -54,8 +54,8 @@ Fit only what your build uses. Wire colours follow the project convention (see `
 | Source | Where | Wires |
 |---|---|---|
 | 2×AA or 2×AAA | J13 (1 = +, 2 = GND) | red / black, JST-XH (F) at the board end |
-| 18650 | through a TP4056 module, OUT+ / OUT− to J13 (mushroom: W5/W6 of the harness); the board has no 18650 holder | red / black |
-| CR2032 | J10 | no wire; on RAW_IN, behind Q1; C1 = 220 µF low-leakage |
+| 18650 | J13; the board has no 18650 holder. Mushroom: through a TP4056 module, OUT+ / OUT− to J13 (W5/W6 of the harness). Wall box: straight from the trough tab contacts to J13, no charger (W1/W2, [`enclosing/basic/README.md`](../../enclosing/basic/README.md)). With a BME280: TPS63020 module on J2 | red / black, JST-XH (F) at the board end |
+| CR2032 | J10 | no wire; on RAW_IN, behind Q1; C1 = 220 µF low-leakage. J10 is on the part removed when the board is cut at x = 147 (wall box, mushroom) |
 
 Never fit two sources together: they are in parallel and charge each other.
 
@@ -79,7 +79,7 @@ Never fit two sources together: they are in parallel and charge each other.
 | VCC | 2 | white |
 | DATA | 3 (PB0) | green |
 
-Module pin orders differ (an FS1000A is DATA/VCC/GND): match the pins by name, not by position. Antenna: 17.3 cm straight wire (λ/4 at 433.92 MHz) on the module ANT pad.
+Module pin orders differ (an FS1000A is DATA/VCC/GND): match the pins by name, not by position. Antenna: 17.3 cm straight wire (λ/4 at 433.92 MHz) on the module ANT pad. In the wall box the module lies flat (J1 pins bent 90°, module over J5/J8, antenna along the wall); standing, the box must be 7.8 mm deeper (`radio_flat = false`).
 
 ### BME280 / BMP280 on J3 (or J14)
 

@@ -8,9 +8,9 @@ In the complete system, data is processed by a [Domoticz](https://domoticz.com/)
 Data decoding is also tested using [RTL_433](https://github.com/merbanan/rtl_433) decoder.
 Large part of the code, especially wireless encoders, are unit-tested.
 
-| TinySensor v3.0 board (cuttable) | Mushroom casing | tinyDecoders receiver |
-|:---:|:---:|:---:|
-| ![TinySensor v3.0 board, isometric view](docs/img/tinysensor_v3_iso.png) | <a href="enclosing/mushroom/README.md"><img src="enclosing/mushroom/rendu_champignon_eclate.png" height="280" alt="Mushroom casing, exploded view"></a> | ![tinyDecoders receiver enclosure, isometric view](docs/img/receiver_iso.png) |
+| TinySensor v3.0 board (cuttable) | Mushroom casing | Wall box | tinyDecoders receiver |
+|:---:|:---:|:---:|:---:|
+| ![TinySensor v3.0 board, isometric view](docs/img/tinysensor_v3_iso.png) | <a href="enclosing/mushroom/README.md"><img src="enclosing/mushroom/rendu_champignon_eclate.png" height="280" alt="Mushroom casing, exploded view"></a> | <a href="enclosing/basic/README.md"><img src="docs/img/wallbox_exploded_iso.png" height="280" alt="Wall box with 18650 trough, exploded view"></a> | ![tinyDecoders receiver enclosure, isometric view](docs/img/receiver_iso.png) |
 
 [![TinySensor v3.0 schematic](docs/img/tinysensor_v3_schematic.svg)](docs/img/tinysensor_v3_schematic.svg)
 
@@ -95,7 +95,7 @@ Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be o
 
 * KiCad board (v3.0) in `hardware/tinysensor/`: [schematic (PDF)](hardware/tinysensor/tinysensor_schematic.pdf), regenerated with `kicad-cli sch export pdf -o hardware/tinysensor/tinysensor_schematic.pdf hardware/tinysensor/tinysensor.kicad_sch`; with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
 * OpenSCAD enclosures (wall box, radiation shield, mushroom, receiver) in `enclosing/`, see [enclosing/README.md](enclosing/README.md).
-* Header renders: `kicad-cli pcb render --rotate '-45,0,45' --quality high --width 1400 --height 800 --zoom 1.22 -o docs/img/tinysensor_v3_iso.png hardware/tinysensor/tinysensor.kicad_pcb` and, from `enclosing/receiver/`, `openscad --preview -D 'part="assembly"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/receiver_iso.png receiver.scad`. Schematic image: `kicad-cli sch export svg --exclude-drawing-sheet -o <dir> hardware/tinysensor/tinysensor.kicad_sch`, then a white background rectangle is added so it stays readable in dark mode.
+* Header renders: `kicad-cli pcb render --rotate '-45,0,45' --quality high --width 1400 --height 800 --zoom 1.22 -o docs/img/tinysensor_v3_iso.png hardware/tinysensor/tinysensor.kicad_pcb` and, from `enclosing/receiver/`, `openscad --preview -D 'part="assembly"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/receiver_iso.png receiver.scad`; from `enclosing/basic/`, `openscad --preview -D 'part="exploded"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/wallbox_exploded_iso.png tinysensor_box.scad`. Schematic image: `kicad-cli sch export svg --exclude-drawing-sheet -o <dir> hardware/tinysensor/tinysensor.kicad_sch`, then a white background rectangle is added so it stays readable in dark mode.
 
 ## Hardware options
 
