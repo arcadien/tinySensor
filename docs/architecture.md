@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-19 — [TECH-HAL-004](../requirements/technical.md#tech-hal-004) (PA5 input buffer off, JP6 delivered open)_
+_Last updated: 2026-11-19 — [PLAT-POWER-007](../requirements/platform.md#plat-power-007) (v2.2 checked on the bench)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -258,7 +258,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [PLAT-POWER-004](../requirements/platform.md#plat-power-004) | `main.cpp` | TRANSMIT_WITH_LED macro wraps every Send(): LedOn() before, LedOff() + Delay30ms() after |
 | [PLAT-POWER-005](../requirements/platform.md#plat-power-005) | `Attiny84aHal` / `platformio.ini` | ATtiny84a at F_CPU = 1 000 000 L; all HAL delay methods calibrated to this frequency |
 | [PLAT-POWER-006](../requirements/platform.md#plat-power-006) | `Attiny84aHal` | `USE_SWITCHED_5V`: PORTB.2 cleared in constructor; PowerOnSensors() sets DDRB.2 (PB2 low, PNP on), PowerOffSensors() clears it (high impedance) |
-| [PLAT-POWER-007](../requirements/platform.md#plat-power-007) | board (`hardware/tinysensor`) | Board requirement, every board; on v3.0: I2C pull-ups R3 (SCL, PA4) / R2 (SDA, PA6), sensor side of the R9/R10 330 Ω series resistors and 1-Wire pull-up R6 (PA3), 4.7 kΩ to SENSOR_VCC (PA2); buses unpowered while PA2 is low. Firmware side: no internal pull-up on these pins ([TECH-HAL-004](../requirements/technical.md#tech-hal-004)); PA3 released after the DS18B20 read ([TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001), draft, not implemented) |
+| [PLAT-POWER-007](../requirements/platform.md#plat-power-007) | board (`hardware/tinysensor`) | Board requirement, every board (v2.2 checked on the bench 2026-11-19: pull-ups to SENSOR_VCC); on v3.0: I2C pull-ups R3 (SCL, PA4) / R2 (SDA, PA6), sensor side of the R9/R10 330 Ω series resistors and 1-Wire pull-up R6 (PA3), 4.7 kΩ to SENSOR_VCC (PA2); buses unpowered while PA2 is low. Firmware side: no internal pull-up on these pins ([TECH-HAL-004](../requirements/technical.md#tech-hal-004)); PA3 released after the DS18B20 read ([TECH-SENSOR-001](../requirements/technical.md#tech-sensor-001), draft, not implemented) |
 | [TECH-HAL-007](../requirements/technical.md#tech-hal-007) | `Attiny84aHal` / `main.cpp` | `Hibernate(s)` → static `sleep(s)` (`s >> 3`, min 1; saves/restores PRR, DDRA, DDRB, PORTA, PORTB; `sleep_bod_disable()` before each `sleep_cpu()`); `PowerOnSensors`/`PowerOffSensors` drive PA2 (and `DDRB.2` with `USE_SWITCHED_5V`); `TRANSMIT_WITH_LED(code)` = `LedOn`, code, `LedOff`, `Delay30ms` |
 | [TECH-DECODE-001](../requirements/technical.md#tech-decode-001) | `Loopback` (tinyDecoders) | Orders tokens to level/duration pulses with nominal durations (A 400, D 512, P 1024, T 560, U 1120, Q 8960, R 4500, G 40000 µs); native env of tinyDecoders builds repo `lib/` |
 | [FUNC-DECODE-001](../requirements/functional.md#func-decode-001) | `X10Decoder` (tinyDecoders) | `Feed(high, durationUs)` true on the last bit of a valid RFXmeter frame; windows nominal ±30 % (Q 8960 / R 4500, bit 560 high, 560 or 1680 low); `Address()` = b0, `Value()` = (b4<<16)\|(b2<<8)\|b3 |
