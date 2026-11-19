@@ -89,7 +89,7 @@ Non-technical requirements (`FUNC`, `UI`, `CONF`, `PLAT`) describe what can be o
 
 ## Hardware and enclosure
 
-* KiCad board (v3.0) in `hardware/tinysensor/`, with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
+* KiCad board (v3.0) in `hardware/tinysensor/`: [schematic (PDF)](hardware/tinysensor/tinysensor_schematic.pdf), regenerated with `kicad-cli sch export pdf -o hardware/tinysensor/tinysensor_schematic.pdf hardware/tinysensor/tinysensor.kicad_sch`; with its [backlog](hardware/tinysensor/BACKLOG.md) and a [rework guide for v2.2 boards](hardware/tinysensor/REWORK_v2.2.md).
 * OpenSCAD enclosures (wall box, radiation shield, mushroom, receiver) in `enclosing/`, see [enclosing/README.md](enclosing/README.md).
 * Header renders: `kicad-cli pcb render --rotate '-45,0,45' --quality high --width 1400 --height 800 --zoom 1.22 -o docs/img/tinysensor_v3_iso.png hardware/tinysensor/tinysensor.kicad_pcb` and, from `enclosing/receiver/`, `openscad --preview -D 'part="assembly"' --camera=0,0,0,55,0,25,0 --viewall --autocenter --projection=o --imgsize=1400,1000 -o ../../docs/img/receiver_iso.png receiver.scad`.
 

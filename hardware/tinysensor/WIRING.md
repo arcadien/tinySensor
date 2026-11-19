@@ -2,7 +2,7 @@
 
 This is the **tinySensor emitter** board (ATtiny84A, `hardware/tinysensor/`). The 433 MHz receiver with OLED is documented separately in [`hardware/receiver/WIRING.md`](../receiver/WIRING.md).
 
-Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, netlist exported with `kicad-cli`). v2.2 boards share the same connectors, with the defects and the fixes listed in [`REWORK_v2.2.md`](REWORK_v2.2.md). Build flags per sensor unit: [`docs/environments.md`](../../docs/environments.md). Parts list: [`BOM.md`](BOM.md).
+Pin numbers come from the v3.0 schematic (`tinysensor.kicad_sch`, [PDF export](tinysensor_schematic.pdf), netlist exported with `kicad-cli`). v2.2 boards share the same connectors, with the defects and the fixes listed in [`REWORK_v2.2.md`](REWORK_v2.2.md). Build flags per sensor unit: [`docs/environments.md`](../../docs/environments.md). Parts list: [`BOM.md`](BOM.md).
 
 ![tinySensor connectors and modules](wiring.svg)
 
