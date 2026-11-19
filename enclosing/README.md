@@ -5,6 +5,7 @@ Parametric OpenSCAD models (tested with OpenSCAD 2021.01). Target material: **PE
 | Folder | Content |
 |---|---|
 | [`basic/`](basic/README.md) | Wall box, radiation shield, table stand, overview `assembly.scad` |
+| [`flat/`](flat/README.md) | Flat indoor box for the CR2032 build, BME280 or DS18B20 soldered to the board (draft, not printed) |
 | [`mushroom/`](mushroom/README.md) | Decorative fly-agaric enclosure, its wiring plan generator `harness.py` |
 | [`receiver/`](receiver/README.md) | Desk enclosure of the tinyDecoders receiver |
 

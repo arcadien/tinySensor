@@ -132,7 +132,9 @@ module jst_eh6() {
   pins([for (i = [0 : 5]) [i * 2.5, 0]], 3);
 }
 
-module pcb_v3(jst_eh = true) {   // jst_eh = false: J3 "I2C" and J14 JSTs not fitted (mushroom)
+// jst_eh = false: J3 "I2C" and J14 JSTs not fitted (mushroom)
+// bare = true: CR2032 build of flat/flat_box.scad, no J2 module, J13 JST, pin headers nor J6 ISP header
+module pcb_v3(jst_eh = true, bare = false) {
   color("#1f5a32") difference() {
     cube([v3_w, v3_h, pcb_t]);
     for (h = v3_holes) translate([h[0] - v3_origin[0], v3_h - (h[1] - v3_origin[1]), -1]) cylinder(d = 3.2, h = pcb_t + 2);
@@ -143,7 +145,7 @@ module pcb_v3(jst_eh = true) {   // jst_eh = false: J3 "I2C" and J14 JSTs not fi
     color("Silver") translate([0, 0, 1]) cylinder(d = 20, h = 3.2);
   }
   // DC/DC module (TPS63020 board) on the J2 header, as on v2.2: removable to reach the MH2 screw
-  kfp3(149.31016, 57.86032) {
+  if (!bare) kfp3(149.31016, 57.86032) {
     pins([[0, 0], [2.54, 0], [5.08, 0]], 6);
     color("#1a4fa0") translate([-1.96, -1.54, 5]) cube([19, 9, 1.2]);
     color("#333") translate([9.04, 0.46, 6.2]) cube([5, 5, 3]);
@@ -176,15 +178,15 @@ module pcb_v3(jst_eh = true) {   // jst_eh = false: J3 "I2C" and J14 JSTs not fi
   }
   // connectors
   if (jst_eh) for (y = [83.91032, 77.11032]) kfp3(199.35016, y, 180) jst_eh6();
-  kfp3(151.62516, 79.86032, -90) {   // J13 "RAW IN", JST-XH B2B-XH-A vertical
+  if (!bare) kfp3(151.62516, 79.86032, -90) {   // J13 "RAW IN", JST-XH B2B-XH-A vertical
     color("WhiteSmoke") translate([-2.45, -3.4, 0]) cube([7.4, 5.75, 7]);
     pins([[0, 0], [2.5, 0]], 3);
   }
-  kfp3(164, 85) {
+  if (!bare) kfp3(164, 85) {
     color("#222") translate([3.18, 0.9, 0]) cube([7.62, 5.08, 2.5]);
     pins([for (x = [4.45428, 6.99428, 9.53428], y = [2.17488, 4.71488]) [x, y]]);
   }
-  for (h = [[192.99936, 56.86044, 0, 3], [174.17796, 58.59272, -90, 3], [188.9506, 51.181, 90, 3],
+  if (!bare) for (h = [[192.99936, 56.86044, 0, 3], [174.17796, 58.59272, -90, 3], [188.9506, 51.181, 90, 3],
             [199.75576, 66.79692, 0, 2], [201.35016, 57.57032, 0, 2], [171.20616, 73.68032, -90, 2]])
     kfp3(h[0], h[1], h[2]) header(h[3]);
 }
