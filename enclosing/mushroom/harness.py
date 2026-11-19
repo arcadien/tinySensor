@@ -25,19 +25,19 @@ WIRES = [
      "tpB+",  "TP4056 B+", "soudé", 100, "22–24 AWG"),
     ("W4", "noir",  "B−",    "jstM2", "JST-XH 2p, broche 2", "JST-XH M (côté chapeau)",
      "tpB-",  "TP4056 B−", "soudé", 100, "22–24 AWG"),
-    ("W5", "rouge", "+BATT", "tpO+",  "TP4056 OUT+", "soudé",
-     "j13-1", "J13 « RAW IN » borne 1 (+BATT)", "bornier à vis", 70, "22–24 AWG"),
+    ("W5", "rouge", "RAW_IN", "tpO+",  "TP4056 OUT+", "soudé",
+     "j13-1", "J13 « RAW IN » broche 1 (RAW_IN)", "JST-XH (F)", 70, "22–24 AWG"),
     ("W6", "noir",  "GND",   "tpO-",  "TP4056 OUT−", "soudé",
-     "j13-2", "J13 borne 2 (GND)", "bornier à vis", 70, "22–24 AWG"),
+     "j13-2", "J13 broche 2 (GND)", "JST-XH (F)", 70, "22–24 AWG"),
 ]
 COLORS = {"rouge": (200, 20, 20), "noir": (0, 0, 0)}
 
 NOTES = [
     "Capteur BME280 : aucun fil. Sa barrette mâle 6 broches s'enfiche directement dans une barrette "
     "femelle 2,54 mm de 6 positions soudée sous la carte, dans l'empreinte « I2C » (1 SENSOR_VCC, "
-    "2 GND, 3 SCL, 4 SDA, 5 non connectée, 6 GND). Le breakout pend parallèle à la carte, 42 mm au-dessus du disque à lamelles.",
+    "2 GND, 3 SCL, 4 SDA, 5 non connectée, 6 SDO via JP6). Le breakout pend parallèle à la carte, 42 mm au-dessus du disque à lamelles.",
     "CSB tombe sur la broche 5 (non connectée : le tirage du breakout garde le mode I2C), SDO sur la 6 "
-    "(GND : adresse 0x76, celle du firmware).",
+    "(JP6 ponté 1-2 → GND : adresse 0x76, celle du firmware ; JP6 est livré ouvert).",
     "Pas de résistance dans le faisceau : les tirages I2C R2/R3 (4,7 kΩ) sont sur la carte.",
     "La paire JST-XH se loge dans la chambre, juste au-dessus du berceau : on soulève "
     "le chapeau (≈ 50 mm) pour la débrancher par le trou central du disque.",
@@ -47,7 +47,7 @@ NOTES = [
     "L'antenne monte droit depuis le module radio (J1 « RADIO ») dans le haut de la gourde, dont le sommet est dans l'axe de J1.",
     "Repérage au TP4056 : W3/W4 (B+/B−) et W5/W6 (OUT+/OUT−) sont deux paires rouge/noir soudées côte à côte. "
     "1 bague de gaine thermo à chaque bout de W3/W4, 2 bagues sur W5/W6 : une inversion contourne la protection DW01.",
-    "JST-XH pré-sertis : vérifier que le rouge est sur la broche 1 des deux côtés (M et F) avant de souder.",
+    "JST-XH pré-sertis : vérifier que le rouge est sur la broche 1 des deux côtés (M et F) avant de souder, et sur le boîtier W5/W6 branché dans J13.",
     "Section 22–24 AWG (plus petit numéro = plus gros fil ; le JST-XH accepte 22 à 28 AWG) : W1-W4 portent le courant de charge (1 A par défaut).",
     "Longueurs : calculées sur le modèle, chapeau soulevé de 50 mm, avec 15 à 25 mm de marge ; à ajuster au montage.",
 ]
@@ -151,19 +151,18 @@ def diagram(doc):
         d.text((x + (22 if anc == "lm" else -22), y), name, font=F_SMALL, fill="white", anchor=anc)
         pts[key] = (x, y)
 
-    # v2.2 board and J13 terminal block
+    # v3.0 board and J13 (JST-XH 2-pin header)
     bx0, bx1 = 2020, W - M - 30
     d.rectangle([bx0, P1 - 120, bx1, P2 + 160], outline="black", width=4, fill=(30, 110, 60))
-    d.text(((bx0 + bx1) / 2, P2 + 140), "carte v2.2", font=F_BOLD, fill="white", anchor="mb")
+    d.text(((bx0 + bx1) / 2, P2 + 140), "carte v3.0", font=F_BOLD, fill="white", anchor="mb")
     jx0, jx1 = bx0 + 10, bx0 + 110
-    d.rectangle([jx0, P1 - 60, jx1, P2 + 60], outline="black", width=4, fill=(40, 120, 200))
+    d.rectangle([jx0, P1 - 60, jx1, P2 + 60], outline="black", width=4, fill=(240, 240, 235))   # JST-XH housing
     for i, y in enumerate((P1, P2), 1):
-        d.ellipse([jx0 + 25, y - 25, jx0 + 75, y + 25], fill=(200, 200, 200), outline="black", width=3)
-        d.line([jx0 + 33, y - 17, jx0 + 67, y + 17], fill="black", width=4)
+        d.rectangle([jx0 + 38, y - 12, jx0 + 62, y + 12], fill=(210, 170, 60), outline="black", width=2)
         d.text((jx1 + 15, y), str(i), font=F_BOLD, fill="white", anchor="lm")
         pts["j13-%d" % i] = (jx0, y)
     d.text(((bx0 + bx1) / 2, P1 - 70), "J13 RAW IN", font=F_BOLD, fill="white", anchor="mb")
-    d.text(((bx0 + bx1) / 2, P2 + 175), "J13 : bornier à vis 5,08", font=F_SMALL, fill="black", anchor="mt")
+    d.text((bx1, P2 + 175), "J13 : JST-XH 2 broches, pas 2,50", font=F_SMALL, fill="black", anchor="rt")  # right-aligned: stays inside the cap frame
 
     # wires + labels
     for wid, col, sig, a, _, a_end, b, _, b_end, length, awg in WIRES:
@@ -239,7 +238,7 @@ def main():
     d = doc.d
     d.text((M, doc.y), "Faisceau accu — TinySensor « champignon »", font=F_TITLE, fill="black")
     doc.y += lh(F_TITLE)
-    d.text((M, doc.y), "18650 (berceau) → JST-XH → TP4056 → J13 « RAW IN » de la carte v2.2 ; "
+    d.text((M, doc.y), "18650 (berceau) → JST-XH → TP4056 → J13 « RAW IN » de la carte v3.0 ; "
            "rouge = +, noir = −", font=F_TXT, fill=(70, 70, 70))
     doc.y += lh(F_TXT) + 40
     diagram(doc)

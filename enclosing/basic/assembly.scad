@@ -11,7 +11,7 @@ use <sensor_shield.scad>
 use <stand.scad>
 use <../euro2.scad>
 // parameters copied from both files
-cav_w = 95.98; reach = 22.4; base_h = 2.4 + 5 + 1.6 + 25 + 2;
+cav_w = 96.81; reach = 22.4; base_h = 2.4 + 5 + 1.6 + 25 + 2;
 gap = 10; plate_t = 1.6; n = 4; stack_h = (n + 1) * gap + plate_t;
 wall_y = 40; clip_t = 4; clip_gap = 6;
 cx = cav_w / 2; oy = -reach - (stack_h + clip_gap); W = wall_y + clip_t;

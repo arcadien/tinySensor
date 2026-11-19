@@ -18,9 +18,9 @@
 part = "assembly"; // [mast, foot, assembly]
 
 /* [Copied from tinysensor_box.scad / sensor_shield.scad — keep aligned] */
-cav_w = 95.98;
-ear_top = 102.154;              // end of the top tab (cav_h + wall + flange + ear_l)
-ear_holes_y = [96.154, -16.4];  // axes of the tabs' wall screw holes
+cav_w = 96.81;
+ear_top = 100.334;              // end of the top tab (cav_h + wall + flange + ear_l)
+ear_holes_y = [94.334, -16.4];  // axes of the tabs' wall screw holes
 shield_bottom = -80;            // underside of the clipped shield (oy of assembly.scad)
 shield_front = 72;              // front of the shield (wall_y + clip_t + plate_d / 2)
 

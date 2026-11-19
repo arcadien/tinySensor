@@ -7,7 +7,7 @@
 //   cap     : gourd-shaped dome (sketch), wavy edge; 3 inner corbels above the disc, M3 screws from below (self-tapping)
 //   gills   : gill disc = underside of the cap; vent slots, USB socket, sleeve on the stem
 //   chassis : frame printed upright, screwed onto the disc: ventilated lower chamber (BME280 plugged under the board),
-//             cut-down v2.2 board, charge module slide (socket facing down, between two gills)
+//             cut v3.0 board (M3 screws), charge module slide (socket facing down, between two gills)
 //   stem    : hollow stem (upright 18650 cradle), lobed, bulbous base, cup ring, tilted tenon at the top
 //   ground  : 1 mm disc under the stem, with grass tufts (stability + decoration)
 //   cradle  : removable cell cradle, slid into the stem; two tab contacts (cell not soldered)
@@ -41,20 +41,22 @@
 
 use <../pcb.scad>
 use <../euro2.scad>
+include <../cell_cradle.scad>   // cell, tab contacts, end grooves (shared with the wall box trough)
 
 /* [Render] */
 part = "assembly"; // [assembly, exploded, cradle_view, section, sensor, console, cap, gills, chassis, stem, ground, cradle, plug, dots]
 explode = 40;      // exploded view: gap between levels (part = "exploded")
 cap_color = "#c0392b"; // render only (fly agaric; panther cap: "#8b5a2b")
 
-/* [Cut-down v2.2 board — see pcb.scad] */
-crop_w = 60.02;
-crop_h = 38.974;
+/* [v3.0 board cut at x = 147 — see pcb.scad (pcb_v3_cropped)] */
+crop_w = 60.85016;   // x 147 -> 207.85016 (measured 60.72 from the dotted line)
+crop_h = 39.334;     // full board height
 pcb_t = 1.6;
-pcb_holes = [[26.1243, -15.6770], [-25.9902, -15.5130]];   // MH5, top MH1, board turned 180°
-k_crop_c = [177.01008, 67.51316];  // centre of the cut (KiCad): local = [x - cx, cy - y]
+k_crop_c = [177.42508, 67.69332];  // centre of the cut (KiCad): local = [x - cx, cy - y]
+k_pcb_holes = [[151.35016, 52.11032], [203, 52]];   // MH2, MH1 (M3), KiCad
 i2c_k = [199.35016, 77.11032];     // "I2C" footprint (JST-EH 6, 2.50 pitch), pin 1; pins towards +X once the board is turned
 radio_k = [192.99936, 56.86044];   // J1 "RADIO" (1x3, 433 MHz module standing): the dome top is right above it
+boss = 8;          // chassis corner bosses (board screws on the -Y corners, chassis screws underneath)
 
 /* [Cap] */
 cap_tilt = 6;      // tilt of the cap on the stem
@@ -64,6 +66,9 @@ cap_H = 190;       // dome height above its edge
 cap_shape = [[0.86, 0], [0.97, 0.08], [1, 0.16], [0.93, 0.29], [0.68, 0.41], [0.45, 0.5], [0.38, 0.58],
              [0.43, 0.71], [0.5, 0.84], [0.45, 0.94], [0.25, 0.99], [0, 1]];
 cap_lean = 8;      // the top leans towards -X (against cap_tilt), pivoting where the cap narrows
+// J1 in the cap frame on the cut v2.2 board, where the dome top was designed: the v3.0 J1 is 0.45 mm away,
+// kept so that the dome (printed) and its dots stay unchanged
+cap_j1 = [-15.98928, -10.65272];
 cap_neck = [0.4, 0.62];  // neck: offset (computed to put the top over J1) and lean set in between these two heights (/ cap_H)
 cap_t = 2.4;
 vent_d = 5;        // vent: from the top of the ceiling to the flank, going down (rain stays out, warm air leaves)
@@ -146,22 +151,10 @@ ring_rise = 0.75;  // edge rise / overhang (< 1: 45° at most, printable without
 ring_amp = 0.35;   // cup waviness (overhang and rise)
 ring_rot = 131;    // phase of the cup waves (°): its widest dip under the USB socket (+X), to plug the cable
 
-/* [Cell cradle] */
-cell_d = 18.6;     // bare 18650, flat top (protected / button top: up to ~70)
-cell_l = 65;
+/* [Cell cradle — cell and contacts in ../cell_cradle.scad] */
 cr_fit = 0.8;      // cradle / bore clearance (radial; 0.4: 1st print barely went in)
 cell_up = 2;       // cell offset towards the open top (thickness of the floor under the cell)
-bt_w = 13;         // tab contacts: 13 x 11 plate, 3 x 7 tab (drilled)
-bt_h = 11;
-bt_t = 0.4;        // sheet thickness (to measure)
-bt_tab = [3, 7];   // tab up (open side), wire soldered on it
 cr_win = [3, 15, 4, 14];  // lightening: windows per flank (count, length, bottom, top above the flat); floor and rails kept
-wire_notch = [4.5, 3];  // wire pass above each end: width, depth below the top of the cell
-bt_dimple = 1.8;   // bump of the "+" contact
-spring_c = 4;      // spring of the "−" contact compressed (10.7 free)
-bt_slot = 0.8;     // plate groove
-bt_sink = 1.5;     // groove deeper than the plate (1st print: tab 1 mm above the edge; +0.4 for cr_fit 0.8)
-bt_win = 10.5;     // window in front of the plate (room for the spring / the bump)
 
 /* [Ground] */
 ground_t = 1;      // disc under the stem (separate part, to glue)
@@ -181,7 +174,6 @@ ns = 72;           // stem, ring: angular step
 /* [Screws] */
 m3_pilot = 2.5;
 m3_clear = 3.4;
-m25_pilot = 2.1;
 
 $fn = 64;
 eps = 0.01;
@@ -189,15 +181,18 @@ eps = 0.01;
 // ---------- derived ----------
 bore_z = foot_t + ballast_h + bore_r + 2;   // bottom of the cradle bore, above the cone
 ballast_top = foot_t + ballast_h + bore_r;  // top of the ceiling
+pcb_holes = [for (h = k_pcb_holes) [k_crop_c[0] - h[0], h[1] - k_crop_c[1]]];   // board turned 180°
 ix = crop_w / 2 + 0.4;              // inner half-dimensions of the chassis
 iy = crop_h / 2 + 0.4;
 ch_z = disc_t;                      // bottom of the chassis
+assert(min([for (h = pcb_holes) min(ix - abs(h[0]), abs(h[0]) - (ix - boss), iy - abs(h[1]), abs(h[1]) - (iy - boss)) - m3_pilot / 2]) >= 1,
+       "Board screw too close to the edge of its corner boss");
 pcb_z = ch_z + chamber_h + pcb_lift;  // underside of the board
 ch_h = pcb_z - ch_z;
 // board turned 180° in the chassis: J1 moves to the -X side, under the leaning top of the cap
 i2c_p1 = [k_crop_c[0] - i2c_k[0], i2c_k[1] - k_crop_c[1]];   // pin 1 in the cap frame
 radio_p = [k_crop_c[0] - radio_k[0], radio_k[1] - k_crop_c[1]];   // J1, same (= dome frame in XY)
-cap_top = [(radio_p[0] + (1 - cap_neck[0]) * cap_H * sin(cap_lean)) / cos(cap_lean), radio_p[1]];   // offset putting the leaning top over J1
+cap_top = [(cap_j1[0] + (1 - cap_neck[0]) * cap_H * sin(cap_lean)) / cos(cap_lean), cap_j1[1]];   // offset putting the leaning top over J1
 bme_z = pcb_z - fh_h - mh_h;        // top of the breakout
 
 module cap_xf() { translate([0, 0, stem_h]) rotate([0, cap_tilt, 0]) translate([0, 0, collar_h]) children(); }
@@ -412,16 +407,16 @@ module chassis() {
       // board ledges along the long sides (45° chamfer underneath)
       for (s = [-1, 1]) mirror([0, s < 0 ? 1 : 0, 0]) translate([-ix, iy, ch_h])
         rotate([0, 90, 0]) linear_extrude(2 * ix) polygon([[0, 0], [1.5, 0], [0, -1.5]]);
-      // corners: chassis screw bosses (bottom); top corners solid up to the board (board M2.5 screws)
-      for (p = ch_screws) translate([p[0] > 0 ? ix - 7 : -ix, p[1] > 0 ? iy - 7 : -iy, 0])
-        cube([7, 7, p[1] < 0 ? ch_h : chamber_h - 1]);
+      // corners: chassis screw bosses (bottom); -Y corners solid up to the board (board M3 screws)
+      for (p = ch_screws) translate([p[0] > 0 ? ix - boss : -ix, p[1] > 0 ? iy - boss : -iy, 0])
+        cube([boss, boss, p[1] < 0 ? ch_h : chamber_h - 1]);
       // charge module slide, held by two arms on the +X wall
       translate([chg_x, 0, 0]) rails(chg_w, chg_t, 20);
       for (s = [-1, 1]) translate([ix + ch_wall - eps, s > 0 ? chg_w / 2 - 1 : -chg_w / 2 - 2, 0]) cube([chg_x - 1.5 - ix - ch_wall + 2 * eps, 3, 20]);
     }
     // chassis screws (from below) and board screws (from above)
     for (p = ch_screws) translate([p[0], p[1], -eps]) cylinder(d = m3_pilot, h = 7);
-    for (h = pcb_holes) translate([h[0], h[1], ch_h - 6]) cylinder(d = m25_pilot, h = 6 + eps);
+    for (h = pcb_holes) translate([h[0], h[1], ch_h - 6]) cylinder(d = m3_pilot, h = 6 + eps);
   }
 }
 
@@ -518,9 +513,6 @@ cr_r = bore_r - cr_fit;
 cr_flat = cr_r * cos(45);           // flat: flanks at 45° at most
 cr_ax = cr_flat;                    // bore axis above the bed
 cl_z = cr_ax + cell_up;             // cell axis
-cr_end = 1.6 + bt_slot + 1;         // end: outer wall + groove + inner wall
-cell_x0 = 1.6 + bt_t + spring_c;    // bottom of the cell (spring compressed)
-cr_len = cell_x0 + cell_l + bt_dimple + bt_t + 1.6;
 // top of the cradle below the breakout, in the cap frame (Z = 0 under the disc)
 cradle_top = (bore_z + cr_len - stem_h) * cos(cap_tilt) + cr_r * sin(cap_tilt) - collar_h;
 wire_gap = bme_z - bme_t - cradle_top;   // room for the JST-XH pair
@@ -531,28 +523,14 @@ module cradle() {
       rotate([0, 90, 0]) translate([-cr_ax, 0, 0]) cylinder(r = cr_r, h = cr_len, $fn = 96);
       translate([0, -cr_r, 0]) cube([cr_len, 2 * cr_r, 2 * cr_r]);
     }
-    // cell bore, insertion slot above its axis (+1 mm)
-    translate([cr_end, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d + 0.6, h = cr_len - 2 * cr_end);
-    translate([cr_end, -cell_d / 2 - 0.3, cl_z + 1]) cube([cr_len - 2 * cr_end, cell_d + 0.6, 2 * cr_r]);
-    for (s = [0, 1]) {
-      xs = s == 0 ? 1.6 : cr_len - 1.6 - bt_slot;   // groove
-      // plate groove, open at the top (tab up)
-      translate([xs, -(bt_w + 0.6) / 2, cl_z - bt_h / 2 - bt_sink]) cube([bt_slot, bt_w + 0.6, 2 * cr_r]);
-      // wire notch next to the tab, through the end walls, up to above the cell:
-      // the wire then runs along the cell in the top slot (≈3 mm below the bore)
-      translate([s == 0 ? -1 : cr_len - cr_end - 1, -(bt_w + 0.6) / 2 - wire_notch[0] + 2, cl_z + cell_d / 2 - wire_notch[1]])
-        cube([cr_end + 2, wire_notch[0], 2 * cr_r]);
-      // window in front of the plate
-      translate([s == 0 ? xs + bt_slot - eps : cr_len - cr_end - eps, -bt_win / 2, cl_z - bt_h / 2]) cube([1 + 2 * eps, bt_win, 2 * cr_r]);
-    }
+    // cell bore + slot, contact grooves, wire notches (the wire then runs along the cell in the top slot)
+    cradle_cell_cuts(cl_z, 2 * cr_r);
     // through windows in the flanks, under the lips holding the cell (top bridged)
     let(n = cr_win[0], l = cr_win[1], post = (cr_len - 2 * cr_end - 8 - n * l) / (n - 1))
       for (i = [0 : n - 1]) translate([cr_end + 4 + i * (l + post), -cr_r - 1, cr_win[2]]) cube([l, 2 * cr_r + 2, cr_win[3] - cr_win[2]]);
     // pull hole in the top end (string, knot inside)
     translate([cr_len - cr_end - 1, 0, cl_z + cell_d / 2 + 0.8]) rotate([0, 90, 0]) cylinder(d = 2.5, h = cr_end + 2, $fn = 24);
-    // polarity, engraved on the end faces
-    for (m = [[0, "-"], [1, "+"]]) translate([m[0] * cr_len, 0, cl_z]) mirror([m[0], 0, 0]) rotate([90, 0, -90])
-      translate([0, 0, -0.6]) linear_extrude(1) text(m[1], size = 8, halign = "center", valign = "center");
+    cradle_polarity(cl_z);
   }
 }
 // fitted cradle: bottom of the cradle on the floor of the bore, flat face towards -X (open side towards +X)
@@ -599,11 +577,7 @@ module ground() {
 // ---------- mock-ups ----------
 module cradle_cell() {   // cradle, cell, contacts (print frame)
   color("#303030") cradle();
-  color("#2e6fd8") translate([cell_x0, 0, cl_z]) rotate([0, 90, 0]) cylinder(d = cell_d, h = cell_l);
-  color("Silver") for (x = [1.6, cr_len - 1.6 - bt_t]) translate([x, -bt_w / 2, cl_z - bt_h / 2 - bt_sink]) {
-    cube([bt_t, bt_w, bt_h]);
-    translate([0, (bt_w - bt_tab[0]) / 2, bt_h]) cube([bt_t, bt_tab[0], bt_tab[1]]);
-  }
+  cradle_cell_mock(cl_z);
 }
 module charger() { color("#1a4fa0") translate([0, -chg_w / 2, 0]) cube([chg_t, chg_w, chg_l]); color("Silver") translate([chg_t, -4, 0]) cube([3, 8, 5.5]); }
 // BME280 plugged under the board (frame: pin 1 of the I2C footprint, underside of the board):
@@ -639,7 +613,7 @@ module assembled() {
     color("Beige") chassis();
     translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
     translate([chg_x + 0.15, 0, ch_z]) charger();
-    translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
+    translate([0, 0, pcb_z]) rotate(180) pcb_v3_cropped(jst_eh = false);
     translate([0, 0, -cap_skirt]) {
       color(cap_color) cap();
       color("White") for (i = [0 : len(dots) - 1]) dot_shell(i);
@@ -658,7 +632,7 @@ module exploded(e = explode) {
     translate([0, 0, e]) { color("Beige") chassis(); translate([chg_x + 0.15, 0, ch_z]) charger(); }
     translate([0, 0, 2 * e + 15]) {
       translate([i2c_p1[0], i2c_p1[1], pcb_z]) rotate(180) bme();
-      translate([0, 0, pcb_z]) rotate(180) pcb_v22_cropped(jst_eh = false);
+      translate([0, 0, pcb_z]) rotate(180) pcb_v3_cropped(jst_eh = false);
     }
     translate([0, 0, 5 * e + 60 - cap_skirt]) {
       color(cap_color) cap();
