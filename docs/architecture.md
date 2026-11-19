@@ -1,6 +1,6 @@
 # Architecture
 
-_Last updated: 2026-11-19 — [CONF-DECODE-002](../requirements/configuration.md#conf-decode-002) (artifact names)_
+_Last updated: 2026-11-19 — [CONF-DECODE-003](../requirements/configuration.md#conf-decode-003) (Pro Micro is the production receiver)_
 
 Emitter firmware paths (`src/`, `include/`, `test/`, `platformio.ini`) are relative to `emitter/`; `lib/` is at the repository root, shared with `tinyDecoders/`.
 
@@ -104,7 +104,7 @@ Design choices:
 
 ## tinyDecoders sub-project
 
-`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED; it also writes one RFLink line per frame on `Serial` (a debug UART on the Pro Mini, USB CDC on the Pro Micro). The production receiver is a standalone viewer on a Pro Mini 5 V / 16 MHz (ATmega328P); the Pro Micro (ATmega32U4) is a breadboard prototype. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
+`tinyDecoders/` (repository root) is a separate PlatformIO project: a 433 MHz receiver that decodes the frames tinySensors emit and shows them on an OLED; it also writes one RFLink line per frame on `Serial` (a debug UART on the Pro Mini, USB CDC on the Pro Micro). The production receiver is a standalone viewer on a Pro Micro 5 V / 16 MHz (ATmega32U4), powered, flashed and read over its native USB; the Pro Mini 5 V / 16 MHz (ATmega328P) is the alternative build. It has its own `platformio.ini`. The dependency goes one way only: tinyDecoders tests build the repository `lib/` encoders and `TestHal_`; the tinySensor firmware never depends on tinyDecoders.
 
 ```mermaid
 graph TD
@@ -170,7 +170,7 @@ The RFLink line output is selected by the compile-time constant `ReceiverHal::Ha
 
 Drawing one cell per `Poll()` (≈ 1 ms of I2C for an 8x16 cell, ≈ 2 ms for a 16x32 cell) keeps the pulse latency well within the 64-pulse ring buffer.
 
-Firmware build: env `promini` of `tinyDecoders/platformio.ini` is the production receiver, a Pro Mini 5 V / 16 MHz (ATmega328P, 2 KB SRAM) with the Arduino framework ([CONF-DECODE-004](../requirements/configuration.md#conf-decode-004)). Env `promicro` builds the Pro Micro 5 V / 16 MHz (ATmega32U4) breadboard prototype ([CONF-DECODE-003](../requirements/configuration.md#conf-decode-003)). Both build the same `src/main.cpp`, the only file in `src/`, so no `build_src_filter`. CI lints `tinyDecoders/`, runs its `native` tests and builds `promini` and `promicro`. The pre-commit clang-format hook covers `tinyDecoders/{src,lib,test}` ([CONF-DECODE-002](../requirements/configuration.md#conf-decode-002)).
+Firmware build: env `promicro` of `tinyDecoders/platformio.ini` is the production receiver, a Pro Micro 5 V / 16 MHz (ATmega32U4) with the Arduino framework ([CONF-DECODE-003](../requirements/configuration.md#conf-decode-003)). Env `promini` builds the alternative Pro Mini 5 V / 16 MHz (ATmega328P, 2 KB SRAM), flashed through a USB-serial adapter ([CONF-DECODE-004](../requirements/configuration.md#conf-decode-004)). Both build the same `src/main.cpp`, the only file in `src/`, so no `build_src_filter`. CI lints `tinyDecoders/`, runs its `native` tests and builds `promini` and `promicro`. The pre-commit clang-format hook covers `tinyDecoders/{src,lib,test}` ([CONF-DECODE-002](../requirements/configuration.md#conf-decode-002)).
 
 `SourceTable::Update` takes each concrete decoder by `const&` and `FormatPage` takes a `SourceRecord`: no interface is introduced. Decoders and the table are pure value logic with no hardware behind them, already substitutable in tests through loopback pulses, and the project avoids virtual calls (same choice as `EnvironmentEncoder`). RAM: the table is 16 × 18 B = 288 B on AVR (8 on native, `kCapacity` chosen by `AVR`); the 128×32 OLED is written cell by cell from the page texts (6 + 4 + 4 characters), never from a 512 B framebuffer; 16x32 glyphs are doubled on the fly from the 8x16 font, one 16-byte page at a time.
 
@@ -281,6 +281,6 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [PLAT-DECODE-003](../requirements/platform.md#plat-decode-003) | `AtmegaReceiverHal` (tinyDecoders) | ICP1 = PB0/D8 (ATmega328P) or PD4 (ATmega32U4), input without pull-up (RXB6 at 5 V); Timer1 normal mode, prescaler 8, ICNC1, edge toggled per capture; duration ticks/2, 65535 after a full period; 64-pulse ring, drop when full; overflow adds 32768 µs; atomic reads |
 | [PLAT-DECODE-004](../requirements/platform.md#plat-decode-004) | `AtmegaReceiverHal` (tinyDecoders) | `Wire` at 400 kHz, SDA/SCL A4/A5 (Pro Mini) or D2/D3 (Pro Micro); SSD1306 0x3C, fixed init sequence, 4 × 128 zero bytes, `AF`; `DrawChar` = pages `page` and `page+1`, column col·8, 8 glyph bytes each; `DrawBigChar` = pages 0–3, column col·16, 16 bytes of `ReadBigGlyphPage` each; no level shifting (OLED module regulated, 5 V I2C) |
 | [PLAT-DECODE-005](../requirements/platform.md#plat-decode-005) | `AtmegaReceiverHal` (tinyDecoders) | `Serial.begin(57600)`: debug UART TX D1 (Pro Mini, adapter optional) or USB CDC (Pro Micro); `WriteLine` drops the line when `availableForWrite() < len + 2`, else line + `\r\n`; no `operator bool`; input ignored, no banner |
-| [CONF-DECODE-003](../requirements/configuration.md#conf-decode-003) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promicro` (breadboard prototype): `sparkfun_promicro16`, Arduino framework, avr109 upload; shared `src/main.cpp`, no `build_src_filter` |
+| [CONF-DECODE-003](../requirements/configuration.md#conf-decode-003) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promicro` (production): `sparkfun_promicro16`, Arduino framework, avr109 upload; shared `src/main.cpp`, no `build_src_filter` |
 | [CONF-DECODE-004](../requirements/configuration.md#conf-decode-004) | `tinyDecoders/platformio.ini` / `tinyDecoders/src/main.cpp` | env `promini` (production): `pro16MHzatmega328`, Arduino framework, default `arduino` upload through a USB-serial adapter, no `lib_deps`, `-DSERIAL_TX_BUFFER_SIZE=128`, USB 5 V on VCC; shared `src/main.cpp` |
 | [TECH-DECODE-005](../requirements/technical.md#tech-decode-005) | `tinyDecoders/src/main.cpp` / `AtmegaReceiverHal` (tinyDecoders) | file-scope `hal` + `receiver`, `setup()` → `Init()`, `loop()` → `Poll()`; `ISR(TIMER1_CAPT_vect)`, `ISR(TIMER1_OVF_vect)`, `ATOMIC_BLOCK` reads; `Wire` at 400 kHz; `Serial.begin(57600)`, `availableForWrite()` guard, no `operator bool` |
