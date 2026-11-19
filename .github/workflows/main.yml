@@ -42,7 +42,7 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Run native tests
-        run: pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_lacrosse -e native_cycle_x10
+        run: pio test -d emitter -e native_debug -e native_cycle_oregon -e native_cycle_oregon_vcc -e native_cycle_oregon_divider -e native_cycle_lacrosse -e native_cycle_x10
       - name: Run tinyDecoders native tests
         run: pio test -d tinyDecoders -e native
       - name: Compile-fail checks
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST]
+        env: [S_02, S_03, S_04, S_05, robot, devmodule, SOLAR_TEST, mushroom]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
