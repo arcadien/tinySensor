@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # 433 MHz receiver firmware: promini (production), promicro (prototype)
+  # 433 MHz receiver firmware: promicro (production), promini (alternative build)
   build-tinydecoders:
     name: Build tinyDecoders
     runs-on: ubuntu-latest
@@ -111,7 +111,7 @@ jobs:
       - name: Upload promini firmware artifact
         uses: actions/upload-artifact@v7
         with:
-          name: firmware-tinydecoders
+          name: firmware-tinydecoders-promini
           path: |
             tinyDecoders/.pio/build/promini/firmware.hex
             tinyDecoders/.pio/build/promini/firmware.elf
@@ -146,7 +146,6 @@ jobs:
           mkdir release
           for d in firmware/*/; do
             n=$(basename "$d"); n=${n#firmware-}
-            [ "$n" = tinydecoders ] && n=tinydecoders-promini
             for f in "$d"*; do cp "$f" "release/$n.${f##*.}"; done
           done
           ls release
