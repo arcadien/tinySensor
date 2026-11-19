@@ -150,7 +150,8 @@ static int CountTransmissions(const std::vector<unsigned char> &orders) {
 
 #if defined(EXPECT_ENVIRONMENT_FRAME)
 // Orders of one environment encoder Send(), without the LED/delay wrapper.
-static std::vector<unsigned char> EnvironmentFrameOrders() {
+static std::vector<unsigned char> EnvironmentFrameOrders(
+    bool lowBattery = false) {
   CycleSpyHal ref;
   Measurements m;
   m.SetTemperature(0);  // native BMx280 stub values
@@ -162,7 +163,7 @@ static std::vector<unsigned char> EnvironmentFrameOrders() {
 #endif
   EnvironmentEncoder environment(&ref);
   ConfigureEncoder(environment);
-  ApplyMeasurements(environment, m, false);
+  ApplyMeasurements(environment, m, lowBattery);
   environment.Send();
   return ref.Orders;
 }
@@ -408,6 +409,32 @@ void Expect_i2c_derived_when_an_i2c_sensor_is_selected() {
   TEST_ASSERT_TRUE(!needsI2c || hasI2c);
 }
 
+// @req FUNC-BATTERY-003
+void Expect_low_battery_cycle_sends_only_the_environment_frame_with_its_flag() {
+  // Given: VCC ~1.1 V and no battery reading, below LOW_BATTERY_VOLTAGE on
+  // every variant (battery = VCC or divided PA1 reading)
+  CycleSpyHal spy;
+  spy.rawInternal11ref = 1023;
+  spy.rawBattery = 0;
+
+  // When
+  runCycle(&spy);
+
+  // Then: no X10 meter frame, no luminosity frame, only the environment
+  // frame (with the battery-low flag on Oregon; Lacrosse has none)
+#if defined(EXPECT_ENVIRONMENT_FRAME)
+  TEST_ASSERT_EQUAL_INT(ENVIRONMENT_FRAMES, CountTransmissions(spy.Orders));
+  std::vector<unsigned char> frame = EnvironmentFrameOrders(true);
+  TEST_ASSERT_TRUE(std::search(spy.Orders.begin(), spy.Orders.end(),
+                               frame.begin(), frame.end()) != spy.Orders.end());
+#if defined(USE_OREGON)
+  TEST_ASSERT_FALSE(frame == EnvironmentFrameOrders(false));
+#endif
+#else
+  TEST_ASSERT_EQUAL_INT(0, CountTransmissions(spy.Orders));
+#endif
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -424,6 +451,8 @@ int main(int, char **) {
   RUN_TEST(Expect_environment_frame_sent_twice_with_a_silence_one_frame_long);
 #endif
   RUN_TEST(Expect_i2c_derived_when_an_i2c_sensor_is_selected);
+  RUN_TEST(
+      Expect_low_battery_cycle_sends_only_the_environment_frame_with_its_flag);
   return UNITY_END();
 }
 
