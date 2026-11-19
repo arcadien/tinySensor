@@ -8,9 +8,9 @@ In the complete system, data is processed by a [Domoticz](https://domoticz.com/)
 Data decoding is also tested using [RTL_433](https://github.com/merbanan/rtl_433) decoder.
 Large part of the code, especially wireless encoders, are unit-tested.
 
-| TinySensor v3.0 board (cuttable) | tinyDecoders receiver |
-|:---:|:---:|
-| ![TinySensor v3.0 board, isometric view](docs/img/tinysensor_v3_iso.png) | ![tinyDecoders receiver enclosure, isometric view](docs/img/receiver_iso.png) |
+| TinySensor v3.0 board (cuttable) | Mushroom casing | tinyDecoders receiver |
+|:---:|:---:|:---:|
+| ![TinySensor v3.0 board, isometric view](docs/img/tinysensor_v3_iso.png) | <a href="enclosing/mushroom/README.md"><img src="enclosing/mushroom/rendu_champignon_eclate.png" height="280" alt="Mushroom casing, exploded view"></a> | ![tinyDecoders receiver enclosure, isometric view](docs/img/receiver_iso.png) |
 
 [![TinySensor v3.0 schematic](docs/img/tinysensor_v3_schematic.svg)](docs/img/tinysensor_v3_schematic.svg)
 
