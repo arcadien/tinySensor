@@ -10,9 +10,9 @@ Parts:
 
 - **Dome** (`cap`) ~161 × 129 × 190 mm (ellipse of mean max radius 72): **gourd** after a sketch, meridian `cap_shape` (wide bottom, waist Ø~55, top Ø~72), **elliptic outline** (see below). From the narrowing zone (`cap_neck`) up, the top leans 8° towards −X (`cap_lean`, against the cap tilt), to bring the mass back over the stem axis: top ~6 mm from the stem axis on the +X side. The board is turned 180° in the chassis so that the top stays right above **J1 "RADIO"** (433 MHz module), along the board axis (`cap_top` is computed), 126 mm above the board. **Vent** Ø5 (`vent_d`): from the ceiling tip, it runs ~15° down towards the rear flank (+Y), with no dots around it; rain stays out and warm air leaves, opposite J1. The bulk of the bottom goes the other way, towards the flare of the stem. Inner ceiling conical at 45°, no support: the top is solid under the tip. The wall keeps curving inwards down to its edge (no vertical skirt, no outer lip, ~27° from the vertical at the bed); the edge drops 4 mm below the gill disc (hides its edge) and thickens inwards to **6 mm wide** (`rim_w`, 45° blend): ~2.4 times more bed contact for a 190 mm high part, same silhouette. Fixing: 3 **corbels** on the inner wall, just above the disc (`corbel_*`: 12 mm wide, 10 mm straight face then 45° chamfer to the wall, Ø2.5 × 8 pilot hole); the disc rises into the dome and is pulled against them by 3 M3 × 10 self-tapping screws from below, heads under the disc between the gills. ![Section through a corbel](rendu_champignon_console.png)
 - **Gills** (`gills`): disc closing the underside of the cap, following the narrowest outline of the dome skirt minus 0.4 mm (`disc_fit`) to clear the skirt, 48 radial blades deeper near the stem (`gill_depth`), cut short around the 7 screws driven from below (dome and chassis, `screw_clear` 4.5 mm for the head and the screwdriver) instead of being left out, vent slots between the blades under the sensor chamber (including on the +X side, at 0° and ±7.5°, flush with the +X edge of the BME280), USB socket opening, central sleeve taking the stem tenon. Prints blades up.
-- **Chassis** (`chassis`) screwed onto the disc (4 M3 screws from below), printed upright:
+- **Chassis** (`chassis`) 65.65 × 44.13 × 54.6 mm outside, 8 mm corner bosses, screwed onto the disc (4 M3 screws from below), printed upright:
   - lower chamber (48 mm, `chamber_h`), ventilated: **BME280 plugged under the board**, no wire or slide (see *Wiring*); the breakout hangs parallel to the board, sensor towards the disc, 42 mm above the disc; chassis windows at the top of the chamber (`win_h`), so that air flows past the sensor. The top of the cradle goes 30 mm through the disc (Ø37 hole, `disc_bore`) and ends 12 mm below the breakout, with the JST-XH pair;
-  - **cut-down v2.2 board** (60 × 39 mm, along the silkscreen dotted lines x = 147 / y = 87, without the 18650 and CR2032 holders): turned 180° (J1 on −X), 2 M2.5 screws (MH5, top MH1), the bottom edge rests on a ledge. The cell arrives on **J13 "RAW IN"** (`+BATT`/`GND`);
+  - **cut v3.0 board** (60.85 × 39.33 mm, cut along the silkscreen dotted line x = 147, without the CR2032 area; the v3.0 board has no 18650 holder): turned 180° (J1 on −X), 2 M3 screws (MH2, MH1), the bottom edge rests on a ledge. The cell arrives on **J13 "RAW IN"** (JST-XH 2-pin, pin 1 `RAW_IN`, pin 2 `GND`). The dome top stays where it was designed over J1 of the cut v2.2 board (`cap_j1`, 0.45 mm from the v3.0 J1), so the dome and the dots are unchanged;
   - slide for the TP4056 **charge module**, upright on the side, **micro-USB facing down** between two gills.
 - **Stem** (`stem`) as a **fly-agaric pear** after a sketch: slender, lopsided bulbous base (~80 × 75 mm at the belly; on the table 19 mm from the axis on the short side, 37 mm on the long side), neck Ø36 to 44 below the ring, Ø45 under the sleeve, hollow (Ø29.4) to the top: takes the cell cradle, inserted from the top, sitting 72 mm above the ground. Underneath, a closed **ballast chamber** following the stem shape (2.4 mm wall, `ballast_wall`, bulb included), conical ceiling at 45° up to 70 mm (`ballast_h`): ~146 cm³, i.e. ~690 g of 1 mm steel shot if filled. Filled through a Ø15 hole in the bottom, closed by a **plug** (`plug`, Ø21 × 1.2 mm) glued into a counterbore, flush with the underside. Same spirit as the cap:
   - lobed shaft (`stem_amp`, lobes twisting along the shaft, `stem_twist`); the deformation only adds material, the wall around the cell never gets thinner, and it fades out under the sleeve;
@@ -44,9 +44,9 @@ The top-view outline is a convex ellipse, `ell_ratio` = minor / major axis (0.8 
 ![Exploded view: ground and stem, cell, gill disc, chassis and charger, board + BME280, dome](rendu_champignon_eclate.png)
 
 0. Stem upside down: shot through the bottom hole (a few drops of glue to freeze it and stop it rattling), plug glued into its counterbore (epoxy), then stem glued onto the ground.
-1. Board: solder a **2.54 mm 1×6 female header** on the **underside** of the board, in the "I2C" footprint; the "I2C" and "I2C_SPI" JSTs are not fitted (see *Wiring*). On the breakout, solder its male header so that the chip faces the disc once plugged in (breakout body towards the inside of the chassis, to check for your breakout model).
-2. Charge module: solder W5 / W6 (red / black, 70 mm, OUT+ / OUT− soldered → J13 screw terminal). W3 / W4 are soldered in step 3: the JST-XH housing (~7.4 × 5.8 mm) barely fits through the window of the +Y wall (8 mm wide), so the bare end is passed through.
-3. Board screwed on top of the chassis; chassis upside down, BME280 plugged in from the open underside of the chassis. Charge module in its slide; W5 / W6 (red / black, 70 mm, TP4056 soldered → screw terminal) screwed into J13; W3 / W4 (red / black, 100 mm, TP4056 soldered → JST-XH M): JST-XH M already crimped, chamber side; push the other, bare end from inside the chamber outwards through the +Y wall window (x = 22), then solder it to B+ / B− of the TP4056; the JST side stays in the chamber, above the cradle. Finally chassis onto the gill disc (4 screws from below).
+1. Board: solder a **2.54 mm 1×6 female header** on the **underside** of the board, in the J3 footprint ("I2C 1"); the J3 and J14 JSTs are not fitted (see *Wiring*). Bridge **JP6 1-2** (solder jumper under the board, delivered open): SDO to GND, address 0x76. On the breakout, solder its male header so that the chip faces the disc once plugged in (breakout body towards the inside of the chassis, to check for your breakout model).
+2. Charge module: solder W5 / W6 (red / black, 70 mm, OUT+ / OUT− soldered → JST-XH (F) 2p for J13). W3 / W4 are soldered in step 3: the JST-XH housing (~7.4 × 5.8 mm) barely fits through the window of the +Y wall (8 mm wide), so the bare end is passed through.
+3. Board screwed on top of the chassis; chassis upside down, BME280 plugged in from the open underside of the chassis. Charge module in its slide; W5 / W6 (red / black, 70 mm, TP4056 soldered → JST-XH F) plugged into J13; W3 / W4 (red / black, 100 mm, TP4056 soldered → JST-XH M): JST-XH M already crimped, chamber side; push the other, bare end from inside the chamber outwards through the +Y wall window (x = 22), then solder it to B+ / B− of the TP4056; the JST side stays in the chamber, above the cradle. Finally chassis onto the gill disc (4 screws from below).
 4. Gill disc pushed into the dome up to the 3 corbels, 3 M3 × 10 self-tapping screws from below (heads between the gills). The 433 MHz module antenna goes straight up from J1 into the top of the gourd.
 5. Cradle: contacts in the grooves, W1 red 40 mm / W2 black 110 mm soldered at the top of the tabs, out through the end notches (W2 runs along the cell in the top slot) → JST-XH F; cell clipped in; cradle into the stem from the top (spring at the bottom).
 6. Cap held ~50 mm above the stem, plug the JST-XH pair, tuck it into the chamber just above the cradle (central hole of the disc), cap fitted on the tenon, radial screw.
@@ -56,11 +56,11 @@ The top-view outline is a convex ellipse, `ell_ratio` = minor / major axis (0.8 
 
 Printable A4 plan: [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (generated by `python3 harness.py`). Board connectors: [`hardware/tinysensor/WIRING.md`](../../hardware/tinysensor/WIRING.md).
 
-**Sensor, no wire.** The BME280 breakout (6 pins VIN GND SCL SDA CSB SDO, ~15 × 11 mm) plugs its male header straight into a **2.54 mm 1×6 female header** soldered under the board, in the "I2C" footprint (6-pin JST-EH, 2.50 pitch: 0.2 mm cumulated offset over 6 positions, absorbed by the play of the Ø0.95 holes).
+**Sensor, no wire.** The BME280 breakout (6 pins VIN GND SCL SDA CSB SDO, ~15 × 11 mm) plugs its male header straight into a **2.54 mm 1×6 female header** soldered under the board, in the J3 ("I2C 1") footprint (6-pin JST-EH, 2.50 pitch: 0.2 mm cumulated offset over 6 positions, absorbed by the play of the Ø0.95 holes).
 
 - Positions 1-4 = SENSOR_VCC, GND, SCL, SDA = VIN, GND, SCL, SDA.
 - Position 5 not connected = CSB: the breakout pull-up keeps the I2C mode.
-- Position 6 = GND = SDO: address **0x76**, the one the firmware expects.
+- Position 6 = SDO, through JP6: bridge **JP6 1-2** (GND) for address **0x76**, the one the firmware expects. JP6 is delivered open on v3.0.
 - I2C pull-ups R2 / R3 4.7 kΩ on the board (board end); the breakout carries its own too.
 - Height: 8.5 mm female + 2.5 mm male plastic; the breakout is above the cradle, 42 mm from the disc; air rises through the disc slots, flows past the sensor, leaves through the high chassis windows and the top vent.
 
@@ -74,19 +74,21 @@ Printable A4 plan: [`faisceau_champignon.pdf`](faisceau_champignon.pdf) (generat
 | W2 | black | B− | cradle "−" tab (bottom, runs along the cell in the top slot) — soldered | JST-XH 2p, pin 2 — JST-XH F | 110 mm | 22–24 AWG |
 | W3 | red | B+ | JST-XH 2p pin 1 — JST-XH M (cap side) | TP4056 B+ — soldered | 100 mm | 22–24 AWG |
 | W4 | black | B− | JST-XH 2p pin 2 — JST-XH M | TP4056 B− — soldered | 100 mm | 22–24 AWG |
-| W5 | red | +BATT | TP4056 OUT+ — soldered | J13 "RAW IN" terminal 1 (+BATT) — screw terminal | 70 mm | 22–24 AWG |
-| W6 | black | GND | TP4056 OUT− — soldered | J13 terminal 2 (GND) — screw terminal | 70 mm | 22–24 AWG |
+| W5 | red | RAW_IN | TP4056 OUT+ — soldered | J13 "RAW IN" pin 1 (RAW_IN) — JST-XH F | 70 mm | 22–24 AWG |
+| W6 | black | GND | TP4056 OUT− — soldered | J13 pin 2 (GND) — JST-XH F | 70 mm | 22–24 AWG |
 
 Routing:
 
 - JST-XH pair (W1 red 40 mm / W2 black 110 mm, tabs soldered → JST-XH F; W3 / W4 red / black 100 mm, JST-XH M → TP4056 soldered) in the chamber, just above the cradle: lifting the cap by about 50 mm is enough to unplug it through the central hole of the disc.
 - W3 / W4 (red / black, 100 mm, JST-XH M → TP4056 soldered) leave the sensor chamber through the +Y wall window (x = 22) and reach the TP4056 (module **with protection**: B+ / B− / OUT+ / OUT− pads, micro-USB facing down).
-- W5 / W6 (red / black, 70 mm, soldered → screw terminal) run over the +X wall of the chassis to J13, close by.
+- W5 / W6 (red / black, 70 mm, soldered → JST-XH F) run over the +X wall of the chassis to J13, close by.
 - Marking: W3 / W4 and W5 / W6 are two red / black pairs soldered side by side on the TP4056. **1 ring** of heat-shrink at each end of W3 / W4, **2 rings** on W5 / W6: swapping B± / OUT± bypasses the DW01 protection.
-- Pre-crimped JST-XH: check red = pin 1 on both sides (M and F) before soldering.
+- Pre-crimped JST-XH: check red = pin 1 on both sides (M and F) before soldering, and on the W5 / W6 housing plugged into J13.
 - 433 MHz antenna: straight, from J1 "RADIO" into the top of the gourd (top right above J1).
 
 ## Open points
+
+- Board change v2.2 → v3.0: the **chassis** and the **gill disc** must be reprinted: the chassis grows to 65.65 × 44.13 mm for the M3 board screws, and its 4 screws into the disc move by 0.4 / 0.18 mm. The dome and the dots are unchanged.
 
 - Cradle (1st print): barely fitted into the stem and the "−" wire did not pass (notch cut with pliers). Fixed for the next print: `cr_fit` clearance 0.8, deeper contact grooves (`bt_sink`), tabs up, wire notch at each end (`wire_notch`).
 - Dimensions to measure: contacts (sheet thickness `bt_t`, compressed spring `spring_c`), position of the charge module socket (`usb_cut`), BME breakout (`bme_w/d`, `bme_edge`, female header height `fh_h`).
@@ -97,7 +99,7 @@ Routing:
 
 | Use | Qty | Reference |
 |---|---|---|
-| board → chassis | 2 | M2.5 × 6 self-tapping |
+| board → chassis | 2 | M3 × 6 self-tapping |
 | chassis → disc | 4 | M3 × 8 self-tapping |
 | dome → disc | 3 | M3 × 10 self-tapping (in the corbels) |
 | cap → stem | 1 | M3 × 8 self-tapping (radial) |
@@ -108,6 +110,7 @@ Routing:
 |---|---|---|
 | Sensor → board (PCB underside, I2C footprint) | 1 | 2.54 mm 1×6 female header |
 | Cell ↔ cap | 1 | 2-pin JST-XH male / female pair (pre-crimped or to crimp) |
+| TP4056 → J13 | 1 | 2-pin JST-XH female housing + 2 crimp contacts |
 | Charging | 1 | micro-USB TP4056 module with protection (DW01), 28.7 × 17.15 × 0.9 mm |
 | Cradle | 1 set | tab contacts ("−" spring + "+" bump, 13 × 11 mm plate) |
 | Harness W1-W6 | ~0.5 m | 22–24 AWG red and black wire |

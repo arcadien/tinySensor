@@ -122,8 +122,8 @@ Still stamped **Rev 3.0** (no v3.0 board was ordered yet). Edited by hand in KiC
 
 - **ISP with the BME280 plugged in:** R9 and R10 (330 Ω) in series between the MCU and J3/J14. Nets `SCK`/`MOSI` on the MCU side (U1, ISP J6), `SCL`/`SDA` on the sensor side (J3, J14, pull-ups R2/R3). To check on a built board: flashing with the BME280 in place, and I2C readings over several cycles.
 - **R7:** the RESET pull-up is now **R5** (10 kΩ); R9 is the SCL series resistor.
-- **P2 / R2:** BT1 18650 holder removed (cost, not used); an 18650 comes in through a TP4056 on J13. J13 is a JST-XH B2B-XH-A instead of a screw terminal. J10 (CR2032) now sits on RAW_IN, behind the Q1 reverse-polarity MOSFET.
+- **P2 / R2:** BT1 18650 holder removed (cost, not used); an 18650 comes in on J13, through a TP4056 (mushroom) or straight from the wall-box trough. J13 is a JST-XH B2B-XH-A instead of a screw terminal. J10 (CR2032) now sits on RAW_IN, behind the Q1 reverse-polarity MOSFET.
 - **P13 / R8:** C4 is the 100 nF ceramic at the radio (replaces C8). C1 takes a Ø6.3 mm footprint: 10 µF for 2×AA/AAA or 18650 + TPS63020, 220 µF low-leakage for a CR2032 (R8). C7 (PA1 divider) is film: no tantalum, its leakage would bias the 500 kΩ source.
 - **R11/P4:** JP6 is delivered open: bridge 1-2 (I2C, 0x76) or 2-3 (SPI) at assembly.
 - **P8 / P11:** THT footprints for R1, R5, R7–R10, C6, C7; D1 is a 5 mm LED; J10 a Keystone 1060; three M3 holes MH1–MH3 (were six M2.5).
-- **Enclosures:** `enclosing/pcb.scad` still models v2.2. The wall box and the mushroom need a v3.0 model; cut at x = 147, v3.0 would be about 60.85 × 39.33 mm against 60.02 × 38.97 mm for the cut v2.2 in the mushroom foot.
+- **Enclosures:** done in the models, not printed yet. `enclosing/pcb.scad` models v3.0 (`pcb_v3`, cut `pcb_v3_cropped`; v2.2 kept). Wall box: full v3.0 board on 3 M3 standoffs, 18650 trough on the floor (tab contacts, 2 zip ties, wires to J13 JST-XH). Mushroom: cut v3.0 board (60.85 × 39.33 mm, was 60.02 × 38.97 for the cut v2.2), 2 M3 screws; chassis and gill disc to reprint.

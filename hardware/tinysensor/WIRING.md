@@ -54,7 +54,7 @@ Fit only what your build uses. Wire colours follow the project convention (see `
 | Source | Where | Wires |
 |---|---|---|
 | 2×AA or 2×AAA | J13 (1 = +, 2 = GND) | red / black, JST-XH (F) at the board end |
-| 18650 | through a TP4056 module, OUT+ / OUT− to J13 (mushroom: W5/W6 of the harness); the board has no 18650 holder | red / black |
+| 18650 | J13; the board has no 18650 holder. Mushroom: through a TP4056 module, OUT+ / OUT− to J13 (W5/W6 of the harness). Wall box: straight from the trough tab contacts to J13, no charger (W1/W2, [`enclosing/basic/README.md`](../../enclosing/basic/README.md)). With a BME280: TPS63020 module on J2 | red / black, JST-XH (F) at the board end |
 | CR2032 | J10 | no wire; on RAW_IN, behind Q1; C1 = 220 µF low-leakage |
 
 Never fit two sources together: they are in parallel and charge each other.
