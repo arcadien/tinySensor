@@ -1,6 +1,7 @@
 /*
- * Integration tests for TECH-DECODE-001: OrdersToPulses() converts TestHal_
- * Orders tokens into {high, durationUs} pulses.
+ * Integration tests of the loopback helper the decoder tests (FUNC-DECODE-001
+ * to 005) rely on: OrdersToPulses() converts TestHal_ Orders tokens into {high,
+ * durationUs} pulses.
  *
  * Production side must provide (code-builder handles this), in
  * tinyDecoders/lib/Loopback/Loopback.h:
@@ -62,7 +63,7 @@ static const TokenCase tokenCases[] = {
     {"saturates-at-65535", "HGG", {{true, 65535}}},
 };
 
-// @req TECH-DECODE-001
+// @req FUNC-DECODE-001
 void OrdersToPulses_converts_hand_written_tokens() {
   for (const TokenCase &c : tokenCases) {
     // Given
@@ -76,7 +77,7 @@ void OrdersToPulses_converts_hand_written_tokens() {
   }
 }
 
-// @req TECH-DECODE-001
+// @req FUNC-DECODE-001
 void OrdersToPulses_loops_back_x10_rfxmeter_frame() {
   // Given
   // one repeat of a 6-byte RFXmeter frame: preamble (2 pulses), 48 data bits

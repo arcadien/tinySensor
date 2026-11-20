@@ -1,7 +1,7 @@
 /*
  * Integration tests for FUNC-DECODE-008: FormatRflink renders the frame a
  * decoder just completed as one RFLink text line. Frames come from the
- * repository encoders through OrdersToPulses (TECH-DECODE-001).
+ * repository encoders through OrdersToPulses.
  *
  * Production side must provide (code-builder handles this), in
  * tinyDecoders/lib/RflinkFormatter/RflinkFormatter.h (<stdint.h> and the

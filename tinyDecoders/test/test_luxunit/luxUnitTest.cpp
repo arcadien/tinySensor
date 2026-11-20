@@ -1,6 +1,7 @@
 /*
- * Integration tests for TECH-DECODE-004: the lux unit cell is the character
- * LuxUnit, shared by FormatPage and the Font8x16 readers.
+ * Integration tests for the lux unit cell (UI-DECODE-001, UI-DECODE-003): the
+ * lux unit cell is the character LuxUnit, shared by FormatPage and the Font8x16
+ * readers.
  *
  * Production side must provide (code-builder handles this), in
  * tinyDecoders/lib/Font8x16/Font8x16.h:
@@ -31,7 +32,7 @@ static const LuxCase luxCases[] = {
     {"five-digits", 65535, 5},
 };
 
-// @req TECH-DECODE-004
+// @req UI-DECODE-001
 void FormatPage_puts_LuxUnit_right_after_the_lux_digits() {
   TEST_ASSERT_EQUAL_CHAR('\x01', LuxUnit);
   for (const LuxCase &c : luxCases) {
@@ -48,7 +49,7 @@ void FormatPage_puts_LuxUnit_right_after_the_lux_digits() {
   }
 }
 
-// @req TECH-DECODE-004
+// @req UI-DECODE-003
 void ReadGlyph_gives_a_blank_glyph_for_LuxUnit() {
   // Given
   static const uint8_t blank[16] = {0};
