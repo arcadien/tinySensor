@@ -218,6 +218,7 @@
 **Title:** DS18B20 temperature read on the 1-Wire bus on PA3, in whole °C
 **Status:** draft
 **Dependencies:** —
+**Verification:** build — the AVR builds with `USE_DS18B20`; no sensor unit in service uses a DS18B20
 **Description:** On a build with a DS18B20, each cycle starts a conversion on the 1-Wire bus on PA3, waits 1 s and reads the result. The temperature in whole °C is the raw 1/16 °C value divided by 16. A result of 0 °C counts as a failed read, so a real 0 °C is lost too: the cycle then has no temperature and, with no other temperature source, sends no environment frame ([CONF-BUILD-002](configuration.md#conf-build-002)). Wrapper details: [TECH-SENSOR-001](technical.md#tech-sensor-001).
 
 ### FUNC-SENSOR-003

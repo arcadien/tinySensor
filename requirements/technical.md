@@ -8,6 +8,7 @@
 **Title:** Protocol and sensor logic reach the hardware only through the injected `Hal` interface, so it runs unchanged in native builds
 **Status:** validated
 **Dependencies:** —
+**Verification:** inspection — outside the AVR implementation of `Hal`, the only AVR registers in `emitter/` and `lib/` are the addresses passed to the ds18b20 driver
 **Description:** Every protocol encoder, and every sensor wrapper that times or drives I/O itself, gets the hardware through a `Hal*` given at construction (`lib/hal/Hal.h`, the boundary between the firmware logic and the MCU) and touches no AVR register. So the same code builds and runs on the host against a test double. Only the AVR implementation of `Hal` accesses registers, with one exception: register addresses passed as arguments to a third-party bus driver. A wrapper whose I/O is entirely done by a third-party driver takes no `Hal*`.
 
 ---
@@ -104,6 +105,7 @@
 **Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
 **Status:** draft
 **Dependencies:** [PLAT-DEBUG-001](platform.md#plat-debug-001)
+**Verification:** build — no environment sets `USE_SERIAL_LOG` yet
 **Description:** When `USE_SERIAL_LOG` is defined, `emitter/src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated.
 
 ---
@@ -164,6 +166,7 @@
 **Title:** Receiver logic is plain C++ without dynamic allocation or `printf`, independent of the hardware
 **Status:** validated
 **Dependencies:** [TECH-DECODE-002](#tech-decode-002)
+**Verification:** build — `pio run -d tinyDecoders` compiles the receiver logic for AVR, and the native build runs it
 **Description:** The decoders, the source table, the RFLink formatter, the page formatter and the receiver loop depend only on `<stdint.h>`, on each other and on `ReceiverHal` ([TECH-DECODE-002](#tech-decode-002)): no `Hal`, no AVR register, no dynamic allocation, no `printf`. They therefore run unchanged in native builds, and their RAM use is fixed at build time: the source table holds 16 sources on AVR, about 288 B, which fits the Pro Mini and the Pro Micro, and 8 in native builds. The RFLink formatter is linked only when `ReceiverHal::HasLineOutput` is true.
 
 ### TECH-DECODE-004

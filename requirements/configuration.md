@@ -20,6 +20,7 @@
 **Title:** Set Oregon channel and rolling code per environment
 **Status:** validated
 **Dependencies:** [CONF-BUILD-001](#conf-build-001)
+**Verification:** inspection — each Oregon environment of `emitter/platformio.ini` sets both flags within range
 **Description:** An Oregon build sets `OREGON_CHANNEL` to 1, 2 or 3 and `OREGON_RCODE` to a rolling code 0x00–0xFF ([FUNC-OREGON-010](functional.md#func-oregon-010); the old 0xA5 limit came from the former layout that split the code over bytes 2 and 3). Every Oregon frame carries them ([FUNC-OREGON-009](functional.md#func-oregon-009), [FUNC-OREGON-010](functional.md#func-oregon-010)).
 
 ### CONF-BUILD-004
@@ -44,6 +45,7 @@
 **Title:** Configure low-battery threshold via LOW_BATTERY_VOLTAGE
 **Status:** validated
 **Dependencies:** [FUNC-BATTERY-003](functional.md#func-battery-003)
+**Verification:** inspection — the default and the per-environment values in `emitter/platformio.ini`
 **Description:** `LOW_BATTERY_VOLTAGE` sets the battery voltage, in mV, below which the battery is low ([FUNC-BATTERY-003](functional.md#func-battery-003)). The default is 2000 mV.
 
 ### CONF-BUILD-008
@@ -68,6 +70,7 @@
 **Title:** Document charge-pump sensor rail via USE_CHARGE_PUMP
 **Status:** validated
 **Dependencies:** —
+**Verification:** inspection — no firmware source reads `USE_CHARGE_PUMP`
 **Description:** `USE_CHARGE_PUMP` only records that the board's sensor rail is boosted by a charge pump. It changes nothing in the firmware.
 
 ### CONF-BUILD-012
@@ -86,28 +89,33 @@
 **Title:** `mushroom` environment builds the 18650-powered BME280 Oregon sensor in the mushroom enclosure
 **Status:** validated
 **Dependencies:** [CONF-BUILD-003](#conf-build-003), [CONF-BUILD-005](#conf-build-005), [CONF-BUILD-007](#conf-build-007), [CONF-BUILD-008](#conf-build-008), [CONF-BUILD-012](#conf-build-012), [CONF-BUILD-013](#conf-build-013)
+**Verification:** build — `pio run -d emitter -e mushroom`
 **Description:** The `mushroom` board is a cut-down v2.2 with a BME280. Its 18650 is charged by a TP4056, and a 3.3 V buck-boost supplies VCC, so VCC is not the battery voltage and PA1 reads half of it. It sends Oregon temperature and humidity without pressure on channel 3 with rolling code 0x3C. The X10 meter 7 reports the battery through a divider of 2 every 5 minutes. The low-battery threshold is 3000 mV, so the discharge stays tracked down to 3.0 V while the buck-boost keeps VCC steady. The 1.1 V reference is calibrated at 1104 mV (4040 mV measured on J13 against 4026 mV reported). The environment is part of the default build, and the environment docs list it with its battery and threshold.
 
 ### CONF-BUILD-015
 **Title:** CI runs every emitter native test environment and builds every emitter board environment
 **Status:** validated
 **Dependencies:** [CONF-BUILD-014](#conf-build-014), [TECH-MAIN-001](technical.md#tech-main-001)
+**Verification:** build — the CI workflow against `emitter/platformio.ini`, and its run
 **Description:** The CI (`.github/workflows/main.yml`) runs `pio test -d emitter` on `native_debug` and on every `native_cycle_*` environment of `emitter/platformio.ini`: `native_cycle_oregon`, `native_cycle_oregon_vcc`, `native_cycle_oregon_divider`, `native_cycle_lacrosse` and `native_cycle_x10`. It builds every environment in `default_envs`: `S_02`, `S_03`, `S_04`, `S_05`, `robot`, `devmodule`, `SOLAR_TEST` and `mushroom`. It publishes each board firmware (`.hex`, `.elf`) as `firmware-<env>`, and the release waits for these builds.
 
 ### CONF-DECODE-002
 **Title:** CI and pre-commit cover tinyDecoders: lint, native tests and the promini and promicro builds
 **Status:** validated
 **Dependencies:** [CONF-DECODE-003](#conf-decode-003), [CONF-DECODE-004](#conf-decode-004)
+**Verification:** build — the CI workflow and its run
 **Description:** The CI (`.github/workflows/main.yml`) lints `tinyDecoders` with the `.rbd/config.yml` linter command (build trees `*/.pio` skipped), runs the `tinyDecoders` native tests, and builds the `promini` and `promicro` environments. It publishes the promicro firmware (`.hex`, `.elf`, production) as `firmware-tinydecoders-promicro` and the promini one as `firmware-tinydecoders-promini`, and the release waits for these builds. The PlatformIO cache follows changes to `tinyDecoders/platformio.ini`. The pre-commit clang-format hook covers `tinyDecoders/src`, `tinyDecoders/lib` and `tinyDecoders/test`.
 
 ### CONF-DECODE-003
 **Title:** tinyDecoders promicro environment builds the production receiver for the Pro Micro 5 V / 16 MHz (ATmega32U4)
 **Status:** validated
 **Dependencies:** [FUNC-DECODE-009](functional.md#func-decode-009), [PLAT-DECODE-003](platform.md#plat-decode-003), [PLAT-DECODE-004](platform.md#plat-decode-004), [PLAT-DECODE-005](platform.md#plat-decode-005)
+**Verification:** build — `pio run -d tinyDecoders -e promicro`
 **Description:** The production tinyDecoders receiver is a standalone viewer on a Pro Micro 5 V / 16 MHz (ATmega32U4), powered and flashed through its micro-USB. Its native USB needs no USB-serial (FTDI) adapter, and its RFLink lines go out on the USB CDC serial port. Its wiring is in [PLAT-DECODE-003](platform.md#plat-decode-003) to 005. The Pro Mini is the alternative build ([CONF-DECODE-004](#conf-decode-004)). `tinyDecoders/platformio.ini` has `[env:promicro]`: `platform = atmelavr`, `board = sparkfun_promicro16`, `framework = arduino`, the default upload (`avr109`, Caterina bootloader over USB) and no `lib_deps`. It builds the same receiver firmware as the Pro Mini; the Arduino core keeps the Pro Micro USB stack running.
 
 ### CONF-DECODE-004
 **Title:** tinyDecoders promini environment builds the alternative receiver for the Pro Mini 5 V / 16 MHz (ATmega328P)
 **Status:** validated
 **Dependencies:** [FUNC-DECODE-007](functional.md#func-decode-007), [FUNC-DECODE-009](functional.md#func-decode-009), [PLAT-DECODE-003](platform.md#plat-decode-003), [PLAT-DECODE-004](platform.md#plat-decode-004), [PLAT-DECODE-005](platform.md#plat-decode-005)
+**Verification:** build — `pio run -d tinyDecoders -e promini`
 **Description:** The alternative tinyDecoders receiver is a standalone viewer on an Arduino Pro Mini 5 V / 16 MHz (ATmega328P), fed USB 5 V on its VCC pin, bypassing the onboard regulator. The production receiver is the Pro Micro ([CONF-DECODE-003](#conf-decode-003)). The Pro Mini has no native USB: flashing it needs a USB-serial adapter on its programming header, and its RFLink lines go out on the debug UART. Its wiring is in [PLAT-DECODE-003](platform.md#plat-decode-003) to 005. `tinyDecoders/platformio.ini` has `[env:promini]`: `platform = atmelavr`, `board = pro16MHzatmega328`, `framework = arduino`, the default upload (`arduino` protocol through the Pro Mini bootloader, over a USB-serial adapter on the programming header), no `lib_deps`, and `build_flags = -DSERIAL_TX_BUFFER_SIZE=128`: the core default of 64 B leaves 63 free bytes, exactly the longest RFLink line plus `\r\n`, and 128 B leaves room for a second line. It builds the same receiver firmware as the Pro Micro ([CONF-DECODE-003](#conf-decode-003)).

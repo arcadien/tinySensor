@@ -9,6 +9,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-008](#plat-power-008)
 **derives_from:** [PLAT-POWER-008](#plat-power-008)
+**Verification:** inspection — sleep loop and BOD-disable sequence in the AVR `Hal` and the disassembly; current and period measured by the bench sheet
 **Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Brownout detection is off during each sleep period.
 
 ---
@@ -27,6 +28,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-001](#plat-power-001), [PLAT-POWER-002](#plat-power-002), [PLAT-POWER-008](#plat-power-008)
 **derives_from:** [PLAT-POWER-008](#plat-power-008)
+**Verification:** inspection — PRR, DDR and PORT values set before sleep and restored after, in the AVR `Hal`; pin levels measured by the bench sheet
 **Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input: PA0 and PA1 without pull-up, PB3 (RESET) pulled up, PB2 pulled up except with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)), and PA7 (digital output) and PB1 (LED) keep their last output level as pull-up state. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep.
 
 ---
