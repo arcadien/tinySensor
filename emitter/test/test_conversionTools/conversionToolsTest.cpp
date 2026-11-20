@@ -23,7 +23,8 @@
 void tearDown() {}
 void setUp() {}
 
-// @req TECH-CONVERT-001
+// @req FUNC-X10-006
+// @req FUNC-X10-007
 void Test_dec16ToHex() {
   struct TestData {
     uint16_t given;

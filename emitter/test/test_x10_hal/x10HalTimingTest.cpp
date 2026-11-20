@@ -18,7 +18,7 @@
  */
 
 /*
- * Integration tests for TECH-X10-001 and TECH-X10-002.
+ * Integration tests for the X10 waveform timings of FUNC-X10-005.
  *
  * Production side must provide (code-builder handles this):
  *
@@ -85,10 +85,10 @@ static int countToken(const std::vector<unsigned char> &orders,
 }
 
 // ---------------------------------------------------------------------------
-// TECH-X10-001 — TestHal_ exposes five distinct X10 timing tokens
+// TestHal_ exposes five distinct X10 timing tokens
 // ---------------------------------------------------------------------------
 
-// @req TECH-X10-001
+// @req FUNC-X10-005
 void TestHal_DelayX10PreambleHigh_appends_distinct_token() {
   // Given
   TestHal.ClearOrders();
@@ -104,7 +104,7 @@ void TestHal_DelayX10PreambleHigh_appends_distinct_token() {
       "DelayX10PreambleHigh must append exactly one token");
 }
 
-// @req TECH-X10-001
+// @req FUNC-X10-005
 void TestHal_DelayX10PreambleLow_appends_distinct_token() {
   // Given
   TestHal.ClearOrders();
@@ -120,7 +120,7 @@ void TestHal_DelayX10PreambleLow_appends_distinct_token() {
       "DelayX10PreambleLow must append exactly one token");
 }
 
-// @req TECH-X10-001
+// @req FUNC-X10-005
 void TestHal_DelayX10BitShort_appends_distinct_token() {
   // Given
   TestHal.ClearOrders();
@@ -136,7 +136,7 @@ void TestHal_DelayX10BitShort_appends_distinct_token() {
       "DelayX10BitShort must append exactly one token");
 }
 
-// @req TECH-X10-001
+// @req FUNC-X10-005
 void TestHal_DelayX10BitLong_appends_distinct_token() {
   // Given
   TestHal.ClearOrders();
@@ -152,7 +152,7 @@ void TestHal_DelayX10BitLong_appends_distinct_token() {
       "DelayX10BitLong must append exactly one token");
 }
 
-// @req TECH-X10-001
+// @req FUNC-X10-005
 void TestHal_DelayX10Gap_appends_distinct_token() {
   // Given
   TestHal.ClearOrders();
@@ -167,8 +167,7 @@ void TestHal_DelayX10Gap_appends_distinct_token() {
                                 "DelayX10Gap must append exactly one token");
 }
 
-// @req TECH-X10-001
-// @req TECH-HAL-002
+// @req FUNC-X10-005
 void TestHal_X10_tokens_are_all_distinct() {
   // Given
   // Each token must differ from every other token
@@ -195,10 +194,10 @@ void TestHal_X10_tokens_are_all_distinct() {
 }
 
 // ---------------------------------------------------------------------------
-// TECH-X10-002 — x10rf::SendCommand uses HAL for preamble and gap delays
+// x10rf::SendCommand uses HAL for preamble and gap delays
 // ---------------------------------------------------------------------------
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_uses_hal_preamble_high_delay() {
   // Given
   // A minimal 1-byte message; 1 repeat so we get exactly one preamble
@@ -218,7 +217,7 @@ void SendCommand_uses_hal_preamble_high_delay() {
                            "(token 'Q' expected)");
 }
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_uses_hal_preamble_low_delay() {
   // Given
   TestHal.ClearOrders();
@@ -234,7 +233,7 @@ void SendCommand_uses_hal_preamble_low_delay() {
       "SendCommand must call DelayX10PreambleLow via Hal (token 'R' expected)");
 }
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_uses_hal_gap_delay_after_transmission() {
   // Given
   TestHal.ClearOrders();
@@ -250,7 +249,7 @@ void SendCommand_uses_hal_gap_delay_after_transmission() {
       "SendCommand must call DelayX10Gap via Hal (token 'G' expected)");
 }
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendCommand_preamble_sequence_is_high_then_low() {
   // Given
   // The X10 preamble must be: RadioGoHigh, DelayX10PreambleHigh,
@@ -289,7 +288,7 @@ void SendCommand_preamble_sequence_is_high_then_low() {
                       "DelayX10PreambleLow must follow RadioGoLow");
 }
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendX10RfBit_zero_uses_hal_bit_short_delays_no_long() {
   // Given
   // A zero bit must generate: RadioGoHigh, BitShort, RadioGoLow, BitShort
@@ -318,7 +317,7 @@ void SendX10RfBit_zero_uses_hal_bit_short_delays_no_long() {
       "Multiple DelayX10BitShort tokens expected for zero-bit data");
 }
 
-// @req TECH-X10-002
+// @req FUNC-X10-005
 void SendX10RfBit_one_uses_hal_bit_long_delay() {
   // Given
   // Sending 0xFF forces all 8 bits to 1, each needing
@@ -337,7 +336,6 @@ void SendX10RfBit_one_uses_hal_bit_long_delay() {
       "SendX10RfBit for a 1-bit must emit DelayX10BitLong (token 'U')");
 }
 
-// @req TECH-X10-002
 // @req FUNC-X10-005
 void SendCommand_gap_appears_once_per_repeat() {
   // Given
@@ -357,7 +355,6 @@ void SendCommand_gap_appears_once_per_repeat() {
       "rf_repeats=2)");
 }
 
-// @req TECH-X10-002
 // @req FUNC-X10-005
 void SendCommand_preamble_appears_once_per_repeat() {
   // Given
@@ -393,7 +390,7 @@ void tearDown(void) {}
 int main(int, char **) {
   UnityBegin("x10HalTimingTest.cpp");
 
-  // TECH-X10-001: TestHal_ token contract
+  // TestHal_ token contract
   RUN_TEST(TestHal_DelayX10PreambleHigh_appends_distinct_token);
   RUN_TEST(TestHal_DelayX10PreambleLow_appends_distinct_token);
   RUN_TEST(TestHal_DelayX10BitShort_appends_distinct_token);
@@ -401,7 +398,7 @@ int main(int, char **) {
   RUN_TEST(TestHal_DelayX10Gap_appends_distinct_token);
   RUN_TEST(TestHal_X10_tokens_are_all_distinct);
 
-  // TECH-X10-002: x10rf uses HAL for all timing
+  // x10rf uses HAL for all timing
   RUN_TEST(SendCommand_uses_hal_preamble_high_delay);
   RUN_TEST(SendCommand_uses_hal_preamble_low_delay);
   RUN_TEST(SendCommand_uses_hal_gap_delay_after_transmission);
