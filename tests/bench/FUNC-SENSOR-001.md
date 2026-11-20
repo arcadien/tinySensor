@@ -1,3 +1,4 @@
+<!-- @req FUNC-SENSOR-001 -->
 # Bench test FUNC-SENSOR-001 — BME280 readings over several cycles
 
 Requirement: [FUNC-SENSOR-001](../../requirements/functional.md#func-sensor-001). Manual test, run at bring-up step **B5** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

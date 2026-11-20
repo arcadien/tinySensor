@@ -1,3 +1,4 @@
+<!-- @req PLAT-POWER-001 -->
 # Bench test PLAT-POWER-001 — hibernate length and sleep current
 
 Requirement: [PLAT-POWER-001](../../requirements/platform.md#plat-power-001). Manual test, run at bring-up step **B6** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

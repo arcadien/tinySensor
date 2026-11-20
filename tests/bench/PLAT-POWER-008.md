@@ -1,3 +1,4 @@
+<!-- @req PLAT-POWER-008 -->
 # Bench test PLAT-POWER-008 — awake: no internal pull-up on the sensor buses, the BME280 still reads
 
 Requirement: [PLAT-POWER-008](../../requirements/platform.md#plat-power-008). Manual test, run at bring-up step **B3** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

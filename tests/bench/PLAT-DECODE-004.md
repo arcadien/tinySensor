@@ -1,3 +1,4 @@
+<!-- @req PLAT-DECODE-004 -->
 # Bench test PLAT-DECODE-004 — receiver drives the SSD1306 OLED
 
 Requirement: [PLAT-DECODE-004](../../requirements/platform.md#plat-decode-004). Manual test, run at bring-up step **A3** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

@@ -1,3 +1,4 @@
+<!-- @req PLAT-POWER-006 -->
 # Bench test PLAT-POWER-006 — switched 5 V module on PB2 (LM35 variant only)
 
 Requirement: [PLAT-POWER-006](../../requirements/platform.md#plat-power-006). Manual test, run at bring-up step **B9** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

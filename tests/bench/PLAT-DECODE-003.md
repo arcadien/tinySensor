@@ -1,3 +1,4 @@
+<!-- @req PLAT-DECODE-003 -->
 # Bench test PLAT-DECODE-003 — receiver captures the radio pulses and keeps time
 
 Requirement: [PLAT-DECODE-003](../../requirements/platform.md#plat-decode-003). Manual test, run at bring-up step **A2** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

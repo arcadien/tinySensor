@@ -1,3 +1,4 @@
+<!-- @req PLAT-DECODE-005 -->
 # Bench test PLAT-DECODE-005 — receiver writes RFLink lines without blocking
 
 Requirement: [PLAT-DECODE-005](../../requirements/platform.md#plat-decode-005). Manual test, run at bring-up step **A4** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.

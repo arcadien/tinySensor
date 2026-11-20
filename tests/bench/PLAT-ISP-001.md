@@ -1,3 +1,4 @@
+<!-- @req PLAT-ISP-001 -->
 # Bench test PLAT-ISP-001 — a v3.0 board is flashed with its BME280 fitted
 
 Requirement: [PLAT-ISP-001](../../requirements/platform.md#plat-isp-001). Manual test, run at bring-up step **B2** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
