@@ -65,7 +65,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-002](#plat-power-002)
 **derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
-**Description:** Every board running this firmware has external pull-ups on its sensor buses, to `SENSOR_VCC`, the sensor rail switched by PA2: SCL (PA4) and SDA (PA6) for the I2C bus, and the 1-Wire bus (PA3), which serves the DS18B20. The firmware enables no internal pull-up on these pins ([PLAT-POWER-008](#plat-power-008)), so a board without them has no working I2C bus. On v3.0 they are three 4.7 kΩ resistors: R3 on SCL, R2 on SDA, R6 on 1-Wire; R3 and R2 sit on the sensor-connector side of the 330 Ω series resistors R9 (SCL) and R10 (SDA), which keep the ISP lines free of the sensor. Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). The v2.2 board of the mushroom also has its I2C pull-ups on `SENSOR_VCC` (values not recorded).
+**Description:** Every board running this firmware has external pull-ups on its sensor buses, to `SENSOR_VCC`, the sensor rail switched by PA2: SCL (PA4) and SDA (PA6) for the I2C bus, and the 1-Wire bus (PA3), which serves the DS18B20. The firmware enables no internal pull-up on these pins ([PLAT-POWER-008](#plat-power-008)), so a board without them has no working I2C bus. On v3.0 they are three 4.7 kΩ resistors: R3 on SCL, R2 on SDA, R6 on 1-Wire; R3 and R2 sit on the sensor-connector side of the ISP isolation resistors ([PLAT-ISP-001](#plat-isp-001)). Both buses are therefore unpowered whenever PA2 is low ([PLAT-POWER-002](#plat-power-002)). The v2.2 board of the mushroom also has its I2C pull-ups on `SENSOR_VCC` (values not recorded).
 
 ---
 
@@ -83,16 +83,16 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-007](#plat-power-007)
 **derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
-**Description:** The ISP lines SCK (PA4) and MOSI (PA6) are also the I2C SCL and SDA. On v3.0, the sensor connector reaches them through 330 Ω series resistors, R9 on SCL and R10 on SDA, with the sensor pull-ups on the connector side ([PLAT-POWER-007](#plat-power-007)), while the ISP header J6 is wired directly to the MCU pins. The programmer therefore drives SCK and MOSI without the sensor loading them, and the board is flashed with the BME280 in place; the sensor still reads correctly through the resistors afterwards. v2.2 boards have no such resistors: their sensor is removed before flashing.
+**Description:** The ISP lines SCK (PA4) and MOSI (PA6) are also the I2C SCL and SDA. On v3.0, the sensor connector reaches them through 330 Ω series resistors, R9 on SCL and R10 on SDA, with the sensor pull-ups on the connector side ([PLAT-POWER-007](#plat-power-007)), while the ISP header J6 is wired directly to the MCU pins. The programmer therefore drives SCK and MOSI without the sensor loading them, and the board is flashed with the BME280 in place; the sensor then reads as [FUNC-SENSOR-001](functional.md#func-sensor-001) requires, through the resistors. v2.2 boards have no such resistors: their sensor is removed before flashing.
 
 ---
 
 ### PLAT-DEBUG-001
-**Title:** Debug serial output: transmit only on PA7, 9600 baud 8N1, line idle high
+**Title:** Debug serial output: transmit only on PA7, 9600 baud ± 2 % 8N1, line idle high
 **Status:** validated
 **Dependencies:** [PLAT-POWER-005](#plat-power-005)
-**derives_from:** [TECH-SERIAL-002](technical.md#tech-serial-002)
-**Description:** The emitter's debug serial output is a software UART on PA7: 9600 baud, each byte a low start bit, 8 data bits least significant first, then a high stop bit. The line is idle high from the start of the output. Numbers are written as text, in decimal unless another base is asked for, and a written line ends with `\r\n`. There is no receive path. The bit time is calibrated for the 1 MHz clock ([PLAT-POWER-005](#plat-power-005)).
+**derives_from:** [TECH-HAL-001](technical.md#tech-hal-001)
+**Description:** The emitter's debug serial output is a software UART on PA7: 9600 baud ± 2 %, each byte a low start bit, 8 data bits least significant first, then a high stop bit. The line is idle high from the start of the output. Numbers go out as text: signed decimal by default, unsigned in a base from 2 to 16 with upper-case digits when one is given, or as the raw byte with base 0. A line ends with `\r\n`. There is no receive path. The bit time is calibrated for the 1 MHz clock ([PLAT-POWER-005](#plat-power-005)).
 
 ---
 
