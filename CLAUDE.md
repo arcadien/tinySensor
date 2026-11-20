@@ -74,6 +74,16 @@ This project uses Requirement-Based Development. **Every code change must origin
 - Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it.
 - ID format: `FUNC-DOMAIN-NNN` (e.g. `FUNC-OREGON-001`, `TECH-HAL-001`).
 
+Requirements are a spec, not a plan. Each one passes four checks:
+1. **Observable** from outside the unit (radio output, pins, screen, serial lines, build result), or a design constraint that has a reason (testability, memory, no hardware access).
+2. **Survives a refactor**: no class, method, file or register name, except at a boundary interface (`Hal`, `ReceiverHal`, `runCycle`, build flags, environments).
+3. **States its reason** when it is not obvious.
+4. **Verifiable on its own**.
+- The "how" (classes, helpers, registers, file layout) goes in `docs/architecture.md` and code comments.
+- **No test information in a requirement**: no "Verification:", "Test:", "Verified by", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:".
+- A helper's unit tests are tagged with the requirement whose behaviour uses the helper (`dec16ToHex` tests → FUNC-X10-006/007).
+- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md` (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); `tests/bench/bring-up.md` gives the order.
+
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
 Every report in `audits/` (`/rbd-audit`, `/rbd-review`) states on its first line under the title the full hash of the commit it audited (`Audited commit:` or `Reviewed commit:`), so `git diff <hash>..HEAD -- requirements docs emitter lib tinyDecoders` shows what changed since the last audit.
