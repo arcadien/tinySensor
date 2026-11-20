@@ -173,10 +173,10 @@
 **Description:** An X10 security frame is 6 bytes: byte 0 is the address; byte 1 is the address with its low nibble inverted; byte 2 is the command and byte 3 its complement; byte 4 is the id; byte 5 is the parity of the frame, 0x00 or 0x01: the XOR of bytes 0–4 folded down to one bit. It is sent per [FUNC-X10-005](#func-x10-005).
 
 ### FUNC-X10-005
-**Title:** Each X10 frame is repeated with a 40 ms gap, the LED on throughout
+**Title:** Each X10 frame is repeated with a 40 ms gap
 **Status:** validated
 **Dependencies:** —
-**Description:** An X10 frame is sent twice in each sensor cycle (the encoder takes the copy count at construction). Each copy is a preamble, radio high 8960 µs then low 4500 µs, then the frame bits most significant first and a one stop bit, each bit being high 560 µs then low 560 µs (`0`) or 1680 µs (`1`), followed by a 40 ms silence. The LED is lit from before the first copy until after the last.
+**Description:** An X10 frame is sent twice in each sensor cycle (the encoder takes the copy count at construction). Each copy is a preamble, radio high 8960 µs then low 4500 µs, then the frame bits most significant first and a one stop bit, each bit being high 560 µs then low 560 µs (`0`) or 1680 µs (`1`), followed by a 40 ms silence.
 
 ### FUNC-X10-006
 **Title:** Battery voltage in mV is sent as BCD in an RFXmeter frame while the battery is not low

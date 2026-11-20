@@ -9,7 +9,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-008](#plat-power-008)
 **derives_from:** [TECH-MAIN-001](technical.md#tech-main-001)
-**Verification:** inspection — sleep loop and BOD-disable sequence in the AVR `Hal` and the disassembly; current and period measured by the bench sheet
+**Verification:** inspection — sleep loop and BOD-disable sequence in the AVR `Hal` and the disassembly
 **Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Brownout detection is off during each sleep period.
 
 ---
@@ -28,7 +28,7 @@
 **Status:** validated
 **Dependencies:** [PLAT-POWER-001](#plat-power-001), [PLAT-POWER-002](#plat-power-002), [PLAT-POWER-008](#plat-power-008)
 **derives_from:** [TECH-MAIN-001](technical.md#tech-main-001)
-**Verification:** inspection — PRR, DDR and PORT values set before sleep and restored after, in the AVR `Hal`; pin levels measured by the bench sheet
+**Verification:** inspection — PRR, DDR and PORT values set before sleep and restored after, in the AVR `Hal`
 **Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input: PA0 and PA1 without pull-up, PB3 (RESET) pulled up, PB2 pulled up except with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)), and PA7 (digital output) and PB1 (LED) keep their last output level as pull-up state. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep.
 
 ---
@@ -36,7 +36,7 @@
 ### PLAT-POWER-004
 **Title:** Every radio transmission is framed by the LED: on before, off after, then a 30 ms pause
 **Status:** validated
-**Dependencies:** [FUNC-X10-005](functional.md#func-x10-005)
+**Dependencies:** [FUNC-X10-005](functional.md#func-x10-005), [FUNC-SENSOR-003](functional.md#func-sensor-003)
 **derives_from:** [FUNC-X10-005](functional.md#func-x10-005)
 **Description:** A transmission is one frame of an encoder, with all its copies: the repeated copies of an X10 frame ([FUNC-X10-005](functional.md#func-x10-005)) are one transmission, while each luminosity copy ([FUNC-SENSOR-003](functional.md#func-sensor-003)) and each environment copy ([FUNC-MAIN-001](functional.md#func-main-001)) is its own transmission. Every transmission of a cycle turns the LED on before its first bit, turns it off after its last bit, then waits 30 ms; for an X10 frame, the 30 ms come after the 40 ms gap of its last copy.
 
