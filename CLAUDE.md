@@ -82,7 +82,7 @@ Requirements are a spec, not a plan. Each one passes four checks:
 - The "how" (classes, helpers, registers, file layout) goes in `docs/architecture.md` and code comments.
 - **No test information in a requirement**: no "Verification:", "Test:", "Verified by", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:".
 - A helper's unit tests are tagged with the requirement whose behaviour uses the helper (`dec16ToHex` tests → FUNC-X10-006/007).
-- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md`, tagged like a test: `<!-- @req <ID> -->` on its first line, one line per requirement it covers (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); `tests/bench/bring-up.md` gives the order.
+- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md`, tagged like a test: `<!-- @req <ID> -->` on its first line, one line per requirement it covers (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); Bench tests are run by hand before each release, in the order of `tests/bench/bring-up.md`; a release is tagged only when every sheet has a passing line for it.
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
