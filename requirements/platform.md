@@ -8,7 +8,7 @@
 **Title:** Hibernate is s / 8 watchdog periods of power-down sleep, rounded down, at least one
 **Status:** validated
 **Dependencies:** [PLAT-POWER-008](#plat-power-008)
-**derives_from:** [PLAT-POWER-008](#plat-power-008)
+**derives_from:** [TECH-MAIN-001](technical.md#tech-main-001)
 **Verification:** inspection — sleep loop and BOD-disable sequence in the AVR `Hal` and the disassembly; current and period measured by the bench sheet
 **Description:** A hibernate of `s` seconds puts the ATtiny84A in power-down sleep for `s / 8` periods of the 8-second hardware watchdog, rounded down, and at least one: a request under 8 s still sleeps one period. Brownout detection is off during each sleep period.
 
@@ -27,7 +27,7 @@
 **Title:** Hibernate stops USI, Timer0, Timer1 and ADC, holds the sensor rail and radio data low, leaves the sensor-rail pull-up pins unpulled; everything is restored on wake
 **Status:** validated
 **Dependencies:** [PLAT-POWER-001](#plat-power-001), [PLAT-POWER-002](#plat-power-002), [PLAT-POWER-008](#plat-power-008)
-**derives_from:** [PLAT-POWER-008](#plat-power-008)
+**derives_from:** [TECH-MAIN-001](technical.md#tech-main-001)
 **Verification:** inspection — PRR, DDR and PORT values set before sleep and restored after, in the AVR `Hal`; pin levels measured by the bench sheet
 **Description:** Before the first sleep period, the power reduction register stops the USI, Timer0, Timer1 and the ADC. PA2 (`SENSOR_VCC`) and PB0 (radio data, the radio being always powered) are outputs held low, so the sensor rail stays off and the transmitter cannot key itself from a floating input. PA3 (1-Wire), PA4 (SCL), PA5 (MISO) and PA6 (SDA) are inputs without internal pull-up: their external pull-ups go to `SENSOR_VCC`, or (PA5) they may reach the sensor SDO in SPI wiring, so an internal pull-up would back-power the unpowered sensors. A floating input costs nothing in power-down, where the input buffers are clamped. Every other pin is an input: PA0 and PA1 without pull-up, PB3 (RESET) pulled up, PB2 pulled up except with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)), and PA7 (digital output) and PB1 (LED) keep their last output level as pull-up state. After the last sleep period, PRR, DDRA, DDRB, PORTA and PORTB get back their values from before sleep.
 
@@ -73,7 +73,7 @@
 **Title:** While awake, no internal pull-up on PORTA, the floating MISO input buffer off, PB2 and PB3 pulled up, unused peripherals off
 **Status:** validated
 **Dependencies:** [PLAT-POWER-002](#plat-power-002), [PLAT-POWER-007](#plat-power-007)
-**derives_from:** [PLAT-POWER-007](#plat-power-007)
+**derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
 **Description:** From reset until the first sleep, and between sleeps, the ATtiny84A enables no internal pull-up on any PORTA pin. PA0 and PA1 are analog inputs, PA2 (`SENSOR_VCC`) and PA7 are outputs, and PA3, PA4 and PA6 are bus pins pulled up externally to `SENSOR_VCC` ([PLAT-POWER-007](#plat-power-007)). While PA2 is low (at boot, at wake before the sensors are powered, after they are powered off), an internal pull-up on a bus pin would drive current through the external pull-up into PA2 and back-power the sensors. PA5 (MISO) has no pull-up at all. It reaches the ISP header J6 and pad 3 of the BME280 SDO jumper JP6, which v3.0 delivers open: bridged 1–2, SDO goes to GND and the sensor answers at I2C address 0x76, the one the firmware reads; bridged 2–3, SDO follows PA5, for SPI. The PA5 digital input buffer is disabled, so the floating pin draws no current in the input stage; reset enables it again, so ISP programming is unaffected. PB2 and PB3 (RESET) are pulled up, the ATtiny84A having no PB4–PB7, except PB2 with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)). PB0 (radio data) and PB1 (LED) are outputs. The analog comparator and Timer1 stay off, and the ADC is on only while it measures.
 
 ---
@@ -82,7 +82,7 @@
 **Title:** A v3.0 board is flashed over ISP with its I2C sensor fitted
 **Status:** validated
 **Dependencies:** [PLAT-POWER-007](#plat-power-007)
-**derives_from:** [PLAT-POWER-007](#plat-power-007)
+**derives_from:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
 **Description:** The ISP lines SCK (PA4) and MOSI (PA6) are also the I2C SCL and SDA. On v3.0, the sensor connector reaches them through 330 Ω series resistors, R9 on SCL and R10 on SDA, with the sensor pull-ups on the connector side ([PLAT-POWER-007](#plat-power-007)), while the ISP header J6 is wired directly to the MCU pins. The programmer therefore drives SCK and MOSI without the sensor loading them, and the board is flashed with the BME280 in place; the sensor still reads correctly through the resistors afterwards. v2.2 boards have no such resistors: their sensor is removed before flashing.
 
 ---
@@ -91,7 +91,7 @@
 **Title:** Debug serial output: transmit only on PA7, 9600 baud 8N1, line idle high
 **Status:** validated
 **Dependencies:** [PLAT-POWER-005](#plat-power-005)
-**derives_from:** [PLAT-POWER-005](#plat-power-005)
+**derives_from:** [TECH-SERIAL-002](technical.md#tech-serial-002)
 **Description:** The emitter's debug serial output is a software UART on PA7: 9600 baud, each byte a low start bit, 8 data bits least significant first, then a high stop bit. The line is idle high from the start of the output. Numbers are written as text, in decimal unless another base is asked for, and a written line ends with `\r\n`. There is no receive path. The bit time is calibrated for the 1 MHz clock ([PLAT-POWER-005](#plat-power-005)).
 
 ---
