@@ -71,7 +71,7 @@ This project uses Requirement-Based Development. **Every code change must origin
 - Requirements live in `requirements/*.md` (functional, technical, performance, ui, configuration, platform).
 - Architecture is tracked in `docs/architecture.md` — updated with an `arch(ID):` commit whenever a requirement changes the component diagram.
 - Commit prefixes are mandatory: `req()`, `test()`, `feat()`, `tech()`, `perf()`, `ui()`, `conf()`, `arch()`, `plan:`.
-- Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it.
+- Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it, and every bench sheet a `<!-- @req ID -->` tag on its first line.
 - ID format: `FUNC-DOMAIN-NNN` (e.g. `FUNC-OREGON-001`, `TECH-HAL-001`).
 
 Requirements are a spec, not a plan. Each one passes four checks:
@@ -82,7 +82,7 @@ Requirements are a spec, not a plan. Each one passes four checks:
 - The "how" (classes, helpers, registers, file layout) goes in `docs/architecture.md` and code comments.
 - **No test information in a requirement**: no "Verification:", "Test:", "Verified by", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:".
 - A helper's unit tests are tagged with the requirement whose behaviour uses the helper (`dec16ToHex` tests → FUNC-X10-006/007).
-- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md` (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); `tests/bench/bring-up.md` gives the order.
+- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md`, tagged like a test: `<!-- @req <ID> -->` on its first line, one line per requirement it covers (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); `tests/bench/bring-up.md` gives the order.
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 

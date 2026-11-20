@@ -6,7 +6,8 @@ id_format:
 test_tagging:
   language: cpp
   framework: unity
-  convention: "// @req {id}"  # placed above the test function
+  convention: "@req {id}"  # C++: "// @req {id}" above the test function; bench sheet: "<!-- @req {id} -->" on its first line
+  bench_sheets: "tests/bench/{id}.md"  # manual test of a requirement no software test can cover
 
 linter:
   # tinyDecoders/ is the 433 MHz receiver sub-project; its .pio/ build tree is skipped
