@@ -1,7 +1,7 @@
 <!-- @req PLAT-POWER-001 -->
 # Bench test PLAT-POWER-001 — hibernate length and sleep current
 
-Requirement: [PLAT-POWER-001](../../requirements/platform.md#plat-power-001). Manual test, run at bring-up step **B6** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-POWER-001](../../requirements/platform.md#plat-power-001). Manual test, run before each release, at step **B6** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The board under test, a multimeter in series in the J13 + wire (µA range), the receiver.
@@ -18,5 +18,5 @@ Requirement: [PLAT-POWER-001](../../requirements/platform.md#plat-power-001). Ma
 - Step 2: below 10 µA at 3 V with the sensors off (ATtiny84A power-down with watchdog and BOD off: about 5 µA; BOD on would add about 20 µA).
 
 ## Results
-| Date | Commit / build | Board | Interval | Sleep current | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | Interval | Sleep current | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|

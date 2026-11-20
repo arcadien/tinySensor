@@ -1,7 +1,7 @@
 <!-- @req PLAT-DECODE-003 -->
 # Bench test PLAT-DECODE-003 — receiver captures the radio pulses and keeps time
 
-Requirement: [PLAT-DECODE-003](../../requirements/platform.md#plat-decode-003). Manual test, run at bring-up step **A2** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-DECODE-003](../../requirements/platform.md#plat-decode-003). Manual test, run before each release, at step **A2** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The receiver (Pro Micro, production; Pro Mini, alternative) with its RXB6 and OLED, wired per `hardware/receiver/WIRING.md`.
@@ -22,5 +22,5 @@ Requirement: [PLAT-DECODE-003](../../requirements/platform.md#plat-decode-003). 
 - Step 3: the source leaves the screen 30 min (± 1 min) after its last frame.
 
 ## Results
-| Date | Commit / build | Board | Lines / frames sent | Expiry time | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | Lines / frames sent | Expiry time | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|

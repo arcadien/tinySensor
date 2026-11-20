@@ -1,7 +1,7 @@
 <!-- @req PLAT-DECODE-004 -->
 # Bench test PLAT-DECODE-004 — receiver drives the SSD1306 OLED
 
-Requirement: [PLAT-DECODE-004](../../requirements/platform.md#plat-decode-004). Manual test, run at bring-up step **A3** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-DECODE-004](../../requirements/platform.md#plat-decode-004). Manual test, run before each release, at step **A3** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The receiver of [PLAT-DECODE-003](PLAT-DECODE-003.md), powered over USB.
@@ -21,5 +21,5 @@ Requirement: [PLAT-DECODE-004](../../requirements/platform.md#plat-decode-004). 
 - Step 3: no gap in the lines while the screen redraws.
 
 ## Results
-| Date | Commit / build | Board | Waiting page | Pages OK | Lines during redraw | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | Waiting page | Pages OK | Lines during redraw | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|---|

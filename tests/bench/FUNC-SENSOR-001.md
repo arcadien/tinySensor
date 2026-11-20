@@ -1,7 +1,7 @@
 <!-- @req FUNC-SENSOR-001 -->
 # Bench test FUNC-SENSOR-001 — BME280 readings over several cycles
 
-Requirement: [FUNC-SENSOR-001](../../requirements/functional.md#func-sensor-001). Manual test, run at bring-up step **B5** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [FUNC-SENSOR-001](../../requirements/functional.md#func-sensor-001). Manual test, run before each release, at step **B5** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The board under test with its BME280, the receiver ([PLAT-DECODE-003](PLAT-DECODE-003.md)), a reference thermometer / hygrometer and the local sea-level pressure (weather service).
@@ -18,5 +18,5 @@ Requirement: [FUNC-SENSOR-001](../../requirements/functional.md#func-sensor-001)
 - Within the BME280 accuracy of the reference: ± 1 °C, ± 3 %, pressure ± 2 hPa (pressure is station pressure, not sea level: compare with altitude in mind).
 
 ## Results
-| Date | Commit / build | Board | T / H / P (board) | T / H / P (reference) | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | T / H / P (board) | T / H / P (reference) | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|

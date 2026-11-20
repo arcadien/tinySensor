@@ -1,7 +1,7 @@
 <!-- @req PLAT-POWER-003 -->
 # Bench test PLAT-POWER-003 — pins and rails during hibernate
 
-Requirement: [PLAT-POWER-003](../../requirements/platform.md#plat-power-003). Manual test, run at bring-up step **B7** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-POWER-003](../../requirements/platform.md#plat-power-003). Manual test, run before each release, at step **B7** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The board under test asleep, a multimeter (V range).
@@ -18,5 +18,5 @@ Requirement: [PLAT-POWER-003](../../requirements/platform.md#plat-power-003). Ma
 - Step 2: no transmission outside the cycles.
 
 ## Results
-| Date | Commit / build | Board | PA2 / PB0 / SDA / SCL / 1-Wire | Radio silent | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | PA2 / PB0 / SDA / SCL / 1-Wire | Radio silent | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|

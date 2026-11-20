@@ -1,7 +1,7 @@
 <!-- @req PLAT-POWER-007 -->
 # Bench test PLAT-POWER-007 — sensor bus pull-ups go to the switched sensor rail
 
-Requirement: [PLAT-POWER-007](../../requirements/platform.md#plat-power-007). Manual test, run at bring-up step **B4** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-POWER-007](../../requirements/platform.md#plat-power-007). Manual test, run before each release, at step **B4** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - The board under test, unpowered, a multimeter (Ω range).
@@ -17,5 +17,5 @@ Requirement: [PLAT-POWER-007](../../requirements/platform.md#plat-power-007). Ma
 - v2.2: SCL and SDA pulled to SENSOR_VCC (note the values).
 
 ## Results
-| Date | Commit / build | Board | SCL / SDA / 1-Wire to SENSOR_VCC | To VCC | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | SCL / SDA / 1-Wire to SENSOR_VCC | To VCC | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|

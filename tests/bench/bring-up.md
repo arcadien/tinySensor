@@ -1,6 +1,6 @@
-# Bring-up and bench tests
+# Release bench tests
 
-Order for a new board and for a reflash. A line ending in → links the bench test sheet that holds the procedure, the pass criteria and the results; the other lines are checks with no requirement behind them. Each sheet's *Results* table gets a line every time it is run, with the commit or build flashed.
+Run by hand before each release, in this order, with the release candidate flashed on every board: a release is tagged only when every sheet has a passing line for it. A line ending in → links the bench test sheet that holds the procedure, the pass criteria and the results; the other lines are checks with no requirement behind them. Each sheet's *Results* table gets one line per release (tag, or commit of the candidate).
 
 **A. Receiver** (needed to read the sensor boards)
 1. Wiring checked against `hardware/receiver/WIRING.md`, receiver flashed.
@@ -19,4 +19,4 @@ Order for a new board and for a reflash. A line ending in → links the bench te
 8. Radio timings at 1 MHz → [PLAT-POWER-005](PLAT-POWER-005.md)
 9. LM35 variant only: switched 5 V → [PLAT-POWER-006](PLAT-POWER-006.md)
 
-The v2.0 release waits for B2, B3 and B5 on a v3.0 board and B3 on the reflashed mushroom.
+For v2.0: every sheet on a v3.0 board, and B3 on the reflashed mushroom.

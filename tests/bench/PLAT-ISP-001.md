@@ -1,7 +1,7 @@
 <!-- @req PLAT-ISP-001 -->
 # Bench test PLAT-ISP-001 — a v3.0 board is flashed with its BME280 fitted
 
-Requirement: [PLAT-ISP-001](../../requirements/platform.md#plat-isp-001). Manual test, run at bring-up step **B2** ([bring-up.md](bring-up.md)); add a line to *Results* every time it is run.
+Requirement: [PLAT-ISP-001](../../requirements/platform.md#plat-isp-001). Manual test, run before each release, at step **B2** ([bring-up.md](bring-up.md)); add a line to *Results* for each release.
 
 ## Equipment
 - A v3.0 board with a BME280 breakout on J3 or J14, JP6 bridged 1–2 (I2C 0x76).
@@ -20,5 +20,5 @@ Requirement: [PLAT-ISP-001](../../requirements/platform.md#plat-isp-001). Manual
 - Step 2: the receiver shows a plausible temperature, humidity and pressure (through R9/R10 330 Ω).
 
 ## Results
-| Date | Commit / build | Board | Flash verified | Readings | Pass | By | Notes |
+| Date | Release (tag / commit) | Board | Flash verified | Readings | Pass | By | Notes |
 |---|---|---|---|---|---|---|---|
