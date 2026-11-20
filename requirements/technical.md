@@ -107,10 +107,10 @@
 ---
 
 ### TECH-SERIAL-002
-**Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
+**Title:** With USE_SERIAL_LOG only, each cycle writes its measured values as text lines on the debug serial output
 **Status:** draft
 **Dependencies:** [PLAT-DEBUG-001](platform.md#plat-debug-001)
-**Description:** With `USE_SERIAL_LOG`, each cycle writes every value it measures (battery, analog input, luminosity, temperature, humidity, pressure) as one `name value unit` line on the debug serial output ([PLAT-DEBUG-001](platform.md#plat-debug-001)). Without it, the firmware has no debug output and links no serial code, which keeps flash and cycle time for the sensor builds.
+**Description:** With `USE_SERIAL_LOG`, each cycle writes one line per value it measures on the debug serial output ([PLAT-DEBUG-001](platform.md#plat-debug-001)), as `<name>: <value><unit>` with the value an unsigned decimal, in this order and only for the values the build measures: `Vbatt: <mV> mV`, `Raw analog: <ADC reading> ADC`, `Analog voltage: <mV> mV`, `Luminosity: <lux> Lux`, `Temp.: <tenths of °C> °C`, `RH : <%> %`, `Pressure : <hPa> hPA`. Without it, the firmware writes nothing and links no serial code, which keeps flash and cycle time for the sensor builds.
 
 ---
 
@@ -133,10 +133,10 @@
 ---
 
 ### TECH-SENSOR-001
-**Title:** DS18B20 access encapsulated in a Ds18b20 wrapper class; main.cpp must not reference AVR registers or ds18b20 library functions directly
+**Title:** With a DS18B20, the cycle touches no AVR register and PA3 is released after each read
 **Status:** draft
 **Dependencies:** [TECH-HAL-001](#tech-hal-001), [FUNC-SENSOR-002](functional.md#func-sensor-002)
-**Description:** A `Ds18b20` wrapper class (header `emitter/include/Ds18b20.h`) must encapsulate all 1-Wire DS18B20 interactions. On AVR, `Ds18b20` must accept a `Hal*` at construction and expose `Begin()`, `Convert()`, `Read()` (returning `int16_t` temperature in °C as integer), and use `hal->Delay1s()` between `ds18b20convert` and `ds18b20read` internally. On non-AVR targets all methods must be stubs returning 0. `main.cpp` must not call `ds18b20convert()`, `ds18b20read()`, or reference `PORTA`, `DDRA`, or `PINA` in any `USE_DS18B20` code path; all such calls are delegated exclusively to `Ds18b20`. Once `Read()` has finished, `Ds18b20` releases PA3: input, no internal pull-up, never left driven high (the 1-Wire library leaves it an output driven high). R6 pulls the line up to `SENSOR_VCC` while the sensors are powered ([PLAT-POWER-007](platform.md#plat-power-007)), so a released PA3 never powers the DS18B20 with the sensor rail off. Not implemented yet: to do when the DS18B20 path is validated again.
+**Description:** On a DS18B20 build, all 1-Wire access goes through a sensor wrapper given the `Hal` ([TECH-HAL-001](#tech-hal-001)): the cycle (`runCycle`) touches no AVR register and calls no 1-Wire driver function, so native builds run it with the sensor reading 0. After each read, PA3 is released: an input without internal pull-up, never left driven high (the 1-Wire driver leaves it driven high). R6 pulls the line up to `SENSOR_VCC` while the sensors are powered ([PLAT-POWER-007](platform.md#plat-power-007)), so a released PA3 never powers the DS18B20 with the sensor rail off.
 
 ---
 
