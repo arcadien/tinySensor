@@ -80,7 +80,7 @@ Requirements are a spec, not a plan. Each one passes four checks:
 3. **States its reason** when it is not obvious.
 4. **Verifiable on its own**.
 - The "how" (classes, helpers, registers, file layout) goes in `docs/architecture.md` and code comments.
-- **No test information in a requirement**: no "Verification:", "Test:", "Verified by", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:".
+- **No test information in a requirement**: no "Test:", "Verified by", "Acceptance:", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:". One exception: a requirement checked automatically by something that is not a test carries `**Verification:** build — <how>` or `**Verification:** inspection — <how>` (before the description); manual hardware checks never go there, they are bench sheets.
 - A helper's unit tests are tagged with the requirement whose behaviour uses the helper (`dec16ToHex` tests → FUNC-X10-006/007).
 - A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md`, tagged like a test: `<!-- @req <ID> -->` on its first line, one line per requirement it covers (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); Bench tests are run by hand before each release, in the order of `tests/bench/bring-up.md`; a release is tagged only when every sheet has a passing line for it.
 
