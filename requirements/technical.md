@@ -25,6 +25,7 @@
 **Title:** ComputeVccMv and ConvertAnalogValueToMv are non-virtual concrete methods on the Hal base class
 **Status:** deprecated
 **Dependencies:** —
+**Superseded by:** [FUNC-BATTERY-001](functional.md#func-battery-001)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the VCC and pin voltage formulas are [FUNC-BATTERY-001](functional.md#func-battery-001).
 
 ---
@@ -33,6 +34,7 @@
 **Title:** Attiny84aHal constructor disables Timer1, ADC, and analog comparator; no pull-up on PORTA, PA5 digital input buffer off, pull-ups on PB2 and PB3
 **Status:** deprecated
 **Dependencies:** [PLAT-POWER-007](platform.md#plat-power-007)
+**Superseded by:** [PLAT-POWER-008](platform.md#plat-power-008)
 **Description:** Deprecated 2026-11-20: the awake pin states and their reason are now [PLAT-POWER-008](platform.md#plat-power-008); the constructor details are in [docs/architecture.md](../docs/architecture.md).
 
 ---
@@ -41,6 +43,7 @@
 **Title:** LedOn and LedOff toggle PORTB PB1 on AVR hardware and toggle IsLedOn in TestHal_
 **Status:** deprecated
 **Dependencies:** —
+**Superseded by:** [PLAT-POWER-004](platform.md#plat-power-004)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the LED behaviour is [PLAT-POWER-004](platform.md#plat-power-004).
 
 ---
@@ -81,6 +84,7 @@
 **Title:** dec16ToHex returns the BCD hex representation of a uint16_t with each decimal digit in one nibble
 **Status:** deprecated
 **Dependencies:** —
+**Superseded by:** [FUNC-X10-006](functional.md#func-x10-006)
 **Description:** Deprecated 2026-11-20: helper detail; the BCD encoding it serves is [FUNC-X10-006](functional.md#func-x10-006) and [FUNC-X10-007](functional.md#func-x10-007).
 
 ---
@@ -97,6 +101,7 @@
 **Title:** SoftSerial transmits output-only UART at 9600 baud using the SerialWriteBit HAL call
 **Status:** deprecated
 **Dependencies:** [TECH-HAL-001](#tech-hal-001)
+**Superseded by:** [PLAT-DEBUG-001](platform.md#plat-debug-001)
 **Description:** Deprecated 2026-11-20: the debug serial output is now [PLAT-DEBUG-001](platform.md#plat-debug-001); the `SoftSerial` / `SerialWriteBit` split is in [docs/architecture.md](../docs/architecture.md).
 
 ---
@@ -105,8 +110,7 @@
 **Title:** Debug logging via SoftSerial is compiled only when USE_SERIAL_LOG is defined
 **Status:** draft
 **Dependencies:** [PLAT-DEBUG-001](platform.md#plat-debug-001)
-**Verification:** build — no environment sets `USE_SERIAL_LOG` yet
-**Description:** When `USE_SERIAL_LOG` is defined, `emitter/src/main.cpp` includes `SoftSerial.h`, instantiates `SoftSerial swSerial(&hal)`, and implements `SerialPrintInfo(name, value, unit)` using it. When `USE_SERIAL_LOG` is absent, `SerialPrintInfo` is a no-op inline function and `SoftSerial` is not instantiated.
+**Description:** With `USE_SERIAL_LOG`, each cycle writes every value it measures (battery, analog input, luminosity, temperature, humidity, pressure) as one `name value unit` line on the debug serial output ([PLAT-DEBUG-001](platform.md#plat-debug-001)). Without it, the firmware has no debug output and links no serial code, which keeps flash and cycle time for the sensor builds.
 
 ---
 
@@ -114,6 +118,7 @@
 **Title:** Hal must expose five timing methods for X10 RF signal intervals
 **Status:** deprecated
 **Dependencies:** [TECH-HAL-001](#tech-hal-001)
+**Superseded by:** [FUNC-X10-005](functional.md#func-x10-005)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the X10 timings are [FUNC-X10-005](functional.md#func-x10-005).
 
 ---
@@ -122,6 +127,7 @@
 **Title:** x10rf must call only Hal timing methods for all delays; direct _delay_us() calls are forbidden
 **Status:** deprecated
 **Dependencies:** [TECH-X10-001](#tech-x10-001)
+**Superseded by:** [FUNC-X10-005](functional.md#func-x10-005)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the X10 timings are [FUNC-X10-005](functional.md#func-x10-005), and [TECH-HAL-001](#tech-hal-001) keeps all timing behind the HAL.
 
 ---
@@ -138,6 +144,7 @@
 **Title:** BMx280 wraps BMP280 and BME280 behind one class; stubs return 0 on native builds
 **Status:** deprecated
 **Dependencies:** [TECH-HAL-001](#tech-hal-001), [FUNC-SENSOR-001](functional.md#func-sensor-001)
+**Superseded by:** [FUNC-SENSOR-001](functional.md#func-sensor-001)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the sensor behaviour is [FUNC-SENSOR-001](functional.md#func-sensor-001), and [TECH-HAL-001](#tech-hal-001) covers wrappers built on a third-party driver.
 
 ---
@@ -159,7 +166,7 @@
 ### TECH-DECODE-002
 **Title:** Receiver hardware is reached only through a compile-time `ReceiverHal` interface given by pointer, with a native test double
 **Status:** validated
-**Dependencies:** [TECH-DECODE-001](#tech-decode-001)
+**Dependencies:** —
 **Description:** The receiver logic gets the hardware through a `ReceiverHal*` given at construction and touches no AVR register. `ReceiverHal` is chosen at compile time, without virtual call: the ATmega implementation on the ATmega328P and ATmega32U4, a test double on native builds; any other target fails to compile. Its operations: pop the oldest ended pulse (level, duration in µs; false when none), read the current second, draw an 8x16 cell (text page 0–2, column 0–15), draw a 16x32 cell (column 0–5), and, when the compile-time `HasLineOutput` is true, write one text line without terminator. The test double lets a caller push pulses, set the time, and read back the drawn cells, the number of draws and the written lines.
 
 ### TECH-DECODE-003
@@ -173,10 +180,12 @@
 **Title:** FormatPage, ReadGlyph and ReadBigGlyphPage build the OLED cells without dynamic allocation
 **Status:** deprecated
 **Dependencies:** [TECH-DECODE-003](#tech-decode-003), [UI-DECODE-001](ui.md#ui-decode-001), [UI-DECODE-002](ui.md#ui-decode-002), [UI-DECODE-003](ui.md#ui-decode-003)
+**Superseded by:** [UI-DECODE-003](ui.md#ui-decode-003)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the screen content is [UI-DECODE-001](ui.md#ui-decode-001) to 003.
 
 ### TECH-DECODE-005
 **Title:** Arduino receiver: shared entry point, and AtmegaReceiverHal built on Timer1 interrupts, Wire and Serial
 **Status:** deprecated
 **Dependencies:** [TECH-DECODE-002](#tech-decode-002), [TECH-DECODE-003](#tech-decode-003), [PLAT-DECODE-003](platform.md#plat-decode-003), [PLAT-DECODE-004](platform.md#plat-decode-004), [PLAT-DECODE-005](platform.md#plat-decode-005), [CONF-DECODE-003](configuration.md#conf-decode-003), [CONF-DECODE-004](configuration.md#conf-decode-004)
+**Superseded by:** [PLAT-DECODE-003](platform.md#plat-decode-003)
 **Description:** Deprecated 2026-11-20: design detail, described in [docs/architecture.md](../docs/architecture.md); the receiver hardware use is [PLAT-DECODE-003](platform.md#plat-decode-003) to 005.
