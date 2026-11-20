@@ -20,7 +20,7 @@ graph TD
   Ds18b20 -->|"1-Wire PA3"| ds18b20["ds18b20 (1-Wire driver library)"]
   main -->|Hal*| LightSensor["LightSensor (BH1750 wrapper)"]
   LightSensor -->|"I2C 0x23"| BH1750["BH1750 (I2C light sensor)"]
-  LightSensor -->|Delay30ms| HAL
+  LightSensor -->|Delay30ms ×5, 150 ms| HAL
 
   HAL["Hal (interface)"] --> Attiny84aHal["Attiny84aHal (AVR)"]
   HAL --> TestHal["TestHal_ (host/test)"]
@@ -84,7 +84,7 @@ Protocol encoders and sensor wrappers that use the HAL receive `Hal*` at constru
 Design choices:
 
 - **Static interface, no virtual call.** The protocol is fixed at build time, so `EnvironmentEncoder` is a `typedef` and `ApplyMeasurements()` an overload per encoder. On an ATtiny84a (8 KB flash) this avoids a vtable and indirect calls while keeping a single call site in `main.cpp`.
-- **Luminosity always uses Lacrosse.** Oregon v3 has no light frame, and a Lacrosse frame carrying luminosity cannot carry other fields (`LacrosseWS7000::Send()` gives luminosity priority). Targets with `USE_BH1750` therefore need `LACROSSE_ID`, whatever the environment protocol.
+- **Luminosity always uses Lacrosse.** Oregon v2.1 has no light frame, and a Lacrosse frame carrying luminosity cannot carry other fields (`LacrosseWS7000::Send()` gives luminosity priority). Targets with `USE_BH1750` therefore need `LACROSSE_ID`, whatever the environment protocol.
 - **Encoders and sensors are built inside `runCycle`** from the injected `Hal*` and configured (`ConfigureEncoder()`, `SetAddress()`) on every cycle; the low-battery flag and battery voltage are locals of the cycle. Exception: `BMx280` is a file-scope object, because built per cycle it costs ~288 B flash on `robot` (97.7 % vs 93.9 %): LTO can no longer resolve the SparkFun driver at a fixed address. It only holds the driver configuration, re-initialised by `Begin()` every cycle. Otherwise nothing persists between cycles, so a field absent in a cycle no longer keeps its previous value in the encoder; this is harmless because the environment frame is only sent when a temperature is present.
 - **Native cycle tests.** `test_main_cycle` runs only in dedicated native envs that build `src/` (`test_build_src = yes`) with `SLEEP_TIME_IN_SECONDS=0` (`TestHal_::Hibernate` really sleeps); `native_debug` ignores it. One env per build variant family:
 
@@ -209,7 +209,7 @@ Every physical board is a separate PlatformIO environment with its own `build_fl
 | [FUNC-X10-002](../requirements/functional.md#func-x10-002) | `x10rf` | RFXsensor 4-byte frame: address+type bits, partial complement, value, packet-type status + nibble-sum parity |
 | [FUNC-X10-003](../requirements/functional.md#func-x10-003) | `x10rf` | Deprecated: x10Switch is removed, no X10 switch frame is sent |
 | [FUNC-X10-004](../requirements/functional.md#func-x10-004) | `x10rf` | x10Security 6-byte frame: address, address with its low nibble inverted, command + complement, id, XOR-fold parity |
-| [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Two copies per cycle, each followed by a 40 ms silence via DelayX10Gap (see [TECH-X10-001](../requirements/technical.md#tech-x10-001)); LED lit from before the first copy until after the last |
+| [FUNC-X10-005](../requirements/functional.md#func-x10-005) | `x10rf` | Two copies per cycle, each a preamble (DelayX10PreambleHigh 8960 µs, DelayX10PreambleLow 4500 µs), bits high DelayX10BitShort 560 µs then low 560 µs (`0`) or DelayX10BitShort + DelayX10BitLong = 1680 µs (`1`), then a 40 ms silence (DelayX10Gap); LED framing per [PLAT-POWER-004](../requirements/platform.md#plat-power-004) |
 | [FUNC-X10-006](../requirements/functional.md#func-x10-006) | `main.cpp` | Battery voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [FUNC-X10-007](../requirements/functional.md#func-x10-007) | `main.cpp` | Analog sensor voltage BCD-encoded and transmitted via RFXmeter; suppressed when lowBattery |
 | [TECH-HAL-001](../requirements/technical.md#tech-hal-001) | `Hal` / `Attiny84aHal` / `TestHal_` / `OregonV3` / `LacrosseWS7000` / `x10rf` / `SoftSerial` / `Ds18b20` / `LightSensor` / `BMx280` | Encoders and HAL-using wrappers take Hal* at construction; BMx280 (third-party bus driver) takes none; no direct AVR register access except addresses passed to a bus driver |
