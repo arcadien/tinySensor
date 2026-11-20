@@ -21,7 +21,7 @@
 
 // Degree glyph; kept a separate literal so "\x7F" never eats a hex digit
 #define DEG "\x7F"
-// Lux unit cell, LuxUnit in Font8x16.h (TECH-DECODE-004)
+// Lux unit cell, LuxUnit in Font8x16.h (UI-DECODE-003)
 #define UNIT "\x01"
 
 static const uint8_t T = SourceRecord::Temperature;

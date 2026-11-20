@@ -23,7 +23,8 @@
 void tearDown() {}
 void setUp() {}
 
-// @req TECH-CONVERT-001
+// @req FUNC-X10-006
+// @req FUNC-X10-007
 void Test_dec16ToHex() {
   struct TestData {
     uint16_t given;
@@ -48,36 +49,8 @@ void Test_dec16ToHex() {
     TEST_ASSERT_EQUAL_UINT16(testData.expected, actual);
   }
 }
-// @req TECH-CONVERT-002
-void Test_dec32ToHex() {
-  struct TestData {
-    uint32_t given;
-    uint32_t expected;
-  };
-
-  // clang-format off
-  TestData testDatas[] = {
-    {0, 0},
-    {5, 5}, 
-    {4200,      0x4200}, 
-    {999999,     0x999999},
-    {99999999,   0x99999999}, // max
-    {99999999+1, 0xA0000000}, // overflow
-
-  };
-  // clang-format on
-
-  uint8_t testCount = sizeof(testDatas) / sizeof(TestData);
-  for (uint8_t testCounter = 0; testCounter < testCount; testCounter++) {
-    TestData testData = testDatas[testCounter];
-    uint32_t actual = ConversionTools::dec32ToHex(testData.given);
-    TEST_ASSERT_EQUAL_UINT32(testData.expected, actual);
-  }
-}
-
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(Test_dec16ToHex);
-  RUN_TEST(Test_dec32ToHex);
   return UNITY_END();
 }

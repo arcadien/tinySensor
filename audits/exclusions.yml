@@ -4,8 +4,8 @@ exclusions:
     justification: "The code predates the RBD workflow; the test commits tagged existing tests (FUNC-ANALOG-001 to PLAT-POWER-004 added on 2026-11-17 by 7f4c027, 6fdc43a, 4919547). Adding implementation commits would mean rewriting master history."
     date: 2026-11-17
   - id: HIST-COMMIT-MISMATCH-001
-    finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005, TECH-SERIAL-001, CONF-BUILD-012, FUNC-SENSOR-003"
-    justification: "Merged history (chore: CI wiring, tests or code bundled in a neighbour commit). TECH-SERIAL-001 (6817d72 added its tests inside the tech commit), CONF-BUILD-012 (code in 0d775cc feat(FUNC-BATTERY-002), tag in d64fb61) and FUNC-SENSOR-003 (tags in a5987fb, tech: without ID) added on 2026-11-17 (audit 3, finding 10). It cannot change without rewriting master; the current tags and code are traced."
+    finding: "Commit history mismatches for CONF-BUILD-002, CONF-BUILD-003, CONF-BUILD-013, FUNC-DECODE-003, FUNC-DECODE-005, TECH-SERIAL-001, CONF-BUILD-012, FUNC-SENSOR-003, PLAT-POWER-001, PLAT-POWER-003, TECH-HAL-001, TECH-DECODE-003, CONF-BUILD-007, CONF-BUILD-011, PLAT-DEBUG-001"
+    justification: "Merged history (chore: CI wiring, tests or code bundled in a neighbour commit). TECH-SERIAL-001 (6817d72 added its tests inside the tech commit), CONF-BUILD-012 (code in 0d775cc feat(FUNC-BATTERY-002), tag in d64fb61) and FUNC-SENSOR-003 (tags in a5987fb, tech: without ID) added on 2026-11-17 (audit 3, finding 10). It cannot change without rewriting master; the current tags and code are traced. Added on 2026-11-20 (audit 2026-11-20, finding 6): build/inspection requirements whose code predates RBD (TECH-HAL-001, CONF-BUILD-007, CONF-BUILD-011), was committed with fix(PLAT-POWER-003) (22eacc3), or under neighbour IDs (PLAT-POWER-001 under TECH-HAL-007, TECH-DECODE-003 under the FUNC-DECODE commits). PLAT-DEBUG-001 added on 2026-11-20 (audit 2026-11-20 (2), finding 1): its code is 6817d72 tech(TECH-SERIAL-001), deprecated with **Superseded by:** PLAT-DEBUG-001; T3 does not follow Superseded by yet."
     date: 2026-11-17
   - id: HIST-PREFIX-001
     finding: "Plan and architecture files changed by commits with the wrong prefix (.rbd/config.yml, requirements/technical.md, requirements/platform.md, docs/architecture.md)"
@@ -27,3 +27,11 @@ exclusions:
     finding: "4 tests in emitter/test/test_ds18b20/ds18b20Test.cpp are tagged with the draft TECH-SENSOR-001"
     justification: "TECH-SENSOR-001 went back to draft pending the DS18B20 rework (PA3 release, 0 °C reading, FUNC-SENSOR-002). The tests still check the current driver wrapper; the tag stays so they are re-traced when the requirement is validated again."
     date: 2026-11-17
+  - id: HIST-ARCH-REMOVED-ID-001
+    finding: "ee76804 arch(CONF-DECODE-001) and b7b07fc arch(PLAT-DECODE-001) cite IDs later removed from the requirement files (aecbdb3, a25dc41)"
+    justification: "The IDs were valid when committed (2026-11-09) and the tinyDecoders requirements were renumbered afterwards. Rewriting master is not worth it."
+    date: 2026-11-20
+  - id: TEXT-BACKREF-001
+    finding: "A parent requirement cites in its text a child that lists it as a dependency (TECH-MAIN-001 / FUNC-MAIN-001, TECH-HAL-006; UI-DECODE-001 / FUNC-DECODE-007, UI-DECODE-003; PLAT-DECODE-005 / CONF-DECODE-004)"
+    justification: "These citations give context (where the behaviour is specified), not a dependency: each parent is fully specified without the child, and the declared Dependencies graph has no cycle."
+    date: 2026-11-20

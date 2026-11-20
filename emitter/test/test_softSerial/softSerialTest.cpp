@@ -46,7 +46,7 @@ static void DecodeFrames(std::string &decoded) {
   }
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_begin_sets_line_idle_high() {
   SoftSerial serial(&TestHal);
   serial.begin();
@@ -54,7 +54,7 @@ void Expect_begin_sets_line_idle_high() {
   TEST_ASSERT_EQUAL_CHAR('S', TestHal.Orders[0]);
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_byte_frame_is_start_lsb_first_data_stop() {
   SoftSerial serial(&TestHal);
   serial.print((uint8_t)0x41);  // 'A' = 0b01000001
@@ -64,7 +64,7 @@ void Expect_byte_frame_is_start_lsb_first_data_stop() {
   TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, TestHal.Orders.data(), FRAME_LEN);
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_string_is_sent_frame_by_frame() {
   SoftSerial serial(&TestHal);
   serial.print("Vbatt: ");
@@ -73,7 +73,7 @@ void Expect_string_is_sent_frame_by_frame() {
   TEST_ASSERT_EQUAL_STRING("Vbatt: ", decoded.c_str());
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_numbers_are_sent_as_decimal_text() {
   SoftSerial serial(&TestHal);
   serial.print(0);
@@ -88,7 +88,7 @@ void Expect_numbers_are_sent_as_decimal_text() {
   TEST_ASSERT_EQUAL_STRING("0 3712 -42 4294967295", decoded.c_str());
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_base_argument_selects_radix() {
   SoftSerial serial(&TestHal);
   serial.print(255L, 16);
@@ -101,7 +101,7 @@ void Expect_base_argument_selects_radix() {
   TEST_ASSERT_EQUAL_STRING("FF 101 A", decoded.c_str());
 }
 
-// @req TECH-SERIAL-001
+// @req PLAT-DEBUG-001
 void Expect_println_appends_crlf() {
   SoftSerial serial(&TestHal);
   serial.println("ok");

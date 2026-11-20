@@ -54,7 +54,7 @@ Protocol encoders receive a `Hal*` at construction and call only HAL methods —
 
 Tests run on the host (`-e native_debug` and the `native_cycle_*` environments, `-DNATIVE`). The test harness instantiates `TestHal_` and passes it to the encoder under test. Protocol correctness is verified by checking the `Orders` vector against expected character sequences — e.g., a zero bit must produce `{'H','D','L','P','H','D'}`. This verifies timing ordering without hardware.
 
-Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_analogFiltering`, `test_power`, `test_led`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle` (only in `native_cycle_*`).
+Test suites: `test_oregon`, `test_lacrosseWS7000`, `test_x10`, `test_conversionTools`, `test_power`, `test_led`, `test_softSerial`, `test_ds18b20`, `test_x10_hal`, `test_environment`, `test_main_cycle` (only in `native_cycle_*`).
 
 ### `src/main.cpp`
 
@@ -71,8 +71,18 @@ This project uses Requirement-Based Development. **Every code change must origin
 - Requirements live in `requirements/*.md` (functional, technical, performance, ui, configuration, platform).
 - Architecture is tracked in `docs/architecture.md` — updated with an `arch(ID):` commit whenever a requirement changes the component diagram.
 - Commit prefixes are mandatory: `req()`, `test()`, `feat()`, `tech()`, `perf()`, `ui()`, `conf()`, `arch()`, `plan:`.
-- Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it.
+- Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it, and every bench sheet a `<!-- @req ID -->` tag on its first line.
 - ID format: `FUNC-DOMAIN-NNN` (e.g. `FUNC-OREGON-001`, `TECH-HAL-001`).
+
+Requirements are a spec, not a plan. Each one passes four checks:
+1. **Observable** from outside the unit (radio output, pins, screen, serial lines, build result), or a design constraint that has a reason (testability, memory, no hardware access).
+2. **Survives a refactor**: no class, method, file or register name, except at a boundary interface (`Hal`, `ReceiverHal`, `runCycle`, build flags, environments).
+3. **States its reason** when it is not obvious.
+4. **Verifiable on its own**.
+- The "how" (classes, helpers, registers, file layout) goes in `docs/architecture.md` and code comments.
+- **No test information in a requirement**: no "Test:", "Verified by", "Acceptance:", "native test", "bench check pending". Input → output examples that define the behaviour stay, as "Examples:". One exception: a requirement checked automatically by something that is not a test carries `**Verification:** build — <how>` or `**Verification:** inspection — <how>` (before the description); manual hardware checks never go there, they are bench sheets.
+- A helper's unit tests are tagged with the requirement whose behaviour uses the helper (`dec16ToHex` tests → FUNC-X10-006/007).
+- A requirement no software test can cover gets a bench test sheet `tests/bench/<ID>.md`, tagged like a test: `<!-- @req <ID> -->` on its first line, one line per requirement it covers (requirement link, equipment, setup, steps, pass criteria, results table filled at each run); Bench tests are run by hand before each release, in the order of `tests/bench/bring-up.md`; a release is tagged only when every sheet has a passing line for it.
 
 To start a new requirement: invoke `/rbd` and describe the intent. The workflow dispatches `requirement-analyst` → `test-builder` → `code-builder` in sequence.
 
