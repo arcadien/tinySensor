@@ -67,6 +67,33 @@
 
 ---
 
+### PLAT-POWER-008
+**Title:** While awake, no internal pull-up on PORTA, the floating MISO input buffer off, PB2 and PB3 pulled up, unused peripherals off
+**Status:** validated
+**Dependencies:** [PLAT-POWER-002](#plat-power-002), [PLAT-POWER-007](#plat-power-007)
+**derives_from:** [PLAT-POWER-007](#plat-power-007)
+**Description:** From reset until the first sleep, and between sleeps, the ATtiny84A enables no internal pull-up on any PORTA pin. PA0 and PA1 are analog inputs, PA2 (`SENSOR_VCC`) and PA7 are outputs, and PA3, PA4 and PA6 are bus pins pulled up externally to `SENSOR_VCC` ([PLAT-POWER-007](#plat-power-007)). While PA2 is low (at boot, at wake before the sensors are powered, after they are powered off), an internal pull-up on a bus pin would drive current through the external pull-up into PA2 and back-power the sensors. PA5 (MISO) has no pull-up at all. It reaches the ISP header J6 and pad 3 of the BME280 SDO jumper JP6, which v3.0 delivers open: bridged 1–2, SDO goes to GND and the sensor answers at I2C address 0x76, the one the firmware reads; bridged 2–3, SDO follows PA5, for SPI. The PA5 digital input buffer is disabled, so the floating pin draws no current in the input stage; reset enables it again, so ISP programming is unaffected. PB2 and PB3 (RESET) are pulled up, the ATtiny84A having no PB4–PB7, except PB2 with `USE_SWITCHED_5V` ([PLAT-POWER-006](#plat-power-006)). PB0 (radio data) and PB1 (LED) are outputs. The analog comparator and Timer1 stay off, and the ADC is on only while it measures.
+
+---
+
+### PLAT-ISP-001
+**Title:** A v3.0 board is flashed over ISP with its I2C sensor fitted
+**Status:** validated
+**Dependencies:** [PLAT-POWER-007](#plat-power-007)
+**derives_from:** [PLAT-POWER-007](#plat-power-007)
+**Description:** The ISP lines SCK (PA4) and MOSI (PA6) are also the I2C SCL and SDA. On v3.0, the sensor connector reaches them through 330 Ω series resistors, R9 on SCL and R10 on SDA, with the sensor pull-ups on the connector side ([PLAT-POWER-007](#plat-power-007)), while the ISP header J6 is wired directly to the MCU pins. The programmer therefore drives SCK and MOSI without the sensor loading them, and the board is flashed with the BME280 in place; the sensor still reads correctly through the resistors afterwards. v2.2 boards have no such resistors: their sensor is removed before flashing.
+
+---
+
+### PLAT-DEBUG-001
+**Title:** Debug serial output: transmit only on PA7, 9600 baud 8N1, line idle high
+**Status:** validated
+**Dependencies:** [PLAT-POWER-005](#plat-power-005)
+**derives_from:** [PLAT-POWER-005](#plat-power-005)
+**Description:** The emitter's debug serial output is a software UART on PA7: 9600 baud, each byte a low start bit, 8 data bits least significant first, then a high stop bit. The line is idle high from the start of the output. Numbers are written as text, in decimal unless another base is asked for, and a written line ends with `\r\n`. There is no receive path. The bit time is calibrated for the 1 MHz clock ([PLAT-POWER-005](#plat-power-005)).
+
+---
+
 ### PLAT-DECODE-003
 **Title:** Receiver captures radio pulses on ICP1 (PB0/D8 on the Pro Mini, PD4 on the Pro Micro) with Timer1 at 0.5 µs and counts seconds from its overflow
 **Status:** validated
