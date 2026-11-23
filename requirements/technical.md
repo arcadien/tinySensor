@@ -155,7 +155,7 @@
 
 **Dependencies:** [PLAT-DEBUG-001](platform.md#plat-debug-001)
 
-**Description:** With `USE_SERIAL_LOG`, each cycle writes one line per value it measures on the debug serial output ([PLAT-DEBUG-001](platform.md#plat-debug-001)), as `<name>: <value><unit>` with the value an unsigned decimal, in this order and only for the values the build measures: `Vbatt: <mV> mV`, `Raw analog: <ADC reading> ADC`, `Analog voltage: <mV> mV`, `Luminosity: <lux> Lux`, `Temp.: <tenths of °C> °C`, `RH : <%> %`, `Pressure : <hPa> hPA`. Without it, the firmware writes nothing and links no serial code, which keeps flash and cycle time for the sensor builds.
+**Description:** With `USE_SERIAL_LOG`, each cycle writes one line per value it measures on the debug serial output ([PLAT-DEBUG-001](platform.md#plat-debug-001)), as `<name>: <value><unit>`, the value being the measurement truncated toward zero to an integer and written as an unsigned decimal (a negative temperature has no defined line yet), in this order and only for the values the build measures: `Vbatt: <mV> mV`, `Raw analog: <ADC reading> ADC`, `Analog voltage: <mV> mV`, `Luminosity: <lux> Lux`, `Temp.: <tenths of °C> °C`, `RH : <%> %`, `Pressure : <hPa> hPA`. Without it, the firmware writes nothing and links no serial code, which keeps flash and cycle time for the sensor builds.
 
 ---
 
