@@ -6,7 +6,7 @@ Coordinates are KiCad's, in mm, board not rotated, seen from the top (component 
 
 ## Must do
 
-### 1. BME280 ground (P1): a strap
+### 1. BME280 ground (P1): a strap — checked with a meter (2026-11-11)
 
 The GND pads of the "I2C" footprint (pads 2 and 6) and the ISP GND pin (J6.6) sit on an isolated copper island.
 Without a fix, the BME280 has no ground. Its SDO pin, wired to GND, floats too, and the sensor I2C address is no longer fixed.
@@ -58,12 +58,19 @@ It is replaced by the **TPS63020** 3.3 V buck-boost module in stock from the Tar
   Also log the result in the Tars test bench `tests/bench/PLAT-POWER-REG-001.md`, which has not been run yet.
 - Consumption: the sleeping ATtiny draws a few µA; the module adds about 25–50 µA idle. That still means several years on a 2500 mAh 18650.
 
+### 6. BME280 CSB (R11): a 10 kΩ pull-up
+
+Position 5 of the "I2C" footprint (CSB) is not connected, and the breakout used does not pull CSB up (checked with a meter on 2026-11-11). If CSB reads low, the sensor goes into SPI mode.
+
+- A **10 kΩ** resistor between **I2C pad 5** (CSB, 189.35 ; 77.11) and **I2C pad 1** (sensor VCC, 199.35 ; 77.11), bottom side, leads sleeved. It stays on the board, not on the breakout.
+- Tie it to pad 1, not to VCC: CSB then follows the sensor supply and does not power the sensor through this pin when it is off.
+- Check, BME280 removed: ≈ 10 kΩ between I2C pad 5 and I2C pad 1.
+
 ## Adapted assembly
 
 - **J2 (P7):** fit nothing in the footprint, only wires W7–W9 (see item 5).
 - **C6 (P8):** do not fit. It only serves the analog sensor (J7 / JP4), absent from the mushroom.
 - **JP2 "DIRECT Vcc" (R9):** leave it open: otherwise it shorts the TPS63020 input to its output.
-- **BME280 CSB (R11):** position 5 is not connected. Check with a meter that the breakout pulls CSB up to VIN (≈ 10 kΩ): otherwise the sensor goes into SPI mode.
 - **J13 polarity (R2, P9):** no reverse protection. Follow the colour code W5 red = terminal 1 (+, square pad) and W6 black = terminal 2. Mark "+" with a felt pen next to J13.
 
 ## Recommended, cheap
