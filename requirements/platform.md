@@ -56,7 +56,7 @@
 
 **derives_from:** [FUNC-X10-005](functional.md#func-x10-005)
 
-**Description:** A transmission is one frame of an encoder, with all its copies: the repeated copies of an X10 frame ([FUNC-X10-005](functional.md#func-x10-005)) are one transmission, while each luminosity copy ([FUNC-SENSOR-003](functional.md#func-sensor-003)) and each environment copy ([FUNC-MAIN-001](functional.md#func-main-001)) is its own transmission. Every transmission of a cycle turns the LED on before its first bit, turns it off after its last bit, then waits 30 ms; for an X10 frame, the 30 ms come after the 40 ms gap of its last copy.
+**Description:** A transmission is what one send of an encoder puts on air: an X10 frame with all its repeated copies and their gaps ([FUNC-X10-005](functional.md#func-x10-005)) is one transmission, while each frame copy the cycle sends on its own, such as each luminosity copy ([FUNC-SENSOR-003](functional.md#func-sensor-003)) or each environment copy, is its own transmission. Every transmission of a cycle turns the LED on before its first bit and off at its end, then waits 30 ms; for an X10 frame, the end is after the 40 ms gap of its last copy, so the LED goes off after that gap.
 
 ---
 
