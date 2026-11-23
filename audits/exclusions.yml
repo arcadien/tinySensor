@@ -35,3 +35,7 @@ exclusions:
     finding: "A parent requirement cites in its text a child that lists it as a dependency (TECH-MAIN-001 / FUNC-MAIN-001, TECH-HAL-006; UI-DECODE-001 / FUNC-DECODE-007, UI-DECODE-003; PLAT-DECODE-005 / CONF-DECODE-004)"
     justification: "These citations give context (where the behaviour is specified), not a dependency: each parent is fully specified without the child, and the declared Dependencies graph has no cycle."
     date: 2026-11-20
+  - id: STYLE-LAYOUT-001
+    finding: "6132405 (style:) inserted blank lines between requirement fields in requirements/*.md"
+    justification: "Layout only (354 blank lines, no text change), merged in PR #95 before the plan: rule was checked. Later layout changes to plan files use plan:."
+    date: 2026-11-23
