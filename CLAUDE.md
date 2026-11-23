@@ -70,7 +70,7 @@ This project uses Requirement-Based Development. **Every code change must origin
 
 - Requirements live in `requirements/*.md` (functional, technical, performance, ui, configuration, platform).
 - Architecture is tracked in `docs/architecture.md` — updated with an `arch(ID):` commit whenever a requirement changes the component diagram.
-- Commit prefixes are mandatory: `req()`, `test()`, `feat()`, `tech()`, `perf()`, `ui()`, `conf()`, `arch()`, `plan:`.
+- Commit prefixes are mandatory: `req()`, `test()`, `feat()`, `tech()`, `perf()`, `ui()`, `conf()`, `plat()` (PLAT implementation, rbd ≥ 0.18), `arch()`, `plan:`.
 - Every Unity test function must carry a `// @req FUNC-DOMAIN-NNN` tag on the line above it, and every bench sheet a `<!-- @req ID -->` tag on its first line.
 - ID format: `FUNC-DOMAIN-NNN` (e.g. `FUNC-OREGON-001`, `TECH-HAL-001`).
 
@@ -144,7 +144,7 @@ Current-limiting and pull resistors sit **at the board end**, never at the LED o
 Strip EXIF/GPS from every image before committing: `python3 ~/.claude/skills/hardware-change/scripts/strip_exif.py <paths>` (`--check` to verify).
 
 ### Commits
-The rbd plugin's pre-push hook (a Claude Code hook on `git push`) checks the prefixes. It accepts the RBD ones above (`req()`…`arch()` must cite a validated ID), `plan:`, `hw:` for hardware (`enclosing/`, `hardware/`, from `.rbd/config.yml` `extra_commit_prefixes`), `docs:` for doc-only commits, and `fix:`, `chore:`, `style:`, `refactor:`. Make granular commits, one per area, and push after each.
+The rbd plugin's pre-push hook (a Claude Code hook on `git push`) checks the prefixes. It accepts the RBD ones above (`req()`…`arch()`, `plat()` included, must cite a validated ID), `plan:`, `hw:` for hardware (`enclosing/`, `hardware/`, from `.rbd/config.yml` `extra_commit_prefixes`), `docs:` for doc-only commits, and `fix:`, `chore:`, `style:`, `refactor:`. Make granular commits, one per area, and push after each.
 
 ## Modeling
 
